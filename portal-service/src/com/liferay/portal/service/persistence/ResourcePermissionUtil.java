@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -94,110 +94,20 @@ public class ResourcePermissionUtil {
 	}
 
 	/**
-	 * @see com.liferay.portal.service.persistence.BasePersistence#remove(com.liferay.portal.model.BaseModel)
+	 * @see com.liferay.portal.service.persistence.BasePersistence#update(com.liferay.portal.model.BaseModel)
 	 */
-	public static ResourcePermission remove(
+	public static ResourcePermission update(
 		ResourcePermission resourcePermission) throws SystemException {
-		return getPersistence().remove(resourcePermission);
+		return getPersistence().update(resourcePermission);
 	}
 
 	/**
-	 * @see com.liferay.portal.service.persistence.BasePersistence#update(com.liferay.portal.model.BaseModel, boolean)
+	 * @see com.liferay.portal.service.persistence.BasePersistence#update(com.liferay.portal.model.BaseModel, ServiceContext)
 	 */
 	public static ResourcePermission update(
-		ResourcePermission resourcePermission, boolean merge)
+		ResourcePermission resourcePermission, ServiceContext serviceContext)
 		throws SystemException {
-		return getPersistence().update(resourcePermission, merge);
-	}
-
-	/**
-	 * @see com.liferay.portal.service.persistence.BasePersistence#update(com.liferay.portal.model.BaseModel, boolean, ServiceContext)
-	 */
-	public static ResourcePermission update(
-		ResourcePermission resourcePermission, boolean merge,
-		ServiceContext serviceContext) throws SystemException {
-		return getPersistence().update(resourcePermission, merge, serviceContext);
-	}
-
-	/**
-	* Caches the resource permission in the entity cache if it is enabled.
-	*
-	* @param resourcePermission the resource permission
-	*/
-	public static void cacheResult(
-		com.liferay.portal.model.ResourcePermission resourcePermission) {
-		getPersistence().cacheResult(resourcePermission);
-	}
-
-	/**
-	* Caches the resource permissions in the entity cache if it is enabled.
-	*
-	* @param resourcePermissions the resource permissions
-	*/
-	public static void cacheResult(
-		java.util.List<com.liferay.portal.model.ResourcePermission> resourcePermissions) {
-		getPersistence().cacheResult(resourcePermissions);
-	}
-
-	/**
-	* Creates a new resource permission with the primary key. Does not add the resource permission to the database.
-	*
-	* @param resourcePermissionId the primary key for the new resource permission
-	* @return the new resource permission
-	*/
-	public static com.liferay.portal.model.ResourcePermission create(
-		long resourcePermissionId) {
-		return getPersistence().create(resourcePermissionId);
-	}
-
-	/**
-	* Removes the resource permission with the primary key from the database. Also notifies the appropriate model listeners.
-	*
-	* @param resourcePermissionId the primary key of the resource permission
-	* @return the resource permission that was removed
-	* @throws com.liferay.portal.NoSuchResourcePermissionException if a resource permission with the primary key could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ResourcePermission remove(
-		long resourcePermissionId)
-		throws com.liferay.portal.NoSuchResourcePermissionException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().remove(resourcePermissionId);
-	}
-
-	public static com.liferay.portal.model.ResourcePermission updateImpl(
-		com.liferay.portal.model.ResourcePermission resourcePermission,
-		boolean merge)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().updateImpl(resourcePermission, merge);
-	}
-
-	/**
-	* Returns the resource permission with the primary key or throws a {@link com.liferay.portal.NoSuchResourcePermissionException} if it could not be found.
-	*
-	* @param resourcePermissionId the primary key of the resource permission
-	* @return the resource permission
-	* @throws com.liferay.portal.NoSuchResourcePermissionException if a resource permission with the primary key could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ResourcePermission findByPrimaryKey(
-		long resourcePermissionId)
-		throws com.liferay.portal.NoSuchResourcePermissionException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().findByPrimaryKey(resourcePermissionId);
-	}
-
-	/**
-	* Returns the resource permission with the primary key or returns <code>null</code> if it could not be found.
-	*
-	* @param resourcePermissionId the primary key of the resource permission
-	* @return the resource permission, or <code>null</code> if a resource permission with the primary key could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ResourcePermission fetchByPrimaryKey(
-		long resourcePermissionId)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().fetchByPrimaryKey(resourcePermissionId);
+		return getPersistence().update(resourcePermission, serviceContext);
 	}
 
 	/**
@@ -216,7 +126,7 @@ public class ResourcePermissionUtil {
 	* Returns a range of all the resource permissions where scope = &#63;.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param scope the scope
@@ -235,7 +145,7 @@ public class ResourcePermissionUtil {
 	* Returns an ordered range of all the resource permissions where scope = &#63;.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param scope the scope
@@ -255,10 +165,6 @@ public class ResourcePermissionUtil {
 	/**
 	* Returns the first resource permission in the ordered set where scope = &#63;.
 	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
-	*
 	* @param scope the scope
 	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	* @return the first matching resource permission
@@ -274,11 +180,22 @@ public class ResourcePermissionUtil {
 	}
 
 	/**
-	* Returns the last resource permission in the ordered set where scope = &#63;.
+	* Returns the first resource permission in the ordered set where scope = &#63;.
 	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
+	* @param scope the scope
+	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	* @return the first matching resource permission, or <code>null</code> if a matching resource permission could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission fetchByScope_First(
+		int scope,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().fetchByScope_First(scope, orderByComparator);
+	}
+
+	/**
+	* Returns the last resource permission in the ordered set where scope = &#63;.
 	*
 	* @param scope the scope
 	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
@@ -295,11 +212,22 @@ public class ResourcePermissionUtil {
 	}
 
 	/**
-	* Returns the resource permissions before and after the current resource permission in the ordered set where scope = &#63;.
+	* Returns the last resource permission in the ordered set where scope = &#63;.
 	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
+	* @param scope the scope
+	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	* @return the last matching resource permission, or <code>null</code> if a matching resource permission could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission fetchByScope_Last(
+		int scope,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().fetchByScope_Last(scope, orderByComparator);
+	}
+
+	/**
+	* Returns the resource permissions before and after the current resource permission in the ordered set where scope = &#63;.
 	*
 	* @param resourcePermissionId the primary key of the current resource permission
 	* @param scope the scope
@@ -322,7 +250,7 @@ public class ResourcePermissionUtil {
 	* Returns all the resource permissions where scope = any &#63;.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param scopes the scopes
@@ -339,7 +267,7 @@ public class ResourcePermissionUtil {
 	* Returns a range of all the resource permissions where scope = any &#63;.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param scopes the scopes
@@ -358,7 +286,7 @@ public class ResourcePermissionUtil {
 	* Returns an ordered range of all the resource permissions where scope = any &#63;.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param scopes the scopes
@@ -377,6 +305,41 @@ public class ResourcePermissionUtil {
 	}
 
 	/**
+	* Removes all the resource permissions where scope = &#63; from the database.
+	*
+	* @param scope the scope
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void removeByScope(int scope)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getPersistence().removeByScope(scope);
+	}
+
+	/**
+	* Returns the number of resource permissions where scope = &#63;.
+	*
+	* @param scope the scope
+	* @return the number of matching resource permissions
+	* @throws SystemException if a system exception occurred
+	*/
+	public static int countByScope(int scope)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().countByScope(scope);
+	}
+
+	/**
+	* Returns the number of resource permissions where scope = any &#63;.
+	*
+	* @param scopes the scopes
+	* @return the number of matching resource permissions
+	* @throws SystemException if a system exception occurred
+	*/
+	public static int countByScope(int[] scopes)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().countByScope(scopes);
+	}
+
+	/**
 	* Returns all the resource permissions where roleId = &#63;.
 	*
 	* @param roleId the role ID
@@ -392,7 +355,7 @@ public class ResourcePermissionUtil {
 	* Returns a range of all the resource permissions where roleId = &#63;.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param roleId the role ID
@@ -411,7 +374,7 @@ public class ResourcePermissionUtil {
 	* Returns an ordered range of all the resource permissions where roleId = &#63;.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param roleId the role ID
@@ -432,10 +395,6 @@ public class ResourcePermissionUtil {
 	/**
 	* Returns the first resource permission in the ordered set where roleId = &#63;.
 	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
-	*
 	* @param roleId the role ID
 	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	* @return the first matching resource permission
@@ -451,11 +410,22 @@ public class ResourcePermissionUtil {
 	}
 
 	/**
-	* Returns the last resource permission in the ordered set where roleId = &#63;.
+	* Returns the first resource permission in the ordered set where roleId = &#63;.
 	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
+	* @param roleId the role ID
+	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	* @return the first matching resource permission, or <code>null</code> if a matching resource permission could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission fetchByRoleId_First(
+		long roleId,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().fetchByRoleId_First(roleId, orderByComparator);
+	}
+
+	/**
+	* Returns the last resource permission in the ordered set where roleId = &#63;.
 	*
 	* @param roleId the role ID
 	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
@@ -472,11 +442,22 @@ public class ResourcePermissionUtil {
 	}
 
 	/**
-	* Returns the resource permissions before and after the current resource permission in the ordered set where roleId = &#63;.
+	* Returns the last resource permission in the ordered set where roleId = &#63;.
 	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
+	* @param roleId the role ID
+	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	* @return the last matching resource permission, or <code>null</code> if a matching resource permission could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission fetchByRoleId_Last(
+		long roleId,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().fetchByRoleId_Last(roleId, orderByComparator);
+	}
+
+	/**
+	* Returns the resource permissions before and after the current resource permission in the ordered set where roleId = &#63;.
 	*
 	* @param resourcePermissionId the primary key of the current resource permission
 	* @param roleId the role ID
@@ -493,6 +474,205 @@ public class ResourcePermissionUtil {
 		return getPersistence()
 				   .findByRoleId_PrevAndNext(resourcePermissionId, roleId,
 			orderByComparator);
+	}
+
+	/**
+	* Removes all the resource permissions where roleId = &#63; from the database.
+	*
+	* @param roleId the role ID
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void removeByRoleId(long roleId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getPersistence().removeByRoleId(roleId);
+	}
+
+	/**
+	* Returns the number of resource permissions where roleId = &#63;.
+	*
+	* @param roleId the role ID
+	* @return the number of matching resource permissions
+	* @throws SystemException if a system exception occurred
+	*/
+	public static int countByRoleId(long roleId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().countByRoleId(roleId);
+	}
+
+	/**
+	* Returns all the resource permissions where companyId = &#63; and primKey LIKE &#63;.
+	*
+	* @param companyId the company ID
+	* @param primKey the prim key
+	* @return the matching resource permissions
+	* @throws SystemException if a system exception occurred
+	*/
+	public static java.util.List<com.liferay.portal.model.ResourcePermission> findByC_LikeP(
+		long companyId, java.lang.String primKey)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().findByC_LikeP(companyId, primKey);
+	}
+
+	/**
+	* Returns a range of all the resource permissions where companyId = &#63; and primKey LIKE &#63;.
+	*
+	* <p>
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
+	* </p>
+	*
+	* @param companyId the company ID
+	* @param primKey the prim key
+	* @param start the lower bound of the range of resource permissions
+	* @param end the upper bound of the range of resource permissions (not inclusive)
+	* @return the range of matching resource permissions
+	* @throws SystemException if a system exception occurred
+	*/
+	public static java.util.List<com.liferay.portal.model.ResourcePermission> findByC_LikeP(
+		long companyId, java.lang.String primKey, int start, int end)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().findByC_LikeP(companyId, primKey, start, end);
+	}
+
+	/**
+	* Returns an ordered range of all the resource permissions where companyId = &#63; and primKey LIKE &#63;.
+	*
+	* <p>
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
+	* </p>
+	*
+	* @param companyId the company ID
+	* @param primKey the prim key
+	* @param start the lower bound of the range of resource permissions
+	* @param end the upper bound of the range of resource permissions (not inclusive)
+	* @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	* @return the ordered range of matching resource permissions
+	* @throws SystemException if a system exception occurred
+	*/
+	public static java.util.List<com.liferay.portal.model.ResourcePermission> findByC_LikeP(
+		long companyId, java.lang.String primKey, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence()
+				   .findByC_LikeP(companyId, primKey, start, end,
+			orderByComparator);
+	}
+
+	/**
+	* Returns the first resource permission in the ordered set where companyId = &#63; and primKey LIKE &#63;.
+	*
+	* @param companyId the company ID
+	* @param primKey the prim key
+	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	* @return the first matching resource permission
+	* @throws com.liferay.portal.NoSuchResourcePermissionException if a matching resource permission could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission findByC_LikeP_First(
+		long companyId, java.lang.String primKey,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.NoSuchResourcePermissionException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence()
+				   .findByC_LikeP_First(companyId, primKey, orderByComparator);
+	}
+
+	/**
+	* Returns the first resource permission in the ordered set where companyId = &#63; and primKey LIKE &#63;.
+	*
+	* @param companyId the company ID
+	* @param primKey the prim key
+	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	* @return the first matching resource permission, or <code>null</code> if a matching resource permission could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission fetchByC_LikeP_First(
+		long companyId, java.lang.String primKey,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence()
+				   .fetchByC_LikeP_First(companyId, primKey, orderByComparator);
+	}
+
+	/**
+	* Returns the last resource permission in the ordered set where companyId = &#63; and primKey LIKE &#63;.
+	*
+	* @param companyId the company ID
+	* @param primKey the prim key
+	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	* @return the last matching resource permission
+	* @throws com.liferay.portal.NoSuchResourcePermissionException if a matching resource permission could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission findByC_LikeP_Last(
+		long companyId, java.lang.String primKey,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.NoSuchResourcePermissionException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence()
+				   .findByC_LikeP_Last(companyId, primKey, orderByComparator);
+	}
+
+	/**
+	* Returns the last resource permission in the ordered set where companyId = &#63; and primKey LIKE &#63;.
+	*
+	* @param companyId the company ID
+	* @param primKey the prim key
+	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	* @return the last matching resource permission, or <code>null</code> if a matching resource permission could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission fetchByC_LikeP_Last(
+		long companyId, java.lang.String primKey,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence()
+				   .fetchByC_LikeP_Last(companyId, primKey, orderByComparator);
+	}
+
+	/**
+	* Returns the resource permissions before and after the current resource permission in the ordered set where companyId = &#63; and primKey LIKE &#63;.
+	*
+	* @param resourcePermissionId the primary key of the current resource permission
+	* @param companyId the company ID
+	* @param primKey the prim key
+	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	* @return the previous, current, and next resource permission
+	* @throws com.liferay.portal.NoSuchResourcePermissionException if a resource permission with the primary key could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission[] findByC_LikeP_PrevAndNext(
+		long resourcePermissionId, long companyId, java.lang.String primKey,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.NoSuchResourcePermissionException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence()
+				   .findByC_LikeP_PrevAndNext(resourcePermissionId, companyId,
+			primKey, orderByComparator);
+	}
+
+	/**
+	* Removes all the resource permissions where companyId = &#63; and primKey LIKE &#63; from the database.
+	*
+	* @param companyId the company ID
+	* @param primKey the prim key
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void removeByC_LikeP(long companyId, java.lang.String primKey)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getPersistence().removeByC_LikeP(companyId, primKey);
+	}
+
+	/**
+	* Returns the number of resource permissions where companyId = &#63; and primKey LIKE &#63;.
+	*
+	* @param companyId the company ID
+	* @param primKey the prim key
+	* @return the number of matching resource permissions
+	* @throws SystemException if a system exception occurred
+	*/
+	public static int countByC_LikeP(long companyId, java.lang.String primKey)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().countByC_LikeP(companyId, primKey);
 	}
 
 	/**
@@ -514,7 +694,7 @@ public class ResourcePermissionUtil {
 	* Returns a range of all the resource permissions where companyId = &#63; and name = &#63; and scope = &#63;.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param companyId the company ID
@@ -535,7 +715,7 @@ public class ResourcePermissionUtil {
 	* Returns an ordered range of all the resource permissions where companyId = &#63; and name = &#63; and scope = &#63;.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param companyId the company ID
@@ -559,10 +739,6 @@ public class ResourcePermissionUtil {
 	/**
 	* Returns the first resource permission in the ordered set where companyId = &#63; and name = &#63; and scope = &#63;.
 	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
-	*
 	* @param companyId the company ID
 	* @param name the name
 	* @param scope the scope
@@ -581,11 +757,25 @@ public class ResourcePermissionUtil {
 	}
 
 	/**
-	* Returns the last resource permission in the ordered set where companyId = &#63; and name = &#63; and scope = &#63;.
+	* Returns the first resource permission in the ordered set where companyId = &#63; and name = &#63; and scope = &#63;.
 	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
+	* @param companyId the company ID
+	* @param name the name
+	* @param scope the scope
+	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	* @return the first matching resource permission, or <code>null</code> if a matching resource permission could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission fetchByC_N_S_First(
+		long companyId, java.lang.String name, int scope,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence()
+				   .fetchByC_N_S_First(companyId, name, scope, orderByComparator);
+	}
+
+	/**
+	* Returns the last resource permission in the ordered set where companyId = &#63; and name = &#63; and scope = &#63;.
 	*
 	* @param companyId the company ID
 	* @param name the name
@@ -605,11 +795,25 @@ public class ResourcePermissionUtil {
 	}
 
 	/**
-	* Returns the resource permissions before and after the current resource permission in the ordered set where companyId = &#63; and name = &#63; and scope = &#63;.
+	* Returns the last resource permission in the ordered set where companyId = &#63; and name = &#63; and scope = &#63;.
 	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
+	* @param companyId the company ID
+	* @param name the name
+	* @param scope the scope
+	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	* @return the last matching resource permission, or <code>null</code> if a matching resource permission could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission fetchByC_N_S_Last(
+		long companyId, java.lang.String name, int scope,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence()
+				   .fetchByC_N_S_Last(companyId, name, scope, orderByComparator);
+	}
+
+	/**
+	* Returns the resource permissions before and after the current resource permission in the ordered set where companyId = &#63; and name = &#63; and scope = &#63;.
 	*
 	* @param resourcePermissionId the primary key of the current resource permission
 	* @param companyId the company ID
@@ -629,6 +833,33 @@ public class ResourcePermissionUtil {
 		return getPersistence()
 				   .findByC_N_S_PrevAndNext(resourcePermissionId, companyId,
 			name, scope, orderByComparator);
+	}
+
+	/**
+	* Removes all the resource permissions where companyId = &#63; and name = &#63; and scope = &#63; from the database.
+	*
+	* @param companyId the company ID
+	* @param name the name
+	* @param scope the scope
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void removeByC_N_S(long companyId, java.lang.String name,
+		int scope) throws com.liferay.portal.kernel.exception.SystemException {
+		getPersistence().removeByC_N_S(companyId, name, scope);
+	}
+
+	/**
+	* Returns the number of resource permissions where companyId = &#63; and name = &#63; and scope = &#63;.
+	*
+	* @param companyId the company ID
+	* @param name the name
+	* @param scope the scope
+	* @return the number of matching resource permissions
+	* @throws SystemException if a system exception occurred
+	*/
+	public static int countByC_N_S(long companyId, java.lang.String name,
+		int scope) throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().countByC_N_S(companyId, name, scope);
 	}
 
 	/**
@@ -652,7 +883,7 @@ public class ResourcePermissionUtil {
 	* Returns a range of all the resource permissions where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63;.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param companyId the company ID
@@ -676,7 +907,7 @@ public class ResourcePermissionUtil {
 	* Returns an ordered range of all the resource permissions where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63;.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param companyId the company ID
@@ -702,10 +933,6 @@ public class ResourcePermissionUtil {
 	/**
 	* Returns the first resource permission in the ordered set where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63;.
 	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
-	*
 	* @param companyId the company ID
 	* @param name the name
 	* @param scope the scope
@@ -727,11 +954,28 @@ public class ResourcePermissionUtil {
 	}
 
 	/**
-	* Returns the last resource permission in the ordered set where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63;.
+	* Returns the first resource permission in the ordered set where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63;.
 	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
+	* @param companyId the company ID
+	* @param name the name
+	* @param scope the scope
+	* @param primKey the prim key
+	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	* @return the first matching resource permission, or <code>null</code> if a matching resource permission could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission fetchByC_N_S_P_First(
+		long companyId, java.lang.String name, int scope,
+		java.lang.String primKey,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence()
+				   .fetchByC_N_S_P_First(companyId, name, scope, primKey,
+			orderByComparator);
+	}
+
+	/**
+	* Returns the last resource permission in the ordered set where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63;.
 	*
 	* @param companyId the company ID
 	* @param name the name
@@ -754,11 +998,28 @@ public class ResourcePermissionUtil {
 	}
 
 	/**
-	* Returns the resource permissions before and after the current resource permission in the ordered set where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63;.
+	* Returns the last resource permission in the ordered set where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63;.
 	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
+	* @param companyId the company ID
+	* @param name the name
+	* @param scope the scope
+	* @param primKey the prim key
+	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	* @return the last matching resource permission, or <code>null</code> if a matching resource permission could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission fetchByC_N_S_P_Last(
+		long companyId, java.lang.String name, int scope,
+		java.lang.String primKey,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence()
+				   .fetchByC_N_S_P_Last(companyId, name, scope, primKey,
+			orderByComparator);
+	}
+
+	/**
+	* Returns the resource permissions before and after the current resource permission in the ordered set where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63;.
 	*
 	* @param resourcePermissionId the primary key of the current resource permission
 	* @param companyId the company ID
@@ -782,153 +1043,111 @@ public class ResourcePermissionUtil {
 	}
 
 	/**
-	* Returns all the resource permissions where companyId = &#63; and name = &#63; and primKey = &#63; and ownerId = &#63;.
+	* Removes all the resource permissions where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63; from the database.
 	*
 	* @param companyId the company ID
 	* @param name the name
+	* @param scope the scope
 	* @param primKey the prim key
-	* @param ownerId the owner ID
-	* @return the matching resource permissions
 	* @throws SystemException if a system exception occurred
 	*/
-	public static java.util.List<com.liferay.portal.model.ResourcePermission> findByC_N_P_O(
-		long companyId, java.lang.String name, java.lang.String primKey,
-		long ownerId)
+	public static void removeByC_N_S_P(long companyId, java.lang.String name,
+		int scope, java.lang.String primKey)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().findByC_N_P_O(companyId, name, primKey, ownerId);
+		getPersistence().removeByC_N_S_P(companyId, name, scope, primKey);
 	}
 
 	/**
-	* Returns a range of all the resource permissions where companyId = &#63; and name = &#63; and primKey = &#63; and ownerId = &#63;.
+	* Returns the number of resource permissions where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63;.
+	*
+	* @param companyId the company ID
+	* @param name the name
+	* @param scope the scope
+	* @param primKey the prim key
+	* @return the number of matching resource permissions
+	* @throws SystemException if a system exception occurred
+	*/
+	public static int countByC_N_S_P(long companyId, java.lang.String name,
+		int scope, java.lang.String primKey)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().countByC_N_S_P(companyId, name, scope, primKey);
+	}
+
+	/**
+	* Returns all the resource permissions where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63; and roleId = any &#63;.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param companyId the company ID
 	* @param name the name
+	* @param scope the scope
 	* @param primKey the prim key
-	* @param ownerId the owner ID
+	* @param roleIds the role IDs
+	* @return the matching resource permissions
+	* @throws SystemException if a system exception occurred
+	*/
+	public static java.util.List<com.liferay.portal.model.ResourcePermission> findByC_N_S_P_R(
+		long companyId, java.lang.String name, int scope,
+		java.lang.String primKey, long[] roleIds)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence()
+				   .findByC_N_S_P_R(companyId, name, scope, primKey, roleIds);
+	}
+
+	/**
+	* Returns a range of all the resource permissions where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63; and roleId = any &#63;.
+	*
+	* <p>
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
+	* </p>
+	*
+	* @param companyId the company ID
+	* @param name the name
+	* @param scope the scope
+	* @param primKey the prim key
+	* @param roleIds the role IDs
 	* @param start the lower bound of the range of resource permissions
 	* @param end the upper bound of the range of resource permissions (not inclusive)
 	* @return the range of matching resource permissions
 	* @throws SystemException if a system exception occurred
 	*/
-	public static java.util.List<com.liferay.portal.model.ResourcePermission> findByC_N_P_O(
-		long companyId, java.lang.String name, java.lang.String primKey,
-		long ownerId, int start, int end)
+	public static java.util.List<com.liferay.portal.model.ResourcePermission> findByC_N_S_P_R(
+		long companyId, java.lang.String name, int scope,
+		java.lang.String primKey, long[] roleIds, int start, int end)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getPersistence()
-				   .findByC_N_P_O(companyId, name, primKey, ownerId, start, end);
+				   .findByC_N_S_P_R(companyId, name, scope, primKey, roleIds,
+			start, end);
 	}
 
 	/**
-	* Returns an ordered range of all the resource permissions where companyId = &#63; and name = &#63; and primKey = &#63; and ownerId = &#63;.
+	* Returns an ordered range of all the resource permissions where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63; and roleId = any &#63;.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param companyId the company ID
 	* @param name the name
+	* @param scope the scope
 	* @param primKey the prim key
-	* @param ownerId the owner ID
+	* @param roleIds the role IDs
 	* @param start the lower bound of the range of resource permissions
 	* @param end the upper bound of the range of resource permissions (not inclusive)
 	* @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
 	* @return the ordered range of matching resource permissions
 	* @throws SystemException if a system exception occurred
 	*/
-	public static java.util.List<com.liferay.portal.model.ResourcePermission> findByC_N_P_O(
-		long companyId, java.lang.String name, java.lang.String primKey,
-		long ownerId, int start, int end,
+	public static java.util.List<com.liferay.portal.model.ResourcePermission> findByC_N_S_P_R(
+		long companyId, java.lang.String name, int scope,
+		java.lang.String primKey, long[] roleIds, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getPersistence()
-				   .findByC_N_P_O(companyId, name, primKey, ownerId, start,
-			end, orderByComparator);
-	}
-
-	/**
-	* Returns the first resource permission in the ordered set where companyId = &#63; and name = &#63; and primKey = &#63; and ownerId = &#63;.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param primKey the prim key
-	* @param ownerId the owner ID
-	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	* @return the first matching resource permission
-	* @throws com.liferay.portal.NoSuchResourcePermissionException if a matching resource permission could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ResourcePermission findByC_N_P_O_First(
-		long companyId, java.lang.String name, java.lang.String primKey,
-		long ownerId,
-		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
-		throws com.liferay.portal.NoSuchResourcePermissionException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence()
-				   .findByC_N_P_O_First(companyId, name, primKey, ownerId,
-			orderByComparator);
-	}
-
-	/**
-	* Returns the last resource permission in the ordered set where companyId = &#63; and name = &#63; and primKey = &#63; and ownerId = &#63;.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param primKey the prim key
-	* @param ownerId the owner ID
-	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	* @return the last matching resource permission
-	* @throws com.liferay.portal.NoSuchResourcePermissionException if a matching resource permission could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ResourcePermission findByC_N_P_O_Last(
-		long companyId, java.lang.String name, java.lang.String primKey,
-		long ownerId,
-		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
-		throws com.liferay.portal.NoSuchResourcePermissionException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence()
-				   .findByC_N_P_O_Last(companyId, name, primKey, ownerId,
-			orderByComparator);
-	}
-
-	/**
-	* Returns the resource permissions before and after the current resource permission in the ordered set where companyId = &#63; and name = &#63; and primKey = &#63; and ownerId = &#63;.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
-	*
-	* @param resourcePermissionId the primary key of the current resource permission
-	* @param companyId the company ID
-	* @param name the name
-	* @param primKey the prim key
-	* @param ownerId the owner ID
-	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	* @return the previous, current, and next resource permission
-	* @throws com.liferay.portal.NoSuchResourcePermissionException if a resource permission with the primary key could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ResourcePermission[] findByC_N_P_O_PrevAndNext(
-		long resourcePermissionId, long companyId, java.lang.String name,
-		java.lang.String primKey, long ownerId,
-		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
-		throws com.liferay.portal.NoSuchResourcePermissionException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence()
-				   .findByC_N_P_O_PrevAndNext(resourcePermissionId, companyId,
-			name, primKey, ownerId, orderByComparator);
+				   .findByC_N_S_P_R(companyId, name, scope, primKey, roleIds,
+			start, end, orderByComparator);
 	}
 
 	/**
@@ -993,348 +1212,6 @@ public class ResourcePermissionUtil {
 	}
 
 	/**
-	* Returns all the resource permissions where companyId = &#63; and name = &#63; and primKey = &#63; and roleId = &#63; and actionIds = &#63;.
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param primKey the prim key
-	* @param roleId the role ID
-	* @param actionIds the action IDs
-	* @return the matching resource permissions
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.model.ResourcePermission> findByC_N_P_R_A(
-		long companyId, java.lang.String name, java.lang.String primKey,
-		long roleId, long actionIds)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence()
-				   .findByC_N_P_R_A(companyId, name, primKey, roleId, actionIds);
-	}
-
-	/**
-	* Returns a range of all the resource permissions where companyId = &#63; and name = &#63; and primKey = &#63; and roleId = &#63; and actionIds = &#63;.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param primKey the prim key
-	* @param roleId the role ID
-	* @param actionIds the action IDs
-	* @param start the lower bound of the range of resource permissions
-	* @param end the upper bound of the range of resource permissions (not inclusive)
-	* @return the range of matching resource permissions
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.model.ResourcePermission> findByC_N_P_R_A(
-		long companyId, java.lang.String name, java.lang.String primKey,
-		long roleId, long actionIds, int start, int end)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence()
-				   .findByC_N_P_R_A(companyId, name, primKey, roleId,
-			actionIds, start, end);
-	}
-
-	/**
-	* Returns an ordered range of all the resource permissions where companyId = &#63; and name = &#63; and primKey = &#63; and roleId = &#63; and actionIds = &#63;.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param primKey the prim key
-	* @param roleId the role ID
-	* @param actionIds the action IDs
-	* @param start the lower bound of the range of resource permissions
-	* @param end the upper bound of the range of resource permissions (not inclusive)
-	* @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	* @return the ordered range of matching resource permissions
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.model.ResourcePermission> findByC_N_P_R_A(
-		long companyId, java.lang.String name, java.lang.String primKey,
-		long roleId, long actionIds, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence()
-				   .findByC_N_P_R_A(companyId, name, primKey, roleId,
-			actionIds, start, end, orderByComparator);
-	}
-
-	/**
-	* Returns the first resource permission in the ordered set where companyId = &#63; and name = &#63; and primKey = &#63; and roleId = &#63; and actionIds = &#63;.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param primKey the prim key
-	* @param roleId the role ID
-	* @param actionIds the action IDs
-	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	* @return the first matching resource permission
-	* @throws com.liferay.portal.NoSuchResourcePermissionException if a matching resource permission could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ResourcePermission findByC_N_P_R_A_First(
-		long companyId, java.lang.String name, java.lang.String primKey,
-		long roleId, long actionIds,
-		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
-		throws com.liferay.portal.NoSuchResourcePermissionException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence()
-				   .findByC_N_P_R_A_First(companyId, name, primKey, roleId,
-			actionIds, orderByComparator);
-	}
-
-	/**
-	* Returns the last resource permission in the ordered set where companyId = &#63; and name = &#63; and primKey = &#63; and roleId = &#63; and actionIds = &#63;.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param primKey the prim key
-	* @param roleId the role ID
-	* @param actionIds the action IDs
-	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	* @return the last matching resource permission
-	* @throws com.liferay.portal.NoSuchResourcePermissionException if a matching resource permission could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ResourcePermission findByC_N_P_R_A_Last(
-		long companyId, java.lang.String name, java.lang.String primKey,
-		long roleId, long actionIds,
-		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
-		throws com.liferay.portal.NoSuchResourcePermissionException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence()
-				   .findByC_N_P_R_A_Last(companyId, name, primKey, roleId,
-			actionIds, orderByComparator);
-	}
-
-	/**
-	* Returns the resource permissions before and after the current resource permission in the ordered set where companyId = &#63; and name = &#63; and primKey = &#63; and roleId = &#63; and actionIds = &#63;.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
-	*
-	* @param resourcePermissionId the primary key of the current resource permission
-	* @param companyId the company ID
-	* @param name the name
-	* @param primKey the prim key
-	* @param roleId the role ID
-	* @param actionIds the action IDs
-	* @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	* @return the previous, current, and next resource permission
-	* @throws com.liferay.portal.NoSuchResourcePermissionException if a resource permission with the primary key could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ResourcePermission[] findByC_N_P_R_A_PrevAndNext(
-		long resourcePermissionId, long companyId, java.lang.String name,
-		java.lang.String primKey, long roleId, long actionIds,
-		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
-		throws com.liferay.portal.NoSuchResourcePermissionException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence()
-				   .findByC_N_P_R_A_PrevAndNext(resourcePermissionId,
-			companyId, name, primKey, roleId, actionIds, orderByComparator);
-	}
-
-	/**
-	* Returns the resource permission where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63; and roleId = &#63; and ownerId = &#63; and actionIds = &#63; or throws a {@link com.liferay.portal.NoSuchResourcePermissionException} if it could not be found.
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param scope the scope
-	* @param primKey the prim key
-	* @param roleId the role ID
-	* @param ownerId the owner ID
-	* @param actionIds the action IDs
-	* @return the matching resource permission
-	* @throws com.liferay.portal.NoSuchResourcePermissionException if a matching resource permission could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ResourcePermission findByC_N_S_P_R_O_A(
-		long companyId, java.lang.String name, int scope,
-		java.lang.String primKey, long roleId, long ownerId, long actionIds)
-		throws com.liferay.portal.NoSuchResourcePermissionException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence()
-				   .findByC_N_S_P_R_O_A(companyId, name, scope, primKey,
-			roleId, ownerId, actionIds);
-	}
-
-	/**
-	* Returns the resource permission where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63; and roleId = &#63; and ownerId = &#63; and actionIds = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param scope the scope
-	* @param primKey the prim key
-	* @param roleId the role ID
-	* @param ownerId the owner ID
-	* @param actionIds the action IDs
-	* @return the matching resource permission, or <code>null</code> if a matching resource permission could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ResourcePermission fetchByC_N_S_P_R_O_A(
-		long companyId, java.lang.String name, int scope,
-		java.lang.String primKey, long roleId, long ownerId, long actionIds)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence()
-				   .fetchByC_N_S_P_R_O_A(companyId, name, scope, primKey,
-			roleId, ownerId, actionIds);
-	}
-
-	/**
-	* Returns the resource permission where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63; and roleId = &#63; and ownerId = &#63; and actionIds = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param scope the scope
-	* @param primKey the prim key
-	* @param roleId the role ID
-	* @param ownerId the owner ID
-	* @param actionIds the action IDs
-	* @param retrieveFromCache whether to use the finder cache
-	* @return the matching resource permission, or <code>null</code> if a matching resource permission could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ResourcePermission fetchByC_N_S_P_R_O_A(
-		long companyId, java.lang.String name, int scope,
-		java.lang.String primKey, long roleId, long ownerId, long actionIds,
-		boolean retrieveFromCache)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence()
-				   .fetchByC_N_S_P_R_O_A(companyId, name, scope, primKey,
-			roleId, ownerId, actionIds, retrieveFromCache);
-	}
-
-	/**
-	* Returns all the resource permissions.
-	*
-	* @return the resource permissions
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.model.ResourcePermission> findAll()
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().findAll();
-	}
-
-	/**
-	* Returns a range of all the resource permissions.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
-	*
-	* @param start the lower bound of the range of resource permissions
-	* @param end the upper bound of the range of resource permissions (not inclusive)
-	* @return the range of resource permissions
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.model.ResourcePermission> findAll(
-		int start, int end)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().findAll(start, end);
-	}
-
-	/**
-	* Returns an ordered range of all the resource permissions.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	* </p>
-	*
-	* @param start the lower bound of the range of resource permissions
-	* @param end the upper bound of the range of resource permissions (not inclusive)
-	* @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	* @return the ordered range of resource permissions
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.model.ResourcePermission> findAll(
-		int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().findAll(start, end, orderByComparator);
-	}
-
-	/**
-	* Removes all the resource permissions where scope = &#63; from the database.
-	*
-	* @param scope the scope
-	* @throws SystemException if a system exception occurred
-	*/
-	public static void removeByScope(int scope)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		getPersistence().removeByScope(scope);
-	}
-
-	/**
-	* Removes all the resource permissions where roleId = &#63; from the database.
-	*
-	* @param roleId the role ID
-	* @throws SystemException if a system exception occurred
-	*/
-	public static void removeByRoleId(long roleId)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		getPersistence().removeByRoleId(roleId);
-	}
-
-	/**
-	* Removes all the resource permissions where companyId = &#63; and name = &#63; and scope = &#63; from the database.
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param scope the scope
-	* @throws SystemException if a system exception occurred
-	*/
-	public static void removeByC_N_S(long companyId, java.lang.String name,
-		int scope) throws com.liferay.portal.kernel.exception.SystemException {
-		getPersistence().removeByC_N_S(companyId, name, scope);
-	}
-
-	/**
-	* Removes all the resource permissions where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63; from the database.
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param scope the scope
-	* @param primKey the prim key
-	* @throws SystemException if a system exception occurred
-	*/
-	public static void removeByC_N_S_P(long companyId, java.lang.String name,
-		int scope, java.lang.String primKey)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		getPersistence().removeByC_N_S_P(companyId, name, scope, primKey);
-	}
-
-	/**
-	* Removes all the resource permissions where companyId = &#63; and name = &#63; and primKey = &#63; and ownerId = &#63; from the database.
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param primKey the prim key
-	* @param ownerId the owner ID
-	* @throws SystemException if a system exception occurred
-	*/
-	public static void removeByC_N_P_O(long companyId, java.lang.String name,
-		java.lang.String primKey, long ownerId)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		getPersistence().removeByC_N_P_O(companyId, name, primKey, ownerId);
-	}
-
-	/**
 	* Removes the resource permission where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63; and roleId = &#63; from the database.
 	*
 	* @param companyId the company ID
@@ -1342,145 +1219,16 @@ public class ResourcePermissionUtil {
 	* @param scope the scope
 	* @param primKey the prim key
 	* @param roleId the role ID
+	* @return the resource permission that was removed
 	* @throws SystemException if a system exception occurred
 	*/
-	public static void removeByC_N_S_P_R(long companyId, java.lang.String name,
-		int scope, java.lang.String primKey, long roleId)
+	public static com.liferay.portal.model.ResourcePermission removeByC_N_S_P_R(
+		long companyId, java.lang.String name, int scope,
+		java.lang.String primKey, long roleId)
 		throws com.liferay.portal.NoSuchResourcePermissionException,
 			com.liferay.portal.kernel.exception.SystemException {
-		getPersistence()
-			.removeByC_N_S_P_R(companyId, name, scope, primKey, roleId);
-	}
-
-	/**
-	* Removes all the resource permissions where companyId = &#63; and name = &#63; and primKey = &#63; and roleId = &#63; and actionIds = &#63; from the database.
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param primKey the prim key
-	* @param roleId the role ID
-	* @param actionIds the action IDs
-	* @throws SystemException if a system exception occurred
-	*/
-	public static void removeByC_N_P_R_A(long companyId, java.lang.String name,
-		java.lang.String primKey, long roleId, long actionIds)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		getPersistence()
-			.removeByC_N_P_R_A(companyId, name, primKey, roleId, actionIds);
-	}
-
-	/**
-	* Removes the resource permission where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63; and roleId = &#63; and ownerId = &#63; and actionIds = &#63; from the database.
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param scope the scope
-	* @param primKey the prim key
-	* @param roleId the role ID
-	* @param ownerId the owner ID
-	* @param actionIds the action IDs
-	* @throws SystemException if a system exception occurred
-	*/
-	public static void removeByC_N_S_P_R_O_A(long companyId,
-		java.lang.String name, int scope, java.lang.String primKey,
-		long roleId, long ownerId, long actionIds)
-		throws com.liferay.portal.NoSuchResourcePermissionException,
-			com.liferay.portal.kernel.exception.SystemException {
-		getPersistence()
-			.removeByC_N_S_P_R_O_A(companyId, name, scope, primKey, roleId,
-			ownerId, actionIds);
-	}
-
-	/**
-	* Removes all the resource permissions from the database.
-	*
-	* @throws SystemException if a system exception occurred
-	*/
-	public static void removeAll()
-		throws com.liferay.portal.kernel.exception.SystemException {
-		getPersistence().removeAll();
-	}
-
-	/**
-	* Returns the number of resource permissions where scope = &#63;.
-	*
-	* @param scope the scope
-	* @return the number of matching resource permissions
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int countByScope(int scope)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().countByScope(scope);
-	}
-
-	/**
-	* Returns the number of resource permissions where scope = any &#63;.
-	*
-	* @param scopes the scopes
-	* @return the number of matching resource permissions
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int countByScope(int[] scopes)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().countByScope(scopes);
-	}
-
-	/**
-	* Returns the number of resource permissions where roleId = &#63;.
-	*
-	* @param roleId the role ID
-	* @return the number of matching resource permissions
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int countByRoleId(long roleId)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().countByRoleId(roleId);
-	}
-
-	/**
-	* Returns the number of resource permissions where companyId = &#63; and name = &#63; and scope = &#63;.
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param scope the scope
-	* @return the number of matching resource permissions
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int countByC_N_S(long companyId, java.lang.String name,
-		int scope) throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().countByC_N_S(companyId, name, scope);
-	}
-
-	/**
-	* Returns the number of resource permissions where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63;.
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param scope the scope
-	* @param primKey the prim key
-	* @return the number of matching resource permissions
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int countByC_N_S_P(long companyId, java.lang.String name,
-		int scope, java.lang.String primKey)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().countByC_N_S_P(companyId, name, scope, primKey);
-	}
-
-	/**
-	* Returns the number of resource permissions where companyId = &#63; and name = &#63; and primKey = &#63; and ownerId = &#63;.
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param primKey the prim key
-	* @param ownerId the owner ID
-	* @return the number of matching resource permissions
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int countByC_N_P_O(long companyId, java.lang.String name,
-		java.lang.String primKey, long ownerId)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().countByC_N_P_O(companyId, name, primKey, ownerId);
+		return getPersistence()
+				   .removeByC_N_S_P_R(companyId, name, scope, primKey, roleId);
 	}
 
 	/**
@@ -1502,43 +1250,160 @@ public class ResourcePermissionUtil {
 	}
 
 	/**
-	* Returns the number of resource permissions where companyId = &#63; and name = &#63; and primKey = &#63; and roleId = &#63; and actionIds = &#63;.
-	*
-	* @param companyId the company ID
-	* @param name the name
-	* @param primKey the prim key
-	* @param roleId the role ID
-	* @param actionIds the action IDs
-	* @return the number of matching resource permissions
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int countByC_N_P_R_A(long companyId, java.lang.String name,
-		java.lang.String primKey, long roleId, long actionIds)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence()
-				   .countByC_N_P_R_A(companyId, name, primKey, roleId, actionIds);
-	}
-
-	/**
-	* Returns the number of resource permissions where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63; and roleId = &#63; and ownerId = &#63; and actionIds = &#63;.
+	* Returns the number of resource permissions where companyId = &#63; and name = &#63; and scope = &#63; and primKey = &#63; and roleId = any &#63;.
 	*
 	* @param companyId the company ID
 	* @param name the name
 	* @param scope the scope
 	* @param primKey the prim key
-	* @param roleId the role ID
-	* @param ownerId the owner ID
-	* @param actionIds the action IDs
+	* @param roleIds the role IDs
 	* @return the number of matching resource permissions
 	* @throws SystemException if a system exception occurred
 	*/
-	public static int countByC_N_S_P_R_O_A(long companyId,
-		java.lang.String name, int scope, java.lang.String primKey,
-		long roleId, long ownerId, long actionIds)
+	public static int countByC_N_S_P_R(long companyId, java.lang.String name,
+		int scope, java.lang.String primKey, long[] roleIds)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getPersistence()
-				   .countByC_N_S_P_R_O_A(companyId, name, scope, primKey,
-			roleId, ownerId, actionIds);
+				   .countByC_N_S_P_R(companyId, name, scope, primKey, roleIds);
+	}
+
+	/**
+	* Caches the resource permission in the entity cache if it is enabled.
+	*
+	* @param resourcePermission the resource permission
+	*/
+	public static void cacheResult(
+		com.liferay.portal.model.ResourcePermission resourcePermission) {
+		getPersistence().cacheResult(resourcePermission);
+	}
+
+	/**
+	* Caches the resource permissions in the entity cache if it is enabled.
+	*
+	* @param resourcePermissions the resource permissions
+	*/
+	public static void cacheResult(
+		java.util.List<com.liferay.portal.model.ResourcePermission> resourcePermissions) {
+		getPersistence().cacheResult(resourcePermissions);
+	}
+
+	/**
+	* Creates a new resource permission with the primary key. Does not add the resource permission to the database.
+	*
+	* @param resourcePermissionId the primary key for the new resource permission
+	* @return the new resource permission
+	*/
+	public static com.liferay.portal.model.ResourcePermission create(
+		long resourcePermissionId) {
+		return getPersistence().create(resourcePermissionId);
+	}
+
+	/**
+	* Removes the resource permission with the primary key from the database. Also notifies the appropriate model listeners.
+	*
+	* @param resourcePermissionId the primary key of the resource permission
+	* @return the resource permission that was removed
+	* @throws com.liferay.portal.NoSuchResourcePermissionException if a resource permission with the primary key could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission remove(
+		long resourcePermissionId)
+		throws com.liferay.portal.NoSuchResourcePermissionException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().remove(resourcePermissionId);
+	}
+
+	public static com.liferay.portal.model.ResourcePermission updateImpl(
+		com.liferay.portal.model.ResourcePermission resourcePermission)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().updateImpl(resourcePermission);
+	}
+
+	/**
+	* Returns the resource permission with the primary key or throws a {@link com.liferay.portal.NoSuchResourcePermissionException} if it could not be found.
+	*
+	* @param resourcePermissionId the primary key of the resource permission
+	* @return the resource permission
+	* @throws com.liferay.portal.NoSuchResourcePermissionException if a resource permission with the primary key could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission findByPrimaryKey(
+		long resourcePermissionId)
+		throws com.liferay.portal.NoSuchResourcePermissionException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().findByPrimaryKey(resourcePermissionId);
+	}
+
+	/**
+	* Returns the resource permission with the primary key or returns <code>null</code> if it could not be found.
+	*
+	* @param resourcePermissionId the primary key of the resource permission
+	* @return the resource permission, or <code>null</code> if a resource permission with the primary key could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ResourcePermission fetchByPrimaryKey(
+		long resourcePermissionId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().fetchByPrimaryKey(resourcePermissionId);
+	}
+
+	/**
+	* Returns all the resource permissions.
+	*
+	* @return the resource permissions
+	* @throws SystemException if a system exception occurred
+	*/
+	public static java.util.List<com.liferay.portal.model.ResourcePermission> findAll()
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().findAll();
+	}
+
+	/**
+	* Returns a range of all the resource permissions.
+	*
+	* <p>
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
+	* </p>
+	*
+	* @param start the lower bound of the range of resource permissions
+	* @param end the upper bound of the range of resource permissions (not inclusive)
+	* @return the range of resource permissions
+	* @throws SystemException if a system exception occurred
+	*/
+	public static java.util.List<com.liferay.portal.model.ResourcePermission> findAll(
+		int start, int end)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().findAll(start, end);
+	}
+
+	/**
+	* Returns an ordered range of all the resource permissions.
+	*
+	* <p>
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourcePermissionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
+	* </p>
+	*
+	* @param start the lower bound of the range of resource permissions
+	* @param end the upper bound of the range of resource permissions (not inclusive)
+	* @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	* @return the ordered range of resource permissions
+	* @throws SystemException if a system exception occurred
+	*/
+	public static java.util.List<com.liferay.portal.model.ResourcePermission> findAll(
+		int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().findAll(start, end, orderByComparator);
+	}
+
+	/**
+	* Removes all the resource permissions from the database.
+	*
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void removeAll()
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getPersistence().removeAll();
 	}
 
 	/**
@@ -1563,11 +1428,10 @@ public class ResourcePermissionUtil {
 		return _persistence;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setPersistence(ResourcePermissionPersistence persistence) {
-		_persistence = persistence;
-
-		ReferenceRegistry.registerReference(ResourcePermissionUtil.class,
-			"_persistence");
 	}
 
 	private static ResourcePermissionPersistence _persistence;

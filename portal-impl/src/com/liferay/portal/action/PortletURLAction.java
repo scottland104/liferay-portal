@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.PortletURLImpl;
 
@@ -39,15 +40,22 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 /**
- * @author Eduardo Lundgren
+ * @author     Eduardo Lundgren
+ * @deprecated As of 6.2.0, with no direct replacement
  */
 public class PortletURLAction extends Action {
 
 	@Override
 	public ActionForward execute(
-			ActionMapping mapping, ActionForm form, HttpServletRequest request,
-			HttpServletResponse response)
+			ActionMapping actionMapping, ActionForm actionForm,
+			HttpServletRequest request, HttpServletResponse response)
 		throws Exception {
+
+		if (!PropsValues.PORTLET_URL_GENERATE_BY_PATH_ENABLED) {
+			response.sendError(HttpServletResponse.SC_FORBIDDEN);
+
+			return null;
+		}
 
 		try {
 			String portletURL = getPortletURL(request);
@@ -85,7 +93,8 @@ public class PortletURLAction extends Action {
 		String resourceId = ParamUtil.getString(request, "resourceId");
 		String returnToFullPageURL = ParamUtil.getString(
 			request, "returnToFullPageURL");
-		boolean secure = ParamUtil.getBoolean(request, "secure");
+		boolean secure = ParamUtil.getBoolean(
+			request, "secure", request.isSecure());
 		String windowState = ParamUtil.getString(request, "windowState");
 
 		PortletURLImpl portletURL = new PortletURLImpl(
@@ -164,7 +173,12 @@ public class PortletURLAction extends Action {
 					parameterMapString);
 
 			for (Map.Entry<String, String> entry : parameterMap.entrySet()) {
-				portletURL.setParameter(entry.getKey(), entry.getValue());
+				String key = entry.getKey();
+				String value = entry.getValue();
+
+				if ((key != null) && (value != null)) {
+					portletURL.setParameter(key, value);
+				}
 			}
 		}
 

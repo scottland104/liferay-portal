@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,11 +23,11 @@ PollsQuestion question = (PollsQuestion)request.getAttribute(WebKeys.POLLS_QUEST
 
 question = question.toEscapedModel();
 
-List choices = PollsChoiceLocalServiceUtil.getChoices(question.getQuestionId());
+List<PollsChoice> choices = PollsChoiceLocalServiceUtil.getChoices(question.getQuestionId());
 
 boolean hasVoted = PollsUtil.hasVoted(request, question.getQuestionId());
 
-boolean viewResults = ParamUtil.getBoolean(request, "viewResults", false);
+boolean viewResults = ParamUtil.getBoolean(request, "viewResults");
 
 if (viewResults && !PollsQuestionPermission.contains(permissionChecker, question, ActionKeys.UPDATE)) {
 	viewResults = false;
@@ -44,7 +44,7 @@ if (viewResults && !PollsQuestionPermission.contains(permissionChecker, question
 		<portlet:param name="questionId" value="<%= String.valueOf(question.getQuestionId()) %>" />
 	</portlet:renderURL>
 
-	<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= Constants.ADD %>" />
+	<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= Constants.VOTE %>" />
 	<aui:input name="redirect" type="hidden" value="<%= viewQuestionRenderURL %>" />
 	<aui:input name="questionId" type="hidden" value="<%= question.getQuestionId() %>" />
 
@@ -52,32 +52,29 @@ if (viewResults && !PollsQuestionPermission.contains(permissionChecker, question
 	<liferay-ui:error exception="<%= NoSuchChoiceException.class %>" message="please-select-an-option" />
 
 	<aui:fieldset>
- 		<liferay-ui:header
+		<liferay-ui:header
 			backURL="<%= redirect %>"
+			escapeXml="<%= false %>"
 			localizeTitle="<%= false %>"
 			title="<%= question.getTitle(locale) %>"
 		/>
 
 		<span style="font-size: x-small;">
-			<%= StringUtil.replace(HtmlUtil.escape(question.getDescription(locale)), StringPool.NEW_LINE, "<br />") %>
+			<%= StringUtil.replace(question.getDescription(locale), StringPool.NEW_LINE, "<br />") %>
 		</span>
 
 		<br /><br />
 
 		<c:choose>
-			<c:when test='<%= !viewResults && !question.isExpired() && !hasVoted && PollsQuestionPermission.contains(permissionChecker, question, ActionKeys.ADD_VOTE) %>'>
+			<c:when test="<%= !viewResults && !question.isExpired() && !hasVoted && PollsQuestionPermission.contains(permissionChecker, question, ActionKeys.ADD_VOTE) %>">
 				<aui:field-wrapper>
 
 					<%
-					Iterator itr = choices.iterator();
-
-					while (itr.hasNext()) {
-						PollsChoice choice = (PollsChoice)itr.next();
-
+					for (PollsChoice choice : choices) {
 						choice = choice.toEscapedModel();
 					%>
 
-						<aui:input inlineLabel="left" label='<%= "<strong>" + choice.getName() + ".</strong> " + HtmlUtil.escape(choice.getDescription(locale)) %>' name="choiceId" type="radio" value="<%= choice.getChoiceId() %>" />
+						<aui:input label='<%= "<strong>" + choice.getName() + ".</strong> " + choice.getDescription(locale) %>' name="choiceId" type="radio" value="<%= choice.getChoiceId() %>" />
 
 					<%
 					}
@@ -102,13 +99,13 @@ if (viewResults && !PollsQuestionPermission.contains(permissionChecker, question
 				</c:if>
 
 				<aui:button-row>
-					<aui:button type="submit" value="vote" />
+					<aui:button type="submit" value="vote[action]" />
 
 					<aui:button href="<%= redirect %>" type="cancel" />
 				</aui:button-row>
 
 				<%
-				PortalUtil.addPortletBreadcrumbEntry(request, question.getTitle(locale), currentURL);
+				PortalUtil.addPortletBreadcrumbEntry(request, HtmlUtil.unescape(question.getTitle(locale)), currentURL);
 				%>
 
 			</c:when>
@@ -130,7 +127,7 @@ if (viewResults && !PollsQuestionPermission.contains(permissionChecker, question
 				</aui:button-row>
 
 				<%
-				PortalUtil.addPortletBreadcrumbEntry(request, question.getTitle(locale), viewQuestionURL.toString());
+				PortalUtil.addPortletBreadcrumbEntry(request, HtmlUtil.unescape(question.getTitle(locale)), viewQuestionURL.toString());
 				PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "results"), currentURL);
 				%>
 

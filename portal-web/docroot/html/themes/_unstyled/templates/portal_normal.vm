@@ -2,15 +2,19 @@
 
 #parse ($init)
 
-<html class="#language("lang.dir")" dir="#language("lang.dir")" lang="$w3c_language_id">
+<html class="$root_css_class" dir="#language ("lang.dir")" lang="$w3c_language_id">
 
 <head>
 	<title>$the_title - $company_name</title>
+
+	<meta content="initial-scale=1.0, width=device-width" name="viewport" />
 
 	$theme.include($top_head_include)
 </head>
 
 <body class="$css_class">
+
+<a href="#main-content" id="skip-to-content">#language ("skip-to-content")</a>
 
 $theme.include($body_top_include)
 
@@ -18,36 +22,28 @@ $theme.include($body_top_include)
 	#dockbar()
 #end
 
-<div id="wrapper">
-	<a href="#main-content" id="skip-to-content">#language("skip-to-content")</a>
-
+<div class="container-fluid" id="wrapper">
 	<header id="banner" role="banner">
-		<hgroup id="heading">
-			<h1 class="company-title">
-				<a class="logo" href="$company_url" title="#language("go-to") $company_name">
-					<span>$company_name</span>
+		<div id="heading">
+			<h1 class="site-title">
+				<a class="$logo_css_class" href="$site_default_url" title="#language ("go-to") $site_name">
+					<img alt="$logo_description" height="$site_logo_height" src="$site_logo" width="$site_logo_width" />
 				</a>
+
+				#if ($show_site_name)
+					<span class="site-name" title="#language ("go-to") $site_name">
+						$site_name
+					</span>
+				#end
 			</h1>
 
-			<h2 class="site-title">
-				<a href="$site_default_url" title="#language("go-to") $site_name">
-					<span>$site_name</span>
-				</a>
-			</h2>
-
-			<h3 class="page-title">
+			<h2 class="page-title">
 				<span>$the_title</span>
-			</h3>
-		</hgroup>
+			</h2>
+		</div>
 
 		#if (!$is_signed_in)
 			<a href="$sign_in_url" id="sign-in" rel="nofollow">$sign_in_text</a>
-		#end
-
-		#if ($update_available_url)
-			<div class="popup-alert-notice">
-				<a class="update-available" href="$update_available_url">#language("updates-are-available-for-liferay")</a>
-			</div>
 		#end
 
 		#if ($has_navigation || $is_signed_in)
@@ -56,13 +52,7 @@ $theme.include($body_top_include)
 	</header>
 
 	<div id="content">
-		<nav class="site-breadcrumbs" id="breadcrumbs">
-			<h1>
-				<span>#language("breadcrumbs")</span>
-			</h1>
-
-			#breadcrumbs()
-		</nav>
+		<nav id="breadcrumbs">#breadcrumbs()</nav>
 
 		#if ($selectable)
 			$theme.include($content_include)
@@ -77,15 +67,15 @@ $theme.include($body_top_include)
 
 	<footer id="footer" role="contentinfo">
 		<p class="powered-by">
-			#language("powered-by") <a href="http://www.liferay.com" rel="external">Liferay</a>
+			#language ("powered-by") <a href="http://www.liferay.com" rel="external">Liferay</a>
 		</p>
 	</footer>
 </div>
 
 $theme.include($body_bottom_include)
 
-</body>
-
 $theme.include($bottom_include)
+
+</body>
 
 </html>

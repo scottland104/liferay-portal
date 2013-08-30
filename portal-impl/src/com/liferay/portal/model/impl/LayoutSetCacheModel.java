@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,13 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.LayoutSet;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
+import java.util.Date;
+
 /**
  * The cache model class for representing LayoutSet in entity cache.
  *
@@ -26,10 +33,11 @@ import com.liferay.portal.model.LayoutSet;
  * @see LayoutSet
  * @generated
  */
-public class LayoutSetCacheModel implements CacheModel<LayoutSet> {
+public class LayoutSetCacheModel implements CacheModel<LayoutSet>,
+	Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(31);
+		StringBundler sb = new StringBundler(35);
 
 		sb.append("{layoutSetId=");
 		sb.append(layoutSetId);
@@ -37,6 +45,10 @@ public class LayoutSetCacheModel implements CacheModel<LayoutSet> {
 		sb.append(groupId);
 		sb.append(", companyId=");
 		sb.append(companyId);
+		sb.append(", createDate=");
+		sb.append(createDate);
+		sb.append(", modifiedDate=");
+		sb.append(modifiedDate);
 		sb.append(", privateLayout=");
 		sb.append(privateLayout);
 		sb.append(", logo=");
@@ -66,12 +78,28 @@ public class LayoutSetCacheModel implements CacheModel<LayoutSet> {
 		return sb.toString();
 	}
 
+	@Override
 	public LayoutSet toEntityModel() {
 		LayoutSetImpl layoutSetImpl = new LayoutSetImpl();
 
 		layoutSetImpl.setLayoutSetId(layoutSetId);
 		layoutSetImpl.setGroupId(groupId);
 		layoutSetImpl.setCompanyId(companyId);
+
+		if (createDate == Long.MIN_VALUE) {
+			layoutSetImpl.setCreateDate(null);
+		}
+		else {
+			layoutSetImpl.setCreateDate(new Date(createDate));
+		}
+
+		if (modifiedDate == Long.MIN_VALUE) {
+			layoutSetImpl.setModifiedDate(null);
+		}
+		else {
+			layoutSetImpl.setModifiedDate(new Date(modifiedDate));
+		}
+
 		layoutSetImpl.setPrivateLayout(privateLayout);
 		layoutSetImpl.setLogo(logo);
 		layoutSetImpl.setLogoId(logoId);
@@ -131,12 +159,108 @@ public class LayoutSetCacheModel implements CacheModel<LayoutSet> {
 
 		layoutSetImpl.resetOriginalValues();
 
+		layoutSetImpl.setVirtualHostname(_virtualHostname);
+
 		return layoutSetImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+		layoutSetId = objectInput.readLong();
+		groupId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		createDate = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
+		privateLayout = objectInput.readBoolean();
+		logo = objectInput.readBoolean();
+		logoId = objectInput.readLong();
+		themeId = objectInput.readUTF();
+		colorSchemeId = objectInput.readUTF();
+		wapThemeId = objectInput.readUTF();
+		wapColorSchemeId = objectInput.readUTF();
+		css = objectInput.readUTF();
+		pageCount = objectInput.readInt();
+		settings = objectInput.readUTF();
+		layoutSetPrototypeUuid = objectInput.readUTF();
+		layoutSetPrototypeLinkEnabled = objectInput.readBoolean();
+
+		_virtualHostname = (java.lang.String)objectInput.readObject();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(layoutSetId);
+		objectOutput.writeLong(groupId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(modifiedDate);
+		objectOutput.writeBoolean(privateLayout);
+		objectOutput.writeBoolean(logo);
+		objectOutput.writeLong(logoId);
+
+		if (themeId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(themeId);
+		}
+
+		if (colorSchemeId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(colorSchemeId);
+		}
+
+		if (wapThemeId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(wapThemeId);
+		}
+
+		if (wapColorSchemeId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(wapColorSchemeId);
+		}
+
+		if (css == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(css);
+		}
+
+		objectOutput.writeInt(pageCount);
+
+		if (settings == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(settings);
+		}
+
+		if (layoutSetPrototypeUuid == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(layoutSetPrototypeUuid);
+		}
+
+		objectOutput.writeBoolean(layoutSetPrototypeLinkEnabled);
+
+		objectOutput.writeObject(_virtualHostname);
 	}
 
 	public long layoutSetId;
 	public long groupId;
 	public long companyId;
+	public long createDate;
+	public long modifiedDate;
 	public boolean privateLayout;
 	public boolean logo;
 	public long logoId;
@@ -149,4 +273,5 @@ public class LayoutSetCacheModel implements CacheModel<LayoutSet> {
 	public String settings;
 	public String layoutSetPrototypeUuid;
 	public boolean layoutSetPrototypeLinkEnabled;
+	public java.lang.String _virtualHostname;
 }

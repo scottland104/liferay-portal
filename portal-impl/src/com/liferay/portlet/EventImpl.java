@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,8 +14,6 @@
 
 package com.liferay.portlet;
 
-import com.liferay.portal.kernel.util.Base64;
-
 import java.io.Serializable;
 
 import javax.portlet.Event;
@@ -25,7 +23,7 @@ import javax.xml.namespace.QName;
 /**
  * @author Brian Wing Shun Chan
  */
-public class EventImpl implements Event {
+public class EventImpl implements Event, Serializable {
 
 	public EventImpl(String name, QName qName, Serializable value) {
 		_name = name;
@@ -33,30 +31,21 @@ public class EventImpl implements Event {
 		_value = value;
 	}
 
-	public String getBase64Value() {
-		if (_base64Value != null) {
-			return _base64Value;
-		}
-		else {
-			_base64Value = Base64.objectToString(_value);
-
-			return _base64Value;
-		}
-	}
-
+	@Override
 	public String getName() {
 		return _name;
 	}
 
+	@Override
 	public QName getQName() {
 		return _qName;
 	}
 
+	@Override
 	public Serializable getValue() {
 		return _value;
 	}
 
-	private String _base64Value;
 	private String _name;
 	private QName _qName;
 	private Serializable _value;

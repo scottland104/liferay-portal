@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -13,6 +13,8 @@
  */
 
 package com.liferay.portal.kernel.dao.orm;
+
+import com.liferay.portal.kernel.security.pacl.permission.PortalRuntimePermission;
 
 import java.io.Serializable;
 
@@ -34,22 +36,23 @@ public class EntityCacheUtil {
 	}
 
 	public static EntityCache getEntityCache() {
-		return _finderCache;
+		PortalRuntimePermission.checkGetBeanProperty(EntityCacheUtil.class);
+
+		return _entityCache;
 	}
 
-	public static Object getResult(
-		boolean entityCacheEnabled, Class<?> clazz, Serializable primaryKey,
-		SessionFactory sessionFactory) {
+	public static Serializable getResult(
+		boolean entityCacheEnabled, Class<?> clazz, Serializable primaryKey) {
 
 		return getEntityCache().getResult(
-			entityCacheEnabled, clazz, primaryKey, sessionFactory);
+			entityCacheEnabled, clazz, primaryKey);
 	}
 
 	public static void invalidate() {
 		getEntityCache().invalidate();
 	}
 
-	public static Object loadResult(
+	public static Serializable loadResult(
 		boolean entityCacheEnabled, Class<?> clazz, Serializable primaryKey,
 		SessionFactory sessionFactory) {
 
@@ -59,7 +62,7 @@ public class EntityCacheUtil {
 
 	public static void putResult(
 		boolean entityCacheEnabled, Class<?> clazz, Serializable primaryKey,
-		Object result) {
+		Serializable result) {
 
 		getEntityCache().putResult(
 			entityCacheEnabled, clazz, primaryKey, result);
@@ -75,10 +78,12 @@ public class EntityCacheUtil {
 		getEntityCache().removeResult(entityCacheEnabled, clazz, primaryKey);
 	}
 
-	public void setEntityCache(EntityCache finderCache) {
-		_finderCache = finderCache;
+	public void setEntityCache(EntityCache entityCache) {
+		PortalRuntimePermission.checkSetBeanProperty(getClass());
+
+		_entityCache = entityCache;
 	}
 
-	private static EntityCache _finderCache;
+	private static EntityCache _entityCache;
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,7 @@
 
 package com.liferay.portal.kernel.workflow;
 
+import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.StringPool;
 
 import java.io.InputStream;
@@ -24,22 +25,32 @@ import java.util.Map;
 /**
  * @author Shuyang Zhou
  * @author Brian Wing Shun Chan
+ * @author Eduardo Lundgren
  */
 public class DefaultWorkflowDefinition
 	implements Serializable, WorkflowDefinition {
 
+	@Override
+	public String getContent() {
+		return _content;
+	}
+
+	@Override
 	public InputStream getInputStream() {
 		return _inputStream;
 	}
 
+	@Override
 	public String getName() {
 		return _name;
 	}
 
+	@Override
 	public Map<String, Object> getOptionalAttributes() {
 		return _optionalAttributes;
 	}
 
+	@Override
 	public String getTitle() {
 		if (_title == null) {
 			return StringPool.BLANK;
@@ -49,20 +60,27 @@ public class DefaultWorkflowDefinition
 		}
 	}
 
+	@Override
 	public String getTitle(String languageId) {
-		return getTitle();
+		return LocalizationUtil.getLocalization(getTitle(), languageId);
 	}
 
+	@Override
 	public int getVersion() {
 		return _version;
 	}
 
+	@Override
 	public boolean isActive() {
 		return _active;
 	}
 
 	public void setActive(boolean active) {
 		_active = active;
+	}
+
+	public void setContent(String content) {
+		_content = content;
 	}
 
 	public void setInputStream(InputStream inputStream) {
@@ -86,6 +104,7 @@ public class DefaultWorkflowDefinition
 	}
 
 	private boolean _active;
+	private String _content;
 	private InputStream _inputStream;
 	private String _name;
 	private Map<String, Object> _optionalAttributes;

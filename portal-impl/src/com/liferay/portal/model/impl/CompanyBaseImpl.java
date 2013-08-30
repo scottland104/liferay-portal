@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -37,7 +37,13 @@ public abstract class CompanyBaseImpl extends CompanyModelImpl
 	 *
 	 * Never modify or reference this class directly. All methods that expect a company model instance should use the {@link Company} interface instead.
 	 */
+	@Override
 	public void persist() throws SystemException {
-		CompanyLocalServiceUtil.updateCompany(this);
+		if (this.isNew()) {
+			CompanyLocalServiceUtil.addCompany(this);
+		}
+		else {
+			CompanyLocalServiceUtil.updateCompany(this);
+		}
 	}
 }

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,13 +17,12 @@
 <%@ include file="/html/taglib/init.jsp" %>
 
 <liferay-ui:icon-menu
-	align="auto"
 	cssClass="portlet-options"
 	direction="down"
 	extended="<%= false %>"
 	icon=""
 	message="options"
-	showArrow="<%= false %>"
+	showArrow="<%= true %>"
 	showWhenSingleIcon="<%= true %>"
 >
 	<liferay-portlet:icon-refresh />
@@ -51,7 +50,7 @@
 	<c:if test="<%= portlet != null %>">
 
 		<%
-		PortletPreferences portletSetup = PortletPreferencesFactoryUtil.getLayoutPortletSetup(layout, portletDisplay.getId());
+		PortletPreferences portletSetup = PortletPreferencesFactoryUtil.getStrictLayoutPortletSetup(layout, portletDisplay.getId());
 
 		boolean widgetShowAddAppLink = GetterUtil.getBoolean(portletSetup.getValue("lfrWidgetShowAddAppLink", null), PropsValues.THEME_PORTLET_SHARING_DEFAULT);
 
@@ -66,18 +65,20 @@
 		boolean iGoogleShowAddAppLink = GetterUtil.getBoolean(portletSetup.getValue("lfrIgoogleShowAddAppLink", StringPool.BLANK));
 		boolean netvibesShowAddAppLinks = GetterUtil.getBoolean(portletSetup.getValue("lfrNetvibesShowAddAppLink", StringPool.BLANK));
 		boolean appShowShareWithFriendsLink = GetterUtil.getBoolean(portletSetup.getValue("lfrAppShowShareWithFriendsLink", StringPool.BLANK));
+
+		PortletURL basePortletURL = PortletURLFactoryUtil.create(request, PortletKeys.PORTLET_SHARING, layout.getPlid(), PortletRequest.RENDER_PHASE);
 		%>
 
 		<c:if test="<%= widgetShowAddAppLink || facebookShowAddAppLink || iGoogleShowAddAppLink || netvibesShowAddAppLinks || appShowShareWithFriendsLink %>">
 			<c:if test="<%= widgetShowAddAppLink %>">
 
 				<%
-				String widgetHREF = "javascript:Liferay.PortletSharing.showWidgetInfo('" + PortalUtil.getWidgetURL(portlet, themeDisplay) + "');";
+				String widgetHREF = "javascript:Liferay.PortletSharing.showWidgetInfo('" + PortalUtil.getWidgetURL(portlet, themeDisplay) + "', '" + basePortletURL + "');";
 				%>
 
 				<liferay-ui:icon
 					cssClass='<%= portletDisplay.getNamespace() + "expose-as-widget" %>'
-					image="../dock/add_content"
+					image="../common/add"
 					label="<%= true %>"
 					message="add-to-any-website"
 					url="<%= widgetHREF %>"
@@ -102,7 +103,7 @@
 
 				<liferay-ui:icon
 					cssClass='<%= portletDisplay.getNamespace() + "expose-as-widget" %>'
-					image="../dock/add_content"
+					image="../common/add"
 					label="<%= true %>"
 					message="add-to-igoogle"
 					url="<%= googleGadgetHREF %>"
@@ -112,11 +113,11 @@
 			<c:if test="<%= netvibesShowAddAppLinks %>">
 
 				<%
-				String netvibesHREF = "javascript:Liferay.PortletSharing.showNetvibesInfo('" + PortalUtil.getNetvibesURL(portlet, themeDisplay) + "');";
+				String netvibesHREF = "javascript:Liferay.PortletSharing.showNetvibesInfo('" + PortalUtil.getNetvibesURL(portlet, themeDisplay) + "', '" + basePortletURL + "');";
 				%>
 
 				<liferay-ui:icon
-					image="../dock/add_content"
+					image="../common/add"
 					label="<%= true %>"
 					message="add-to-netvibes"
 					method="get"

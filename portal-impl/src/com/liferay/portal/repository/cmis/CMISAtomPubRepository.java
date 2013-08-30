@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,11 +16,12 @@ package com.liferay.portal.repository.cmis;
 
 import com.liferay.portal.InvalidRepositoryException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.repository.RepositoryException;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.repository.cmis.CMISRepositoryHandler;
 import com.liferay.portal.kernel.repository.cmis.Session;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.PrincipalThreadLocal;
 
 import java.util.HashMap;
@@ -36,7 +37,7 @@ import org.apache.chemistry.opencmis.commons.enums.BindingType;
 public class CMISAtomPubRepository extends CMISRepositoryHandler {
 
 	@Override
-	public Session getSession() throws PortalException, RepositoryException {
+	public Session getSession() throws PortalException, SystemException {
 		Map<String, String> parameters = new HashMap<String, String>();
 
 		parameters.put(
@@ -45,21 +46,24 @@ public class CMISAtomPubRepository extends CMISRepositoryHandler {
 			SessionParameter.BINDING_TYPE, BindingType.ATOMPUB.value());
 		parameters.put(SessionParameter.COMPRESSION, Boolean.TRUE.toString());
 
-		Locale locale = LocaleUtil.getDefault();
+		Locale locale = LocaleUtil.getSiteDefault();
 
 		parameters.put(
-			SessionParameter.LOCALE_ISO3166_COUNTRY,
-			locale.getCountry());
+			SessionParameter.LOCALE_ISO3166_COUNTRY, locale.getCountry());
 		parameters.put(
 			SessionParameter.LOCALE_ISO639_LANGUAGE, locale.getLanguage());
 
 		String password = PrincipalThreadLocal.getPassword();
 
-		parameters.put(SessionParameter.PASSWORD, password);
+		if (Validator.isNotNull(password)) {
+			parameters.put(SessionParameter.PASSWORD, password);
+		}
 
 		String login = getLogin();
 
-		parameters.put(SessionParameter.USER, login);
+		if (Validator.isNotNull(login)) {
+			parameters.put(SessionParameter.USER, login);
+		}
 
 		CMISRepositoryUtil.checkRepository(
 			getRepositoryId(), parameters, getTypeSettingsProperties(),
@@ -68,10 +72,12 @@ public class CMISAtomPubRepository extends CMISRepositoryHandler {
 		return CMISRepositoryUtil.createSession(parameters);
 	}
 
+	@Override
 	public String[] getSupportedConfigurations() {
 		return _SUPPORTED_CONFIGURATIONS;
 	}
 
+	@Override
 	public String[][] getSupportedParameters() {
 		return _SUPPORTED_PARAMETERS;
 	}

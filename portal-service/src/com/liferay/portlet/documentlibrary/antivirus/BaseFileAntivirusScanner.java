@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,10 +26,12 @@ import java.io.InputStream;
  */
 public abstract class BaseFileAntivirusScanner implements AntivirusScanner {
 
+	@Override
 	public boolean isActive() {
 		return _ACTIVE;
 	}
 
+	@Override
 	public void scan(byte[] bytes)
 		throws AntivirusScannerException, SystemException {
 
@@ -52,6 +54,7 @@ public abstract class BaseFileAntivirusScanner implements AntivirusScanner {
 		}
 	}
 
+	@Override
 	public void scan(InputStream inputStream)
 		throws AntivirusScannerException, SystemException {
 
@@ -74,7 +77,7 @@ public abstract class BaseFileAntivirusScanner implements AntivirusScanner {
 		}
 	}
 
-	private static boolean _ACTIVE = true;
+	private static final boolean _ACTIVE = true;
 
 	private static final String _ANTIVIRUS_EXTENSION = "avs";
 

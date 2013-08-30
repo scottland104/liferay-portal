@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,57 +19,111 @@
 <%
 ResultRow row = (ResultRow)request.getAttribute(WebKeys.SEARCH_CONTAINER_RESULT_ROW);
 
-Group group = (Group)row.getObject();
+Group group = null;
+
+boolean organizationUser = false;
+boolean userGroupUser = false;
+
+if (row != null) {
+	group = (Group)row.getObject();
+
+	organizationUser = GetterUtil.getBoolean(row.getParameter("organizationUser"));
+	userGroupUser = GetterUtil.getBoolean(row.getParameter("userGroupUser"));
+}
+else {
+	group = (Group)request.getAttribute("view_tree.jspf-site");
+
+	GroupSearchTerms searchTerms = (GroupSearchTerms)request.getAttribute("view_tree.jspf-searchTerms");
+
+	organizationUser = SitesUtil.isOrganizationUser(company.getCompanyId(), group, user, new ArrayList<String>());
+	userGroupUser = SitesUtil.isUserGroupUser(company.getCompanyId(), group, user, new ArrayList<String>());
+}
+
+boolean hasUpdatePermission = GroupPermissionUtil.contains(permissionChecker, group.getGroupId(), ActionKeys.UPDATE);
+
+boolean view = false;
+
+if (row == null) {
+	view = true;
+}
 %>
 
-<liferay-ui:icon-menu>
-	<c:if test="<%= GroupPermissionUtil.contains(permissionChecker, group.getGroupId(), ActionKeys.UPDATE) %>">
-		<liferay-portlet:renderURL doAsGroupId="<%= group.getGroupId() %>" portletName="<%= PortletKeys.SITE_SETTINGS %>" var="editURL">
-			<portlet:param name="redirect" value="<%= currentURL %>" />
-		</liferay-portlet:renderURL>
+<liferay-ui:icon-menu showExpanded="<%= view %>" showWhenSingleIcon="<%= true %>">
 
+	<%
+	ThemeDisplay siteThemeDisplay = (ThemeDisplay)themeDisplay.clone();
+
+	siteThemeDisplay.setScopeGroupId(group.getGroupId());
+
+	PortletURL siteAdministrationURL = PortalUtil.getSiteAdministrationURL(renderResponse, siteThemeDisplay);
+	%>
+
+	<c:if test="<%= siteAdministrationURL != null %>">
 		<liferay-ui:icon
 			image="edit"
-			message="edit-settings"
-			url="<%= editURL %>"
+			message="manage"
+			method="get"
+			url="<%= siteAdministrationURL.toString() %>"
 		/>
 	</c:if>
 
-	<%--<c:if test="<%= GroupPermissionUtil.contains(permissionChecker, group.getGroupId(), ActionKeys.PERMISSIONS) %>">
-		<liferay-security:permissionsURL
-			modelResource="<%= Group.class.getName() %>"
-			modelResourceDescription="<%= group.getName() %>"
-			resourcePrimKey="<%= String.valueOf(group.getGroupId()) %>"
-			var="permissionsURL"
-		/>
+	<c:if test="<%= hasUpdatePermission %>">
 
-		<liferay-ui:icon
-			image="permissions"
-			url="<%= permissionsURL %>"
-		/>
-	</c:if>--%>
+		<%
+		int childSitesCount = GroupLocalServiceUtil.getGroupsCount(company.getCompanyId(), group.getGroupId(), true);
+		%>
 
-	<c:if test="<%= GroupPermissionUtil.contains(permissionChecker, group.getGroupId(), ActionKeys.MANAGE_LAYOUTS) %>">
-		<liferay-portlet:renderURL doAsGroupId="<%= group.getGroupId() %>" portletName="<%= PortletKeys.GROUP_PAGES %>" var="managePagesURL">
-			<portlet:param name="redirect" value="<%= currentURL %>" />
-		</liferay-portlet:renderURL>
+		<c:if test="<%= childSitesCount > 0 %>">
+			<liferay-portlet:renderURL var="viewSubsitesURL">
+				<portlet:param name="struts_action" value="/sites_admin/view" />
+				<portlet:param name="backURL" value="<%= StringPool.SLASH + currentURL %>" />
+				<portlet:param name="groupId" value="<%= String.valueOf(group.getGroupId()) %>" />
+				<portlet:param name="sitesListView" value="<%= SiteConstants.LIST_VIEW_TREE %>" />
+			</liferay-portlet:renderURL>
 
-		<liferay-ui:icon
-			image="pages"
-			message="manage-pages"
-			url="<%= managePagesURL %>"
-		/>
+			<liferay-ui:icon
+				image="view"
+				message="view-subsites"
+				url="<%= viewSubsitesURL %>"
+			/>
+		</c:if>
 	</c:if>
 
-	<c:if test="<%= GroupPermissionUtil.contains(permissionChecker, group.getGroupId(), ActionKeys.ASSIGN_MEMBERS) %>">
-		<liferay-portlet:renderURL doAsGroupId="<%= group.getGroupId() %>" portletName="<%= PortletKeys.SITE_MEMBERSHIPS_ADMIN %>" var="assignMembersURL">
-			<portlet:param name="redirect" value="<%= currentURL %>" />
+	<c:if test="<%= group.isCompany() && hasUpdatePermission %>">
+		<liferay-ui:staging extended="<%= true %>" groupId="<%= group.getGroupId() %>" onlyActions="<%= true %>" showManageBranches="<%= false %>" />
+
+		<liferay-portlet:renderURL portletName="<%= PortletKeys.LAYOUTS_ADMIN %>" var="exportURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
+			<portlet:param name="struts_action" value="/layouts_admin/export_layouts" />
+			<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.EXPORT %>" />
+			<portlet:param name="groupId" value="<%= String.valueOf(group.getGroupId()) %>" />
+			<portlet:param name="rootNodeName" value="<%= group.getDescriptiveName(locale) %>" />
 		</liferay-portlet:renderURL>
 
+		<%
+		String taglibExportURL = "javascript:Liferay.Util.openWindow({id: '" + renderResponse.getNamespace() + "exportDialog', title: '" + UnicodeLanguageUtil.get(pageContext, "export") + "', uri: '" + HtmlUtil.escapeURL(exportURL.toString()) + "'});";
+		%>
+
 		<liferay-ui:icon
-			image="assign"
-			message="manage-memberships"
-			url="<%= assignMembersURL %>"
+			image="export"
+			message="export"
+			url="<%= taglibExportURL %>"
+		/>
+
+		<liferay-portlet:renderURL portletName="<%= PortletKeys.LAYOUTS_ADMIN %>" var="importURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
+			<portlet:param name="struts_action" value="/layouts_admin/import_layouts" />
+			<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.VALIDATE %>" />
+			<portlet:param name="groupId" value="<%= String.valueOf(group.getGroupId()) %>" />
+			<portlet:param name="rootNodeName" value="<%= group.getDescriptiveName(locale) %>" />
+		</liferay-portlet:renderURL>
+
+		<%
+		String taglibImportURL = "javascript:Liferay.Util.openWindow({id: '" + renderResponse.getNamespace() + "importDialog', title: '" + UnicodeLanguageUtil.get(pageContext, "import") + "', uri: '" + HtmlUtil.escapeURL(importURL.toString()) + "'});";
+		%>
+
+		<liferay-ui:icon
+			image="download"
+			message="import"
+			url="<%= taglibImportURL %>"
 		/>
 	</c:if>
 
@@ -105,7 +159,7 @@ Group group = (Group)row.getObject();
 		/>
 	</c:if>
 
-	<c:if test="<%= (group.getType() == GroupConstants.TYPE_SITE_OPEN) || (group.getType() == GroupConstants.TYPE_SITE_RESTRICTED) %>">
+	<c:if test="<%= !group.isCompany() && (!(organizationUser || userGroupUser) && ((group.getType() == GroupConstants.TYPE_SITE_OPEN) || (group.getType() == GroupConstants.TYPE_SITE_RESTRICTED)) && GroupLocalServiceUtil.hasUserGroup(user.getUserId(), group.getGroupId())) && !SiteMembershipPolicyUtil.isMembershipRequired(user.getUserId(), group.getGroupId()) %>">
 		<portlet:actionURL var="leaveURL">
 			<portlet:param name="struts_action" value="/sites_admin/edit_site_assignments" />
 			<portlet:param name="<%= Constants.CMD %>" value="group_users" />
@@ -120,7 +174,7 @@ Group group = (Group)row.getObject();
 		/>
 	</c:if>
 
-	<c:if test="<%= GroupPermissionUtil.contains(permissionChecker, group.getGroupId(), ActionKeys.UPDATE) %>">
+	<c:if test="<%= !group.isCompany() && hasUpdatePermission %>">
 		<portlet:actionURL var="activateURL">
 			<portlet:param name="struts_action" value="/sites_admin/edit_site" />
 			<portlet:param name="<%= Constants.CMD %>" value="<%= group.isActive() ? Constants.DEACTIVATE : Constants.RESTORE %>" />
@@ -141,8 +195,7 @@ Group group = (Group)row.getObject();
 		</c:choose>
 	</c:if>
 
-
-	<c:if test="<%= GroupPermissionUtil.contains(permissionChecker, group.getGroupId(), ActionKeys.DELETE) %>">
+	<c:if test="<%= !group.isCompany() && GroupPermissionUtil.contains(permissionChecker, group.getGroupId(), ActionKeys.DELETE) && !PortalUtil.isSystemGroup(group.getName()) %>">
 		<portlet:actionURL var="deleteURL">
 			<portlet:param name="struts_action" value="/sites_admin/edit_site" />
 			<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.DELETE %>" />
@@ -151,5 +204,49 @@ Group group = (Group)row.getObject();
 		</portlet:actionURL>
 
 		<liferay-ui:icon-delete url="<%= deleteURL %>" />
+	</c:if>
+
+	<c:if test="<%= !group.isCompany() && (PortalPermissionUtil.contains(permissionChecker, ActionKeys.ADD_COMMUNITY) || GroupPermissionUtil.contains(permissionChecker, group.getGroupId(), ActionKeys.ADD_COMMUNITY)) %>">
+
+		<%
+		List<LayoutSetPrototype> layoutSetPrototypes = LayoutSetPrototypeServiceUtil.search(company.getCompanyId(), Boolean.TRUE, null);
+		%>
+
+		<liferay-portlet:renderURL varImpl="addSiteURL">
+			<portlet:param name="struts_action" value="/sites_admin/edit_site" />
+			<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.ADD %>" />
+			<portlet:param name="redirect" value="<%= currentURL %>" />
+			<portlet:param name="parentGroupSearchContainerPrimaryKeys" value="<%= String.valueOf(group.getGroupId()) %>" />
+		</liferay-portlet:renderURL>
+
+		<%
+		addSiteURL.setParameter("showPrototypes", "0");
+		%>
+
+		<liferay-ui:icon
+			image="site_icon"
+			message='<%= LanguageUtil.format(pageContext, "add-x", "blank-site") %>'
+			method="get"
+			url="<%= addSiteURL.toString() %>"
+		/>
+
+		<%
+		addSiteURL.setParameter("showPrototypes", "1");
+
+		for (LayoutSetPrototype layoutSetPrototype : layoutSetPrototypes) {
+			addSiteURL.setParameter("layoutSetPrototypeId", String.valueOf(layoutSetPrototype.getLayoutSetPrototypeId()));
+		%>
+
+			<liferay-ui:icon
+				image="site_icon"
+				message='<%= LanguageUtil.format(pageContext, "add-x", HtmlUtil.escape(layoutSetPrototype.getName(locale))) %>'
+				method="get"
+				url="<%= addSiteURL.toString() %>"
+			/>
+
+		<%
+		}
+		%>
+
 	</c:if>
 </liferay-ui:icon-menu>

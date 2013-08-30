@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -31,9 +31,7 @@ import java.io.Writer;
  */
 public class FreeMarkerUtil {
 
-	public static String process(String name, Object context)
-		throws Exception {
-
+	public static String process(String name, Object context) throws Exception {
 		UnsyncStringWriter unsyncStringWriter = new UnsyncStringWriter();
 
 		process(name, context, unsyncStringWriter);
@@ -59,6 +57,7 @@ public class FreeMarkerUtil {
 		_configuration.setObjectWrapper(new DefaultObjectWrapper());
 		_configuration.setTemplateLoader(
 			new ClassTemplateLoader(FreeMarkerUtil.class, StringPool.SLASH));
+		_configuration.setTemplateUpdateDelay(Integer.MAX_VALUE);
 
 		return _configuration;
 	}

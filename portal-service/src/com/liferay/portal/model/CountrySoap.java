@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,8 +22,8 @@ import java.util.List;
 /**
  * This class is used by SOAP remote services, specifically {@link com.liferay.portal.service.http.CountryServiceSoap}.
  *
- * @author    Brian Wing Shun Chan
- * @see       com.liferay.portal.service.http.CountryServiceSoap
+ * @author Brian Wing Shun Chan
+ * @see com.liferay.portal.service.http.CountryServiceSoap
  * @generated
  */
 public class CountrySoap implements Serializable {
@@ -36,6 +36,7 @@ public class CountrySoap implements Serializable {
 		soapModel.setA3(model.getA3());
 		soapModel.setNumber(model.getNumber());
 		soapModel.setIdd(model.getIdd());
+		soapModel.setZipRequired(model.getZipRequired());
 		soapModel.setActive(model.getActive());
 
 		return soapModel;
@@ -137,6 +138,18 @@ public class CountrySoap implements Serializable {
 		_idd = idd;
 	}
 
+	public boolean getZipRequired() {
+		return _zipRequired;
+	}
+
+	public boolean isZipRequired() {
+		return _zipRequired;
+	}
+
+	public void setZipRequired(boolean zipRequired) {
+		_zipRequired = zipRequired;
+	}
+
 	public boolean getActive() {
 		return _active;
 	}
@@ -155,5 +168,6 @@ public class CountrySoap implements Serializable {
 	private String _a3;
 	private String _number;
 	private String _idd;
+	private boolean _zipRequired;
 	private boolean _active;
 }

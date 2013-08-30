@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,8 +17,10 @@ package com.liferay.portal.servlet.filters.sso.ntlm;
 import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.cache.SingleVMPoolUtil;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.io.BigEndianCodec;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.SecureRandomUtil;
 import com.liferay.portal.kernel.servlet.BrowserSnifferUtil;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -34,9 +36,6 @@ import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.util.WebKeys;
 
-import java.security.SecureRandom;
-
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,8 +47,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import jcifs.Config;
-
-import jcifs.http.NtlmHttpFilter;
 
 import jcifs.util.Base64;
 
@@ -65,19 +62,12 @@ public class NtlmFilter extends BasePortalFilter {
 
 	@Override
 	public void init(FilterConfig filterConfig) {
+		super.init(filterConfig);
+
 		try {
-			NtlmHttpFilter ntlmFilter = new NtlmHttpFilter();
-
-			ntlmFilter.init(filterConfig);
-
 			Properties properties = PropsUtil.getProperties("jcifs.", false);
 
-			Iterator<Map.Entry<Object, Object>> itr =
-				properties.entrySet().iterator();
-
-			while (itr.hasNext()) {
-				Map.Entry<Object, Object> entry = itr.next();
-
+			for (Map.Entry<Object, Object> entry : properties.entrySet()) {
 				String key = (String)entry.getKey();
 				String value = (String)entry.getValue();
 
@@ -119,16 +109,16 @@ public class NtlmFilter extends BasePortalFilter {
 
 		String domain = PrefsPropsUtil.getString(
 			companyId, PropsKeys.NTLM_DOMAIN, PropsValues.NTLM_DOMAIN);
-		String domainController =  PrefsPropsUtil.getString(
+		String domainController = PrefsPropsUtil.getString(
 			companyId, PropsKeys.NTLM_DOMAIN_CONTROLLER,
 			PropsValues.NTLM_DOMAIN_CONTROLLER);
-		String domainControllerName =  PrefsPropsUtil.getString(
+		String domainControllerName = PrefsPropsUtil.getString(
 			companyId, PropsKeys.NTLM_DOMAIN_CONTROLLER_NAME,
 			PropsValues.NTLM_DOMAIN_CONTROLLER_NAME);
-		String serviceAccount =  PrefsPropsUtil.getString(
+		String serviceAccount = PrefsPropsUtil.getString(
 			companyId, PropsKeys.NTLM_SERVICE_ACCOUNT,
 			PropsValues.NTLM_SERVICE_ACCOUNT);
-		String servicePassword =  PrefsPropsUtil.getString(
+		String servicePassword = PrefsPropsUtil.getString(
 			companyId, PropsKeys.NTLM_SERVICE_PASSWORD,
 			PropsValues.NTLM_SERVICE_PASSWORD);
 
@@ -151,7 +141,7 @@ public class NtlmFilter extends BasePortalFilter {
 				!Validator.equals(
 					ntlmManager.getServiceAccount(), serviceAccount) ||
 				!Validator.equals(
-					 ntlmManager.getServicePassword(), servicePassword)) {
+					ntlmManager.getServicePassword(), servicePassword)) {
 
 				ntlmManager.setConfiguration(
 					domain, domainController, domainControllerName,
@@ -160,6 +150,16 @@ public class NtlmFilter extends BasePortalFilter {
 		}
 
 		return ntlmManager;
+	}
+
+	protected String getPortalCacheKey(HttpServletRequest request) {
+		HttpSession session = request.getSession(false);
+
+		if (session == null) {
+			return request.getRemoteAddr();
+		}
+
+		return session.getId();
 	}
 
 	@Override
@@ -182,83 +182,83 @@ public class NtlmFilter extends BasePortalFilter {
 		if (authorization.startsWith("NTLM")) {
 			NtlmManager ntlmManager = getNtlmManager(companyId);
 
+			String portalCacheKey = getPortalCacheKey(request);
+
 			byte[] src = Base64.decode(authorization.substring(5));
 
 			if (src[8] == 1) {
 				byte[] serverChallenge = new byte[8];
 
-				_secureRandom.nextBytes(serverChallenge);
+				BigEndianCodec.putLong(
+					serverChallenge, 0, SecureRandomUtil.nextLong());
 
 				byte[] challengeMessage = ntlmManager.negotiate(
 					src, serverChallenge);
 
 				authorization = Base64.encode(challengeMessage);
 
+				response.setContentLength(0);
 				response.setHeader(
 					HttpHeaders.WWW_AUTHENTICATE, "NTLM " + authorization);
 				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-				response.setContentLength(0);
 
 				response.flushBuffer();
 
-				_portalCache.put(request.getRemoteAddr(), serverChallenge);
+				_portalCache.put(portalCacheKey, serverChallenge);
 
 				// Interrupt filter chain, send response. Browser will
 				// immediately post a new request.
 
 				return;
 			}
-			else {
-				byte[] serverChallenge = (byte[])_portalCache.get(
-					request.getRemoteAddr());
 
-				if (serverChallenge == null) {
-					response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "NTLM");
-					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-					response.setContentLength(0);
+			byte[] serverChallenge = _portalCache.get(portalCacheKey);
 
-					response.flushBuffer();
+			if (serverChallenge == null) {
+				response.setContentLength(0);
+				response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "NTLM");
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-					return;
+				response.flushBuffer();
+
+				return;
+			}
+
+			NtlmUserAccount ntlmUserAccount = null;
+
+			try {
+				ntlmUserAccount = ntlmManager.authenticate(
+					src, serverChallenge);
+			}
+			catch (Exception e) {
+				if (_log.isErrorEnabled()) {
+					_log.error("Unable to perform NTLM authentication", e);
 				}
+			}
+			finally {
+				_portalCache.remove(portalCacheKey);
+			}
 
-				NtlmUserAccount ntlmUserAccount = null;
+			if (ntlmUserAccount == null) {
+				response.setContentLength(0);
+				response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "NTLM");
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-				try {
-					ntlmUserAccount = ntlmManager.authenticate(
-						src, serverChallenge);
-				}
-				catch (Exception e) {
-					if (_log.isErrorEnabled()) {
-						_log.error("Unable to perform NTLM authentication", e);
-					}
-				}
-				finally {
-					_portalCache.remove(request.getRemoteAddr());
-				}
+				response.flushBuffer();
 
-				if (ntlmUserAccount == null) {
-					response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "NTLM");
-					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-					response.setContentLength(0);
+				return;
+			}
 
-					response.flushBuffer();
+			if (_log.isDebugEnabled()) {
+				_log.debug("NTLM remote user " + ntlmUserAccount.getUserName());
+			}
 
-					return;
-				}
+			request.setAttribute(
+				WebKeys.NTLM_REMOTE_USER, ntlmUserAccount.getUserName());
 
-				if (_log.isDebugEnabled()) {
-					_log.debug(
-						"NTLM remote user " + ntlmUserAccount.getUserName());
-				}
-
-				request.setAttribute(
-					WebKeys.NTLM_REMOTE_USER, ntlmUserAccount.getUserName());
-
-				if (session != null) {
-					session.setAttribute(
-						WebKeys.NTLM_USER_ACCOUNT, ntlmUserAccount);
-				}
+			if (session != null) {
+				session.setAttribute(
+					WebKeys.NTLM_USER_ACCOUNT, ntlmUserAccount);
 			}
 		}
 
@@ -273,13 +273,17 @@ public class NtlmFilter extends BasePortalFilter {
 			}
 
 			if (ntlmUserAccount == null) {
+				response.setContentLength(0);
 				response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "NTLM");
 				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-				response.setContentLength(0);
 
 				response.flushBuffer();
 
 				return;
+			}
+			else {
+				request.setAttribute(
+					WebKeys.NTLM_REMOTE_USER, ntlmUserAccount.getUserName());
 			}
 		}
 
@@ -290,8 +294,7 @@ public class NtlmFilter extends BasePortalFilter {
 
 	private Map<Long, NtlmManager> _ntlmManagers =
 		new ConcurrentHashMap<Long, NtlmManager>();
-	private PortalCache _portalCache = SingleVMPoolUtil.getCache(
-		NtlmFilter.class.getName());
-	private SecureRandom _secureRandom = new SecureRandom();
+	private PortalCache<String, byte[]> _portalCache =
+		SingleVMPoolUtil.getCache(NtlmFilter.class.getName());
 
 }

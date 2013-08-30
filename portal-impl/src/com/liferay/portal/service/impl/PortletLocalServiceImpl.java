@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,27 +14,32 @@
 
 package com.liferay.portal.service.impl;
 
-import com.liferay.portal.kernel.cache.MultiVMPoolUtil;
-import com.liferay.portal.kernel.cache.PortalCache;
+import com.liferay.portal.PortletIdException;
+import com.liferay.portal.kernel.cluster.Clusterable;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.image.SpriteProcessor;
 import com.liferay.portal.kernel.image.SpriteProcessorUtil;
+import com.liferay.portal.kernel.lar.DefaultConfigurationPortletDataHandler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.plugin.PluginPackage;
 import com.liferay.portal.kernel.portlet.FriendlyURLMapper;
 import com.liferay.portal.kernel.portlet.LiferayPortletConfig;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.PortletLayoutListener;
 import com.liferay.portal.kernel.scheduler.SchedulerEntry;
 import com.liferay.portal.kernel.scheduler.SchedulerEntryImpl;
 import com.liferay.portal.kernel.scheduler.TimeUnit;
 import com.liferay.portal.kernel.scheduler.TriggerType;
 import com.liferay.portal.kernel.servlet.ServletContextUtil;
+import com.liferay.portal.kernel.spring.aop.Skip;
+import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.ContentTypes;
+import com.liferay.portal.kernel.util.ContextPathUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -44,12 +49,14 @@ import com.liferay.portal.kernel.xml.QName;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.model.CompanyConstants;
 import com.liferay.portal.model.EventDefinition;
+import com.liferay.portal.model.ModelHintsUtil;
 import com.liferay.portal.model.Portlet;
 import com.liferay.portal.model.PortletApp;
 import com.liferay.portal.model.PortletCategory;
 import com.liferay.portal.model.PortletConstants;
 import com.liferay.portal.model.PortletFilter;
 import com.liferay.portal.model.PortletInfo;
+import com.liferay.portal.model.PortletPreferences;
 import com.liferay.portal.model.PortletURLListener;
 import com.liferay.portal.model.PublicRenderParameter;
 import com.liferay.portal.model.ResourceConstants;
@@ -63,7 +70,9 @@ import com.liferay.portal.model.impl.PublicRenderParameterImpl;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.ResourceActionsUtil;
 import com.liferay.portal.service.base.PortletLocalServiceBaseImpl;
+import com.liferay.portal.service.permission.PortletPermissionUtil;
 import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.util.PortletCategoryKeys;
 import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.util.WebAppPool;
@@ -77,7 +86,7 @@ import com.liferay.portlet.expando.model.CustomAttributesDisplay;
 import com.liferay.util.ContentUtil;
 import com.liferay.util.bridges.mvc.MVCPortlet;
 
-import java.io.File;
+import java.net.URL;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -101,12 +110,15 @@ import javax.servlet.ServletContext;
  * @author Raymond Augé
  * @author Eduardo Lundgren
  * @author Wesley Gong
+ * @author Shuyang Zhou
  */
 public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 
+	@Override
+	@Skip
 	public void addPortletCategory(long companyId, String categoryName) {
 		PortletCategory portletCategory = (PortletCategory)WebAppPool.get(
-			String.valueOf(companyId), WebKeys.PORTLET_CATEGORY);
+			companyId, WebKeys.PORTLET_CATEGORY);
 
 		if (portletCategory == null) {
 			_log.error(
@@ -119,8 +131,7 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		PortletCategory newPortletCategory = new PortletCategory(categoryName);
 
 		if (newPortletCategory.getParentCategory() == null) {
-			PortletCategory rootPortletCategory =
-				new PortletCategory();
+			PortletCategory rootPortletCategory = new PortletCategory();
 
 			rootPortletCategory.addCategory(newPortletCategory);
 		}
@@ -128,6 +139,7 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		portletCategory.merge(newPortletCategory.getRootCategory());
 	}
 
+	@Override
 	public void checkPortlet(Portlet portlet)
 		throws PortalException, SystemException {
 
@@ -154,20 +166,13 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			for (String roleName : roleNames) {
 				Role role = roleLocalService.getRole(companyId, roleName);
 
-				if (PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM == 6) {
-					if (resourceBlockLocalService.isSupported(name)) {
-						resourceBlockLocalService.addCompanyScopePermission(
-							companyId, name, role.getRoleId(), actionId);
-					}
-					else {
-						resourcePermissionLocalService.addResourcePermission(
-							companyId, name, scope, primKey, role.getRoleId(),
-							actionId);
-					}
+				if (resourceBlockLocalService.isSupported(name)) {
+					resourceBlockLocalService.addCompanyScopePermission(
+						companyId, name, role.getRoleId(), actionId);
 				}
 				else {
-					permissionLocalService.setRolePermission(
-						role.getRoleId(), companyId, name, scope, primKey,
+					resourcePermissionLocalService.addResourcePermission(
+						companyId, name, scope, primKey, role.getRoleId(),
 						actionId);
 				}
 			}
@@ -178,6 +183,7 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			portlet.isActive());
 	}
 
+	@Override
 	public void checkPortlets(long companyId)
 		throws PortalException, SystemException {
 
@@ -188,6 +194,8 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		}
 	}
 
+	@Override
+	@Skip
 	public void clearCache() {
 
 		// Refresh security path to portlet id mapping for all portlets
@@ -196,28 +204,91 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 
 		// Refresh company portlets
 
-		_companyPortletsPool.removeAll();
+		portletLocalService.clearCompanyPortletsPool();
+	}
+
+	@Clusterable
+	@Override
+	@Transactional(enabled = false)
+	public void clearCompanyPortletsPool() {
+		_companyPortletsPool.clear();
 	}
 
 	/**
-	 * @deprecated {@link #clonePortlet(String)}
+	 * @deprecated As of 6.1.0, replaced by {@link #clonePortlet(String)}
 	 */
+	@Override
+	@Skip
 	public Portlet clonePortlet(long companyId, String portletId) {
 		return clonePortlet(portletId);
 	}
 
+	@Override
+	@Skip
 	public Portlet clonePortlet(String portletId) {
 		Portlet portlet = getPortletById(portletId);
 
 		return (Portlet)portlet.clone();
 	}
 
+	@Override
+	public void deletePortlet(long companyId, String portletId, long plid)
+		throws PortalException, SystemException {
+
+		String rootPortletId = PortletConstants.getRootPortletId(portletId);
+
+		resourceLocalService.deleteResource(
+			companyId, rootPortletId, ResourceConstants.SCOPE_INDIVIDUAL,
+			PortletPermissionUtil.getPrimaryKey(plid, portletId));
+
+		int ownerType = PortletKeys.PREFS_OWNER_TYPE_LAYOUT;
+
+		if (PortletConstants.hasUserId(portletId)) {
+			ownerType = PortletKeys.PREFS_OWNER_TYPE_USER;
+		}
+
+		List<PortletPreferences> portletPreferencesList =
+			portletPreferencesLocalService.getPortletPreferences(
+				ownerType, plid, portletId);
+
+		Portlet portlet = getPortletById(companyId, portletId);
+
+		PortletLayoutListener portletLayoutListener = null;
+
+		if (portlet != null) {
+			portletLayoutListener = portlet.getPortletLayoutListenerInstance();
+
+			PortletInstanceFactoryUtil.delete(portlet);
+		}
+
+		for (PortletPreferences portletPreferences : portletPreferencesList) {
+			if (portletLayoutListener != null) {
+				portletLayoutListener.onRemoveFromLayout(
+					portletPreferences.getPortletId(), plid);
+			}
+
+			portletPreferencesLocalService.deletePortletPreferences(
+				portletPreferences.getPortletPreferencesId());
+		}
+	}
+
+	@Override
+	public void deletePortlets(long companyId, String[] portletIds, long plid)
+		throws PortalException, SystemException {
+
+		for (String portletId : portletIds) {
+			deletePortlet(companyId, portletId, plid);
+		}
+	}
+
+	@Override
 	public Portlet deployRemotePortlet(Portlet portlet, String categoryName)
 		throws PortalException, SystemException {
 
 		return deployRemotePortlet(portlet, new String[] {categoryName});
 	}
 
+	@Override
 	public Portlet deployRemotePortlet(Portlet portlet, String[] categoryNames)
 		throws PortalException, SystemException {
 
@@ -239,7 +310,7 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			portlet.getPortletId(), portletActions);
 
 		PortletCategory portletCategory = (PortletCategory)WebAppPool.get(
-			String.valueOf(portlet.getCompanyId()), WebKeys.PORTLET_CATEGORY);
+			portlet.getCompanyId(), WebKeys.PORTLET_CATEGORY);
 
 		if (portletCategory == null) {
 			_log.error(
@@ -273,6 +344,8 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		return portlet;
 	}
 
+	@Override
+	@Skip
 	public void destroyPortlet(Portlet portlet) {
 		String portletId = portlet.getRootPortletId();
 
@@ -291,10 +364,14 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		clearCache();
 	}
 
+	@Override
+	@Skip
 	public void destroyRemotePortlet(Portlet portlet) {
 		destroyPortlet(portlet);
 	}
 
+	@Override
+	@Skip
 	public List<CustomAttributesDisplay> getCustomAttributesDisplays() {
 		List<CustomAttributesDisplay> customAttributesDisplays =
 			new ArrayList<CustomAttributesDisplay>(
@@ -309,7 +386,7 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 				portlet.getCustomAttributesDisplayInstances();
 
 			if ((portletCustomAttributesDisplays != null) &&
-				(!portletCustomAttributesDisplays.isEmpty())) {
+				!portletCustomAttributesDisplays.isEmpty()) {
 
 				customAttributesDisplays.addAll(
 					portletCustomAttributesDisplays);
@@ -319,6 +396,8 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		return customAttributesDisplays;
 	}
 
+	@Override
+	@Skip
 	public PortletCategory getEARDisplay(String xml) throws SystemException {
 		try {
 			return _readLiferayDisplayXML(xml);
@@ -328,6 +407,8 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		}
 	}
 
+	@Override
+	@Skip
 	public List<Portlet> getFriendlyURLMapperPortlets() {
 		List<Portlet> portlets = new ArrayList<Portlet>(
 			_friendlyURLMapperPortlets.size());
@@ -348,6 +429,8 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		return portlets;
 	}
 
+	@Override
+	@Skip
 	public List<FriendlyURLMapper> getFriendlyURLMappers() {
 		List<FriendlyURLMapper> friendlyURLMappers =
 			new ArrayList<FriendlyURLMapper>(_friendlyURLMapperPortlets.size());
@@ -368,10 +451,14 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		return friendlyURLMappers;
 	}
 
+	@Override
+	@Skip
 	public PortletApp getPortletApp(String servletContextName) {
 		return _getPortletApp(servletContextName);
 	}
 
+	@Override
+	@Skip
 	public Portlet getPortletById(long companyId, String portletId)
 		throws SystemException {
 
@@ -449,7 +536,7 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			portlet.setPortletInfo(
 				new PortletInfo(portletId, portletId, portletId, portletId));
 
-			if (PortletConstants.getInstanceId(portletId) != null) {
+			if (PortletConstants.hasInstanceId(portletId)) {
 				portlet.setInstanceable(true);
 			}
 
@@ -460,28 +547,40 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		return portlet;
 	}
 
+	@Override
+	@Skip
 	public Portlet getPortletById(String portletId) {
 		Map<String, Portlet> portletsPool = _getPortletsPool();
 
-		return portletsPool.get(portletId);
+		String rootPortletId = PortletConstants.getRootPortletId(portletId);
+
+		return portletsPool.get(rootPortletId);
 	}
 
+	@Override
+	@Skip
 	public Portlet getPortletByStrutsPath(long companyId, String strutsPath)
 		throws SystemException {
 
 		return getPortletById(companyId, _getPortletId(strutsPath));
 	}
 
+	@Override
+	@Skip
 	public List<Portlet> getPortlets() {
 		Map<String, Portlet> portletsPool = _getPortletsPool();
 
 		return ListUtil.fromMapValues(portletsPool);
 	}
 
+	@Override
+	@Skip
 	public List<Portlet> getPortlets(long companyId) throws SystemException {
 		return getPortlets(companyId, true, true);
 	}
 
+	@Override
+	@Skip
 	public List<Portlet> getPortlets(
 			long companyId, boolean showSystem, boolean showPortal)
 		throws SystemException {
@@ -490,30 +589,54 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 
 		List<Portlet> portlets = ListUtil.fromMapValues(portletsPool);
 
-		if (!showSystem || !showPortal) {
-			Iterator<Portlet> itr = portlets.iterator();
+		if (showSystem && showPortal) {
+			return portlets;
+		}
 
-			while (itr.hasNext()) {
-				Portlet portlet = itr.next();
+		Iterator<Portlet> itr = portlets.iterator();
 
-				if (showPortal &&
-					portlet.getPortletId().equals(PortletKeys.PORTAL)) {
+		while (itr.hasNext()) {
+			Portlet portlet = itr.next();
 
-				}
-				else if (!showPortal &&
-						 portlet.getPortletId().equals(PortletKeys.PORTAL)) {
+			if (showPortal &&
+				portlet.getPortletId().equals(PortletKeys.PORTAL)) {
 
-					itr.remove();
-				}
-				else if (!showSystem && portlet.isSystem()) {
-					itr.remove();
-				}
+			}
+			else if (!showPortal &&
+					 portlet.getPortletId().equals(PortletKeys.PORTAL)) {
+
+				itr.remove();
+			}
+			else if (!showSystem && portlet.isSystem()) {
+				itr.remove();
 			}
 		}
 
 		return portlets;
 	}
 
+	@Override
+	@Skip
+	public List<Portlet> getScopablePortlets() {
+		Map<String, Portlet> portletsPool = _getPortletsPool();
+
+		List<Portlet> portlets = ListUtil.fromMapValues(portletsPool);
+
+		Iterator<Portlet> itr = portlets.iterator();
+
+		while (itr.hasNext()) {
+			Portlet portlet = itr.next();
+
+			if (!portlet.isScopeable()) {
+				itr.remove();
+			}
+		}
+
+		return portlets;
+	}
+
+	@Override
+	@Skip
 	public PortletCategory getWARDisplay(String servletContextName, String xml)
 		throws SystemException {
 
@@ -525,6 +648,8 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		}
 	}
 
+	@Override
+	@Skip
 	public boolean hasPortlet(long companyId, String portletId)
 		throws SystemException {
 
@@ -551,15 +676,18 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		}
 	}
 
+	@Override
+	@Skip
 	public void initEAR(
 		ServletContext servletContext, String[] xmls,
 		PluginPackage pluginPackage) {
 
 		// Clear pools every time initEAR is called. See LEP-5452.
 
+		portletLocalService.clearCompanyPortletsPool();
+
 		_portletAppsPool.clear();
 		_portletsPool.clear();
-		_companyPortletsPool.removeAll();
 		_portletIdsByStrutsPath.clear();
 		_friendlyURLMapperPortlets.clear();
 
@@ -577,8 +705,8 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 					servletContext, xmls[1], portletsPool, servletURLPatterns,
 					pluginPackage));
 
-			Set<String> liferayPortletIds =
-				_readLiferayPortletXML(xmls[2], portletsPool);
+			Set<String> liferayPortletIds = _readLiferayPortletXML(
+				xmls[2], portletsPool);
 
 			liferayPortletIds.addAll(
 				_readLiferayPortletXML(xmls[3], portletsPool));
@@ -640,6 +768,8 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		}
 	}
 
+	@Override
+	@Skip
 	public List<Portlet> initWAR(
 		String servletContextName, ServletContext servletContext, String[] xmls,
 		PluginPackage pluginPackage) {
@@ -715,6 +845,59 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		return portlets;
 	}
 
+	@Override
+	public Map<String, Portlet> loadGetPortletsPool(long companyId)
+		throws SystemException {
+
+		Map<String, Portlet> portletsPool =
+			new ConcurrentHashMap<String, Portlet>();
+
+		Map<String, Portlet> parentPortletsPool = _getPortletsPool();
+
+		if (parentPortletsPool == null) {
+
+			// The Upgrade scripts sometimes try to access portlet preferences
+			// before the portal's been initialized. Return an empty pool.
+
+			return portletsPool;
+		}
+
+		for (Portlet portlet : parentPortletsPool.values()) {
+			portlet = (Portlet)portlet.clone();
+
+			portlet.setCompanyId(companyId);
+
+			portletsPool.put(portlet.getPortletId(), portlet);
+		}
+
+		List<Portlet> portlets = portletPersistence.findByCompanyId(companyId);
+
+		for (Portlet portlet : portlets) {
+			Portlet portletModel = portletsPool.get(portlet.getPortletId());
+
+			// Portlet may be null if it exists in the database but its portlet
+			// WAR is not yet loaded
+
+			if (portletModel != null) {
+				portletModel.setPluginPackage(portlet.getPluginPackage());
+				portletModel.setDefaultPluginSetting(
+					portlet.getDefaultPluginSetting());
+				portletModel.setRoles(portlet.getRoles());
+				portletModel.setActive(portlet.getActive());
+			}
+		}
+
+		return portletsPool;
+	}
+
+	@Clusterable
+	@Override
+	@Transactional(enabled = false)
+	public void removeCompanyPortletsPool(long companyId) {
+		_companyPortletsPool.remove(companyId);
+	}
+
+	@Override
 	public Portlet updatePortlet(
 			long companyId, String portletId, String roles, boolean active)
 		throws SystemException {
@@ -735,20 +918,16 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		portlet.setRoles(roles);
 		portlet.setActive(active);
 
-		portletPersistence.update(portlet, false);
+		portletPersistence.update(portlet);
 
 		portlet = getPortletById(companyId, portletId);
 
 		portlet.setRoles(roles);
 		portlet.setActive(active);
 
-		_updateCompanyPortletsPool(companyId);
+		portletLocalService.removeCompanyPortletsPool(companyId);
 
 		return portlet;
-	}
-
-	private String _encodeKey(long companyId) {
-		return _keyPrefix.concat(StringUtil.toHexString(companyId));
 	}
 
 	private PortletApp _getPortletApp(String servletContextName) {
@@ -764,14 +943,31 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 	}
 
 	private String _getPortletId(String securityPath) {
-		if (_portletIdsByStrutsPath.size() == 0) {
+		if (_portletIdsByStrutsPath.isEmpty()) {
 			for (Portlet portlet : _getPortletsPool().values()) {
-				_portletIdsByStrutsPath.put(
-					portlet.getStrutsPath(), portlet.getPortletId());
+				String strutsPath = portlet.getStrutsPath();
+
+				if (_portletIdsByStrutsPath.containsKey(strutsPath)) {
+					_log.warn("Duplicate struts path " + strutsPath);
+				}
+
+				_portletIdsByStrutsPath.put(strutsPath, portlet.getPortletId());
 			}
 		}
 
 		String portletId = _portletIdsByStrutsPath.get(securityPath);
+
+		if (Validator.isNull(portletId)) {
+			for (String strutsPath : _portletIdsByStrutsPath.keySet()) {
+				if (securityPath.startsWith(
+						strutsPath.concat(StringPool.SLASH))) {
+
+					portletId = _portletIdsByStrutsPath.get(strutsPath);
+
+					break;
+				}
+			}
+		}
 
 		if (Validator.isNull(portletId)) {
 			_log.error(
@@ -837,14 +1033,19 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 
 		List<Portlet> portlets = new ArrayList<Portlet>();
 
+		String servletContextNameSuffix = servletContextName;
+
+		if (Validator.isNotNull(servletContextName)) {
+			servletContextNameSuffix = PortalUtil.getJsSafePortletId(
+				PortletConstants.WAR_SEPARATOR.concat(servletContextName));
+		}
+
 		for (Map.Entry<String, Portlet> entry : portletsPool.entrySet()) {
 			String portletId = entry.getKey();
 			Portlet portlet = entry.getValue();
 
-			if (Validator.isNotNull(servletContextName)) {
-				if (portletId.endsWith(
-						PortletConstants.WAR_SEPARATOR + servletContextName)) {
-
+			if (Validator.isNotNull(servletContextNameSuffix)) {
+				if (portletId.endsWith(servletContextNameSuffix)) {
 					portlets.add(portlet);
 				}
 			}
@@ -865,52 +1066,12 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 	private Map<String, Portlet> _getPortletsPool(long companyId)
 		throws SystemException {
 
-		String key = _encodeKey(companyId);
-
-		Map<String, Portlet> portletsPool =
-			(Map<String, Portlet>)_companyPortletsPool.get(key);
+		Map<String, Portlet> portletsPool = _companyPortletsPool.get(companyId);
 
 		if (portletsPool == null) {
-			portletsPool = new ConcurrentHashMap<String, Portlet>();
+			portletsPool = portletLocalService.loadGetPortletsPool(companyId);
 
-			Map<String, Portlet> parentPortletsPool = _getPortletsPool();
-
-			if (parentPortletsPool == null) {
-
-				// The Upgrade scripts sometimes try to access portlet
-				// preferences before the portal's been initialized. Return an
-				// empty pool.
-
-				return portletsPool;
-			}
-
-			for (Portlet portlet : parentPortletsPool.values()) {
-				portlet = (Portlet)portlet.clone();
-
-				portlet.setCompanyId(companyId);
-
-				portletsPool.put(portlet.getPortletId(), portlet);
-			}
-
-			List<Portlet> portlets = portletPersistence.findByCompanyId(
-				companyId);
-
-			for (Portlet portlet : portlets) {
-				Portlet portletModel = portletsPool.get(portlet.getPortletId());
-
-				// Portlet may be null if it exists in the database but its
-				// portlet WAR is not yet loaded
-
-				if (portletModel != null) {
-					portletModel.setPluginPackage(portlet.getPluginPackage());
-					portletModel.setDefaultPluginSetting(
-						portlet.getDefaultPluginSetting());
-					portletModel.setRoles(portlet.getRoles());
-					portletModel.setActive(portlet.getActive());
-				}
-			}
-
-			_companyPortletsPool.put(key, portletsPool);
+			_companyPortletsPool.put(companyId, portletsPool);
 		}
 
 		return portletsPool;
@@ -986,19 +1147,18 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 
 			PortletApp portletApp = portlet.getPortletApp();
 
-			if ((servletContextName != null) && (portletApp.isWARFile()) &&
+			if ((servletContextName != null) && portletApp.isWARFile() &&
 				(portletId.endsWith(
 					PortletConstants.WAR_SEPARATOR +
 						PortalUtil.getJsSafePortletId(servletContextName)) &&
-				(!portletIds.contains(portletId)))) {
+				 !portletIds.contains(portletId))) {
 
 				undefinedPortletIds.add(portletId);
 			}
 			else if ((servletContextName == null) &&
-					 (!portletApp.isWARFile()) &&
-					 (portletId.indexOf(
-						PortletConstants.WAR_SEPARATOR) == -1) &&
-					 (!portletIds.contains(portletId))) {
+					 !portletApp.isWARFile() &&
+					 !portletId.contains(PortletConstants.WAR_SEPARATOR) &&
+					 !portletIds.contains(portletId)) {
 
 				undefinedPortletIds.add(portletId);
 			}
@@ -1060,6 +1220,22 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			GetterUtil.getString(
 				portletElement.elementText("struts-path"),
 				portletModel.getStrutsPath()));
+
+		String strutsPath = portletModel.getStrutsPath();
+
+		if (Validator.isNotNull(strutsPath)) {
+			if (_portletIdsByStrutsPath.containsKey(strutsPath)) {
+				String strutsPathPortletId = _portletIdsByStrutsPath.get(
+					strutsPath);
+
+				if (!strutsPathPortletId.equals(portletId)) {
+					_log.warn("Duplicate struts path " + strutsPath);
+				}
+			}
+
+			_portletIdsByStrutsPath.put(strutsPath, portletId);
+		}
+
 		portletModel.setParentStrutsPath(
 			GetterUtil.getString(
 				portletElement.elementText("parent-struts-path"),
@@ -1078,13 +1254,15 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 				portletElement.elementText("configuration-action-class"),
 				portletModel.getConfigurationActionClass()));
 
-		List<String> indexerClasses = portletModel.getIndexerClasses();
+		List<String> indexerClasses = new ArrayList<String>();
 
 		for (Element indexerClassElement :
 				portletElement.elements("indexer-class")) {
 
 			indexerClasses.add(indexerClassElement.getText());
 		}
+
+		portletModel.setIndexerClasses(indexerClasses);
 
 		portletModel.setOpenSearchClass(
 			GetterUtil.getString(
@@ -1096,7 +1274,6 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 
 			SchedulerEntry schedulerEntry = new SchedulerEntryImpl();
 
-			schedulerEntry.setContextPath(portletModel.getContextPath());
 			schedulerEntry.setDescription(
 				GetterUtil.getString(
 					schedulerEntryElement.elementText(
@@ -1185,10 +1362,34 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			GetterUtil.getString(
 				portletElement.elementText("url-encoder-class"),
 				portletModel.getURLEncoderClass()));
-		portletModel.setPortletDataHandlerClass(
+
+		String portletDataHandlerClass = GetterUtil.getString(
+			portletElement.elementText("portlet-data-handler-class"),
+			portletModel.getPortletDataHandlerClass());
+
+		if (Validator.isNull(portletDataHandlerClass)) {
+			portletDataHandlerClass =
+				DefaultConfigurationPortletDataHandler.class.getName();
+		}
+
+		portletModel.setPortletDataHandlerClass(portletDataHandlerClass);
+
+		List<String> stagedModelDataHandlerClasses = new ArrayList<String>();
+
+		for (Element stagedModelDataHandlerClassElement :
+				portletElement.elements("staged-model-data-handler-class")) {
+
+			stagedModelDataHandlerClasses.add(
+				stagedModelDataHandlerClassElement.getText());
+		}
+
+		portletModel.setStagedModelDataHandlerClasses(
+			stagedModelDataHandlerClasses);
+
+		portletModel.setTemplateHandlerClass(
 			GetterUtil.getString(
-				portletElement.elementText("portlet-data-handler-class"),
-				portletModel.getPortletDataHandlerClass()));
+				portletElement.elementText("template-handler"),
+				portletModel.getTemplateHandlerClass()));
 		portletModel.setPortletLayoutListenerClass(
 			GetterUtil.getString(
 				portletElement.elementText("portlet-layout-listener-class"),
@@ -1201,16 +1402,41 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			GetterUtil.getString(
 				portletElement.elementText("pop-message-listener-class"),
 				portletModel.getPopMessageListenerClass()));
-		portletModel.setSocialActivityInterpreterClass(
-			GetterUtil.getString(
-				portletElement.elementText(
-					"social-activity-interpreter-class"),
-					portletModel.getSocialActivityInterpreterClass()));
+
+		List<String> socialActivityInterpreterClasses = new ArrayList<String>();
+
+		for (Element socialActivityInterpreterClassElement :
+				portletElement.elements("social-activity-interpreter-class")) {
+
+			socialActivityInterpreterClasses.add(
+				socialActivityInterpreterClassElement.getText());
+		}
+
+		portletModel.setSocialActivityInterpreterClasses(
+			socialActivityInterpreterClasses);
+
 		portletModel.setSocialRequestInterpreterClass(
 			GetterUtil.getString(
-				portletElement.elementText(
-					"social-request-interpreter-class"),
-					portletModel.getSocialRequestInterpreterClass()));
+				portletElement.elementText("social-request-interpreter-class"),
+				portletModel.getSocialRequestInterpreterClass()));
+		portletModel.setUserNotificationDefinitions(
+			GetterUtil.getString(
+				portletElement.elementText("user-notification-definitions"),
+				portletModel.getUserNotificationDefinitions()));
+
+		List<String> userNotificationHandlerClasses = new ArrayList<String>();
+
+		for (Element userNotificationHandlerClassElement :
+				portletElement.elements(
+					"user-notification-handler-class")) {
+
+			userNotificationHandlerClasses.add(
+				userNotificationHandlerClassElement.getText());
+		}
+
+		portletModel.setUserNotificationHandlerClasses(
+			userNotificationHandlerClasses);
+
 		portletModel.setWebDAVStorageToken(
 			GetterUtil.getString(
 				portletElement.elementText("webdav-storage-token"),
@@ -1223,10 +1449,27 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			GetterUtil.getString(
 				portletElement.elementText("xml-rpc-method-class"),
 				portletModel.getXmlRpcMethodClass()));
-		portletModel.setControlPanelEntryCategory(
-			GetterUtil.getString(
-				portletElement.elementText("control-panel-entry-category"),
-				portletModel.getControlPanelEntryCategory()));
+
+		String controlPanelEntryCategory = GetterUtil.getString(
+			portletElement.elementText("control-panel-entry-category"),
+			portletModel.getControlPanelEntryCategory());
+
+		if (Validator.equals(controlPanelEntryCategory, "content")) {
+			controlPanelEntryCategory =
+				PortletCategoryKeys.SITE_ADMINISTRATION_CONTENT;
+		}
+		else if (Validator.equals(controlPanelEntryCategory, "marketplace")) {
+			controlPanelEntryCategory = PortletCategoryKeys.APPS;
+		}
+		else if (Validator.equals(controlPanelEntryCategory, "portal")) {
+			controlPanelEntryCategory = PortletCategoryKeys.USERS;
+		}
+		else if (Validator.equals(controlPanelEntryCategory, "server")) {
+			controlPanelEntryCategory = PortletCategoryKeys.APPS;
+		}
+
+		portletModel.setControlPanelEntryCategory(controlPanelEntryCategory);
+
 		portletModel.setControlPanelEntryWeight(
 			GetterUtil.getDouble(
 				portletElement.elementText("control-panel-entry-weight"),
@@ -1236,8 +1479,7 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 				portletElement.elementText("control-panel-entry-class"),
 				portletModel.getControlPanelEntryClass()));
 
-		List<String> assetRendererFactoryClasses =
-			portletModel.getAssetRendererFactoryClasses();
+		List<String> assetRendererFactoryClasses = new ArrayList<String>();
 
 		for (Element assetRendererFactoryClassElement :
 				portletElement.elements("asset-renderer-factory")) {
@@ -1246,8 +1488,10 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 				assetRendererFactoryClassElement.getText());
 		}
 
-		List<String> atomCollectionAdapterClasses =
-			portletModel.getAtomCollectionAdapterClasses();
+		portletModel.setAssetRendererFactoryClasses(
+			assetRendererFactoryClasses);
+
+		List<String> atomCollectionAdapterClasses = new ArrayList<String>();
 
 		for (Element atomCollectionAdapterClassElement :
 				portletElement.elements("atom-collection-adapter")) {
@@ -1256,8 +1500,10 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 				atomCollectionAdapterClassElement.getText());
 		}
 
-		List<String> customAttributesDisplayClasses =
-			portletModel.getCustomAttributesDisplayClasses();
+		portletModel.setAtomCollectionAdapterClasses(
+			atomCollectionAdapterClasses);
+
+		List<String> customAttributesDisplayClasses = new ArrayList<String>();
 
 		for (Element customAttributesDisplayClassElement :
 				portletElement.elements("custom-attributes-display")) {
@@ -1266,6 +1512,9 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 				customAttributesDisplayClassElement.getText());
 		}
 
+		portletModel.setCustomAttributesDisplayClasses(
+			customAttributesDisplayClasses);
+
 		if (customAttributesDisplayClasses.isEmpty()) {
 			_customAttributesDisplayPortlets.remove(portletId);
 		}
@@ -1273,14 +1522,34 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			_customAttributesDisplayPortlets.put(portletId, portletModel);
 		}
 
-		List<String> workflowHandlerClasses =
-			portletModel.getWorkflowHandlerClasses();
+		portletModel.setDDMDisplayClass(
+			GetterUtil.getString(
+				portletElement.elementText("ddm-display"),
+				portletModel.getDDMDisplayClass()));
+		portletModel.setPermissionPropagatorClass(
+			GetterUtil.getString(
+				portletElement.elementText("permission-propagator"),
+				portletModel.getPermissionPropagatorClass()));
+
+		List<String> trashHandlerClasses = new ArrayList<String>();
+
+		for (Element trashHandlerClassElement :
+				portletElement.elements("trash-handler")) {
+
+			trashHandlerClasses.add(trashHandlerClassElement.getText());
+		}
+
+		portletModel.setTrashHandlerClasses(trashHandlerClasses);
+
+		List<String> workflowHandlerClasses = new ArrayList<String>();
 
 		for (Element workflowHandlerClassElement :
 				portletElement.elements("workflow-handler")) {
 
 			workflowHandlerClasses.add(workflowHandlerClassElement.getText());
 		}
+
+		portletModel.setWorkflowHandlerClasses(workflowHandlerClasses);
 
 		portletModel.setPreferencesCompanyWide(
 			GetterUtil.getBoolean(
@@ -1358,10 +1627,9 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		Element autopropagatedParametersElement = portletElement.element(
 			"autopropagated-parameters");
 
-		if (autopropagatedParametersElement != null) {
-			Set<String> autopropagatedParameters =
-				portletModel.getAutopropagatedParameters();
+		Set<String> autopropagatedParameters = new HashSet<String>();
 
+		if (autopropagatedParametersElement != null) {
 			String[] autopropagatedParametersArray = StringUtil.split(
 				autopropagatedParametersElement.getText());
 
@@ -1372,6 +1640,12 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			}
 		}
 
+		portletModel.setAutopropagatedParameters(autopropagatedParameters);
+
+		portletModel.setRequiresNamespacedParameters(
+			GetterUtil.getBoolean(
+				portletElement.elementText("requires-namespaced-parameters"),
+				portletModel.isRequiresNamespacedParameters()));
 		portletModel.setActionTimeout(
 			GetterUtil.getInteger(
 				portletElement.elementText("action-timeout"),
@@ -1389,8 +1663,7 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 				portletElement.elementText("ajaxable"),
 				portletModel.isAjaxable()));
 
-		List<String> headerPortalCssList =
-			portletModel.getHeaderPortalCss();
+		List<String> headerPortalCssList = new ArrayList<String>();
 
 		for (Element headerPortalCssElement :
 				portletElement.elements("header-portal-css")) {
@@ -1398,7 +1671,9 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			headerPortalCssList.add(headerPortalCssElement.getText());
 		}
 
-		List<String> headerPortletCssList = portletModel.getHeaderPortletCss();
+		portletModel.setHeaderPortalCss(headerPortalCssList);
+
+		List<String> headerPortletCssList = new ArrayList<String>();
 
 		for (Element headerPortletCssElement :
 				portletElement.elements("header-portlet-css")) {
@@ -1406,8 +1681,9 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			headerPortletCssList.add(headerPortletCssElement.getText());
 		}
 
-		List<String> headerPortalJavaScriptList =
-			portletModel.getHeaderPortalJavaScript();
+		portletModel.setHeaderPortletCss(headerPortletCssList);
+
+		List<String> headerPortalJavaScriptList = new ArrayList<String>();
 
 		for (Element headerPortalJavaScriptElement :
 				portletElement.elements("header-portal-javascript")) {
@@ -1416,8 +1692,9 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 				headerPortalJavaScriptElement.getText());
 		}
 
-		List<String> headerPortletJavaScriptList =
-			portletModel.getHeaderPortletJavaScript();
+		portletModel.setHeaderPortalJavaScript(headerPortalJavaScriptList);
+
+		List<String> headerPortletJavaScriptList = new ArrayList<String>();
 
 		for (Element headerPortletJavaScriptElement :
 				portletElement.elements("header-portlet-javascript")) {
@@ -1426,7 +1703,9 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 				headerPortletJavaScriptElement.getText());
 		}
 
-		List<String> footerPortalCssList = portletModel.getFooterPortalCss();
+		portletModel.setHeaderPortletJavaScript(headerPortletJavaScriptList);
+
+		List<String> footerPortalCssList = new ArrayList<String>();
 
 		for (Element footerPortalCssElement :
 				portletElement.elements("footer-portal-css")) {
@@ -1434,7 +1713,9 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			footerPortalCssList.add(footerPortalCssElement.getText());
 		}
 
-		List<String> footerPortletCssList = portletModel.getFooterPortletCss();
+		portletModel.setFooterPortalCss(footerPortalCssList);
+
+		List<String> footerPortletCssList = new ArrayList<String>();
 
 		for (Element footerPortletCssElement :
 				portletElement.elements("footer-portlet-css")) {
@@ -1442,8 +1723,9 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			footerPortletCssList.add(footerPortletCssElement.getText());
 		}
 
-		List<String> footerPortalJavaScriptList =
-			portletModel.getFooterPortalJavaScript();
+		portletModel.setFooterPortletCss(footerPortletCssList);
+
+		List<String> footerPortalJavaScriptList = new ArrayList<String>();
 
 		for (Element footerPortalJavaScriptElement :
 				portletElement.elements("footer-portal-javascript")) {
@@ -1452,8 +1734,9 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 				footerPortalJavaScriptElement.getText());
 		}
 
-		List<String> footerPortletJavaScriptList =
-			portletModel.getFooterPortletJavaScript();
+		portletModel.setFooterPortalJavaScript(footerPortalJavaScriptList);
+
+		List<String> footerPortletJavaScriptList = new ArrayList<String>();
 
 		for (Element footerPortletJavaScriptElement :
 				portletElement.elements("footer-portlet-javascript")) {
@@ -1461,6 +1744,8 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			footerPortletJavaScriptList.add(
 				footerPortletJavaScriptElement.getText());
 		}
+
+		portletModel.setFooterPortletJavaScript(footerPortletJavaScriptList);
 
 		portletModel.setCssClassWrapper(
 			GetterUtil.getString(
@@ -1481,8 +1766,7 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			GetterUtil.getBoolean(
 				portletElement.elementText("active"), portletModel.isActive()));
 		portletModel.setInclude(
-			GetterUtil.getBoolean(
-				portletElement.elementText("include"),
+			GetterUtil.getBoolean(portletElement.elementText("include"),
 			portletModel.isInclude()));
 
 		if (Validator.isNull(servletContextName)) {
@@ -1564,9 +1848,10 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 	}
 
 	private void _readPortletXML(
-		String servletContextName, Map<String, Portlet> portletsPool,
-		PluginPackage pluginPackage, PortletApp portletApp,
-		Set<String> portletIds, long timestamp, Element portletElement) {
+			String servletContextName, Map<String, Portlet> portletsPool,
+			PluginPackage pluginPackage, PortletApp portletApp,
+			Set<String> portletIds, long timestamp, Element portletElement)
+		throws PortletIdException {
 
 		String portletName = portletElement.elementText("portlet-name");
 
@@ -1578,6 +1863,15 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		}
 
 		portletId = PortalUtil.getJsSafePortletId(portletId);
+
+		if (portletId.length() > _PORTLET_ID_MAX_LENGTH) {
+
+			// LPS-32878
+
+			throw new PortletIdException(
+				"Portlet id " + portletId + " has more than " +
+					_PORTLET_ID_MAX_LENGTH + " characters");
+		}
 
 		if (_log.isDebugEnabled()) {
 			_log.debug("Reading portlet " + portletId);
@@ -1606,13 +1900,15 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		portletModel.setPortletClass(
 			GetterUtil.getString(portletElement.elementText("portlet-class")));
 
-		Map<String, String> initParams = portletModel.getInitParams();
+		Map<String, String> initParams = new HashMap<String, String>();
 
 		for (Element initParamElement : portletElement.elements("init-param")) {
 			initParams.put(
 				initParamElement.elementText("name"),
 				initParamElement.elementText("value"));
 		}
+
+		portletModel.setInitParams(initParams);
 
 		Element expirationCacheElement = portletElement.element(
 			"expiration-cache");
@@ -1622,19 +1918,15 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 				GetterUtil.getInteger(expirationCacheElement.getText()));
 		}
 
-		for (Element supportsElement : portletElement.elements("supports")) {
-			Map<String, Set<String>> portletModes =
-				portletModel.getPortletModes();
+		Map<String, Set<String>> portletModes =
+			new HashMap<String, Set<String>>();
+		Map<String, Set<String>> windowStates =
+			new HashMap<String, Set<String>>();
 
+		for (Element supportsElement : portletElement.elements("supports")) {
 			String mimeType = supportsElement.elementText("mime-type");
 
-			Set<String> mimeTypePortletModes = portletModes.get(mimeType);
-
-			if (mimeTypePortletModes == null) {
-				mimeTypePortletModes = new HashSet<String>();
-
-				portletModes.put(mimeType, mimeTypePortletModes);
-			}
+			Set<String> mimeTypePortletModes = new HashSet<String>();
 
 			mimeTypePortletModes.add(PortletMode.VIEW.toString().toLowerCase());
 
@@ -1645,16 +1937,9 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 					portletModeElement.getTextTrim().toLowerCase());
 			}
 
-			Map<String, Set<String>> windowStates =
-				portletModel.getWindowStates();
+			portletModes.put(mimeType, mimeTypePortletModes);
 
-			Set<String> mimeTypeWindowStates = windowStates.get(mimeType);
-
-			if (mimeTypeWindowStates == null) {
-				mimeTypeWindowStates = new HashSet<String>();
-
-				windowStates.put(mimeType, mimeTypeWindowStates);
-			}
+			Set<String> mimeTypeWindowStates = new HashSet<String>();
 
 			mimeTypeWindowStates.add(
 				WindowState.NORMAL.toString().toLowerCase());
@@ -1677,9 +1962,14 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 				mimeTypeWindowStates.add(
 					windowStateElement.getTextTrim().toLowerCase());
 			}
+
+			windowStates.put(mimeType, mimeTypeWindowStates);
 		}
 
-		Set<String> supportedLocales = portletModel.getSupportedLocales();
+		portletModel.setPortletModes(portletModes);
+		portletModel.setWindowStates(windowStates);
+
+		Set<String> supportedLocales = new HashSet<String>();
 
 		//supportedLocales.add(
 		//	LocaleUtil.toLanguageId(LocaleUtil.getDefault()));
@@ -1691,6 +1981,8 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 
 			supportedLocales.add(supportedLocale);
 		}
+
+		portletModel.setSupportedLocales(supportedLocales);
 
 		portletModel.setResourceBundle(
 			portletElement.elementText("resource-bundle"));
@@ -1758,13 +2050,17 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			}
 		}
 
-		Set<String> unlikedRoles = portletModel.getUnlinkedRoles();
+		Set<String> unlinkedRoles = new HashSet<String>();
 
 		for (Element roleElement :
 				portletElement.elements("security-role-ref")) {
 
-			unlikedRoles.add(roleElement.elementText("role-name"));
+			unlinkedRoles.add(roleElement.elementText("role-name"));
 		}
+
+		portletModel.setUnlinkedRoles(unlinkedRoles);
+
+		Set<QName> processingEvents = new HashSet<QName>();
 
 		for (Element supportedProcessingEventElement :
 				portletElement.elements("supported-processing-event")) {
@@ -1777,8 +2073,23 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			QName qName = PortletQNameUtil.getQName(
 				qNameElement, nameElement, portletApp.getDefaultNamespace());
 
-			portletModel.addProcessingEvent(qName);
+			processingEvents.add(qName);
+
+			Set<EventDefinition> eventDefinitions =
+				portletApp.getEventDefinitions();
+
+			for (EventDefinition eventDefinition : eventDefinitions) {
+				Set<QName> qNames = eventDefinition.getQNames();
+
+				if (qNames.contains(qName)) {
+					processingEvents.addAll(qNames);
+				}
+			}
 		}
+
+		portletModel.setProcessingEvents(processingEvents);
+
+		Set<QName> publishingEvents = new HashSet<QName>();
 
 		for (Element supportedPublishingEventElement :
 				portletElement.elements("supported-publishing-event")) {
@@ -1791,8 +2102,13 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 			QName qName = PortletQNameUtil.getQName(
 				qNameElement, nameElement, portletApp.getDefaultNamespace());
 
-			portletModel.addPublishingEvent(qName);
+			publishingEvents.add(qName);
 		}
+
+		portletModel.setPublishingEvents(publishingEvents);
+
+		Set<PublicRenderParameter> publicRenderParameters =
+			new HashSet<PublicRenderParameter>();
 
 		for (Element supportedPublicRenderParameter :
 				portletElement.elements("supported-public-render-parameter")) {
@@ -1810,8 +2126,10 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 				continue;
 			}
 
-			portletModel.addPublicRenderParameter(publicRenderParameter);
+			publicRenderParameters.add(publicRenderParameter);
 		}
+
+		portletModel.setPublicRenderParameters(publicRenderParameters);
 	}
 
 	private Set<String> _readPortletXML(
@@ -1863,6 +2181,15 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 
 			EventDefinition eventDefinition = new EventDefinitionImpl(
 				qName, valueType, portletApp);
+
+			List<Element> aliases = eventDefinitionElement.elements("alias");
+
+			for (Element alias : aliases) {
+				qName = PortletQNameUtil.getQName(
+					alias, null, portletApp.getDefaultNamespace());
+
+				eventDefinition.addAliasQName(qName);
+			}
 
 			portletApp.addEventDefinition(eventDefinition);
 		}
@@ -2030,77 +2357,66 @@ public class PortletLocalServiceImpl extends PortletLocalServiceBaseImpl {
 		Set<String> resourcePaths = servletContext.getResourcePaths(
 			resourcePath);
 
-		if (resourcePaths == null) {
+		if ((resourcePaths == null) || resourcePaths.isEmpty()) {
 			return;
 		}
 
-		List<File> images = new ArrayList<File>(resourcePaths.size());
+		List<URL> imageURLs = new ArrayList<URL>(resourcePaths.size());
 
 		for (String curResourcePath : resourcePaths) {
 			if (curResourcePath.endsWith(StringPool.SLASH)) {
 				_setSpriteImages(servletContext, portletApp, curResourcePath);
 			}
 			else if (curResourcePath.endsWith(".png")) {
-				String realPath = ServletContextUtil.getRealPath(
-					servletContext, curResourcePath);
+				URL imageURL = servletContext.getResource(curResourcePath);
 
-				if (realPath != null) {
-					images.add(new File(realPath));
+				if (imageURL != null) {
+					imageURLs.add(imageURL);
 				}
 				else {
-					if (ServerDetector.isTomcat()) {
-						if (_log.isInfoEnabled()) {
-							_log.info(ServletContextUtil.LOG_INFO_SPRITES);
-						}
-					}
-					else {
-						_log.error(
-							"Real path for " + curResourcePath + " is null");
-					}
+					_log.error(
+						"Resource URL for " + curResourcePath + " is null");
 				}
 			}
 		}
 
-		String spriteFileName = PropsValues.SPRITE_FILE_NAME;
-		String spritePropertiesFileName =
-			PropsValues.SPRITE_PROPERTIES_FILE_NAME;
-		String spritePropertiesRootPath = ServletContextUtil.getRealPath(
-			servletContext, StringPool.SLASH);
+		String spriteRootDirName = PropsValues.SPRITE_ROOT_DIR;
+		String spriteFileName = resourcePath.concat(
+			PropsValues.SPRITE_FILE_NAME);
+		String spritePropertiesFileName = resourcePath.concat(
+			PropsValues.SPRITE_PROPERTIES_FILE_NAME);
+		String rootPath = ServletContextUtil.getRootPath(servletContext);
 
 		Properties spriteProperties = SpriteProcessorUtil.generate(
-			images, spriteFileName, spritePropertiesFileName,
-			spritePropertiesRootPath, 16, 16, 10240);
+			servletContext, imageURLs, spriteRootDirName, spriteFileName,
+			spritePropertiesFileName, rootPath, 16, 16, 10240);
 
 		if (spriteProperties == null) {
 			return;
 		}
 
-		spriteFileName =
-			resourcePath.substring(0, resourcePath.length()) + spriteFileName;
+		String contextPath = ContextPathUtil.getContextPath(servletContext);
+
+		spriteFileName = contextPath.concat(SpriteProcessor.PATH).concat(
+			spriteFileName);
 
 		portletApp.setSpriteImages(spriteFileName, spriteProperties);
 	}
 
-	private void _updateCompanyPortletsPool(long companyId) {
-		String key = _encodeKey(companyId);
-
-		Map<String, Portlet> portletsPool =
-			(Map<String, Portlet>)_companyPortletsPool.get(key);
-
-		_companyPortletsPool.put(key, portletsPool);
-	}
+	private static final int _PORTLET_ID_MAX_LENGTH =
+		ModelHintsUtil.getMaxLength(Portlet.class.getName(), "portletId") -
+			PortletConstants.INSTANCE_SEPARATOR.length() +
+				PortletConstants.USER_SEPARATOR.length() + 39;
 
 	private static Log _log = LogFactoryUtil.getLog(
 		PortletLocalServiceImpl.class);
 
-	private static PortalCache _companyPortletsPool =
-		MultiVMPoolUtil.getCache(Portlet.class.getName());
+	private static Map<Long, Map<String, Portlet>> _companyPortletsPool =
+		new ConcurrentHashMap<Long, Map<String, Portlet>>();
 	private static Map<String, Portlet> _customAttributesDisplayPortlets =
 		new ConcurrentHashMap<String, Portlet>();
 	private static Map<String, Portlet> _friendlyURLMapperPortlets =
 		new ConcurrentHashMap<String, Portlet>();
-	private static String _keyPrefix = Portlet.class.getName().concat(
-		StringPool.POUND);
 	private static Map<String, PortletApp> _portletAppsPool =
 		new ConcurrentHashMap<String, PortletApp>();
 	private static Map<String, String> _portletIdsByStrutsPath =

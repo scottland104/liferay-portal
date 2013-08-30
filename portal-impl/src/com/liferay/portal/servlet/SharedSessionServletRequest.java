@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -46,6 +46,8 @@ public class SharedSessionServletRequest extends HttpServletRequestWrapper {
 
 	@Override
 	public HttpSession getSession() {
+		checkPortalSession();
+
 		if (_shared) {
 			return _portalSession;
 		}
@@ -56,12 +58,21 @@ public class SharedSessionServletRequest extends HttpServletRequestWrapper {
 
 	@Override
 	public HttpSession getSession(boolean create) {
+		if (create) {
+			checkPortalSession();
+		}
+
 		if (_shared) {
 			return _portalSession;
 		}
 		else {
-			return getSharedSessionWrapper(
-				_portalSession, super.getSession(create));
+			HttpSession portletSession = super.getSession(create);
+
+			if (portletSession != null) {
+				return getSharedSessionWrapper(_portalSession, portletSession);
+			}
+
+			return null;
 		}
 	}
 
@@ -69,19 +80,27 @@ public class SharedSessionServletRequest extends HttpServletRequestWrapper {
 		return _portalSession;
 	}
 
+	protected void checkPortalSession() {
+		try {
+			_portalSession.isNew();
+		}
+		catch (IllegalStateException ise) {
+			_portalSession = super.getSession(true);
+		}
+	}
+
 	protected HttpSession getSharedSessionWrapper(
 		HttpSession portalSession, HttpSession portletSession) {
 
-		if (CompoundSessionIdSplitterUtil.hasSessionDelimiter() &&
-			!(portalSession instanceof CompoundSessionIdHttpSession)) {
+		if (CompoundSessionIdSplitterUtil.hasSessionDelimiter()) {
+			if (!(portalSession instanceof CompoundSessionIdHttpSession)) {
+				portalSession = new CompoundSessionIdHttpSession(portalSession);
+			}
 
-			portalSession = new CompoundSessionIdHttpSession(portalSession);
-		}
-
-		if (CompoundSessionIdSplitterUtil.hasSessionDelimiter() &&
-			!(portletSession instanceof CompoundSessionIdHttpSession)) {
-
-			portletSession = new CompoundSessionIdHttpSession(portletSession);
+			if (!(portletSession instanceof CompoundSessionIdHttpSession)) {
+				portletSession = new CompoundSessionIdHttpSession(
+					portletSession);
+			}
 		}
 
 		if (ServerDetector.isJetty()) {

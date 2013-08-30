@@ -1,13 +1,35 @@
 <#include "../init.ftl">
 
-<#if fieldValue != "">
-	<#assign selected = (field.value == fieldValue)>
-<#else>
-	<#assign selected = (field.value == parentField.predefinedValue)>
+<#assign parentFieldRawValue = parentFieldStructure.predefinedValue>
+
+<#if validator.isNull(parentFieldRawValue)>
+	<#assign parentFieldRawValue = "[]">
 </#if>
 
+<#if fields?? && fields.get(parentName)??>
+	<#assign parentValueIndex = getterUtil.getInteger(parentFieldStructure.valueIndex)>
+
+	<#assign field = fields.get(parentName)>
+
+	<#assign parentFieldRawValue = field.getValue(requestedLocale, parentValueIndex)>
+</#if>
+
+<#assign selected = jsonFactoryUtil.looseDeserialize(parentFieldRawValue)?seq_contains(fieldStructure.value)>
+
 <#if parentType == "select">
-	<@aui.option cssClass=cssClass label=field.label selected=selected value=field.value />
+	<@aui.option cssClass=cssClass label=escapeAttribute(fieldStructure.label) selected=selected value=escape(fieldStructure.value) />
 <#else>
-	<@aui.input checked=selected cssClass=cssClass label=field.label name=parentName type="radio" value=field.value />
+	<#assign parentFieldNamespace = "">
+
+	<#assign parentFieldNamespace = "">
+
+	<#if parentFieldStructure.fieldNamespace??>
+		<#assign parentFieldNamespace = "_INSTANCE_" + parentFieldStructure.fieldNamespace>
+	</#if>
+
+	<@aui.input checked=selected cssClass=cssClass label=escape(fieldStructure.label) name="${namespacedParentName}${parentFieldNamespace}" type="radio" value=fieldStructure.value>
+		<#if parentFieldStructure.required?? && (parentFieldStructure.required == "true")>
+			<@aui.validator name="required" />
+		</#if>
+	</@aui.input>
 </#if>

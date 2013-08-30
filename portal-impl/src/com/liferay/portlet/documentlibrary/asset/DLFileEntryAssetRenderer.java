@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,17 +20,29 @@ import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
+import com.liferay.portal.kernel.trash.TrashRenderer;
+import com.liferay.portal.kernel.util.CharPool;
+import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.StringBundler;
+import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.util.WebKeys;
+import com.liferay.portlet.asset.model.AssetRendererFactory;
 import com.liferay.portlet.asset.model.BaseAssetRenderer;
+import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.model.DLFileEntryConstants;
 import com.liferay.portlet.documentlibrary.service.permission.DLFileEntryPermission;
+import com.liferay.portlet.documentlibrary.util.DLUtil;
+import com.liferay.portlet.trash.util.TrashUtil;
 
+import java.util.Date;
 import java.util.Locale;
 
 import javax.portlet.PortletRequest;
@@ -42,8 +54,10 @@ import javax.portlet.RenderResponse;
  * @author Julio Camarero
  * @author Juan Fernández
  * @author Sergio González
+ * @author Zsolt Berentey
  */
-public class DLFileEntryAssetRenderer extends BaseAssetRenderer {
+public class DLFileEntryAssetRenderer
+	extends BaseAssetRenderer implements TrashRenderer {
 
 	public DLFileEntryAssetRenderer(
 		FileEntry fileEntry, FileVersion fileVersion) {
@@ -52,10 +66,17 @@ public class DLFileEntryAssetRenderer extends BaseAssetRenderer {
 		_fileVersion = fileVersion;
 	}
 
+	@Override
+	public String getClassName() {
+		return DLFileEntry.class.getName();
+	}
+
+	@Override
 	public long getClassPK() {
-		if (!_fileVersion.isApproved() &&
-			(!_fileVersion.getVersion().equals(
-				DLFileEntryConstants.VERSION_DEFAULT))) {
+		if (!_fileVersion.isApproved() && _fileVersion.isDraft() &&
+			!_fileVersion.isPending() &&
+			!_fileVersion.getVersion().equals(
+				DLFileEntryConstants.VERSION_DEFAULT)) {
 
 			return _fileVersion.getFileVersionId();
 		}
@@ -74,16 +95,97 @@ public class DLFileEntryAssetRenderer extends BaseAssetRenderer {
 		}
 	}
 
+	@Override
+	public Date getDisplayDate() {
+		return _fileEntry.getModifiedDate();
+	}
+
+	@Override
 	public long getGroupId() {
 		return _fileEntry.getGroupId();
 	}
 
+	@Override
+	public String getIconPath(ThemeDisplay themeDisplay) {
+		return themeDisplay.getPathThemeImages() + "/file_system/small/" +
+			_fileEntry.getIcon() + ".png";
+	}
+
+	@Override
+	public String getNewName(String oldName, String token) {
+		String extension = FileUtil.getExtension(oldName);
+
+		if (Validator.isNull(extension)) {
+			return super.getNewName(oldName, token);
+		}
+
+		StringBundler sb = new StringBundler(5);
+
+		int index = oldName.lastIndexOf(CharPool.PERIOD);
+
+		sb.append(oldName.substring(0, index));
+
+		sb.append(StringPool.SPACE);
+		sb.append(token);
+		sb.append(StringPool.PERIOD);
+		sb.append(extension);
+
+		return sb.toString();
+	}
+
+	@Override
+	public String getPortletId() {
+		AssetRendererFactory assetRendererFactory = getAssetRendererFactory();
+
+		return assetRendererFactory.getPortletId();
+	}
+
+	@Override
 	public String getSummary(Locale locale) {
 		return HtmlUtil.stripHtml(_fileEntry.getDescription());
 	}
 
+	@Override
+	public String getThumbnailPath(PortletRequest portletRequest)
+		throws Exception {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		String thumbnailSrc = DLUtil.getThumbnailSrc(
+			_fileEntry, null, themeDisplay);
+
+		if (Validator.isNotNull(thumbnailSrc)) {
+			return thumbnailSrc;
+		}
+
+		return themeDisplay.getPathThemeImages() +
+			"/file_system/large/document.png";
+	}
+
+	@Override
 	public String getTitle(Locale locale) {
-		return _fileVersion.getTitle();
+		String title = null;
+
+		if (getAssetRendererType() == AssetRendererFactory.TYPE_LATEST) {
+			title = _fileVersion.getTitle();
+		}
+		else {
+			title = _fileEntry.getTitle();
+		}
+
+		return TrashUtil.getOriginalTitle(title);
+	}
+
+	@Override
+	public String getType() {
+		return DLFileEntryAssetRendererFactory.TYPE;
+	}
+
+	@Override
+	public String getURLDownload(ThemeDisplay themeDisplay) {
+		return DLUtil.getPreviewURL(
+			_fileEntry, _fileVersion, themeDisplay, StringPool.BLANK);
 	}
 
 	@Override
@@ -122,27 +224,48 @@ public class DLFileEntryAssetRenderer extends BaseAssetRenderer {
 	}
 
 	@Override
+	public String getURLImagePreview(PortletRequest portletRequest)
+		throws Exception {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		return DLUtil.getImagePreviewURL(
+			_fileEntry, _fileVersion, themeDisplay);
+	}
+
+	@Override
 	public String getURLViewInContext(
 		LiferayPortletRequest liferayPortletRequest,
 		LiferayPortletResponse liferayPortletResponse,
 		String noSuchEntryRedirect) {
 
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)liferayPortletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		return themeDisplay.getPathMain() +
-			"/document_library/find_file_entry?p_l_id=" +
-				themeDisplay.getPlid() + "&fileEntryId=" +
-					_fileEntry.getFileEntryId();
+		return getURLViewInContext(
+			liferayPortletRequest, noSuchEntryRedirect,
+			"/document_library/find_file_entry", "fileEntryId",
+			_fileEntry.getFileEntryId());
 	}
 
+	@Override
 	public long getUserId() {
 		return _fileEntry.getUserId();
 	}
 
+	@Override
+	public String getUserName() {
+		return _fileEntry.getUserName();
+	}
+
+	@Override
 	public String getUuid() {
 		return _fileEntry.getUuid();
+	}
+
+	public boolean hasDeletePermission(PermissionChecker permissionChecker)
+		throws PortalException, SystemException {
+
+		return DLFileEntryPermission.contains(
+			permissionChecker, _fileEntry.getFileEntryId(), ActionKeys.DELETE);
 	}
 
 	@Override
@@ -171,6 +294,7 @@ public class DLFileEntryAssetRenderer extends BaseAssetRenderer {
 		return false;
 	}
 
+	@Override
 	public String render(
 			RenderRequest renderRequest, RenderResponse renderResponse,
 			String template)
@@ -181,19 +305,31 @@ public class DLFileEntryAssetRenderer extends BaseAssetRenderer {
 
 			renderRequest.setAttribute(
 				WebKeys.DOCUMENT_LIBRARY_FILE_ENTRY, _fileEntry);
-			renderRequest.setAttribute(
-				WebKeys.DOCUMENT_LIBRARY_FILE_VERSION, _fileVersion);
 
-			return "/html/portlet/document_library/asset/" + template + ".jsp";
+			String version = ParamUtil.getString(renderRequest, "version");
+
+			if ((getAssetRendererType() == AssetRendererFactory.TYPE_LATEST) ||
+				Validator.isNotNull(version)) {
+
+				if ((_fileEntry != null) && Validator.isNotNull(version)) {
+					_fileVersion = _fileEntry.getFileVersion(version);
+				}
+
+				renderRequest.setAttribute(
+					WebKeys.DOCUMENT_LIBRARY_FILE_VERSION, _fileVersion);
+			}
+			else {
+				renderRequest.setAttribute(
+					WebKeys.DOCUMENT_LIBRARY_FILE_VERSION,
+					_fileEntry.getFileVersion());
+			}
+
+			return "/html/portlet/document_library/asset/file_entry_" +
+				template + ".jsp";
 		}
 		else {
 			return null;
 		}
-	}
-
-	@Override
-	protected String getIconPath(ThemeDisplay themeDisplay) {
-		return themeDisplay.getPathThemeImages() + "/common/clip.png";
 	}
 
 	private FileEntry _fileEntry;

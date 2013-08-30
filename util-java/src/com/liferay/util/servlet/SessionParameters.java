@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,8 +16,8 @@ package com.liferay.util.servlet;
 
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.SystemProperties;
-import com.liferay.util.PwdGenerator;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -34,12 +34,10 @@ import javax.servlet.http.HttpSession;
  */
 public class SessionParameters {
 
-	public static final boolean USE_SESSION_PARAMETERS = GetterUtil.getBoolean(
-		SystemProperties.get(SessionParameters.class.getName()), true);
-
 	public static final String KEY = SessionParameters.class.getName();
 
-	// Servlet Request
+	public static final boolean USE_SESSION_PARAMETERS = GetterUtil.getBoolean(
+		SystemProperties.get(SessionParameters.class.getName()), true);
 
 	public static String get(HttpServletRequest request, String parameter) {
 		return get(request.getSession(), parameter);
@@ -56,7 +54,32 @@ public class SessionParameters {
 
 		if (newParameter == null) {
 			newParameter =
-				PwdGenerator.getPassword() + StringPool.UNDERLINE + parameter;
+				StringUtil.randomString() + StringPool.UNDERLINE +
+					parameter;
+
+			parameters.put(parameter, newParameter);
+		}
+
+		return newParameter;
+	}
+
+	public static String get(PortletRequest portletRequest, String parameter) {
+		return get(portletRequest.getPortletSession(), parameter);
+	}
+
+	public static String get(PortletSession portletSession, String parameter) {
+		if (!USE_SESSION_PARAMETERS) {
+			return parameter;
+		}
+
+		Map<String, String> parameters = _getParameters(portletSession);
+
+		String newParameter = parameters.get(parameter);
+
+		if (newParameter == null) {
+			newParameter =
+				StringUtil.randomString() + StringPool.UNDERLINE +
+					parameter;
 
 			parameters.put(parameter, newParameter);
 		}
@@ -81,31 +104,6 @@ public class SessionParameters {
 		}
 
 		return parameters;
-	}
-
-	// Portlet Request
-
-	public static String get(PortletRequest portletRequest, String parameter) {
-		return get(portletRequest.getPortletSession(), parameter);
-	}
-
-	public static String get(PortletSession portletSession, String parameter) {
-		if (!USE_SESSION_PARAMETERS) {
-			return parameter;
-		}
-
-		Map<String, String> parameters = _getParameters(portletSession);
-
-		String newParameter = parameters.get(parameter);
-
-		if (newParameter == null) {
-			newParameter =
-				PwdGenerator.getPassword() + StringPool.UNDERLINE + parameter;
-
-			parameters.put(parameter, newParameter);
-		}
-
-		return newParameter;
 	}
 
 	private static Map<String, String> _getParameters(

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -62,8 +62,9 @@ public class TrackbackAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		try {
@@ -176,8 +177,7 @@ public class TrackbackAction extends PortletAction {
 
 		String entryURL =
 			PortalUtil.getLayoutFullURL(themeDisplay) +
-				Portal.FRIENDLY_URL_SEPARATOR + "blogs/" +
-					entry.getUrlTitle();
+				Portal.FRIENDLY_URL_SEPARATOR + "blogs/" + entry.getUrlTitle();
 
 		LinkbackConsumerUtil.addNewTrackback(
 			message.getMessageId(), url, entryURL);
@@ -193,18 +193,18 @@ public class TrackbackAction extends PortletAction {
 	protected boolean isCommentsEnabled(ActionRequest actionRequest)
 		throws Exception {
 
-		PortletPreferences preferences = actionRequest.getPreferences();
+		PortletPreferences portletPreferences = actionRequest.getPreferences();
 
 		String portletResource = ParamUtil.getString(
 			actionRequest, "portletResource");
 
 		if (Validator.isNotNull(portletResource)) {
-			preferences = PortletPreferencesFactoryUtil.getPortletSetup(
+			portletPreferences = PortletPreferencesFactoryUtil.getPortletSetup(
 				actionRequest, portletResource);
 		}
 
 		return GetterUtil.getBoolean(
-			preferences.getValue("enableComments", null), true);
+			portletPreferences.getValue("enableComments", null), true);
 	}
 
 	protected void sendError(

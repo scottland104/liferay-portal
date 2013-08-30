@@ -1,7 +1,4 @@
 <!--
-This is the DTD for the Portlet Application parameters that are specific to
-Liferay Portal.
-
 <!DOCTYPE liferay-portlet-app PUBLIC
 	"-//Liferay//DTD Portlet Application 6.1.0//EN"
 	"http://www.liferay.com/dtd/liferay-portlet-app_6_1_0.dtd">
@@ -26,12 +23,12 @@ social-activity-interpreter-class?, social-request-interpreter-class?,
 webdav-storage-token?, webdav-storage-class?, xml-rpc-method-class?,
 control-panel-entry-category?, control-panel-entry-weight?,
 control-panel-entry-class?, asset-renderer-factory*, atom-collection-adapter*,
-custom-attributes-display*, workflow-handler*, preferences-company-wide?,
-preferences-unique-per-layout?, preferences-owned-by-group?,
-use-default-template?, show-portlet-access-denied?, show-portlet-inactive?,
-action-url-redirect?, restore-current-view?, maximize-edit?, maximize-help?,
-pop-up-print?, layout-cacheable?, instanceable?, remoteable?, scopeable?,
-user-principal-strategy?, private-request-attributes?,
+custom-attributes-display*, permission-propagator?, workflow-handler*,
+preferences-company-wide?, preferences-unique-per-layout?,
+preferences-owned-by-group?, use-default-template?, show-portlet-access-denied?,
+show-portlet-inactive?, action-url-redirect?, restore-current-view?,
+maximize-edit?, maximize-help?, pop-up-print?, layout-cacheable?, instanceable?,
+remoteable?, scopeable?, user-principal-strategy?, private-request-attributes?,
 private-session-attributes?, autopropagated-parameters?, action-timeout?,
 render-timeout?, render-weight?, ajaxable?, header-portal-css*,
 header-portlet-css*, header-portal-javascript*, header-portlet-javascript*,
@@ -64,7 +61,7 @@ The default value is "" which means this is not used.
 <!ELEMENT virtual-path (#PCDATA)>
 
 <!--
-Supppose the struts-path value is "mail". This tells the portal that all
+Suppose the struts-path value is "mail". This tells the portal that all
 requests with the path mail/* are considered part of this portlet's scope. Users
 who request paths that match mail/* will only be granted access if they also
 have access to this portlet. This is true for both portlet requests and regular
@@ -92,7 +89,7 @@ users to configure the portlet at runtime.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-impl/com/liferay/portlet/messageboards/action/ConfigurationActionImpl.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-impl/com/liferay/portlet/messageboards/action/ConfigurationActionImpl.html
 -->
 <!ELEMENT configuration-action-class (#PCDATA)>
 
@@ -103,8 +100,8 @@ search index for the portlet.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-impl/com/liferay/portlet/messageboards/util/Indexer.html
-http://docs.liferay.com/portal/6.0/javadocs/portal-service/com/liferay/portal/kernel/search/Indexer.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-impl/com/liferay/portlet/messageboards/util/Indexer.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-service/com/liferay/portal/kernel/search/Indexer.html
 http://lucene.apache.org
 -->
 <!ELEMENT indexer-class (#PCDATA)>
@@ -116,8 +113,8 @@ in the OpenSearch 1.1 standard.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-impl/com/liferay/portlet/alfrescocontent/util/OpenSearch.html
-http://docs.liferay.com/portal/6.0/javadocs/portal-service/com/liferay/portal/kernel/search/OpenSearch.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-impl/com/liferay/portlet/alfrescocontent/util/OpenSearch.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-service/com/liferay/portal/kernel/search/OpenSearch.html
 http://www.opensearch.org
 -->
 <!ELEMENT open-search-class (#PCDATA)>
@@ -194,7 +191,7 @@ default portlet URL implementation.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-impl/com/liferay/portal/struts/StrutsActionPortletURL.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-impl/com/liferay/portal/struts/StrutsActionPortletURL.html
 -->
 <!ELEMENT portlet-url-class (#PCDATA)>
 
@@ -206,8 +203,8 @@ example of its uses.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-impl/com/liferay/portlet/messageboards/MBFriendlyURLMapper.html
-http://docs.liferay.com/portal/6.0/javadocs/portal-service/com/liferay/portal/kernel/portlet/FriendlyURLMapper.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-impl/com/liferay/portlet/messageboards/MBFriendlyURLMapper.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-service/com/liferay/portal/kernel/portlet/FriendlyURLMapper.html
 -->
 <!ELEMENT friendly-url-mapper-class (#PCDATA)>
 
@@ -240,8 +237,8 @@ tasks are run.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-impl/com/liferay/portlet/journal/lar/PortletDataHandlerImpl.html
-http://docs.liferay.com/portal/6.0/javadocs/portal-service/com/liferay/portal/kernel/lar/PortletDataHandler.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-impl/com/liferay/portlet/journal/lar/PortletDataHandlerImpl.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-service/com/liferay/portal/kernel/lar/PortletDataHandler.html
 -->
 <!ELEMENT portlet-data-handler-class (#PCDATA)>
 
@@ -252,8 +249,8 @@ is added, moved, or removed from a layout.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-impl/com/liferay/portlet/journalcontent/JournalContentPortletLayoutListener.html
-http://docs.liferay.com/portal/6.0/javadocs/portal-service/com/liferay/portal/kernel/portlet/PortletLayoutListener.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-impl/com/liferay/portlet/journalcontent/JournalContentPortletLayoutListener.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-service/com/liferay/portal/kernel/portlet/PortletLayoutListener.html
 -->
 <!ELEMENT portlet-layout-listener-class (#PCDATA)>
 
@@ -265,7 +262,7 @@ notified of data changes. See the Chat portlet for a real world implementation.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-service/com/liferay/portal/kernel/poller/PollerProcessor.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-service/com/liferay/portal/kernel/poller/PollerProcessor.html
 -->
 <!ELEMENT poller-processor-class (#PCDATA)>
 
@@ -276,8 +273,8 @@ emails.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-impl/com/liferay/portlet/messageboards/pop/MessageListenerImpl.html
-http://docs.liferay.com/portal/6.0/javadocs/portal-service/com/liferay/portal/kernel/pop/MessageListener.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-impl/com/liferay/portlet/messageboards/pop/MessageListenerImpl.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-service/com/liferay/portal/kernel/pop/MessageListener.html
 -->
 <!ELEMENT pop-message-listener-class (#PCDATA)>
 
@@ -289,8 +286,8 @@ human being.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-impl/com/liferay/portlet/messageboards/social/MBActivityInterpreter.html
-http://docs.liferay.com/portal/6.0/javadocs/portal-service/com/liferay/portlet/social/model/SocialActivityInterpreter.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-impl/com/liferay/portlet/messageboards/social/MBActivityInterpreter.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-service/com/liferay/portlet/social/model/SocialActivityInterpreter.html
 -->
 <!ELEMENT social-activity-interpreter-class (#PCDATA)>
 
@@ -302,7 +299,7 @@ human being.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-service/com/liferay/portlet/social/model/SocialRequestInterpreter.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-service/com/liferay/portlet/social/model/SocialRequestInterpreter.html
 -->
 <!ELEMENT social-request-interpreter-class (#PCDATA)>
 
@@ -312,7 +309,7 @@ this portlet.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-impl/com/liferay/portlet/documentlibrary/webdav/DLWebDAVStorageImpl.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-impl/com/liferay/portlet/documentlibrary/webdav/DLWebDAVStorageImpl.html
 -->
 <!ELEMENT webdav-storage-token (#PCDATA)>
 
@@ -323,7 +320,7 @@ the WebDAV protocol.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-impl/com/liferay/portlet/documentlibrary/webdav/DLWebDAVStorageImpl.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-impl/com/liferay/portlet/documentlibrary/webdav/DLWebDAVStorageImpl.html
 -->
 <!ELEMENT webdav-storage-class (#PCDATA)>
 
@@ -334,7 +331,7 @@ XML-RPC protocol.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-impl/com/liferay/portlet/blogs/util/PingbackMethodImpl.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-impl/com/liferay/portlet/blogs/util/PingbackMethodImpl.html
 -->
 <!ELEMENT xml-rpc-method-class (#PCDATA)>
 
@@ -360,7 +357,7 @@ context. The default value is set in portal.properties.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-service/com/liferay/portlet/ControlPanelEntry.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-service/com/liferay/portlet/ControlPanelEntry.html
 -->
 <!ELEMENT control-panel-entry-class (#PCDATA)>
 
@@ -371,7 +368,7 @@ Publisher.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-service/com/liferay/portlet/asset/model/AssetRendererFactory.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-service/com/liferay/portlet/asset/model/AssetRendererFactory.html
 -->
 <!ELEMENT asset-renderer-factory (#PCDATA)>
 
@@ -388,9 +385,16 @@ custom fields administration UI.
 
 See:
 
-http://docs.liferay.com/portal/6.0/javadocs/portal-service/com/liferay/portlet/expando/model/CustomAttributesDisplay.html
+http://docs.liferay.com/portal/6.1/javadocs/portal-service/com/liferay/portlet/expando/model/CustomAttributesDisplay.html
 -->
 <!ELEMENT custom-attributes-display (#PCDATA)>
+
+<!--
+The permission-propagator value must be a class that implements
+com.liferay.portal.security.permission.PermissionPropagator and is called to
+propagate permissions.
+-->
+<!ELEMENT permission-propagator (#PCDATA)>
 
 <!--
 -->
@@ -691,13 +695,13 @@ output FBML automatically if a request is made by Facebook.
 <!ELEMENT facebook-integration (#PCDATA)>
 
 <!--
-If the add-default-resource value is set to false, and the portlet does not
-belong to the page but has been dynamically added, then the user will see that
-he does not have permissions to view the portlet. If the add-default-resource
-value is set to true, the default portlet resources and permissions are added to
-the page. The user can then view the portlet. Most portlets are harmless and can
-benefit from this flexibility. However, to prevent security loop holes, the
-default value is false.
+If the add-default-resource value is set to false and the portlet does not
+belong to the page but has been dynamically added, then the user will not have
+permissions to view the portlet. If the add-default-resource value is set to
+true, the default portlet resources and permissions are added to the page, and
+the user can then view the portlet. This is useful (and necessary) for portlets
+that need to be dynamically added to a page. However, to prevent security loop
+holes, the default value is false.
 
 The properties "portlet.add.default.resource.check.enabled" and
 "portlet.add.default.resource.check.whitelist" in portal.properties allow

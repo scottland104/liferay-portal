@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,7 +22,9 @@ String title = StringPool.BLANK;
 %>
 
 <c:if test="<%= Validator.isNotNull(headerArticleId) %>">
-	<liferay-ui:journal-article articleId="<%= headerArticleId %>" groupId="<%= headerArticleGroupId %>" />
+	<p>
+		<liferay-ui:journal-article articleId="<%= headerArticleId %>" groupId="<%= headerArticleGroupId %>" />
+	</p>
 </c:if>
 
 <%
@@ -38,7 +40,7 @@ for (int i = 0; i < urls.length; i++) {
 
 	boolean last = false;
 
-	if (i == urls.length - 1) {
+	if (i == (urls.length - 1)) {
 		last = true;
 	}
 %>
@@ -50,13 +52,15 @@ for (int i = 0; i < urls.length; i++) {
 %>
 
 <c:if test="<%= Validator.isNotNull(footerArticleId) %>">
-	<liferay-ui:journal-article articleId="<%= footerArticleId %>" groupId="<%= footerArticleGroupId %>" />
+	<p>
+		<liferay-ui:journal-article articleId="<%= footerArticleId %>" groupId="<%= footerArticleGroupId %>" />
+	</p>
 </c:if>
 
 <aui:script use="aui-base">
-	var minusAlt = '<liferay-ui:message key="collapse" />';
+	var minusAlt = '<%= UnicodeLanguageUtil.get(pageContext, "collapse") %>';
 	var minusImage = '01_minus.png';
-	var plusAlt = '<liferay-ui:message key="expand" />';
+	var plusAlt = '<%= UnicodeLanguageUtil.get(pageContext, "expand") %>';
 	var plusImage = '01_plus.png';
 
 	A.all('.<portlet:namespace />entry-expander').on(

@@ -6,6 +6,12 @@
 
 	var toCharCode = Liferay.Util.toCharCode;
 
+	var BODY_CONTENT = 'bodyContent';
+
+	var REGION = 'region';
+
+	var TRIGGER = 'trigger';
+
 	Liferay.Portal.Tabs._show = function(event) {
 		var id = event.id;
 		var names = event.names;
@@ -17,10 +23,7 @@
 		var tabSection = event.tabSection;
 
 		if (tabItem) {
-			tabItem.radioClass('aui-selected');
-			tabItem.radioClass('aui-state-active');
-			tabItem.radioClass('aui-tab-active');
-			tabItem.radioClass('current');
+			tabItem.radioClass('active');
 		}
 
 		if (tabSection) {
@@ -113,18 +116,15 @@
 			if (!cached) {
 				cached = new A.Tooltip(
 					{
-						trigger: '.liferay-tooltip',
-						zIndex: 10000
+						cssClass: 'tooltip-help',
+						opacity: 1,
+						visible: false,
+						zIndex: Liferay.zIndex.TOOLTIP
 					}
 				).render();
 
 				instance._cached = cached;
 			}
-
-			var trigger = cached.get('trigger');
-			var bodyContent = cached.get('bodyContent');
-
-			var newElement = (trigger.indexOf(obj) == -1);
 
 			if (text == null) {
 				obj = A.one(obj);
@@ -132,15 +132,10 @@
 				text = instance._getText(obj.guid());
 			}
 
-			if (newElement || (bodyContent != text)) {
-				cached.set('trigger', obj);
-				cached.set('bodyContent', text);
+			cached.set(BODY_CONTENT, text);
 
-				cached.show();
-			}
-
-			cached.refreshAlign();
+			cached.set(TRIGGER, obj).show();
 		},
-		['aui-tooltip']
+		['aui-tooltip-delegate']
 	);
 })(AUI(), Liferay);

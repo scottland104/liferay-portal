@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,7 +24,7 @@ import java.io.FileNotFoundException;
 import java.util.List;
 
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
-import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
 /**
@@ -36,13 +36,16 @@ import org.springframework.web.context.support.XmlWebApplicationContext;
  *
  * @author Brian Wing Shun Chan
  * @author Alexander Chow
+ * @author Tomas Polesovsky
  */
 public class PortalApplicationContext extends XmlWebApplicationContext {
 
 	@Override
-	protected void loadBeanDefinitions(XmlBeanDefinitionReader reader) {
+	protected void loadBeanDefinitions(
+		XmlBeanDefinitionReader xmlBeanDefinitionReader) {
+
 		try {
-			super.loadBeanDefinitions(reader);
+			super.loadBeanDefinitions(xmlBeanDefinitionReader);
 		}
 		catch (Exception e) {
 			if (_log.isWarnEnabled()) {
@@ -50,7 +53,8 @@ public class PortalApplicationContext extends XmlWebApplicationContext {
 			}
 		}
 
-		reader.setResourceLoader(new DefaultResourceLoader());
+		xmlBeanDefinitionReader.setResourceLoader(
+			new PathMatchingResourcePatternResolver());
 
 		if (PropsValues.SPRING_CONFIGS == null) {
 			return;
@@ -68,7 +72,7 @@ public class PortalApplicationContext extends XmlWebApplicationContext {
 
 		for (String configLocation : configLocations) {
 			try {
-				reader.loadBeanDefinitions(configLocation);
+				xmlBeanDefinitionReader.loadBeanDefinitions(configLocation);
 			}
 			catch (Exception e) {
 				Throwable cause = e.getCause();

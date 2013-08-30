@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -36,8 +36,6 @@ import com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil;
  */
 public class LayoutRevisionAssetRendererFactory
 	extends BaseAssetRendererFactory {
-
-	public static final String CLASS_NAME =	LayoutRevision.class.getName();
 
 	public static final String TYPE = "layout_revision";
 
@@ -76,7 +74,7 @@ public class LayoutRevisionAssetRendererFactory
 
 		StringBundler sb = new StringBundler();
 
-		sb.append(layoutRevision.getHTMLTitle(LocaleUtil.getDefault()));
+		sb.append(layoutRevision.getHTMLTitle(LocaleUtil.getSiteDefault()));
 		sb.append(" [");
 		sb.append(layoutSetBranch.getName());
 		sb.append("]");
@@ -86,26 +84,46 @@ public class LayoutRevisionAssetRendererFactory
 		return assetEntry;
 	}
 
+	@Override
 	public AssetRenderer getAssetRenderer(long layoutRevisionId, int type)
 		throws PortalException, SystemException {
 
 		LayoutRevision layoutRevision =
 			LayoutRevisionLocalServiceUtil.getLayoutRevision(layoutRevisionId);
 
-		return new LayoutRevisionAssetRenderer(layoutRevision);
+		LayoutRevisionAssetRenderer layoutRevisionAssetRenderer =
+			new LayoutRevisionAssetRenderer(layoutRevision);
+
+		layoutRevisionAssetRenderer.setAssetRendererType(type);
+
+		return layoutRevisionAssetRenderer;
 	}
 
+	@Override
 	public String getClassName() {
-		return CLASS_NAME;
+		return LayoutRevision.class.getName();
 	}
 
+	@Override
 	public String getType() {
 		return TYPE;
+	}
+
+	@Override
+	public boolean isCategorizable() {
+		return false;
+	}
+
+	@Override
+	public boolean isSelectable() {
+		return _SELECTABLE;
 	}
 
 	@Override
 	protected String getIconPath(ThemeDisplay themeDisplay) {
 		return themeDisplay.getPathThemeImages() + "/common/pages.png";
 	}
+
+	private static final boolean _SELECTABLE = false;
 
 }

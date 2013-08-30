@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,7 @@ import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.util.PropsValues;
+import com.liferay.portlet.bookmarks.NoSuchFolderException;
 import com.liferay.portlet.bookmarks.model.BookmarksFolder;
 import com.liferay.portlet.bookmarks.model.BookmarksFolderConstants;
 import com.liferay.portlet.bookmarks.service.BookmarksFolderLocalServiceUtil;
@@ -59,62 +60,35 @@ public class BookmarksFolderPermission {
 			actionId = ActionKeys.ADD_SUBFOLDER;
 		}
 
-		long folderId = folder.getFolderId();
+		if (actionId.equals(ActionKeys.VIEW) &&
+			PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
 
-		if (actionId.equals(ActionKeys.VIEW)) {
-			while (folderId !=
-					BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+			try {
+				long folderId = folder.getFolderId();
 
-				folder = BookmarksFolderLocalServiceUtil.getFolder(folderId);
+				while (folderId !=
+							BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
 
-				folderId = folder.getParentFolderId();
+					folder = BookmarksFolderLocalServiceUtil.getFolder(
+						folderId);
 
-				if (!permissionChecker.hasOwnerPermission(
-						folder.getCompanyId(), BookmarksFolder.class.getName(),
-						folder.getFolderId(), folder.getUserId(), actionId) &&
-					!permissionChecker.hasPermission(
-						folder.getGroupId(), BookmarksFolder.class.getName(),
-						folder.getFolderId(), actionId)) {
+					if (!_hasPermission(permissionChecker, folder, actionId)) {
+						return false;
+					}
 
-					return false;
+					folderId = folder.getParentFolderId();
 				}
-
-				if (!PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
-					break;
+			}
+			catch (NoSuchFolderException nsfe) {
+				if (!folder.isInTrash()) {
+					throw nsfe;
 				}
 			}
 
 			return true;
 		}
-		else {
-			while (folderId !=
-					BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
 
-				folder = BookmarksFolderLocalServiceUtil.getFolder(folderId);
-
-				folderId = folder.getParentFolderId();
-
-				if (permissionChecker.hasOwnerPermission(
-						folder.getCompanyId(), BookmarksFolder.class.getName(),
-						folder.getFolderId(), folder.getUserId(), actionId)) {
-
-					return true;
-				}
-
-				if (permissionChecker.hasPermission(
-						folder.getGroupId(), BookmarksFolder.class.getName(),
-						folder.getFolderId(), actionId)) {
-
-					return true;
-				}
-
-				if (actionId.equals(ActionKeys.VIEW)) {
-					break;
-				}
-			}
-
-			return false;
-		}
+		return _hasPermission(permissionChecker, folder, actionId);
 	}
 
 	public static boolean contains(
@@ -132,6 +106,23 @@ public class BookmarksFolderPermission {
 
 			return contains(permissionChecker, folder, actionId);
 		}
+	}
+
+	private static boolean _hasPermission(
+		PermissionChecker permissionChecker, BookmarksFolder folder,
+		String actionId) {
+
+		if (permissionChecker.hasOwnerPermission(
+				folder.getCompanyId(), BookmarksFolder.class.getName(),
+				folder.getFolderId(), folder.getUserId(), actionId) ||
+			permissionChecker.hasPermission(
+				folder.getGroupId(), BookmarksFolder.class.getName(),
+				folder.getFolderId(), actionId)) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 }

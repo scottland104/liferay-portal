@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,9 +19,9 @@
 <%@ page import="com.liferay.portlet.currencyconverter.util.CurrencyUtil" %>
 
 <%
-PortletPreferences preferences = renderRequest.getPreferences();
+String[] symbols = portletPreferences.getValues("symbols", new String[0]);
 
-String[] symbols = preferences.getValues("symbols", new String[0]);
-
-Map allSymbols = CurrencyUtil.getAllSymbols(pageContext);
+Map<String, String> allSymbols = CurrencyUtil.getAllSymbols(pageContext);
 %>
+
+<%@ include file="/html/portlet/currency_converter/init-ext.jsp" %>

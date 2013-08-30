@@ -1,4 +1,4 @@
-AUI().add(
+AUI.add(
 	'liferay-auto-fields',
 	function(A) {
 		var Lang = A.Lang;
@@ -9,14 +9,12 @@ AUI().add(
 
 		var TPL_INPUT_HIDDEN = '<input name="{name}" type="hidden" />';
 
-		var TPL_AUTOROW_CONTROLS = '<span class="row-controls ' + CSS_AUTOROW_CONTROLS + '"><a href="javascript:;" class="add-row">{0}</a><a href="javascript:;" class="delete-row modify-link">{1}</a></span>';
+		var TPL_ADD_BUTTON = '<button type="button" class="add-row btn-content btn btn-icon-only toolbar-first toolbar-item" title=""><span class="btn-icon icon icon-plus"></span></button>';
 
-		var TPL_ADD_BUTTON = '<button type="button" class="add-row aui-buttonitem-content aui-buttonitem aui-state-default aui-buttonitem-icon-only aui-toolbar-first aui-toolbar-item" title=""><span class="aui-buttonitem-icon aui-icon aui-icon-plus"></span></button>';
-
-		var TPL_DELETE_BUTTON = '<button type="button" class="delete-row aui-buttonitem-content aui-buttonitem aui-state-default aui-buttonitem-icon-only aui-toolbar-last aui-toolbar-item" title=""><span class="aui-buttonitem-icon aui-icon aui-icon-minus"></span></button>';
+		var TPL_DELETE_BUTTON = '<button type="button" class="delete-row btn-content btn btn-icon-only toolbar-last toolbar-item" title=""><span class="btn-icon icon icon-minus"></span></button>';
 
 		var TPL_AUTOROW_CONTROLS =
-			'<span class="lfr-autorow-controls aui-toolbar aui-toolbar-horizontal"><span class="aui-toolbar-content">' +
+			'<span class="lfr-autorow-controls toolbar toolbar-horizontal"><span class="toolbar-content">' +
 				TPL_ADD_BUTTON +
 				TPL_DELETE_BUTTON +
 			'</span></span>';
@@ -96,7 +94,7 @@ AUI().add(
 									instance.deleteRow(currentRow);
 								}
 							},
-							'.lfr-autorow-controls .aui-buttonitem'
+							'.lfr-autorow-controls .btn'
 						);
 
 						baseRows.each(
@@ -126,7 +124,7 @@ AUI().add(
 							}
 						);
 
-						if (config.sortable){
+						if (config.sortable) {
 							instance._makeSortable(config.sortableHandle);
 						}
 
@@ -235,7 +233,7 @@ AUI().add(
 					serialize: function(filter) {
 						var instance = this;
 
-						var visibleRows = instance._contentBox.all('.lfr-form-row:visible');
+						var visibleRows = instance._contentBox.all('.lfr-form-row').each(instance._clearHiddenRows, instance);
 
 						var serializedData = [];
 
@@ -277,7 +275,7 @@ AUI().add(
 					_attachSubmitListener: function() {
 						var instance = this;
 
-						Liferay.on('submitForm', A.bind(Liferay.fire, Liferay, 'saveAutoFields'));
+						Liferay.on('submitForm', A.bind('fire', Liferay, 'saveAutoFields'));
 
 						AutoFields.prototype._attachSubmitListener = Lang.emptyFn;
 					},
@@ -398,7 +396,7 @@ AUI().add(
 					_isHiddenRow: function(row) {
 						var instance = this;
 
-						return row.hasClass(row._hideClass);
+						return row.hasClass(row._hideClass || 'hide');
 					},
 
 					_makeSortable: function(sortableHandle) {
@@ -440,6 +438,6 @@ AUI().add(
 	},
 	'',
 	{
-		requires: ['aui-base', 'aui-data-set', 'aui-io-request', 'aui-parse-content', 'sortable', 'base', 'liferay-undo-manager']
+		requires: ['aui-base', 'aui-data-set-deprecated', 'aui-io-request', 'aui-parse-content', 'base', 'liferay-undo-manager', 'sortable']
 	}
 );

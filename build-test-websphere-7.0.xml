@@ -4,117 +4,22 @@
 	<import file="build-test.xml" />
 
 	<target name="run-selenium-websphere-7.0">
-		<antcall target="prepare-vm-server">
-			<param name="vm.vmdk.suffix" value="websphere-7.0.0.7" />
-		</antcall>
-
-		<tstamp>
-			<format property="tstamp.value" pattern="yyyyMMddkkmmssSSS" />
-		</tstamp>
-
-		<unzip src="dist/liferay-portal-dependencies-${lp.version}.zip" dest="${tstamp.value}">
-			<mapper type="flatten" />
-		</unzip>
-
-		<copy todir="${tstamp.value}">
-			<fileset
-				dir="lib/development"
-				includes="hsql.jar,jtds.jar,mysql.jar,persistence.jar,postgresql.jar"
-			/>
-		</copy>
+		<echo file="app.server.${user.name}.properties">app.server.type=websphere</echo>
 
 		<if>
-			<isset property="jdbc.drivers.optional.dir" />
+			<not>
+				<isset property="build.app.server" />
+			</not>
 			<then>
-				<copy todir="${tstamp.value}">
-					<fileset
-						dir="${jdbc.drivers.optional.dir}"
-						includes="*.jar"
-					/>
-				</copy>
+				<ant antfile="build-dist.xml" target="unzip-websphere" />
+
+				<ant target="all" />
 			</then>
 		</if>
 
-		<exec executable="${pscp.executable}">
-			<arg line="-pw ${vm.password} ${tstamp.value}\*.jar ${vm.username}@${vm.host}:/Progra~1/IBM/WebSphere/AppServer/lib/ext" />
-		</exec>
-
-		<delete dir="${tstamp.value}" />
-
-		<exec executable="${plink.executable}">
-			<arg line="-pw ${vm.password} ${vm.username}@${vm.host} cmd.exe /c move C:\Progra~1\IBM\WebSphere\AppServer\lib\ext\portlet.jar C:\Progra~1\IBM\WebSphere\AppServer\java\jre\lib\ext" />
-		</exec>
-
-		<exec executable="${pscp.executable}">
-			<arg line="-pw ${vm.password} ${vm.username}@${vm.host}:/Progra~1/IBM/WebSphere/AppServer/profiles/AppSrv01/config/cells/liferay-ead7385Node01Cell/nodes/liferay-ead7385Node01/servers/server1/server.xml server.xml" />
-		</exec>
-
-		<replace file="server.xml">
-			<replacefilter token="genericJvmArguments=&quot;&quot;" value="genericJvmArguments=&quot;-Dfile.encoding=UTF8&quot;" />
-		</replace>
-
-		<exec executable="${pscp.executable}">
-			<arg line="-pw ${vm.password} server.xml ${vm.username}@${vm.host}:/Progra~1/IBM/WebSphere/AppServer/profiles/AppSrv01/config/cells/liferay-ead7385Node01Cell/nodes/liferay-ead7385Node01/servers/server1/server.xml" />
-		</exec>
-
-		<delete file="server.xml" />
-
-		<exec executable="${plink.executable}">
-			<arg line="-pw ${vm.password} ${vm.username}@${vm.host} cmd.exe /c C:\Progra~1\IBM\WebSphere\AppServer\profiles\AppSrv01\bin\startServer.bat server1" />
-		</exec>
-
-		<echo file="wsadmin.py">print AdminApp.list()
-
-print AdminApp.uninstall('DefaultApplication')
-
-print AdminConfig.save()
-
-print AdminApp.install('C:/liferay-portal-${lp.version}.war', '[-appname liferay-portal -contextroot /]')
-
-print AdminConfig.save()
-
-print AdminApp.list()
-
-print AdminApp.install('C:/tunnel-web.war', '[-appname liferay-tunnel-web -contextroot /tunnel-web]')
-
-print AdminConfig.save()
-
-print AdminApp.list()
-
-appManager = AdminControl.queryNames('type=ApplicationManager,process=server1,*')
-
-print appManager
-
-print AdminControl.invoke(appManager, 'startApplication', 'liferay-portal')
-print AdminControl.invoke(appManager, 'startApplication', 'liferay-tunnel-web')</echo>
-
-		<exec executable="${pscp.executable}">
-			<arg line="-pw ${vm.password} wsadmin.py ${vm.username}@${vm.host}:/" />
-		</exec>
-
-		<delete file="wsadmin.py" />
-
-		<exec executable="${plink.executable}">
-			<arg line="-pw ${vm.password} ${vm.username}@${vm.host} cmd.exe /c C:\Progra~1\IBM\WebSphere\AppServer\bin\wsadmin.bat -f C:\wsadmin.py" />
-		</exec>
-
-		<exec executable="${plink.executable}">
-			<arg line="-pw ${vm.password} ${vm.username}@${vm.host} cmd.exe /c C:\Progra~1\IBM\WebSphere\AppServer\profiles\AppSrv01\bin\stopServer.bat server1" />
-		</exec>
-
 		<antcall target="revert-test-properties" />
 
-		<replace
-			file="portal-impl/test/test-portal-impl.properties"
-			token="localhost:8080"
-			value="${vm.host}:9080"
-		/>
-
-		<replace
-			file="portal-web/test/test-portal-web.properties"
-			token="localhost:8080"
-			value="${vm.host}:9080"
-		/>
+		<antcall target="prepare-selenium" />
 
 		<antcall target="start-selenium" />
 
@@ -123,23 +28,27 @@ print AdminControl.invoke(appManager, 'startApplication', 'liferay-tunnel-web')<
 		</antcall>
 
 		<antcall target="stop-selenium" />
-
-		<exec dir="${vm.drive}/${vm.host}" executable="${vmware-cmd.executable}">
-			<arg line="${vm.drive}\${vm.host}\${vm.host}.vmx stop hard" />
-		</exec>
 	</target>
 
 	<target name="run-websphere-7.0">
-		<antcall target="rebuild-database" inheritAll="false" />
+		<antcall target="clean-up-logs" />
 
-		<exec executable="${plink.executable}">
-			<arg line="-pw ${vm.password} ${vm.username}@${vm.host} cmd.exe /c C:\Progra~1\IBM\WebSphere\AppServer\profiles\AppSrv01\bin\startServer.bat server1" />
-		</exec>
+		<record action="start" name="log" />
 
-		<antcall target="run-selenium-test" />
+		<antcall target="run-simple-server">
+			<param name="simple.server.dir" value="${app.server.websphere.dir}" />
+			<param name="simple.server.bin.dir" value="${app.server.websphere.bin.dir}" />
+			<param name="simple.server.deploy.dir" value="${app.server.websphere.deploy.dir}" />
+			<param name="simple.server.lib.global.dir" value="${app.server.websphere.lib.global.dir}" />
+			<param name="simple.server.portal.dir" value="${app.server.websphere.portal.dir}" />
+			<param name="simple.server.start.executable" value="startServer.bat" />
+			<param name="simple.server.start.executable.arg.line" value="server1" />
+			<param name="simple.server.stop.executable" value="stopServer.bat" />
+			<param name="simple.server.stop.executable.arg.line" value="server1" />
+		</antcall>
 
-		<exec executable="${plink.executable}">
-			<arg line="-pw ${vm.password} ${vm.username}@${vm.host} cmd.exe /c C:\Progra~1\IBM\WebSphere\AppServer\profiles\AppSrv01\bin\stopServer.bat server1" />
-		</exec>
+		<record action="stop" name="log" />
+
+		<antcall target="evaluate-logs" />
 	</target>
 </project>

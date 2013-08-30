@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -45,7 +45,7 @@ if (url != null) {
 			z = url.length();
 		}
 
-		url = url.substring(0, y) + url.substring(z, url.length());
+		url = url.substring(0, y) + url.substring(z);
 	}
 
 	// Strip trailing &
@@ -72,7 +72,7 @@ String backLabel = (String)request.getAttribute("liferay-ui:tabs:backLabel");
 String backURL = (String)request.getAttribute("liferay-ui:tabs:backURL");
 
 if (Validator.isNotNull(backURL) && !backURL.equals("javascript:history.go(-1);")) {
-	backURL = HtmlUtil.escape(HtmlUtil.escapeHREF(PortalUtil.escapeRedirect(backURL)));
+	backURL = HtmlUtil.escapeHREF(PortalUtil.escapeRedirect(backURL));
 }
 
 // Refresh
@@ -89,7 +89,7 @@ String onClick = GetterUtil.getString((String)request.getAttribute("liferay-ui:t
 	<%
 	String oldPortletURLValue = null;
 
-	if (portletURL != null) {
+	if ((portletURL != null) && (param != null)) {
 		oldPortletURLValue = portletURL.getParameter(param);
 	}
 	%>
@@ -101,7 +101,7 @@ String onClick = GetterUtil.getString((String)request.getAttribute("liferay-ui:t
 		<c:otherwise>
 			<input name="<%= namespace %><%= param %>TabsScroll" type="hidden" />
 
-			<ul class="aui-tabview-list">
+			<ul class="nav nav-tabs">
 		</c:otherwise>
 	</c:choose>
 
@@ -124,10 +124,10 @@ String onClick = GetterUtil.getString((String)request.getAttribute("liferay-ui:t
 					}
 					else {
 						if (values[i].equals("&raquo;")) {
-							curURL = url + separator + param + "=" + values[0] + anchor;
+							curURL = url + separator + namespace + param + "=" + values[0] + anchor;
 						}
 						else {
-							curURL = url + separator + param + "=" + values[i] + anchor;
+							curURL = url + separator + namespace + param + "=" + values[i] + anchor;
 						}
 					}
 				}
@@ -138,7 +138,7 @@ String onClick = GetterUtil.getString((String)request.getAttribute("liferay-ui:t
 						curURL += "document." + namespace + formName + "." + namespace + param + ".value = '" + names[i] + "';";
 					}
 
-					curURL += "Liferay.Portal.Tabs.show('" + namespace + param + "', " + namesJS + ", '" + names[i] + "');";
+					curURL += "Liferay.Portal.Tabs.show('" + namespace + param + "', " + namesJS + ", '" + UnicodeFormatter.toString(names[i]) + "');";
 				}
 			}
 		}
@@ -150,26 +150,17 @@ String onClick = GetterUtil.getString((String)request.getAttribute("liferay-ui:t
 				curOnClick = onClick + "('" + curURL + "', '" + values[i] + "'); return false;";
 			}
 			else {
-				curOnClick = "Liferay.Portal.Tabs.show('" + namespace + param + "', " + namesJS + ", '" + names[i] + "', " + onClick + ");";
-
+				curOnClick = "Liferay.Portal.Tabs.show('" + namespace + param + "', " + namesJS + ", '" + UnicodeFormatter.toString(names[i]) + "', " + onClick + ");";
 				curURL = "javascript:;";
 			}
 		}
 
 		boolean selected = (values.length == 1) || value.equals(values[i]);
 
-		String cssClassName = "aui-tab aui-state-default";
+		String cssClassName = "tab";
 
 		if (selected) {
-			cssClassName += " current aui-tab-active aui-state-active";
-		}
-
-		if (i == 0) {
-			cssClassName += " first";
-		}
-
-		if ((i == values.length - 1) && Validator.isNull(backURL)) {
-			cssClassName += " last";
+			cssClassName += " active";
 		}
 	%>
 
@@ -184,31 +175,9 @@ String onClick = GetterUtil.getString((String)request.getAttribute("liferay-ui:t
 			</c:when>
 			<c:otherwise>
 				<li class="<%= cssClassName %>" id="<%= namespace %><%= param %><%= StringUtil.toCharCode(values[i]) %>TabsId">
-					<span class="aui-tab-content">
-						<c:choose>
-							<c:when test="<%= Validator.isNotNull(curURL) && !selected %>">
-								<a class="aui-tab-label" href="<%= curURL %>"
-									<c:if test="<%= Validator.isNotNull(curOnClick) %>">
-										onClick="<%= curOnClick %>"
-									</c:if>
-								>
-							</c:when>
-							<c:otherwise>
-								<span class="aui-tab-label">
-							</c:otherwise>
-						</c:choose>
-
+					<a href="<%= Validator.isNotNull(curURL) ? curURL : "javascript:;" %>" onClick="<%= Validator.isNotNull(curOnClick) ? curOnClick : StringPool.BLANK %>">
 						<%= LanguageUtil.get(pageContext, names[i]) %>
-
-						<c:choose>
-							<c:when test="<%= Validator.isNotNull(curURL) && !selected %>">
-								</a>
-							</c:when>
-							<c:otherwise>
-								</span>
-							</c:otherwise>
-						</c:choose>
-					</span>
+					</a>
 				</li>
 			</c:otherwise>
 		</c:choose>
@@ -228,12 +197,8 @@ String onClick = GetterUtil.getString((String)request.getAttribute("liferay-ui:t
 				/>
 			</c:when>
 			<c:otherwise>
-				<li class="aui-tab toggle last">
-					<span class="aui-tab-content">
-						<span class="aui-tab-label">
-							<a href="<%= backURL %>" id="<%= namespace %><%= param %>TabsBack"><%= Validator.isNotNull(backLabel) ? backLabel : "&laquo;" + LanguageUtil.get(pageContext, "back") %></a>
-						</span>
-					</span>
+				<li>
+					<a class="tab" href="<%= backURL %>" id="<%= namespace %><%= param %>TabsBack"><%= Validator.isNotNull(backLabel) ? backLabel : "&laquo;" + LanguageUtil.get(pageContext, "back") %></a>
 				</li>
 			</c:otherwise>
 		</c:choose>
@@ -249,7 +214,7 @@ String onClick = GetterUtil.getString((String)request.getAttribute("liferay-ui:t
 	</c:choose>
 
 	<%
-	if (portletURL != null) {
+	if ((portletURL != null) && (param != null) && (oldPortletURLValue != null)) {
 		portletURL.setParameter(param, oldPortletURLValue);
 	}
 	%>

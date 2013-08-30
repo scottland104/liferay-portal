@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,8 +21,12 @@ import com.liferay.portal.kernel.util.TextFormatter;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.permission.ResourceActionsUtil;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Brian Wing Shun Chan
@@ -40,6 +44,7 @@ public class Entity {
 	public static final Accessor<Entity, String> NAME_ACCESSOR =
 		new Accessor<Entity, String>() {
 
+			@Override
 			public String get(Entity entity) {
 				return entity.getName();
 			}
@@ -61,21 +66,30 @@ public class Entity {
 	public static boolean hasColumn(
 		String name, List<EntityColumn> columnList) {
 
-		int pos = columnList.indexOf(new EntityColumn(name));
+		return hasColumn(name, null, columnList);
+	}
 
-		if (pos != -1) {
-			return true;
+	public static boolean hasColumn(
+		String name, String type, List<EntityColumn> columnList) {
+
+		int index = columnList.indexOf(new EntityColumn(name));
+
+		if (index != -1) {
+			EntityColumn col = columnList.get(index);
+
+			if ((type == null) || type.equals(col.getType())) {
+				return true;
+			}
 		}
-		else {
-			return false;
-		}
+
+		return false;
 	}
 
 	public Entity(String name) {
 		this(
-			null, null, null, name,  null,null, null, false, false, false, true,
-			null, null, null, null, null, true, false, null, null, null, null,
-			null, null, null, null, null);
+			null, null, null, name, null, null, null, false, false, false, true,
+			null, null, null, null, null, true, false, false, null, null, null,
+			null, null, null, null, null, null);
 	}
 
 	public Entity(
@@ -84,7 +98,7 @@ public class Entity {
 		boolean uuidAccessor, boolean localService, boolean remoteService,
 		String persistenceClass, String finderClass, String dataSource,
 		String sessionFactory, String txManager, boolean cacheEnabled,
-		boolean jsonEnabled, List<EntityColumn> pkList,
+		boolean jsonEnabled, boolean deprecated, List<EntityColumn> pkList,
 		List<EntityColumn> regularColList, List<EntityColumn> blobList,
 		List<EntityColumn> collectionList, List<EntityColumn> columnList,
 		EntityOrder order, List<EntityFinder> finderList,
@@ -110,6 +124,7 @@ public class Entity {
 		_txManager = GetterUtil.getString(txManager, DEFAULT_TX_MANAGER);
 		_cacheEnabled = cacheEnabled;
 		_jsonEnabled = jsonEnabled;
+		_deprecated = deprecated;
 		_pkList = pkList;
 		_regularColList = regularColList;
 		_blobList = blobList;
@@ -120,6 +135,21 @@ public class Entity {
 		_referenceList = referenceList;
 		_txRequiredList = txRequiredList;
 
+		if (_finderList != null) {
+			Set<EntityColumn> finderColumns = new HashSet<EntityColumn>();
+
+			for (EntityFinder entityFinder : _finderList) {
+				finderColumns.addAll(entityFinder.getColumns());
+			}
+
+			_finderColumnsList = new ArrayList<EntityColumn>(finderColumns);
+
+			Collections.sort(_finderColumnsList);
+		}
+		else {
+			_finderColumnsList = Collections.emptyList();
+		}
+
 		if ((_blobList != null) && !_blobList.isEmpty()) {
 			for (EntityColumn col : _blobList) {
 				if (!col.isLazy()) {
@@ -129,10 +159,28 @@ public class Entity {
 				}
 			}
 		}
+
+		if ((_columnList != null) && !_columnList.isEmpty()) {
+			for (EntityColumn col : _columnList) {
+				if (col.isContainerModel() || col.isParentContainerModel()) {
+					_containerModel = true;
+
+					break;
+				}
+			}
+		}
 	}
 
 	@Override
 	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof Entity)) {
+			return false;
+		}
+
 		Entity entity = (Entity)obj;
 
 		String name = entity.getName();
@@ -147,6 +195,24 @@ public class Entity {
 
 	public String getAlias() {
 		return _alias;
+	}
+
+	public List<EntityColumn> getBadNamedColumnsList() {
+		List<EntityColumn> badNamedColumnsList = ListUtil.copy(_columnList);
+
+		Iterator<EntityColumn> itr = badNamedColumnsList.iterator();
+
+		while (itr.hasNext()) {
+			EntityColumn col = itr.next();
+
+			String name = col.getName();
+
+			if (name.equals(col.getDBName())) {
+				itr.remove();
+			}
+		}
+
+		return badNamedColumnsList;
 	}
 
 	public List<EntityColumn> getBlobList() {
@@ -211,6 +277,10 @@ public class Entity {
 		return _finderClass;
 	}
 
+	public List<EntityColumn> getFinderColumnsList() {
+		return _finderColumnsList;
+	}
+
 	public List<EntityFinder> getFinderList() {
 		return _finderList;
 	}
@@ -247,17 +317,6 @@ public class Entity {
 		return _persistenceClass;
 	}
 
-	public String getPKDBName() {
-		if (hasCompoundPK()) {
-			return getVarName() + "PK";
-		}
-		else {
-			EntityColumn col = _getPKColumn();
-
-			return col.getDBName();
-		}
-	}
-
 	public String getPKClassName() {
 		if (hasCompoundPK()) {
 			return _name + "PK";
@@ -266,6 +325,17 @@ public class Entity {
 			EntityColumn col = _getPKColumn();
 
 			return col.getType();
+		}
+	}
+
+	public String getPKDBName() {
+		if (hasCompoundPK()) {
+			return getVarName() + "PK";
+		}
+		else {
+			EntityColumn col = _getPKColumn();
+
+			return col.getDBName();
 		}
 	}
 
@@ -281,6 +351,17 @@ public class Entity {
 			EntityColumn col = _getPKColumn();
 
 			return col.getName();
+		}
+	}
+
+	public String getPKVarNames() {
+		if (hasCompoundPK()) {
+			return getVarName() + "PKs";
+		}
+		else {
+			EntityColumn col = _getPKColumn();
+
+			return col.getNames();
 		}
 	}
 
@@ -341,7 +422,7 @@ public class Entity {
 		while (itr.hasNext()) {
 			EntityFinder finder = itr.next();
 
-			if (finder.isCollection()) {
+			if (finder.isCollection() && !finder.isUnique()) {
 				itr.remove();
 			}
 		}
@@ -357,6 +438,21 @@ public class Entity {
 		return TextFormatter.formatPlural(getVarName());
 	}
 
+	public boolean hasActionableDynamicQuery() {
+		if (hasColumns() && hasLocalService()) {
+			if (hasCompoundPK()) {
+				EntityColumn col = _pkList.get(0);
+
+				return col.isPrimitiveType();
+			}
+			else {
+				return hasPrimitivePK();
+			}
+		}
+
+		return false;
+	}
+
 	public boolean hasArrayableOperator() {
 		for (EntityFinder finder : _finderList) {
 			if (finder.hasArrayableOperator()) {
@@ -369,6 +465,10 @@ public class Entity {
 
 	public boolean hasColumn(String name) {
 		return hasColumn(name, _columnList);
+	}
+
+	public boolean hasColumn(String name, String type) {
+		return hasColumn(name, type, _columnList);
 	}
 
 	public boolean hasColumns() {
@@ -389,20 +489,6 @@ public class Entity {
 		}
 	}
 
-	public boolean hasFinderClass() {
-		if (Validator.isNull(_finderClass)) {
-			return false;
-		}
-		else {
-			return true;
-		}
-	}
-
-	@Override
-	public int hashCode() {
-		return _name.hashCode();
-	}
-
 	public boolean hasEagerBlobColumn() {
 		if ((_blobList == null) || _blobList.isEmpty()) {
 			return false;
@@ -415,6 +501,20 @@ public class Entity {
 		}
 
 		return false;
+	}
+
+	public boolean hasFinderClass() {
+		if (Validator.isNull(_finderClass)) {
+			return false;
+		}
+		else {
+			return true;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		return _name.hashCode();
 	}
 
 	public boolean hasLazyBlobColumn() {
@@ -446,7 +546,7 @@ public class Entity {
 	}
 
 	public boolean hasPrimitivePK() {
-		return 	hasPrimitivePK(true);
+		return hasPrimitivePK(true);
 	}
 
 	public boolean hasPrimitivePK(boolean includeWrappers) {
@@ -478,18 +578,16 @@ public class Entity {
 	}
 
 	public boolean isAttachedModel() {
-		if (hasColumn("classNameId") && hasColumn("classPK")) {
-			EntityColumn classNameIdCol = getColumn("classNameId");
+		if (!isTypedModel()) {
+			return false;
+		}
 
-			String classNameIdColType = classNameIdCol.getType();
-
+		if (hasColumn("classPK")) {
 			EntityColumn classPKCol = getColumn("classPK");
 
 			String classPKColType = classPKCol.getType();
 
-			if (classNameIdColType.equals("long") &&
-				classPKColType.equals("long")) {
-
+			if (classPKColType.equals("long")) {
 				return true;
 			}
 		}
@@ -498,19 +596,22 @@ public class Entity {
 	}
 
 	public boolean isAuditedModel() {
-		if (hasColumn("companyId") && hasColumn("createDate") &&
-			hasColumn("modifiedDate") && hasColumn("userId") &&
+		if (hasColumn("companyId") && hasColumn("createDate", "Date") &&
+			hasColumn("modifiedDate", "Date") && hasColumn("userId") &&
 			hasColumn("userName")) {
 
 			return true;
 		}
-		else {
-			return false;
-		}
+
+		return false;
 	}
 
 	public boolean isCacheEnabled() {
 		return _cacheEnabled;
+	}
+
+	public boolean isContainerModel() {
+		return _containerModel;
 	}
 
 	public boolean isDefaultDataSource() {
@@ -538,6 +639,10 @@ public class Entity {
 		else {
 			return false;
 		}
+	}
+
+	public boolean isDeprecated() {
+		return _deprecated;
 	}
 
 	public boolean isGroupedModel() {
@@ -640,6 +745,47 @@ public class Entity {
 		}
 	}
 
+	public boolean isStagedAuditedModel() {
+		if (isAuditedModel() && isStagedModel()) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public boolean isStagedGroupedModel() {
+		if (isGroupedModel() && isStagedModel()) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public boolean isStagedModel() {
+		if (hasUuid() && hasColumn("companyId") &&
+			hasColumn("createDate", "Date") &&
+			hasColumn("modifiedDate", "Date")) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	public boolean isTypedModel() {
+		if (hasColumn("classNameId")) {
+			EntityColumn classNameIdCol = getColumn("classNameId");
+
+			String classNameIdColType = classNameIdCol.getType();
+
+			if (classNameIdColType.equals("long")) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public boolean isWorkflowEnabled() {
 		if (hasColumn("status") && hasColumn("statusByUserId") &&
 			hasColumn("statusByUserName") && hasColumn("statusDate")) {
@@ -677,8 +823,11 @@ public class Entity {
 	private boolean _cacheEnabled;
 	private List<EntityColumn> _collectionList;
 	private List<EntityColumn> _columnList;
+	private boolean _containerModel;
 	private String _dataSource;
+	private boolean _deprecated;
 	private String _finderClass;
+	private List<EntityColumn> _finderColumnsList;
 	private List<EntityFinder> _finderList;
 	private String _humanName;
 	private boolean _jsonEnabled;

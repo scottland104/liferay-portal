@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -28,76 +28,48 @@ String newFeedId = ParamUtil.getString(request, "newFeedId");
 
 String structureId = BeanParamUtil.getString(feed, request, "structureId");
 
-JournalStructure structure = null;
+DDMStructure ddmStructure = null;
 
-String structureName = StringPool.BLANK;
+String ddmStructureName = StringPool.BLANK;
 
 if (Validator.isNotNull(structureId)) {
 	try {
-		structure = JournalStructureLocalServiceUtil.getStructure(groupId, structureId);
+		ddmStructure = DDMStructureLocalServiceUtil.getStructure(themeDisplay.getSiteGroupId(), PortalUtil.getClassNameId(JournalArticle.class), structureId, true);
 
-		structureName = structure.getName();
+		ddmStructureName = ddmStructure.getName(locale);
 	}
-	catch (NoSuchStructureException nsse1) {
-		if (groupId != themeDisplay.getCompanyGroupId()) {
-			try {
-				structure = JournalStructureLocalServiceUtil.getStructure(themeDisplay.getCompanyGroupId(), structureId);
-
-				structureName = structure.getName();
-			}
-			catch (NoSuchStructureException nsse2) {
-			}
-		}
+	catch (NoSuchStructureException nsse) {
 	}
 }
 
-List<JournalTemplate> templates = new ArrayList<JournalTemplate>();
+List<DDMTemplate> ddmTemplates = new ArrayList<DDMTemplate>();
 
-if (structure != null) {
-	templates.addAll(JournalTemplateLocalServiceUtil.getStructureTemplates(themeDisplay.getCompanyGroupId(), structureId));
-	templates.addAll(JournalTemplateLocalServiceUtil.getStructureTemplates(groupId, structureId));
+if (ddmStructure != null) {
+	ddmTemplates.addAll(DDMTemplateLocalServiceUtil.getTemplates(themeDisplay.getCompanyGroupId(), PortalUtil.getClassNameId(DDMStructure.class), ddmStructure.getStructureId()));
+	ddmTemplates.addAll(DDMTemplateLocalServiceUtil.getTemplates(themeDisplay.getSiteGroupId(), PortalUtil.getClassNameId(DDMStructure.class), ddmStructure.getStructureId()));
 }
 
 String templateId = BeanParamUtil.getString(feed, request, "templateId");
 
-if ((structure == null) && Validator.isNotNull(templateId)) {
-	JournalTemplate template = null;
+if ((ddmStructure == null) && Validator.isNotNull(templateId)) {
+	DDMTemplate ddmTemplate = null;
 
 	try {
-		template = JournalTemplateLocalServiceUtil.getTemplate(groupId, templateId);
+		ddmTemplate = DDMTemplateLocalServiceUtil.getTemplate(themeDisplay.getSiteGroupId(), PortalUtil.getClassNameId(DDMStructure.class), templateId, true);
 	}
-	catch (NoSuchTemplateException nste1) {
-		if (groupId != themeDisplay.getCompanyGroupId()) {
-			try {
-				template = JournalTemplateLocalServiceUtil.getTemplate(themeDisplay.getCompanyGroupId(), templateId);
-			}
-			catch (NoSuchTemplateException nste2) {
-			}
-		}
+	catch (NoSuchTemplateException nste) {
 	}
 
-	if (template != null) {
-		structureId = template.getStructureId();
-
+	if (ddmTemplate != null) {
 		try {
-			structure = JournalStructureLocalServiceUtil.getStructure(groupId, structureId);
+			ddmStructure = DDMStructureLocalServiceUtil.getStructure(ddmTemplate.getClassPK());
 
-			structureName = structure.getName();
+			structureId = ddmStructure.getStructureKey();
+			ddmStructureName = ddmStructure.getName(locale);
 
-			templates = JournalTemplateLocalServiceUtil.getStructureTemplates(groupId, structureId);
+			ddmTemplates = DDMTemplateLocalServiceUtil.getTemplates(themeDisplay.getSiteGroupId(), PortalUtil.getClassNameId(DDMStructure.class), ddmTemplate.getClassPK());
 		}
-		catch (NoSuchStructureException nsse1) {
-			if (groupId != themeDisplay.getCompanyGroupId()) {
-				try {
-					structure = JournalStructureLocalServiceUtil.getStructure(themeDisplay.getCompanyGroupId(), structureId);
-
-					structureName = structure.getName();
-
-					templates = JournalTemplateLocalServiceUtil.getStructureTemplates(themeDisplay.getCompanyGroupId(), structureId);
-				}
-				catch (NoSuchStructureException nsse2) {
-				}
-			}
+		catch (NoSuchStructureException nsse) {
 		}
 	}
 }
@@ -106,12 +78,14 @@ String rendererTemplateId = BeanParamUtil.getString(feed, request, "rendererTemp
 
 String contentField = BeanParamUtil.getString(feed, request, "contentField");
 
-if (Validator.isNull(contentField) || ((structure == null) && !contentField.equals(JournalFeedConstants.WEB_CONTENT_DESCRIPTION) && !contentField.equals(JournalFeedConstants.RENDERED_WEB_CONTENT))) {
+if (Validator.isNull(contentField) || ((ddmStructure == null) && !contentField.equals(JournalFeedConstants.WEB_CONTENT_DESCRIPTION) && !contentField.equals(JournalFeedConstants.RENDERED_WEB_CONTENT))) {
 	contentField = JournalFeedConstants.WEB_CONTENT_DESCRIPTION;
 }
 
-String feedType = BeanParamUtil.getString(feed, request, "feedType", RSSUtil.DEFAULT_TYPE);
+String feedFormat = BeanParamUtil.getString(feed, request, "feedFormat", RSSUtil.FORMAT_DEFAULT);
 double feedVersion = BeanParamUtil.getDouble(feed, request, "feedVersion", RSSUtil.VERSION_DEFAULT);
+
+String feedType = RSSUtil.getFeedType(feedFormat, feedVersion);
 
 ResourceURL feedURL = null;
 
@@ -132,12 +106,13 @@ if (feed != null) {
 	<portlet:param name="struts_action" value="/journal/edit_feed" />
 </portlet:actionURL>
 
-<aui:form action="<%= editFeedURL %>" enctype="multipart/form-data" method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "saveFeed();" %>' >
+<aui:form action="<%= editFeedURL %>" enctype="multipart/form-data" method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "saveFeed();" %>'>
 	<aui:input name="<%= Constants.CMD %>" type="hidden" value="" />
-	<aui:input name="redirect" type="hidden" value="" />
+	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 	<aui:input name="groupId" type="hidden" value="<%= groupId %>" />
 	<aui:input name="feedId" type="hidden" value="<%= feedId %>" />
 	<aui:input name="rendererTemplateId" type="hidden" value="<%= rendererTemplateId %>" />
+	<aui:input name="contentField" type="hidden" value="<%= contentField %>" />
 
 	<liferay-ui:header
 		backURL="<%= redirect %>"
@@ -163,7 +138,7 @@ if (feed != null) {
 						<aui:input name="autoFeedId" type="hidden" value="<%= true %>" />
 					</c:when>
 					<c:otherwise>
-						<aui:input cssClass="lfr-input-text-container" field="feedId" fieldParam="newFeedId" label="id" name="newFeedId" value="<%= newFeedId %>" />
+						<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" cssClass="lfr-input-text-container" field="feedId" fieldParam="newFeedId" label="id" name="newFeedId" value="<%= newFeedId %>" />
 
 						<aui:input label="autogenerate-id" name="autoFeedId" type="checkbox" />
 					</c:otherwise>
@@ -171,12 +146,12 @@ if (feed != null) {
 			</c:when>
 			<c:otherwise>
 				<aui:field-wrapper label="id">
-					<%= feedId %>
+					<%= HtmlUtil.escape(feedId) %>
 				</aui:field-wrapper>
 			</c:otherwise>
 		</c:choose>
 
-		<aui:input cssClass="lfr-input-text-container" name="name" />
+		<aui:input autoFocus="<%= ((feed != null) && !PropsValues.JOURNAL_FEED_FORCE_AUTOGENERATE_ID && windowState.equals(WindowState.MAXIMIZED)) %>" cssClass="lfr-input-text-container" name="name" />
 
 		<aui:input cssClass="lfr-textarea-container" name="description" />
 
@@ -218,14 +193,7 @@ if (feed != null) {
 				<aui:field-wrapper label="structure">
 					<aui:input name="structureId" type="hidden" value="<%= structureId %>" />
 
-					<portlet:renderURL var="structureURL">
-						<portlet:param name="struts_action" value="/journal/edit_structure" />
-						<portlet:param name="redirect" value="<%= currentURL %>" />
-						<portlet:param name="groupId" value="<%= String.valueOf(groupId) %>" />
-						<portlet:param name="parentStructureId" value="<%= structureId %>" />
-					</portlet:renderURL>
-
-					<aui:a href="<%= structureURL %>" label="<%= structureName %>" id="structureName" />
+					<%= HtmlUtil.escape(ddmStructureName) %>
 
 					<aui:button name="selectStructureButton" onClick='<%= renderResponse.getNamespace() + "openStructureSelector();" %>' value="select" />
 
@@ -234,15 +202,13 @@ if (feed != null) {
 
 				<aui:field-wrapper label="template">
 					<c:choose>
-						<c:when test="<%= templates.isEmpty() %>">
+						<c:when test="<%= ddmTemplates.isEmpty() %>">
 							<aui:input name="templateId" type="hidden" value="<%= templateId %>" />
-
-							<aui:button name="selectTemplateButton" onClick='<%= renderResponse.getNamespace() + "openTemplateSelector();" %>' value="select" />
 						</c:when>
 						<c:otherwise>
 							<liferay-ui:table-iterator
-								list="<%= templates %>"
-								listType="com.liferay.portlet.journal.model.JournalTemplate"
+								list="<%= ddmTemplates %>"
+								listType="com.liferay.portlet.dynamicdatamapping.model.DDMTemplate"
 								rowLength="3"
 								rowPadding="30"
 							>
@@ -250,26 +216,17 @@ if (feed != null) {
 								<%
 								boolean templateChecked = false;
 
-								if (templateId.equals(tableIteratorObj.getTemplateId())) {
+								if (templateId.equals(tableIteratorObj.getTemplateKey())) {
 									templateChecked = true;
 								}
 								%>
 
-								<aui:input checked="<%= templateChecked %>" name="templateId" type="radio" value="<%= tableIteratorObj.getTemplateId() %>" />
-
-								<portlet:renderURL var="templateURL">
-									<portlet:param name="struts_action" value="/journal/edit_template" />
-									<portlet:param name="redirect" value="<%= currentURL %>" />
-									<portlet:param name="groupId" value="<%= String.valueOf(tableIteratorObj.getGroupId()) %>" />
-									<portlet:param name="templateId" value="<%= tableIteratorObj.getTemplateId() %>" />
-								</portlet:renderURL>
-
-								<aui:a href="<%= templateURL %>"><%= tableIteratorObj.getName() %></aui:a>
+								<aui:input checked="<%= templateChecked %>" label="<%= HtmlUtil.escape(tableIteratorObj.getName(locale)) %>" name="templateId" type="radio" value="<%= tableIteratorObj.getTemplateKey() %>" />
 
 								<c:if test="<%= tableIteratorObj.isSmallImage() %>">
 									<br />
 
-									<img border="0" hspace="0" src="<%= Validator.isNotNull(tableIteratorObj.getSmallImageURL()) ? tableIteratorObj.getSmallImageURL() : themeDisplay.getPathImage() + "/journal/template?img_id=" + tableIteratorObj.getSmallImageId() + "&t=" + ImageServletTokenUtil.getToken(tableIteratorObj.getSmallImageId()) %>" vspace="0" />
+									<img border="0" hspace="0" src="<%= Validator.isNotNull(tableIteratorObj.getSmallImageURL()) ? tableIteratorObj.getSmallImageURL() : themeDisplay.getPathImage() + "/journal/template?img_id=" + tableIteratorObj.getSmallImageId() + "&t=" + WebServerServletTokenUtil.getToken(tableIteratorObj.getSmallImageId()) %>" vspace="0" />
 								</c:if>
 							</liferay-ui:table-iterator>
 						</c:otherwise>
@@ -280,24 +237,19 @@ if (feed != null) {
 
 		<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id="journalPresentationSettingsPanel" persistState="<%= true %>" title="presentation-settings">
 			<aui:fieldset>
-				<aui:select label="feed-item-content" name="contentField">
+				<aui:select label="feed-item-content" name="contentFieldSelector">
+					<aui:option label="<%= JournalFeedConstants.WEB_CONTENT_DESCRIPTION %>" selected="<%= contentField.equals(JournalFeedConstants.WEB_CONTENT_DESCRIPTION) %>" />
 
-					<%
-					String taglibSelectRendererTemplateOption = renderResponse.getNamespace() + "selectRendererTemplate('');";
-					%>
-
-					<aui:option label="<%= JournalFeedConstants.RENDERED_WEB_CONTENT %>" onClick="<%= taglibSelectRendererTemplateOption %>" selected="<%= contentField.equals(JournalFeedConstants.WEB_CONTENT_DESCRIPTION) %>" />
 					<optgroup label='<liferay-ui:message key="<%= JournalFeedConstants.RENDERED_WEB_CONTENT %>" />'>
-						<aui:option label="use-default-template" onClick="<%= taglibSelectRendererTemplateOption %>" selected="<%= contentField.equals(JournalFeedConstants.RENDERED_WEB_CONTENT) %>" value="<%= JournalFeedConstants.RENDERED_WEB_CONTENT %>" />
+						<aui:option data-contentField="<%= JournalFeedConstants.RENDERED_WEB_CONTENT %>" label="use-default-template" selected="<%= contentField.equals(JournalFeedConstants.RENDERED_WEB_CONTENT) %>" value="" />
 
-						<c:if test="<%= (structure != null) && (templates.size() > 1) %>">
+						<c:if test="<%= (ddmStructure != null) && (ddmTemplates.size() > 1) %>">
 
 							<%
-							for (JournalTemplate currTemplate : templates) {
-								taglibSelectRendererTemplateOption = renderResponse.getNamespace() + "selectRendererTemplate('" + currTemplate.getTemplateId() + "');";
+							for (DDMTemplate curTemplate : ddmTemplates) {
 							%>
 
-								<aui:option label='<%= LanguageUtil.format(pageContext, "use-template-x", currTemplate.getName()) %>' onClick="<%= taglibSelectRendererTemplateOption %>" selected="<%= rendererTemplateId.equals(currTemplate.getTemplateId()) %>" value="<%= JournalFeedConstants.RENDERED_WEB_CONTENT %>" />
+								<aui:option data-contentField="<%= JournalFeedConstants.RENDERED_WEB_CONTENT %>" label='<%= LanguageUtil.format(pageContext, "use-template-x", HtmlUtil.escape(curTemplate.getName(locale))) %>' selected="<%= rendererTemplateId.equals(curTemplate.getTemplateKey()) %>" value="<%= curTemplate.getTemplateKey() %>" />
 
 							<%
 							}
@@ -306,11 +258,11 @@ if (feed != null) {
 						</c:if>
 					</optgroup>
 
-					<c:if test="<%= structure != null %>">
+					<c:if test="<%= ddmStructure != null %>">
 						<optgroup label="<liferay-ui:message key="structure-fields" />">
 
 							<%
-							Document doc = SAXReaderUtil.read(structure.getXsd());
+							Document doc = SAXReaderUtil.read(ddmStructure.getXsd());
 
 							XPath xpathSelector = SAXReaderUtil.createXPath("//dynamic-element");
 
@@ -323,10 +275,9 @@ if (feed != null) {
 								String elType = StringUtil.replace(el.attributeValue("type"), StringPool.UNDERLINE, StringPool.DASH);
 
 								if (!elType.equals("boolean") && !elType.equals("list") && !elType.equals("multi-list")) {
-									taglibSelectRendererTemplateOption = renderResponse.getNamespace() + "selectRendererTemplate('');";
 							%>
 
-									<aui:option label='<%= TextFormatter.format(elName, TextFormatter.J) + "(" + LanguageUtil.get(pageContext, elType) + ")" %>' onClick="<%= taglibSelectRendererTemplateOption %>" selected="<%= contentField.equals(elName) %>" value="<%= elName %>" />
+									<aui:option label='<%= TextFormatter.format(elName, TextFormatter.J) + "(" + LanguageUtil.get(pageContext, elType) + ")" %>' selected="<%= contentField.equals(elName) %>" value="<%= elName %>" />
 
 							<%
 								}
@@ -337,23 +288,13 @@ if (feed != null) {
 					</c:if>
 				</aui:select>
 
-				<aui:select label="feed-type" name="feedTypeAndVersion">
+				<aui:select name="feedType">
 
 					<%
-					for (int i = 4; i < RSSUtil.RSS_VERSIONS.length; i++) {
+					for (String curFeedType : RSSUtil.FEED_TYPES) {
 					%>
 
-						<aui:option label="<%= LanguageUtil.get(pageContext, RSSUtil.RSS) + StringPool.SPACE + RSSUtil.RSS_VERSIONS[i] %>" selected="<%= feedType.equals(RSSUtil.RSS) && (feedVersion == RSSUtil.RSS_VERSIONS[i]) %>" value="<%= RSSUtil.RSS + StringPool.COLON + RSSUtil.RSS_VERSIONS[i]%>" />
-
-					<%
-					}
-					%>
-
-					<%
-					for (int i = 1; i < RSSUtil.ATOM_VERSIONS.length; i++) {
-					%>
-
-						<aui:option label="<%= LanguageUtil.get(pageContext, RSSUtil.ATOM) + StringPool.SPACE + RSSUtil.ATOM_VERSIONS[i] %>" selected="<%= feedType.equals(RSSUtil.ATOM) && (feedVersion == RSSUtil.ATOM_VERSIONS[i]) %>" value="<%= RSSUtil.ATOM + StringPool.COLON + RSSUtil.ATOM_VERSIONS[i]%>" />
+						<aui:option label="<%= RSSUtil.getFeedTypeName(curFeedType) %>" selected="<%= feedType.equals(curFeedType) %>" value="<%= curFeedType %>" />
 
 					<%
 					}
@@ -377,15 +318,29 @@ if (feed != null) {
 	</liferay-ui:panel-container>
 
 	<aui:button-row>
-		<aui:button type="submit" />
 
-		<c:if test="<%= feed != null %>">
+		<%
+		boolean hasSavePermission = false;
 
-			<%
-			String taglibPreviewButton = "Liferay.Util.openWindow({uri: '" + feedURL + "', title: '" + UnicodeLanguageUtil.get(pageContext, "feed") + "'});";
-			%>
+		if (feed != null) {
+			hasSavePermission = JournalFeedPermission.contains(permissionChecker, feed, ActionKeys.UPDATE);
+		}
+		else {
+			hasSavePermission = JournalPermission.contains(permissionChecker, scopeGroupId, ActionKeys.ADD_FEED);
+		}
+		%>
 
-			<aui:button onClick="<%= taglibPreviewButton %>" value="preview" />
+		<c:if test="<%= hasSavePermission %>">
+			<aui:button type="submit" />
+
+			<c:if test="<%= feed != null %>">
+
+				<%
+				String taglibPreviewButton = "Liferay.Util.openWindow({id:'" + renderResponse.getNamespace() + "preview', title: '" + UnicodeLanguageUtil.get(pageContext, "feed") + "', uri: '" + feedURL + "'});";
+				%>
+
+				<aui:button onClick="<%= taglibPreviewButton %>" value="preview" />
+			</c:if>
 		</c:if>
 
 		<aui:button href="<%= redirect %>" type="cancel" />
@@ -394,27 +349,34 @@ if (feed != null) {
 
 <aui:script>
 	function <portlet:namespace />openStructureSelector() {
-		Liferay.Util.openWindow(
+		Liferay.Util.openDDMPortlet(
 			{
+				basePortletURL: '<%= PortletURLFactoryUtil.create(request, PortletKeys.DYNAMIC_DATA_MAPPING, themeDisplay.getPlid(), PortletRequest.RENDER_PHASE) %>',
+				classPK: <%= (ddmStructure != null) ? ddmStructure.getPrimaryKey(): 0 %>,
 				dialog: {
-					stack: false,
-					width: 680
+					destroyOnHide: true
 				},
-				title: '<liferay-ui:message key="structure" />',
-				uri: '<portlet:renderURL windowState="<%= LiferayWindowState.POP_UP.toString() %>"><portlet:param name="struts_action" value="/journal/select_structure" /><portlet:param name="groupId" value="<%= String.valueOf(groupId) %>" /></portlet:renderURL>'
-			}
-		);
-	}
+				eventName: '<portlet:namespace />selectStructure',
+				groupId: <%= themeDisplay.getSiteGroupId() %>,
 
-	function <portlet:namespace />openTemplateSelector() {
-		Liferay.Util.openWindow(
-			{
-				dialog: {
-					stack: false,
-					width: 680
-				},
-				title: '<liferay-ui:message key="template" />',
-				uri: '<portlet:renderURL windowState="<%= LiferayWindowState.POP_UP.toString() %>"><portlet:param name="struts_action" value="/journal/select_template" /><portlet:param name="groupId" value="<%= String.valueOf(groupId) %>" /></portlet:renderURL>'
+				<%
+				Portlet portlet = PortletLocalServiceUtil.getPortletById(portletDisplay.getId());
+				%>
+
+				refererPortletName: '<%= PortletKeys.JOURNAL %>',
+				refererWebDAVToken: '<%= portlet.getWebDAVStorageToken() %>',
+				struts_action: '/dynamic_data_mapping/select_structure',
+				title: '<%= UnicodeLanguageUtil.get(pageContext, "structures") %>'
+			},
+			function(event) {
+				if (confirm('<%= UnicodeLanguageUtil.get(pageContext, "selecting-a-new-structure-will-change-the-available-templates-and-available-feed-item-content") %>') && (document.<portlet:namespace />fm.<portlet:namespace />structureId.value != event.structurekey)) {
+					document.<portlet:namespace />fm.<portlet:namespace />structureId.value = event.ddmstructurekey;
+					document.<portlet:namespace />fm.<portlet:namespace />templateId.value = "";
+					document.<portlet:namespace />fm.<portlet:namespace />rendererTemplateId.value = "";
+					document.<portlet:namespace />fm.<portlet:namespace />contentField.value = "<%= JournalFeedConstants.WEB_CONTENT_DESCRIPTION %>";
+
+					submitForm(document.<portlet:namespace />fm);
+				}
 			}
 		);
 	}
@@ -424,12 +386,12 @@ if (feed != null) {
 		document.<portlet:namespace />fm.<portlet:namespace />templateId.value = "";
 		document.<portlet:namespace />fm.<portlet:namespace />rendererTemplateId.value = "";
 		document.<portlet:namespace />fm.<portlet:namespace />contentField.value = "<%= JournalFeedConstants.WEB_CONTENT_DESCRIPTION %>";
+
 		submitForm(document.<portlet:namespace />fm);
 	}
 
 	function <portlet:namespace />saveFeed() {
 		document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= feed == null ? Constants.ADD : Constants.UPDATE %>";
-		document.<portlet:namespace />fm.<portlet:namespace />redirect.value = "<%= HtmlUtil.escapeURL(redirect) %>";
 
 		<c:if test="<%= feed == null %>">
 			document.<portlet:namespace />fm.<portlet:namespace />feedId.value = document.<portlet:namespace />fm.<portlet:namespace />newFeedId.value;
@@ -442,28 +404,13 @@ if (feed != null) {
 		document.<portlet:namespace />fm.<portlet:namespace />rendererTemplateId.value = rendererTemplateId;
 	}
 
-	function <portlet:namespace />selectStructure(structureId, structureName, dialog) {
-		if (confirm('<%= UnicodeLanguageUtil.get(pageContext, "selecting-a-new-structure-will-change-the-available-templates-and-available-feed-item-content") %>') && document.<portlet:namespace />fm.<portlet:namespace />structureId.value != structureId) {
-			document.<portlet:namespace />fm.<portlet:namespace />structureId.value = structureId;
-			document.<portlet:namespace />fm.<portlet:namespace />templateId.value = "";
-			document.<portlet:namespace />fm.<portlet:namespace />rendererTemplateId.value = "";
-			document.<portlet:namespace />fm.<portlet:namespace />contentField.value = "<%= JournalFeedConstants.WEB_CONTENT_DESCRIPTION %>";
-
-			if (dialog) {
-				dialog.close();
-			}
-
-			submitForm(document.<portlet:namespace />fm);
-		}
-	}
-
 	function <portlet:namespace />selectTemplate(structureId, templateId, dialog) {
 		if (confirm('<%= UnicodeLanguageUtil.get(pageContext, "selecting-a-template-will-change-the-structure,-available-input-fields,-and-available-templates") %>')) {
 			document.<portlet:namespace />fm.<portlet:namespace />structureId.value = structureId;
 			document.<portlet:namespace />fm.<portlet:namespace />templateId.value = templateId;
 
 			if (dialog) {
-				dialog.close();
+				dialog.hide();
 			}
 
 			submitForm(document.<portlet:namespace />fm);
@@ -471,15 +418,26 @@ if (feed != null) {
 	}
 
 	Liferay.Util.disableToggleBoxes('<portlet:namespace />autoFeedIdCheckbox','<portlet:namespace />newFeedId', true);
+</aui:script>
 
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-		<c:choose>
-			<c:when test="<%= PropsValues.JOURNAL_FEED_FORCE_AUTOGENERATE_ID %>">
-				Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />name);
-			</c:when>
-			<c:otherwise>
-				Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace /><%= (feed == null) ? "newFeedId" : "name" %>);
-			</c:otherwise>
-		</c:choose>
-	</c:if>
+<aui:script use="aui-base">
+	var feedItemContentSelector = A.one('select#<portlet:namespace />contentFieldSelector');
+
+	var changeFeedItemContent = function() {
+		var selectedFeedItemOption = feedItemContentSelector.one(':selected');
+
+		var data = selectedFeedItemOption.attr('data-contentField');
+		var value = selectedFeedItemOption.attr('value');
+
+		if (data === '<%= JournalFeedConstants.RENDERED_WEB_CONTENT %>') {
+			document.<portlet:namespace />fm.<portlet:namespace />rendererTemplateId.value = value;
+			document.<portlet:namespace />fm.<portlet:namespace />contentField.value = '<%= JournalFeedConstants.RENDERED_WEB_CONTENT %>';
+		}
+		else {
+			document.<portlet:namespace />fm.<portlet:namespace />rendererTemplateId.value = '';
+			document.<portlet:namespace />fm.<portlet:namespace />contentField.value = value;
+		}
+	}
+
+	feedItemContentSelector.on('change', changeFeedItemContent);
 </aui:script>

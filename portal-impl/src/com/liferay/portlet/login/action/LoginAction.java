@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,7 @@
 
 package com.liferay.portlet.login.action;
 
+import com.liferay.portal.CompanyMaxUsersException;
 import com.liferay.portal.CookieNotSupportedException;
 import com.liferay.portal.NoSuchUserException;
 import com.liferay.portal.PasswordExpiredException;
@@ -28,21 +29,27 @@ import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.model.Layout;
 import com.liferay.portal.security.auth.AuthException;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.PortletPreferencesFactoryUtil;
+import com.liferay.portlet.PortletURLImpl;
 import com.liferay.portlet.login.util.LoginUtil;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
 import javax.portlet.PortletPreferences;
+import javax.portlet.PortletRequest;
+import javax.portlet.PortletURL;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
+import javax.portlet.WindowState;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -59,8 +66,9 @@ public class LoginAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
@@ -81,10 +89,12 @@ public class LoginAction extends PortletAction {
 		}*/
 
 		try {
-			PortletPreferences preferences =
+			PortletPreferences portletPreferences =
 				PortletPreferencesFactoryUtil.getPortletSetup(actionRequest);
 
-			login(themeDisplay, actionRequest, actionResponse, preferences);
+			login(
+				themeDisplay, actionRequest, actionResponse,
+				portletPreferences);
 
 			boolean doActionAfterLogin = ParamUtil.getBoolean(
 				actionRequest, "doActionAfterLogin");
@@ -100,18 +110,18 @@ public class LoginAction extends PortletAction {
 				if (cause instanceof PasswordExpiredException ||
 					cause instanceof UserLockoutException) {
 
-					SessionErrors.add(
-						actionRequest, cause.getClass().getName());
+					SessionErrors.add(actionRequest, cause.getClass());
 				}
 				else {
 					if (_log.isInfoEnabled()) {
 						_log.info("Authentication failed");
 					}
 
-					SessionErrors.add(actionRequest, e.getClass().getName());
+					SessionErrors.add(actionRequest, e.getClass());
 				}
 			}
-			else if (e instanceof CookieNotSupportedException ||
+			else if (e instanceof CompanyMaxUsersException ||
+					 e instanceof CookieNotSupportedException ||
 					 e instanceof NoSuchUserException ||
 					 e instanceof PasswordExpiredException ||
 					 e instanceof UserEmailAddressException ||
@@ -120,23 +130,28 @@ public class LoginAction extends PortletAction {
 					 e instanceof UserPasswordException ||
 					 e instanceof UserScreenNameException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 			}
 			else {
 				_log.error(e, e);
 
 				PortalUtil.sendError(e, actionRequest, actionResponse);
+
+				return;
 			}
+
+			postProcessAuthFailure(actionRequest, actionResponse);
 		}
 	}
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
-		return mapping.findForward(
+		return actionMapping.findForward(
 			getForward(renderRequest, "portlet.login.login"));
 	}
 
@@ -150,9 +165,9 @@ public class LoginAction extends PortletAction {
 
 		String portalURL = null;
 
-		if ((PropsValues.COMPANY_SECURITY_AUTH_REQUIRES_HTTPS) &&
-			(!PropsValues.SESSION_ENABLE_PHISHING_PROTECTION) &&
-			(httpsInitial != null) && (!httpsInitial.booleanValue())) {
+		if (PropsValues.COMPANY_SECURITY_AUTH_REQUIRES_HTTPS &&
+			!PropsValues.SESSION_ENABLE_PHISHING_PROTECTION &&
+			(httpsInitial != null) && !httpsInitial.booleanValue()) {
 
 			portalURL = PortalUtil.getPortalURL(request, false);
 		}
@@ -170,7 +185,8 @@ public class LoginAction extends PortletAction {
 
 	protected void login(
 			ThemeDisplay themeDisplay, ActionRequest actionRequest,
-			ActionResponse actionResponse, PortletPreferences preferences)
+			ActionResponse actionResponse,
+			PortletPreferences portletPreferences)
 		throws Exception {
 
 		HttpServletRequest request = PortalUtil.getHttpServletRequest(
@@ -182,10 +198,12 @@ public class LoginAction extends PortletAction {
 		String password = actionRequest.getParameter("password");
 		boolean rememberMe = ParamUtil.getBoolean(actionRequest, "rememberMe");
 
-		String authType = preferences.getValue("authType", null);
+		String authType = portletPreferences.getValue("authType", null);
 
-		LoginUtil.login(
-			request, response, login, password, rememberMe, authType);
+		if (!themeDisplay.isSignedIn()) {
+			LoginUtil.login(
+				request, response, login, password, rememberMe, authType);
+		}
 
 		if (PropsValues.PORTAL_JAAS_ENABLE) {
 			actionResponse.sendRedirect(
@@ -215,6 +233,28 @@ public class LoginAction extends PortletAction {
 				}
 			}
 		}
+	}
+
+	protected void postProcessAuthFailure(
+			ActionRequest actionRequest, ActionResponse actionResponse)
+		throws Exception {
+
+		Layout layout = (Layout)actionRequest.getAttribute(WebKeys.LAYOUT);
+
+		PortletURL portletURL = new PortletURLImpl(
+			actionRequest, PortletKeys.LOGIN, layout.getPlid(),
+			PortletRequest.RENDER_PHASE);
+
+		String redirect = ParamUtil.getString(actionRequest, "redirect");
+
+		if (Validator.isNotNull(redirect)) {
+			portletURL.setParameter(
+				"redirect", PortalUtil.escapeRedirect(redirect));
+		}
+
+		portletURL.setWindowState(WindowState.MAXIMIZED);
+
+		actionResponse.sendRedirect(portletURL.toString());
 	}
 
 	private static final boolean _CHECK_METHOD_ON_PROCESS_ACTION = false;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -41,25 +41,26 @@ import java.util.Map;
 public class TeamFinderImpl
 	extends BasePersistenceImpl<Team> implements TeamFinder {
 
-	public static String COUNT_BY_G_N_D =
+	public static final String COUNT_BY_G_N_D =
 		TeamFinder.class.getName() + ".countByG_N_D";
 
-	public static String FIND_BY_G_N_D =
+	public static final String FIND_BY_G_N_D =
 		TeamFinder.class.getName() + ".findByG_N_D";
 
-	public static String JOIN_BY_USERS_TEAMS =
+	public static final String JOIN_BY_USERS_TEAMS =
 		TeamFinder.class.getName() + ".joinByUsersTeams";
 
-	public static String JOIN_BY_USERS_USER_GROUPS =
+	public static final String JOIN_BY_USERS_USER_GROUPS =
 		TeamFinder.class.getName() + ".joinByUsersUserGroups";
 
+	@Override
 	public int countByG_N_D(
 			long groupId, String name, String description,
 			LinkedHashMap<String, Object> params)
 		throws SystemException {
 
-		name = StringUtil.lowerCase(name);
-		description = StringUtil.lowerCase(description);
+		name = CustomSQLUtil.keywords(name)[0];
+		description = CustomSQLUtil.keywords(description)[0];
 
 		Session session = null;
 
@@ -78,13 +79,14 @@ public class TeamFinderImpl
 			QueryPos qPos = QueryPos.getInstance(q);
 
 			setJoin(qPos, params);
+
 			qPos.add(groupId);
 			qPos.add(name);
 			qPos.add(name);
 			qPos.add(description);
 			qPos.add(description);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -104,14 +106,15 @@ public class TeamFinderImpl
 		}
 	}
 
+	@Override
 	public List<Team> findByG_N_D(
 			long groupId, String name, String description,
 			LinkedHashMap<String, Object> params, int start, int end,
 			OrderByComparator obc)
 		throws SystemException {
 
-		name = StringUtil.lowerCase(name);
-		description = StringUtil.lowerCase(description);
+		name = CustomSQLUtil.keywords(name)[0];
+		description = CustomSQLUtil.keywords(description)[0];
 
 		Session session = null;
 
@@ -131,6 +134,7 @@ public class TeamFinderImpl
 			QueryPos qPos = QueryPos.getInstance(q);
 
 			setJoin(qPos, params);
+
 			qPos.add(groupId);
 			qPos.add(name);
 			qPos.add(name);
@@ -154,11 +158,7 @@ public class TeamFinderImpl
 
 		StringBundler sb = new StringBundler(params.size());
 
-		Iterator<Map.Entry<String, Object>> itr = params.entrySet().iterator();
-
-		while (itr.hasNext()) {
-			Map.Entry<String, Object> entry = itr.next();
-
+		for (Map.Entry<String, Object> entry : params.entrySet()) {
 			String key = entry.getKey();
 			Object value = entry.getValue();
 
@@ -198,11 +198,7 @@ public class TeamFinderImpl
 
 		StringBundler sb = new StringBundler(params.size());
 
-		Iterator<Map.Entry<String, Object>> itr = params.entrySet().iterator();
-
-		while (itr.hasNext()) {
-			Map.Entry<String, Object> entry = itr.next();
-
+		for (Map.Entry<String, Object> entry : params.entrySet()) {
 			String key = entry.getKey();
 			Object value = entry.getValue();
 
@@ -241,21 +237,18 @@ public class TeamFinderImpl
 	protected void setJoin(
 		QueryPos qPos, LinkedHashMap<String, Object> params) {
 
-		if (params != null) {
-			Iterator<Map.Entry<String, Object>> itr =
-				params.entrySet().iterator();
+		if (params == null) {
+			return;
+		}
 
-			while (itr.hasNext()) {
-				Map.Entry<String, Object> entry = itr.next();
+		for (Map.Entry<String, Object> entry : params.entrySet()) {
+			Object value = entry.getValue();
 
-				Object value = entry.getValue();
+			if (value instanceof Long) {
+				Long valueLong = (Long)value;
 
-				if (value instanceof Long) {
-					Long valueLong = (Long)value;
-
-					if (Validator.isNotNull(valueLong)) {
-						qPos.add(valueLong);
-					}
+				if (Validator.isNotNull(valueLong)) {
+					qPos.add(valueLong);
 				}
 			}
 		}

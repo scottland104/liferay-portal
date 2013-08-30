@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,11 @@ import com.liferay.portal.model.CacheModel;
 
 import com.liferay.portlet.messageboards.model.MBMessage;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -29,7 +34,8 @@ import java.util.Date;
  * @see MBMessage
  * @generated
  */
-public class MBMessageCacheModel implements CacheModel<MBMessage> {
+public class MBMessageCacheModel implements CacheModel<MBMessage>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(51);
@@ -68,14 +74,14 @@ public class MBMessageCacheModel implements CacheModel<MBMessage> {
 		sb.append(body);
 		sb.append(", format=");
 		sb.append(format);
-		sb.append(", attachments=");
-		sb.append(attachments);
 		sb.append(", anonymous=");
 		sb.append(anonymous);
 		sb.append(", priority=");
 		sb.append(priority);
 		sb.append(", allowPingbacks=");
 		sb.append(allowPingbacks);
+		sb.append(", answer=");
+		sb.append(answer);
 		sb.append(", status=");
 		sb.append(status);
 		sb.append(", statusByUserId=");
@@ -89,6 +95,7 @@ public class MBMessageCacheModel implements CacheModel<MBMessage> {
 		return sb.toString();
 	}
 
+	@Override
 	public MBMessage toEntityModel() {
 		MBMessageImpl mbMessageImpl = new MBMessageImpl();
 
@@ -153,10 +160,10 @@ public class MBMessageCacheModel implements CacheModel<MBMessage> {
 			mbMessageImpl.setFormat(format);
 		}
 
-		mbMessageImpl.setAttachments(attachments);
 		mbMessageImpl.setAnonymous(anonymous);
 		mbMessageImpl.setPriority(priority);
 		mbMessageImpl.setAllowPingbacks(allowPingbacks);
+		mbMessageImpl.setAnswer(answer);
 		mbMessageImpl.setStatus(status);
 		mbMessageImpl.setStatusByUserId(statusByUserId);
 
@@ -179,6 +186,104 @@ public class MBMessageCacheModel implements CacheModel<MBMessage> {
 		return mbMessageImpl;
 	}
 
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		uuid = objectInput.readUTF();
+		messageId = objectInput.readLong();
+		groupId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		userId = objectInput.readLong();
+		userName = objectInput.readUTF();
+		createDate = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
+		classNameId = objectInput.readLong();
+		classPK = objectInput.readLong();
+		categoryId = objectInput.readLong();
+		threadId = objectInput.readLong();
+		rootMessageId = objectInput.readLong();
+		parentMessageId = objectInput.readLong();
+		subject = objectInput.readUTF();
+		body = objectInput.readUTF();
+		format = objectInput.readUTF();
+		anonymous = objectInput.readBoolean();
+		priority = objectInput.readDouble();
+		allowPingbacks = objectInput.readBoolean();
+		answer = objectInput.readBoolean();
+		status = objectInput.readInt();
+		statusByUserId = objectInput.readLong();
+		statusByUserName = objectInput.readUTF();
+		statusDate = objectInput.readLong();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		if (uuid == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
+
+		objectOutput.writeLong(messageId);
+		objectOutput.writeLong(groupId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(userId);
+
+		if (userName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(userName);
+		}
+
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(modifiedDate);
+		objectOutput.writeLong(classNameId);
+		objectOutput.writeLong(classPK);
+		objectOutput.writeLong(categoryId);
+		objectOutput.writeLong(threadId);
+		objectOutput.writeLong(rootMessageId);
+		objectOutput.writeLong(parentMessageId);
+
+		if (subject == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(subject);
+		}
+
+		if (body == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(body);
+		}
+
+		if (format == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(format);
+		}
+
+		objectOutput.writeBoolean(anonymous);
+		objectOutput.writeDouble(priority);
+		objectOutput.writeBoolean(allowPingbacks);
+		objectOutput.writeBoolean(answer);
+		objectOutput.writeInt(status);
+		objectOutput.writeLong(statusByUserId);
+
+		if (statusByUserName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(statusByUserName);
+		}
+
+		objectOutput.writeLong(statusDate);
+	}
+
 	public String uuid;
 	public long messageId;
 	public long groupId;
@@ -196,10 +301,10 @@ public class MBMessageCacheModel implements CacheModel<MBMessage> {
 	public String subject;
 	public String body;
 	public String format;
-	public boolean attachments;
 	public boolean anonymous;
 	public double priority;
 	public boolean allowPingbacks;
+	public boolean answer;
 	public int status;
 	public long statusByUserId;
 	public String statusByUserName;

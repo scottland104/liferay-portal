@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,15 +15,14 @@
 package com.liferay.portal.service;
 
 /**
- * <p>
- * This class is a wrapper for {@link OrganizationLocalService}.
- * </p>
+ * Provides a wrapper for {@link OrganizationLocalService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       OrganizationLocalService
+ * @author Brian Wing Shun Chan
+ * @see OrganizationLocalService
  * @generated
  */
-public class OrganizationLocalServiceWrapper implements OrganizationLocalService {
+public class OrganizationLocalServiceWrapper implements OrganizationLocalService,
+	ServiceWrapper<OrganizationLocalService> {
 	public OrganizationLocalServiceWrapper(
 		OrganizationLocalService organizationLocalService) {
 		_organizationLocalService = organizationLocalService;
@@ -36,6 +35,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @return the organization that was added
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.Organization addOrganization(
 		com.liferay.portal.model.Organization organization)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -48,6 +48,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @param organizationId the primary key for the new organization
 	* @return the new organization
 	*/
+	@Override
 	public com.liferay.portal.model.Organization createOrganization(
 		long organizationId) {
 		return _organizationLocalService.createOrganization(organizationId);
@@ -57,27 +58,37 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* Deletes the organization with the primary key from the database. Also notifies the appropriate model listeners.
 	*
 	* @param organizationId the primary key of the organization
+	* @return the organization that was removed
 	* @throws PortalException if a organization with the primary key could not be found
 	* @throws SystemException if a system exception occurred
 	*/
-	public void deleteOrganization(long organizationId)
+	@Override
+	public com.liferay.portal.model.Organization deleteOrganization(
+		long organizationId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		_organizationLocalService.deleteOrganization(organizationId);
+		return _organizationLocalService.deleteOrganization(organizationId);
 	}
 
 	/**
 	* Deletes the organization from the database. Also notifies the appropriate model listeners.
 	*
 	* @param organization the organization
+	* @return the organization that was removed
 	* @throws PortalException
 	* @throws SystemException if a system exception occurred
 	*/
-	public void deleteOrganization(
+	@Override
+	public com.liferay.portal.model.Organization deleteOrganization(
 		com.liferay.portal.model.Organization organization)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		_organizationLocalService.deleteOrganization(organization);
+		return _organizationLocalService.deleteOrganization(organization);
+	}
+
+	@Override
+	public com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery() {
+		return _organizationLocalService.dynamicQuery();
 	}
 
 	/**
@@ -87,6 +98,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @return the matching rows
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	@SuppressWarnings("rawtypes")
 	public java.util.List dynamicQuery(
 		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery)
@@ -98,7 +110,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* Performs a dynamic query on the database and returns a range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.OrganizationModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -107,6 +119,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @return the range of matching rows
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	@SuppressWarnings("rawtypes")
 	public java.util.List dynamicQuery(
 		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
@@ -118,7 +131,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* Performs a dynamic query on the database and returns an ordered range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.OrganizationModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -128,6 +141,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @return the ordered range of matching rows
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	@SuppressWarnings("rawtypes")
 	public java.util.List dynamicQuery(
 		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
@@ -145,10 +159,51 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @return the number of rows that match the dynamic query
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public long dynamicQueryCount(
 		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _organizationLocalService.dynamicQueryCount(dynamicQuery);
+	}
+
+	/**
+	* Returns the number of rows that match the dynamic query.
+	*
+	* @param dynamicQuery the dynamic query
+	* @param projection the projection to apply to the query
+	* @return the number of rows that match the dynamic query
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public long dynamicQueryCount(
+		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		com.liferay.portal.kernel.dao.orm.Projection projection)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.dynamicQueryCount(dynamicQuery,
+			projection);
+	}
+
+	@Override
+	public com.liferay.portal.model.Organization fetchOrganization(
+		long organizationId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.fetchOrganization(organizationId);
+	}
+
+	/**
+	* Returns the organization with the matching UUID and company.
+	*
+	* @param uuid the organization's UUID
+	* @param companyId the primary key of the company
+	* @return the matching organization, or <code>null</code> if a matching organization could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public com.liferay.portal.model.Organization fetchOrganizationByUuidAndCompanyId(
+		java.lang.String uuid, long companyId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.fetchOrganizationByUuidAndCompanyId(uuid,
+			companyId);
 	}
 
 	/**
@@ -159,6 +214,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @throws PortalException if a organization with the primary key could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.Organization getOrganization(
 		long organizationId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -166,6 +222,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 		return _organizationLocalService.getOrganization(organizationId);
 	}
 
+	@Override
 	public com.liferay.portal.model.PersistedModel getPersistedModel(
 		java.io.Serializable primaryKeyObj)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -174,10 +231,28 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	}
 
 	/**
+	* Returns the organization with the matching UUID and company.
+	*
+	* @param uuid the organization's UUID
+	* @param companyId the primary key of the company
+	* @return the matching organization
+	* @throws PortalException if a matching organization could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public com.liferay.portal.model.Organization getOrganizationByUuidAndCompanyId(
+		java.lang.String uuid, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.getOrganizationByUuidAndCompanyId(uuid,
+			companyId);
+	}
+
+	/**
 	* Returns a range of all the organizations.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.OrganizationModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param start the lower bound of the range of organizations
@@ -185,6 +260,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @return the range of organizations
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.model.Organization> getOrganizations(
 		int start, int end)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -197,6 +273,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @return the number of organizations
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getOrganizationsCount()
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _organizationLocalService.getOrganizationsCount();
@@ -209,6 +286,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @return the organization that was updated
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.Organization updateOrganization(
 		com.liferay.portal.model.Organization organization)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -216,17 +294,321 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	}
 
 	/**
-	* Updates the organization in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
-	*
-	* @param organization the organization
-	* @param merge whether to merge the organization with the current session. See {@link com.liferay.portal.service.persistence.BatchSession#update(com.liferay.portal.kernel.dao.orm.Session, com.liferay.portal.model.BaseModel, boolean)} for an explanation.
-	* @return the organization that was updated
 	* @throws SystemException if a system exception occurred
 	*/
-	public com.liferay.portal.model.Organization updateOrganization(
-		com.liferay.portal.model.Organization organization, boolean merge)
+	@Override
+	public void addGroupOrganization(long groupId, long organizationId)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		return _organizationLocalService.updateOrganization(organization, merge);
+		_organizationLocalService.addGroupOrganization(groupId, organizationId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void addGroupOrganization(long groupId,
+		com.liferay.portal.model.Organization organization)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.addGroupOrganization(groupId, organization);
+	}
+
+	/**
+	* @throws PortalException
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void addGroupOrganizations(long groupId, long[] organizationIds)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.addGroupOrganizations(groupId, organizationIds);
+	}
+
+	/**
+	* @throws PortalException
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void addGroupOrganizations(long groupId,
+		java.util.List<com.liferay.portal.model.Organization> Organizations)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.addGroupOrganizations(groupId, Organizations);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void clearGroupOrganizations(long groupId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.clearGroupOrganizations(groupId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void deleteGroupOrganization(long groupId, long organizationId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.deleteGroupOrganization(groupId,
+			organizationId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void deleteGroupOrganization(long groupId,
+		com.liferay.portal.model.Organization organization)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.deleteGroupOrganization(groupId, organization);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void deleteGroupOrganizations(long groupId, long[] organizationIds)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.deleteGroupOrganizations(groupId,
+			organizationIds);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void deleteGroupOrganizations(long groupId,
+		java.util.List<com.liferay.portal.model.Organization> Organizations)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.deleteGroupOrganizations(groupId,
+			Organizations);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public java.util.List<com.liferay.portal.model.Organization> getGroupOrganizations(
+		long groupId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.getGroupOrganizations(groupId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public java.util.List<com.liferay.portal.model.Organization> getGroupOrganizations(
+		long groupId, int start, int end)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.getGroupOrganizations(groupId, start,
+			end);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public java.util.List<com.liferay.portal.model.Organization> getGroupOrganizations(
+		long groupId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.getGroupOrganizations(groupId, start,
+			end, orderByComparator);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public int getGroupOrganizationsCount(long groupId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.getGroupOrganizationsCount(groupId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public boolean hasGroupOrganization(long groupId, long organizationId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.hasGroupOrganization(groupId,
+			organizationId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public boolean hasGroupOrganizations(long groupId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.hasGroupOrganizations(groupId);
+	}
+
+	/**
+	* @throws PortalException
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void setGroupOrganizations(long groupId, long[] organizationIds)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.setGroupOrganizations(groupId, organizationIds);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void addUserOrganization(long userId, long organizationId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.addUserOrganization(userId, organizationId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void addUserOrganization(long userId,
+		com.liferay.portal.model.Organization organization)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.addUserOrganization(userId, organization);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void addUserOrganizations(long userId, long[] organizationIds)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.addUserOrganizations(userId, organizationIds);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void addUserOrganizations(long userId,
+		java.util.List<com.liferay.portal.model.Organization> Organizations)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.addUserOrganizations(userId, Organizations);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void clearUserOrganizations(long userId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.clearUserOrganizations(userId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void deleteUserOrganization(long userId, long organizationId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.deleteUserOrganization(userId, organizationId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void deleteUserOrganization(long userId,
+		com.liferay.portal.model.Organization organization)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.deleteUserOrganization(userId, organization);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void deleteUserOrganizations(long userId, long[] organizationIds)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.deleteUserOrganizations(userId,
+			organizationIds);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void deleteUserOrganizations(long userId,
+		java.util.List<com.liferay.portal.model.Organization> Organizations)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.deleteUserOrganizations(userId, Organizations);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public java.util.List<com.liferay.portal.model.Organization> getUserOrganizations(
+		long userId) throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.getUserOrganizations(userId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public java.util.List<com.liferay.portal.model.Organization> getUserOrganizations(
+		long userId, int start, int end)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.getUserOrganizations(userId, start, end);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public java.util.List<com.liferay.portal.model.Organization> getUserOrganizations(
+		long userId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.getUserOrganizations(userId, start,
+			end, orderByComparator);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public int getUserOrganizationsCount(long userId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.getUserOrganizationsCount(userId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public boolean hasUserOrganization(long userId, long organizationId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.hasUserOrganization(userId,
+			organizationId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public boolean hasUserOrganizations(long userId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.hasUserOrganizations(userId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public void setUserOrganizations(long userId, long[] organizationIds)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.setUserOrganizations(userId, organizationIds);
 	}
 
 	/**
@@ -234,6 +616,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	*
 	* @return the Spring bean ID for this bean
 	*/
+	@Override
 	public java.lang.String getBeanIdentifier() {
 		return _organizationLocalService.getBeanIdentifier();
 	}
@@ -243,23 +626,89 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	*
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
+	@Override
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
 		_organizationLocalService.setBeanIdentifier(beanIdentifier);
 	}
 
 	/**
-	* Adds the organizations to the group.
+	* Adds an organization.
 	*
-	* @param groupId the primary key of the group
-	* @param organizationIds the primary keys of the organizations
-	* @throws PortalException if a group or organization with the primary key
-	could not be found
+	* <p>
+	* This method handles the creation and bookkeeping of the organization
+	* including its resources, metadata, and internal data structures. It is
+	* not necessary to make a subsequent call to {@link
+	* #addOrganizationResources(long, Organization)}.
+	* </p>
+	*
+	* @param userId the primary key of the creator/owner of the organization
+	* @param parentOrganizationId the primary key of the organization's parent
+	organization
+	* @param name the organization's name
+	* @param site whether the organization is to be associated with a main
+	site
+	* @return the organization
+	* @throws PortalException if a creator or parent organization with the
+	primary key could not be found or if the organization's
+	information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
-	public void addGroupOrganizations(long groupId, long[] organizationIds)
+	@Override
+	public com.liferay.portal.model.Organization addOrganization(long userId,
+		long parentOrganizationId, java.lang.String name, boolean site)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		_organizationLocalService.addGroupOrganizations(groupId, organizationIds);
+		return _organizationLocalService.addOrganization(userId,
+			parentOrganizationId, name, site);
+	}
+
+	/**
+	* Adds an organization.
+	*
+	* <p>
+	* This method handles the creation and bookkeeping of the organization
+	* including its resources, metadata, and internal data structures. It is
+	* not necessary to make a subsequent call to {@link
+	* #addOrganizationResources(long, Organization)}.
+	* </p>
+	*
+	* @param userId the primary key of the creator/owner of the
+	organization
+	* @param parentOrganizationId the primary key of the organization's
+	parent organization
+	* @param name the organization's name
+	* @param type the organization's type
+	* @param recursable whether the permissions of the organization are to
+	be inherited by its suborganizations
+	* @param regionId the primary key of the organization's region
+	* @param countryId the primary key of the organization's country
+	* @param statusId the organization's workflow status
+	* @param comments the comments about the organization
+	* @param site whether the organization is to be associated with a main
+	site
+	* @param serviceContext the service context to be applied (optionally
+	<code>null</code>). Can set asset category IDs, asset tag
+	names, and expando bridge attributes for the organization.
+	* @return the organization
+	* @throws PortalException if a creator or parent organization with the
+	primary key could not be found or if the organization's
+	information was invalid
+	* @throws SystemException if a system exception occurred
+	* @deprecated As of 6.2.0, replaced by {@link #addOrganization(long, long,
+	String, String, long, long, int, String, boolean,
+	ServiceContext)}
+	*/
+	@Override
+	public com.liferay.portal.model.Organization addOrganization(long userId,
+		long parentOrganizationId, java.lang.String name,
+		java.lang.String type, boolean recursable, long regionId,
+		long countryId, int statusId, java.lang.String comments, boolean site,
+		com.liferay.portal.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.addOrganization(userId,
+			parentOrganizationId, name, type, recursable, regionId, countryId,
+			statusId, comments, site, serviceContext);
 	}
 
 	/**
@@ -277,33 +726,32 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	organization
 	* @param name the organization's name
 	* @param type the organization's type
-	* @param recursable whether the permissions of the organization are to be
-	inherited by its sub-organizations
 	* @param regionId the primary key of the organization's region
 	* @param countryId the primary key of the organization's country
 	* @param statusId the organization's workflow status
 	* @param comments the comments about the organization
 	* @param site whether the organization is to be associated with a main
 	site
-	* @param serviceContext the organization's service context (optionally
-	<code>null</code>). Can specify the organization's asset category
-	IDs, asset tag names, and expando bridge attributes.
+	* @param serviceContext the service context to be applied (optionally
+	<code>null</code>). Can set asset category IDs, asset tag names,
+	and expando bridge attributes for the organization.
 	* @return the organization
 	* @throws PortalException if a creator or parent organization with the
 	primary key could not be found or if the organization's
 	information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.Organization addOrganization(long userId,
 		long parentOrganizationId, java.lang.String name,
-		java.lang.String type, boolean recursable, long regionId,
-		long countryId, int statusId, java.lang.String comments, boolean site,
+		java.lang.String type, long regionId, long countryId, int statusId,
+		java.lang.String comments, boolean site,
 		com.liferay.portal.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return _organizationLocalService.addOrganization(userId,
-			parentOrganizationId, name, type, recursable, regionId, countryId,
-			statusId, comments, site, serviceContext);
+			parentOrganizationId, name, type, regionId, countryId, statusId,
+			comments, site, serviceContext);
 	}
 
 	/**
@@ -315,6 +763,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @throws PortalException if a portal exception occurred
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void addOrganizationResources(long userId,
 		com.liferay.portal.model.Organization organization)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -330,6 +779,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @param organizationIds the primary keys of the organizations
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void addPasswordPolicyOrganizations(long passwordPolicyId,
 		long[] organizationIds)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -346,23 +796,24 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void deleteLogo(long organizationId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		_organizationLocalService.deleteLogo(organizationId);
 	}
 
-	/**
-	* Returns all the organizations belonging to the group.
-	*
-	* @param groupId the primary key of the group
-	* @return the organizations belonging to the group
-	* @throws SystemException if a system exception occurred
-	*/
-	public java.util.List<com.liferay.portal.model.Organization> getGroupOrganizations(
-		long groupId)
+	@Override
+	public com.liferay.portal.model.Organization fetchOrganization(
+		long companyId, java.lang.String name)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		return _organizationLocalService.getGroupOrganizations(groupId);
+		return _organizationLocalService.fetchOrganization(companyId, name);
+	}
+
+	@Override
+	public java.util.List<com.liferay.portal.model.Organization> getNoAssetOrganizations()
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.getNoAssetOrganizations();
 	}
 
 	/**
@@ -375,6 +826,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public com.liferay.portal.model.Organization getOrganization(
 		long companyId, java.lang.String name)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -391,9 +843,20 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	<code>0</code> if the organization could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public long getOrganizationId(long companyId, java.lang.String name)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _organizationLocalService.getOrganizationId(companyId, name);
+	}
+
+	@Override
+	public java.util.List<com.liferay.portal.model.Organization> getOrganizations(
+		long userId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator obc)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.getOrganizations(userId, start, end,
+			obc);
 	}
 
 	/**
@@ -405,6 +868,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @return the organizations belonging to the parent organization
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.model.Organization> getOrganizations(
 		long companyId, long parentOrganizationId)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -437,6 +901,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @see com.liferay.portal.service.persistence.OrganizationPersistence#findByC_P(
 	long, long, int, int)
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.model.Organization> getOrganizations(
 		long companyId, long parentOrganizationId, int start, int end)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -453,6 +918,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.model.Organization> getOrganizations(
 		long[] organizationIds)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -469,6 +935,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @return the number of organizations belonging to the parent organization
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public int getOrganizationsCount(long companyId, long parentOrganizationId)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _organizationLocalService.getOrganizationsCount(companyId,
@@ -485,6 +952,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.model.Organization> getParentOrganizations(
 		long organizationId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -493,17 +961,49 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	}
 
 	/**
-	* Returns the sub-organizations of the organizations.
+	* Returns the suborganizations of the organizations.
 	*
 	* @param organizations the organizations from which to get
-	sub-organizations
-	* @return the sub-organizations of the organizations
+	suborganizations
+	* @return the suborganizations of the organizations
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.model.Organization> getSuborganizations(
 		java.util.List<com.liferay.portal.model.Organization> organizations)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _organizationLocalService.getSuborganizations(organizations);
+	}
+
+	/**
+	* Returns the suborganizations of the organization.
+	*
+	* @param companyId the primary key of the organization's company
+	* @param organizationId the primary key of the organization
+	* @return the suborganizations of the organization
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public java.util.List<com.liferay.portal.model.Organization> getSuborganizations(
+		long companyId, long organizationId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.getSuborganizations(companyId,
+			organizationId);
+	}
+
+	/**
+	* Returns the count of suborganizations of the organization.
+	*
+	* @param companyId the primary key of the organization's company
+	* @param organizationId the primary key of the organization
+	* @return the count of suborganizations of the organization
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public int getSuborganizationsCount(long companyId, long organizationId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.getSuborganizationsCount(companyId,
+			organizationId);
 	}
 
 	/**
@@ -515,6 +1015,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @return the intersection of <code>allOrganizations</code> and
 	<code>availableOrganizations</code>
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.model.Organization> getSubsetOrganizations(
 		java.util.List<com.liferay.portal.model.Organization> allOrganizations,
 		java.util.List<com.liferay.portal.model.Organization> availableOrganizations) {
@@ -523,138 +1024,39 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	}
 
 	/**
-	* Returns all the organizations associated with the user.
+	* Returns all the organizations associated with the user. If
+	* includeAdministrative is <code>true</code>, the result includes those
+	* organizations that are not directly associated to the user but he is an
+	* administrator or an owner of the organization.
 	*
 	* @param userId the primary key of the user
+	* @param includeAdministrative whether to includes organizations that are
+	indirectly associated to the user because he is an administrator
+	or an owner of the organization
 	* @return the organizations associated with the user
 	* @throws PortalException if a user with the primary key could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.model.Organization> getUserOrganizations(
-		long userId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return _organizationLocalService.getUserOrganizations(userId);
-	}
-
-	/**
-	* Returns all the organizations associated with the user, optionally
-	* including the organizations associated with the user groups to which the
-	* user belongs.
-	*
-	* @param userId the primary key of the user
-	* @param inheritUserGroups whether to include organizations associated
-	with the user groups to which the user belongs
-	* @return the organizations associated with the user
-	* @throws PortalException if a user with the primary key could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public java.util.List<com.liferay.portal.model.Organization> getUserOrganizations(
-		long userId, boolean inheritUserGroups)
+		long userId, boolean includeAdministrative)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return _organizationLocalService.getUserOrganizations(userId,
-			inheritUserGroups);
+			includeAdministrative);
 	}
 
 	/**
-	* Returns a range of all the organizations associated with the user,
-	* optionally including the organizations associated with the user groups to
-	* which the user belongs.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end -
-	* start</code> instances. <code>start</code> and <code>end</code> are not
-	* primary keys, they are indexes in the result set. Thus, <code>0</code>
-	* refers to the first result in the set. Setting both <code>start</code>
-	* and <code>end</code> to {@link
-	* com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
-	* result set.
-	* </p>
-	*
-	* @param userId the primary key of the user
-	* @param inheritUserGroups whether to include organizations associated
-	with the user groups to which the user belongs
-	* @param start the lower bound of the range of organizations to return
-	* @param end the upper bound of the range of organizations to return (not
-	inclusive)
-	* @return the range organizations associated with the user
-	* @throws PortalException if a user with the primary key could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public java.util.List<com.liferay.portal.model.Organization> getUserOrganizations(
-		long userId, boolean inheritUserGroups, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return _organizationLocalService.getUserOrganizations(userId,
-			inheritUserGroups, start, end);
-	}
-
-	/**
-	* Returns a range of all the organizations associated with the user.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end -
-	* start</code> instances. <code>start</code> and <code>end</code> are not
-	* primary keys, they are indexes in the result set. Thus, <code>0</code>
-	* refers to the first result in the set. Setting both <code>start</code>
-	* and <code>end</code> to {@link
-	* com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
-	* result set.
-	* </p>
-	*
-	* @param userId the primary key of the user
-	* @param start the lower bound of the range of organizations to return
-	* @param end the upper bound of the range of organizations to return (not
-	inclusive)
-	* @return the range organizations associated with the user
-	* @throws PortalException if a user with the primary key could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public java.util.List<com.liferay.portal.model.Organization> getUserOrganizations(
-		long userId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return _organizationLocalService.getUserOrganizations(userId, start, end);
-	}
-
-	/**
-	* Returns the number of organizations associated with the user.
-	*
-	* @param userId the primary key of the user
-	* @return the number of organizations associated with the user
-	* @throws SystemException if a system exception occurred
-	*/
-	public int getUserOrganizationsCount(long userId)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return _organizationLocalService.getUserOrganizationsCount(userId);
-	}
-
-	/**
-	* Returns <code>true</code> if the organization belongs to the group.
-	*
-	* @param groupId the primary key of the group
-	* @param organizationId the primary key of the organization
-	* @return <code>true</code> if the organization belongs to the group;
-	<code>false</code> otherwise
-	* @throws SystemException if a system exception occurred
-	*/
-	public boolean hasGroupOrganization(long groupId, long organizationId)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return _organizationLocalService.hasGroupOrganization(groupId,
-			organizationId);
-	}
-
-	/**
-	* Returns <code>true</code> if the password policy has been assigned to
-	* the organization.
+	* Returns <code>true</code> if the password policy has been assigned to the
+	* organization.
 	*
 	* @param passwordPolicyId the primary key of the password policy
 	* @param organizationId the primary key of the organization
-	* @return <code>true</code> if the password policy has been assigned to
-	the organization; <code>false</code> otherwise
+	* @return <code>true</code> if the password policy has been assigned to the
+	organization; <code>false</code> otherwise
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public boolean hasPasswordPolicyOrganization(long passwordPolicyId,
 		long organizationId)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -663,45 +1065,20 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	}
 
 	/**
-	* Returns <code>true</code> if the user is a member of the organization.
-	* This method is usually called to determine if the user has view access
-	* to a resource belonging to the organization.
-	*
-	* @param userId the primary key of the user
-	* @param organizationId the primary key of the organization
-	* @return <code>true</code> if the user has access to the organization;
-	<code>false</code> otherwise
-	* @throws SystemException if a system exception occurred
-	*/
-	public boolean hasUserOrganization(long userId, long organizationId)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return _organizationLocalService.hasUserOrganization(userId,
-			organizationId);
-	}
-
-	/**
 	* Returns <code>true</code> if the user is a member of the organization,
-	* optionally focusing on sub-organizations, user groups, or the specified
-	* organization. This method is usually called to determine if the user has
-	* view access to a resource belonging to the organization.
-	*
-	* <p>
+	* optionally focusing on suborganizations or the specified organization.
+	* This method is usually called to determine if the user has view access to
+	* a resource belonging to the organization.
 	*
 	* <ol>
 	* <li>
-	* If <code>inheritSuborganizations=<code>false</code></code> and
-	* <code>inheritUserGroups=<code>false</code></code>: the method checks
-	* whether the user
-	* belongs to the organization specified by <code>organizationId</code>. The
-	* parameter
+	* If <code>inheritSuborganizations=<code>false</code></code>:
+	* the method checks whether the user belongs to the organization specified
+	* by <code>organizationId</code>. The parameter
 	* <code>includeSpecifiedOrganization</code> is ignored.
 	* </li>
 	* <li>
-	* If <code>inheritUserGroups=<code>true</code></code>: the method checks
-	* whether the
-	* user belongs to a user group which has been made as a whole member of the
-	* the organization specified by <code>organizationId</code>. The parameter
-	* <code>includeSpecifiedOrganization</code> is
+	* The parameter <code>includeSpecifiedOrganization</code> is
 	* ignored unless <code>inheritSuborganizations</code> is also
 	* <code>true</code>.
 	* </li>
@@ -722,18 +1099,13 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* </li>
 	* </ol>
 	*
-	* <p>
-	*
 	* @param userId the primary key of the organization's user
 	* @param organizationId the primary key of the organization
-	* @param inheritSuborganizations if <code>true</code> sub-organizations
-	are considered in the determination
-	* @param inheritUserGroups if <code>true</code> organizations inherited
-	from the user groups to which the user belongs are considered in
-	the determination
+	* @param inheritSuborganizations if <code>true</code> suborganizations are
+	considered in the determination
 	* @param includeSpecifiedOrganization if <code>true</code> the
 	organization specified by <code>organizationId</code> is
-	considered in the determination.
+	considered in the determination
 	* @return <code>true</code> if the user has access to the organization;
 	<code>false</code> otherwise
 	* @throws PortalException if an organization with the primary key could not
@@ -741,13 +1113,13 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @throws SystemException if a system exception occurred
 	* @see com.liferay.portal.service.persistence.OrganizationFinder
 	*/
+	@Override
 	public boolean hasUserOrganization(long userId, long organizationId,
-		boolean inheritSuborganizations, boolean inheritUserGroups,
-		boolean includeSpecifiedOrganization)
+		boolean inheritSuborganizations, boolean includeSpecifiedOrganization)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return _organizationLocalService.hasUserOrganization(userId,
-			organizationId, inheritSuborganizations, inheritUserGroups,
+			organizationId, inheritSuborganizations,
 			includeSpecifiedOrganization);
 	}
 
@@ -761,14 +1133,47 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* </p>
 	*
 	* @param companyId the primary key of the organization's company
-	* @param force whether to force the rebuild even if the tree is not stale
+	* @throws PortalException if an organization with the primary key could not
+	be found
 	* @throws SystemException if a system exception occurred
-	* @see com.liferay.portal.service.persistence.OrganizationPersistence#rebuildTree(
-	long, boolean)
 	*/
-	public void rebuildTree(long companyId, boolean force)
+	@Override
+	public void rebuildTree(long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		_organizationLocalService.rebuildTree(companyId);
+	}
+
+	/**
+	* Returns a range of all the organizations of the company.
+	*
+	* <p>
+	* Useful when paginating results. Returns a maximum of <code>end -
+	* start</code> instances. <code>start</code> and <code>end</code> are not
+	* primary keys, they are indexes in the result set. Thus, <code>0</code>
+	* refers to the first result in the set. Setting both <code>start</code>
+	* and <code>end</code> to {@link
+	* com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
+	* result set.
+	* </p>
+	*
+	* @param companyId the primary key of the company
+	* @param params the finder parameters (optionally <code>null</code>). For
+	more information see {@link
+	com.liferay.portlet.usersadmin.util.OrganizationIndexer}
+	* @param start the lower bound of the range of organizations to return
+	* @param end the upper bound of the range of organizations to return (not
+	inclusive)
+	* @return the range of all the organizations of the company
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public java.util.List<com.liferay.portal.model.Organization> search(
+		long companyId,
+		java.util.LinkedHashMap<java.lang.String, java.lang.Object> params,
+		int start, int end)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		_organizationLocalService.rebuildTree(companyId, force);
+		return _organizationLocalService.search(companyId, params, start, end);
 	}
 
 	/**
@@ -794,7 +1199,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	country (optionally <code>null</code>)
 	* @param params the finder parameters (optionally <code>null</code>). For
 	more information see {@link
-	com.liferay.portlet.enterpriseadmin.util.OrganizationIndexer}
+	com.liferay.portlet.usersadmin.util.OrganizationIndexer}
 	* @param start the lower bound of the range of organizations to return
 	* @param end the upper bound of the range of organizations to return (not
 	inclusive)
@@ -802,8 +1207,9 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	<code>null</code>)
 	* @return the matching organizations ordered by name
 	* @throws SystemException if a system exception occurred
-	* @see com.liferay.portlet.enterpriseadmin.util.OrganizationIndexer
+	* @see com.liferay.portlet.usersadmin.util.OrganizationIndexer
 	*/
+	@Override
 	public com.liferay.portal.kernel.search.Hits search(long companyId,
 		long parentOrganizationId, java.lang.String keywords,
 		java.util.LinkedHashMap<java.lang.String, java.lang.Object> params,
@@ -850,6 +1256,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @throws SystemException if a system exception occurred
 	* @see com.liferay.portal.service.persistence.OrganizationFinder
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.model.Organization> search(
 		long companyId, long parentOrganizationId, java.lang.String keywords,
 		java.lang.String type, java.lang.Long regionId,
@@ -902,6 +1309,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @throws SystemException if a system exception occurred
 	* @see com.liferay.portal.service.persistence.OrganizationFinder
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.model.Organization> search(
 		long companyId, long parentOrganizationId, java.lang.String keywords,
 		java.lang.String type, java.lang.Long regionId,
@@ -958,6 +1366,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @throws SystemException if a system exception occurred
 	* @see com.liferay.portal.service.persistence.OrganizationFinder
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.model.Organization> search(
 		long companyId, long parentOrganizationId, java.lang.String name,
 		java.lang.String type, java.lang.String street, java.lang.String city,
@@ -1018,6 +1427,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @throws SystemException if a system exception occurred
 	* @see com.liferay.portal.service.persistence.OrganizationFinder
 	*/
+	@Override
 	public java.util.List<com.liferay.portal.model.Organization> search(
 		long companyId, long parentOrganizationId, java.lang.String name,
 		java.lang.String type, java.lang.String street, java.lang.String city,
@@ -1061,9 +1471,9 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @param country the country keywords (optionally <code>null</code>)
 	* @param params the finder parameters (optionally <code>null</code>). For
 	more information see {@link
-	com.liferay.portlet.enterpriseadmin.util.OrganizationIndexer}.
+	com.liferay.portlet.usersadmin.util.OrganizationIndexer}.
 	* @param andSearch whether every field must match its keywords or just one
-	field.
+	field
 	* @param start the lower bound of the range of organizations to return
 	* @param end the upper bound of the range of organizations to return (not
 	inclusive)
@@ -1071,8 +1481,9 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	<code>null</code>)
 	* @return the matching organizations ordered by <code>sort</code>
 	* @throws SystemException if a system exception occurred
-	* @see com.liferay.portlet.enterpriseadmin.util.OrganizationIndexer
+	* @see com.liferay.portlet.usersadmin.util.OrganizationIndexer
 	*/
+	@Override
 	public com.liferay.portal.kernel.search.Hits search(long companyId,
 		long parentOrganizationId, java.lang.String name,
 		java.lang.String type, java.lang.String street, java.lang.String city,
@@ -1109,6 +1520,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @throws SystemException if a system exception occurred
 	* @see com.liferay.portal.service.persistence.OrganizationFinder
 	*/
+	@Override
 	public int searchCount(long companyId, long parentOrganizationId,
 		java.lang.String keywords, java.lang.String type,
 		java.lang.Long regionId, java.lang.Long countryId,
@@ -1147,6 +1559,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @throws SystemException if a system exception occurred
 	* @see com.liferay.portal.service.persistence.OrganizationFinder
 	*/
+	@Override
 	public int searchCount(long companyId, long parentOrganizationId,
 		java.lang.String name, java.lang.String type, java.lang.String street,
 		java.lang.String city, java.lang.String zip, java.lang.Long regionId,
@@ -1160,21 +1573,6 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	}
 
 	/**
-	* Sets the organizations in the group, removing and adding organizations to
-	* the group as necessary.
-	*
-	* @param groupId the primary key of the group
-	* @param organizationIds the primary keys of the organizations
-	* @throws PortalException if a portal exception occurred
-	* @throws SystemException if a system exception occurred
-	*/
-	public void setGroupOrganizations(long groupId, long[] organizationIds)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		_organizationLocalService.setGroupOrganizations(groupId, organizationIds);
-	}
-
-	/**
 	* Removes the organizations from the group.
 	*
 	* @param groupId the primary key of the group
@@ -1182,6 +1580,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @throws PortalException if a portal exception occurred
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void unsetGroupOrganizations(long groupId, long[] organizationIds)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -1196,6 +1595,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @param organizationIds the primary keys of the organizations
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void unsetPasswordPolicyOrganizations(long passwordPolicyId,
 		long[] organizationIds)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -1214,6 +1614,7 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @throws PortalException if a user with the primary key could not be found
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public void updateAsset(long userId,
 		com.liferay.portal.model.Organization organization,
 		long[] assetCategoryIds, java.lang.String[] assetTagNames)
@@ -1233,23 +1634,27 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 	* @param name the organization's name
 	* @param type the organization's type
 	* @param recursable whether permissions of the organization are to be
-	inherited by its sub-organizations
+	inherited by its suborganizations
 	* @param regionId the primary key of the organization's region
 	* @param countryId the primary key of the organization's country
 	* @param statusId the organization's workflow status
 	* @param comments the comments about the organization
 	* @param site whether the organization is to be associated with a main
 	site
-	* @param serviceContext the organization's service context (optionally
-	<code>null</code>). Can specify the organization's replacement
-	asset category IDs, replacement asset tag names, and new expando
-	bridge attributes.
+	* @param serviceContext the service context to be applied (optionally
+	<code>null</code>). Can set asset category IDs and asset tag
+	names for the organization, and merge expando bridge
+	attributes for the organization.
 	* @return the organization
-	* @throws PortalException if an organization or parent organization with
-	the primary key could not be found or if the new information was
-	invalid
+	* @throws PortalException if an organization or parent organization
+	with the primary key could not be found or if the new
+	information was invalid
 	* @throws SystemException if a system exception occurred
+	* @deprecated As of 6.2.0, replaced by {@link #updateOrganization(long,
+	long, long, String, String, long, long, int, String, boolean,
+	ServiceContext)}
 	*/
+	@Override
 	public com.liferay.portal.model.Organization updateOrganization(
 		long companyId, long organizationId, long parentOrganizationId,
 		java.lang.String name, java.lang.String type, boolean recursable,
@@ -1262,11 +1667,66 @@ public class OrganizationLocalServiceWrapper implements OrganizationLocalService
 			regionId, countryId, statusId, comments, site, serviceContext);
 	}
 
+	/**
+	* Updates the organization.
+	*
+	* @param companyId the primary key of the organization's company
+	* @param organizationId the primary key of the organization
+	* @param parentOrganizationId the primary key of organization's parent
+	organization
+	* @param name the organization's name
+	* @param type the organization's type
+	* @param regionId the primary key of the organization's region
+	* @param countryId the primary key of the organization's country
+	* @param statusId the organization's workflow status
+	* @param comments the comments about the organization
+	* @param site whether the organization is to be associated with a main
+	site
+	* @param serviceContext the service context to be applied (optionally
+	<code>null</code>). Can set asset category IDs and asset tag
+	names for the organization, and merge expando bridge attributes
+	for the organization.
+	* @return the organization
+	* @throws PortalException if an organization or parent organization with
+	the primary key could not be found or if the new information was
+	invalid
+	* @throws SystemException if a system exception occurred
+	*/
+	@Override
+	public com.liferay.portal.model.Organization updateOrganization(
+		long companyId, long organizationId, long parentOrganizationId,
+		java.lang.String name, java.lang.String type, long regionId,
+		long countryId, int statusId, java.lang.String comments, boolean site,
+		com.liferay.portal.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return _organizationLocalService.updateOrganization(companyId,
+			organizationId, parentOrganizationId, name, type, regionId,
+			countryId, statusId, comments, site, serviceContext);
+	}
+
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
+	 */
 	public OrganizationLocalService getWrappedOrganizationLocalService() {
 		return _organizationLocalService;
 	}
 
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
+	 */
 	public void setWrappedOrganizationLocalService(
+		OrganizationLocalService organizationLocalService) {
+		_organizationLocalService = organizationLocalService;
+	}
+
+	@Override
+	public OrganizationLocalService getWrappedService() {
+		return _organizationLocalService;
+	}
+
+	@Override
+	public void setWrappedService(
 		OrganizationLocalService organizationLocalService) {
 		_organizationLocalService = organizationLocalService;
 	}

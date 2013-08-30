@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,25 +16,20 @@ package com.liferay.portal.struts;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.portlet.LiferayPortletConfig;
+import com.liferay.portal.kernel.portlet.LiferayPortletRequestDispatcher;
 import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.model.Layout;
 import com.liferay.portal.model.Portlet;
 import com.liferay.portal.security.auth.PrincipalException;
-import com.liferay.portal.security.permission.ActionKeys;
-import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.service.PortletLocalServiceUtil;
-import com.liferay.portal.service.permission.PortletPermissionUtil;
-import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.ActionResponseImpl;
-import com.liferay.portlet.PortletConfigImpl;
-import com.liferay.portlet.PortletRequestDispatcherImpl;
 
 import java.io.IOException;
 
@@ -42,6 +37,8 @@ import java.lang.reflect.Constructor;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
+import javax.portlet.EventRequest;
+import javax.portlet.EventResponse;
 import javax.portlet.PortletContext;
 import javax.portlet.PortletException;
 import javax.portlet.PortletRequest;
@@ -84,17 +81,11 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 			Class<?> clazz = Class.forName(className);
 
 			Constructor<?> constructor = clazz.getConstructor(
-				new Class[] {
-					ActionServlet.class, ModuleConfig.class
-				}
-			);
+				ActionServlet.class, ModuleConfig.class);
 
 			PortletRequestProcessor portletReqProcessor =
 				(PortletRequestProcessor)constructor.newInstance(
-					new Object[] {
-						servlet, moduleConfig
-					}
-				);
+					servlet, moduleConfig);
 
 			return portletReqProcessor;
 		}
@@ -153,8 +144,8 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 			return;
 		}
 
-		PortletConfigImpl portletConfigImpl =
-			(PortletConfigImpl)actionRequest.getAttribute(
+		LiferayPortletConfig liferayPortletConfig =
+			(LiferayPortletConfig)actionRequest.getAttribute(
 				JavaConstants.JAVAX_PORTLET_CONFIG);
 
 		try {
@@ -173,13 +164,13 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 			}
 
 			portletAction.processAction(
-				actionMapping, actionForm, portletConfigImpl, actionRequest,
+				actionMapping, actionForm, liferayPortletConfig, actionRequest,
 				actionResponse);
 		}
 		catch (Exception e) {
 			String exceptionId =
 				WebKeys.PORTLET_STRUTS_EXCEPTION + StringPool.PERIOD +
-					portletConfigImpl.getPortletId();
+					liferayPortletConfig.getPortletId();
 
 			actionRequest.setAttribute(exceptionId, e);
 		}
@@ -187,35 +178,48 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 		String forward = (String)actionRequest.getAttribute(
 			PortletAction.getForwardKey(actionRequest));
 
-		if (forward != null) {
-			String queryString = StringPool.BLANK;
-
-			int pos = forward.indexOf(CharPool.QUESTION);
-
-			if (pos != -1) {
-				queryString = forward.substring(pos + 1, forward.length());
-				forward = forward.substring(0, pos);
-			}
-
-			ActionForward actionForward = actionMapping.findForward(forward);
-
-			if ((actionForward != null) && (actionForward.getRedirect())) {
-				String forwardPath = actionForward.getPath();
-
-				if (forwardPath.startsWith(StringPool.SLASH)) {
-					LiferayPortletURL forwardURL =
-						(LiferayPortletURL)actionResponseImpl.createRenderURL();
-
-					forwardURL.setParameter("struts_action", forwardPath);
-
-					StrutsURLEncoder.setParameters(forwardURL, queryString);
-
-					forwardPath = forwardURL.toString();
-				}
-
-				actionResponse.sendRedirect(forwardPath);
-			}
+		if (forward == null) {
+			return;
 		}
+
+		String queryString = StringPool.BLANK;
+
+		int pos = forward.indexOf(CharPool.QUESTION);
+
+		if (pos != -1) {
+			queryString = forward.substring(pos + 1);
+			forward = forward.substring(0, pos);
+		}
+
+		ActionForward actionForward = actionMapping.findForward(forward);
+
+		if ((actionForward != null) && actionForward.getRedirect()) {
+			String forwardPath = actionForward.getPath();
+
+			if (forwardPath.startsWith(StringPool.SLASH)) {
+				LiferayPortletURL forwardURL =
+					(LiferayPortletURL)actionResponseImpl.createRenderURL();
+
+				forwardURL.setParameter("struts_action", forwardPath);
+
+				StrutsURLEncoder.setParameters(forwardURL, queryString);
+
+				forwardPath = forwardURL.toString();
+			}
+
+			actionResponse.sendRedirect(forwardPath);
+		}
+	}
+
+	public void process(EventRequest eventRequest, EventResponse eventResponse)
+		throws IOException, ServletException {
+
+		HttpServletRequest request = PortalUtil.getHttpServletRequest(
+			eventRequest);
+		HttpServletResponse response = PortalUtil.getHttpServletResponse(
+			eventResponse);
+
+		process(request, response);
 	}
 
 	public void process(
@@ -243,6 +247,89 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 	}
 
 	@Override
+	public ActionMapping processMapping(
+		HttpServletRequest request, HttpServletResponse response, String path) {
+
+		if (path == null) {
+			return null;
+		}
+
+		ActionMapping actionMapping = null;
+
+		long companyId = PortalUtil.getCompanyId(request);
+
+		LiferayPortletConfig liferayPortletConfig =
+			(LiferayPortletConfig)request.getAttribute(
+				JavaConstants.JAVAX_PORTLET_CONFIG);
+
+		try {
+			Portlet portlet = PortletLocalServiceUtil.getPortletById(
+				companyId, liferayPortletConfig.getPortletId());
+
+			if (StrutsActionRegistryUtil.getAction(path) != null) {
+				actionMapping = (ActionMapping)moduleConfig.findActionConfig(
+					path);
+
+				if (actionMapping == null) {
+					actionMapping = new ActionMapping();
+
+					actionMapping.setModuleConfig(moduleConfig);
+					actionMapping.setPath(path);
+
+					request.setAttribute(Globals.MAPPING_KEY, actionMapping);
+				}
+			}
+			else if (moduleConfig.findActionConfig(path) != null) {
+				actionMapping = super.processMapping(request, response, path);
+			}
+			else if (Validator.isNotNull(portlet.getParentStrutsPath())) {
+				int pos = path.indexOf(StringPool.SLASH, 1);
+
+				String parentPath =
+					StringPool.SLASH + portlet.getParentStrutsPath() +
+						path.substring(pos);
+
+				if (StrutsActionRegistryUtil.getAction(parentPath) != null) {
+					actionMapping =
+						(ActionMapping)moduleConfig.findActionConfig(
+							parentPath);
+
+					if (actionMapping == null) {
+						actionMapping = new ActionMapping();
+
+						actionMapping.setModuleConfig(moduleConfig);
+						actionMapping.setPath(parentPath);
+
+						request.setAttribute(
+							Globals.MAPPING_KEY, actionMapping);
+					}
+				}
+				else if (moduleConfig.findActionConfig(parentPath) != null) {
+					actionMapping = super.processMapping(
+						request, response, parentPath);
+				}
+			}
+		}
+		catch (Exception e) {
+		}
+
+		if (actionMapping == null) {
+			MessageResources messageResources = getInternal();
+
+			String msg = messageResources.getMessage("processInvalid");
+
+			_log.error("User ID " + request.getRemoteUser());
+			_log.error("Current URL " + PortalUtil.getCurrentURL(request));
+			_log.error("Referer " + request.getHeader("Referer"));
+			_log.error("Remote address " + request.getRemoteAddr());
+
+			_log.error(msg + " " + path);
+		}
+
+		return actionMapping;
+	}
+
+	@Override
 	protected void doForward(
 			String uri, HttpServletRequest request,
 			HttpServletResponse response)
@@ -257,11 +344,12 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 			HttpServletResponse response)
 		throws IOException, ServletException {
 
-		PortletConfigImpl portletConfigImpl =
-			(PortletConfigImpl)request.getAttribute(
+		LiferayPortletConfig liferayPortletConfig =
+			(LiferayPortletConfig)request.getAttribute(
 				JavaConstants.JAVAX_PORTLET_CONFIG);
 
-		PortletContext portletContext = portletConfigImpl.getPortletContext();
+		PortletContext portletContext =
+			liferayPortletConfig.getPortletContext();
 
 		PortletRequest portletRequest = (PortletRequest)request.getAttribute(
 			JavaConstants.JAVAX_PORTLET_REQUEST);
@@ -269,16 +357,17 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 		PortletResponse portletResponse = (PortletResponse)request.getAttribute(
 			JavaConstants.JAVAX_PORTLET_RESPONSE);
 
-		PortletRequestDispatcherImpl portletRequestDispatcher =
-			(PortletRequestDispatcherImpl)portletContext.getRequestDispatcher(
-				StrutsUtil.TEXT_HTML_DIR + uri);
+		LiferayPortletRequestDispatcher liferayPortletRequestDispatcher =
+			(LiferayPortletRequestDispatcher)
+				portletContext.getRequestDispatcher(
+					StrutsUtil.TEXT_HTML_DIR + uri);
 
 		try {
-			if (portletRequestDispatcher == null) {
+			if (liferayPortletRequestDispatcher == null) {
 				_log.error(uri + " is not a valid include");
 			}
 			else {
-				portletRequestDispatcher.include(
+				liferayPortletRequestDispatcher.include(
 					portletRequest, portletResponse, true);
 			}
 		}
@@ -301,7 +390,7 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 		throws IOException {
 
 		PortletActionAdapter portletActionAdapter =
-			(PortletActionAdapter)StrutsActionRegistry.getAction(
+			(PortletActionAdapter)StrutsActionRegistryUtil.getAction(
 				actionMapping.getPath());
 
 		if (portletActionAdapter != null) {
@@ -347,13 +436,13 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 			Action action, ActionForm actionForm, ActionMapping actionMapping)
 		throws IOException, ServletException {
 
-		PortletConfigImpl portletConfigImpl =
-			(PortletConfigImpl)request.getAttribute(
+		LiferayPortletConfig liferayPortletConfig =
+			(LiferayPortletConfig)request.getAttribute(
 				JavaConstants.JAVAX_PORTLET_CONFIG);
 
 		String exceptionId =
 			WebKeys.PORTLET_STRUTS_EXCEPTION + StringPool.PERIOD +
-				portletConfigImpl.getPortletId();
+				liferayPortletConfig.getPortletId();
 
 		Exception e = (Exception)request.getAttribute(exceptionId);
 
@@ -390,88 +479,6 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 	}
 
 	@Override
-	public ActionMapping processMapping(
-		HttpServletRequest request, HttpServletResponse response, String path) {
-
-		if (path == null) {
-			return null;
-		}
-
-		ActionMapping actionMapping = null;
-
-		long companyId = PortalUtil.getCompanyId(request);
-
-		PortletConfigImpl portletConfigImpl =
-			(PortletConfigImpl)request.getAttribute(
-				JavaConstants.JAVAX_PORTLET_CONFIG);
-
-		try {
-			Portlet portlet = PortletLocalServiceUtil.getPortletById(
-				companyId, portletConfigImpl.getPortletId());
-
-			if (StrutsActionRegistry.getAction(path) != null) {
-				actionMapping = (ActionMapping)moduleConfig.findActionConfig(
-					path);
-
-				if (actionMapping == null) {
-					actionMapping = new ActionMapping();
-
-					actionMapping.setModuleConfig(moduleConfig);
-					actionMapping.setPath(path);
-
-					request.setAttribute(Globals.MAPPING_KEY, actionMapping);
-				}
-			}
-			else if (moduleConfig.findActionConfig(path) != null) {
-				actionMapping = super.processMapping(request, response, path);
-			}
-			else if (Validator.isNotNull(portlet.getParentStrutsPath())) {
-				int pos = path.indexOf(StringPool.SLASH, 1);
-
-				String parentPath =
-					StringPool.SLASH + portlet.getParentStrutsPath() +
-						path.substring(pos, path.length());
-
-				if (StrutsActionRegistry.getAction(parentPath) != null) {
-					actionMapping =
-						(ActionMapping)moduleConfig.findActionConfig(path);
-
-					if (actionMapping == null) {
-						actionMapping = new ActionMapping();
-
-						actionMapping.setModuleConfig(moduleConfig);
-						actionMapping.setPath(parentPath);
-
-						request.setAttribute(
-							Globals.MAPPING_KEY, actionMapping);
-					}
-				}
-				else if (moduleConfig.findActionConfig(parentPath) != null) {
-					actionMapping = super.processMapping(
-						request, response, parentPath);
-				}
-			}
-		}
-		catch (Exception e) {
-		}
-
-		if (actionMapping == null) {
-			MessageResources messageResources = getInternal();
-
-			String msg = messageResources.getMessage("processInvalid");
-
-			_log.error("User ID " + request.getRemoteUser());
-			_log.error("Current URL " + PortalUtil.getCurrentURL(request));
-			_log.error("Referer " + request.getHeader("Referer"));
-			_log.error("Remote address " + request.getRemoteAddr());
-
-			_log.error(msg + " " + path);
-		}
-
-		return actionMapping;
-	}
-
-	@Override
 	protected HttpServletRequest processMultipart(HttpServletRequest request) {
 
 		// Disable Struts from automatically wrapping a multipart request
@@ -498,18 +505,20 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 		}
 
 		if (path == null) {
-			PortletConfigImpl portletConfigImpl =
-				(PortletConfigImpl)request.getAttribute(
+			LiferayPortletConfig liferayPortletConfig =
+				(LiferayPortletConfig)request.getAttribute(
 					JavaConstants.JAVAX_PORTLET_CONFIG);
 
 			_log.error(
-				portletConfigImpl.getPortletName() +
+				liferayPortletConfig.getPortletName() +
 					" does not have any paths specified");
 		}
 		else {
 			if (_log.isDebugEnabled()) {
 				_log.debug("Processing path " + path);
 			}
+
+			request.removeAttribute(WebKeys.PORTLET_STRUTS_ACTION);
 		}
 
 		return path;
@@ -534,12 +543,12 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 		String path = actionMapping.getPath();
 
 		try {
-			PortletConfigImpl portletConfigImpl =
-				(PortletConfigImpl)request.getAttribute(
+			LiferayPortletConfig liferayPortletConfig =
+				(LiferayPortletConfig)request.getAttribute(
 					JavaConstants.JAVAX_PORTLET_CONFIG);
 
 			Portlet portlet = PortletLocalServiceUtil.getPortletById(
-				companyId, portletConfigImpl.getPortletId());
+				companyId, liferayPortletConfig.getPortletId());
 
 			if (portlet == null) {
 				return false;
@@ -550,6 +559,7 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 
 			if (!strutsPath.equals(portlet.getStrutsPath()) &&
 				!strutsPath.equals(portlet.getParentStrutsPath())) {
+
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						"The struts path " + strutsPath + " does not belong " +
@@ -559,29 +569,9 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 
 				throw new PrincipalException();
 			}
-			else if (portlet.isActive()) {
-				if (PortalUtil.isAllowAddPortletDefaultResource(
-						request, portlet)) {
-
-					PortalUtil.addPortletDefaultResource(request, portlet);
-				}
-
-				ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
-					WebKeys.THEME_DISPLAY);
-
-				Layout layout = themeDisplay.getLayout();
-				PermissionChecker permissionChecker =
-					themeDisplay.getPermissionChecker();
-
-				if (!PortletPermissionUtil.contains(
-						permissionChecker, layout, portlet, ActionKeys.VIEW)) {
-
-					throw new PrincipalException();
-				}
-			}
 			else if (!portlet.isActive()) {
-				ForwardConfig forwardConfig =
-					actionMapping.findForward(_PATH_PORTAL_PORTLET_INACTIVE);
+				ForwardConfig forwardConfig = actionMapping.findForward(
+					_PATH_PORTAL_PORTLET_INACTIVE);
 
 				if (!action) {
 					processForwardConfig(request, response, forwardConfig);
@@ -595,8 +585,8 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 				_log.warn(e.getMessage());
 			}
 
-			ForwardConfig forwardConfig =
-				actionMapping.findForward(_PATH_PORTAL_PORTLET_ACCESS_DENIED);
+			ForwardConfig forwardConfig = actionMapping.findForward(
+				_PATH_PORTAL_PORTLET_ACCESS_DENIED);
 
 			if (!action) {
 				processForwardConfig(request, response, forwardConfig);
@@ -644,8 +634,8 @@ public class PortletRequestProcessor extends TilesRequestProcessor {
 
 		request.setAttribute(Globals.ERROR_KEY, errors);
 
-		// Struts normally calls internalModuleRelativeForward which breaks
-		// if called inside processAction
+		// Struts normally calls internalModuleRelativeForward which breaks if
+		// called inside processAction
 
 		request.setAttribute(PortletAction.getForwardKey(request), input);
 

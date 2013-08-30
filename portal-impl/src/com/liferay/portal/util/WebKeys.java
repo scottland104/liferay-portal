@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,9 @@
 
 package com.liferay.portal.util;
 
-import com.liferay.util.bridges.jsf.sun.LiferayConfigureListener;
+import com.liferay.portal.kernel.resiliency.spi.agent.annotation.Direction;
+import com.liferay.portal.kernel.resiliency.spi.agent.annotation.Distributed;
+import com.liferay.portal.kernel.resiliency.spi.agent.annotation.MatchType;
 
 /**
  * @author Brian Wing Shun Chan
@@ -32,13 +34,13 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 
 	public static final String ASSET_PUBLISHER_ABSTRACT_LENGTH = "ASSET_PUBLISHER_ABSTRACT_LENGTH";
 
+	public static final String ASSET_PUBLISHER_VIEW_URL = "ASSET_PUBLISHER_VIEW_URL";
+
 	public static final String ASSET_TAG = "ASSET_TAG";
 
 	public static final String ASSET_VOCABULARIES = "ASSET_VOCABULARIES";
 
 	public static final String ASSET_VOCABULARY = "ASSET_VOCABULARY";
-
-	public static final String ASSOCIATE_KEY = LiferayConfigureListener.ASSOCIATE_KEY;
 
 	public static final String BASIC_AUTH_ENABLED = "BASIC_AUTH_ENABLED";
 
@@ -74,6 +76,8 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 
 	public static final String CONFIGURATION_ACTION_PATH = "CONFIGURATION_ACTION_PATH";
 
+	public static final String CONTROL_PANEL_CATEGORIES_MAP = "CONTROL_PANEL_CATEGORIES_MAP";
+
 	public static final String DEVICE = "DEVICE";
 
 	public static final String DIFF_HTML_RESULTS = "DIFF_HTML_RESULTS";
@@ -87,6 +91,8 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 	public static final String DOCUMENT_LIBRARY_FILE_ENTRY_TYPE = "DOCUMENT_LIBRARY_FILE_ENTRY_TYPE";
 
 	public static final String DOCUMENT_LIBRARY_FILE_SHORTCUT = "DOCUMENT_LIBRARY_FILE_SHORTCUT";
+
+	public static final String DOCUMENT_LIBRARY_FILE_SHORTCUTS = "DOCUMENT_LIBRARY_FILE_SHORTCUTS";
 
 	public static final String DOCUMENT_LIBRARY_FILE_VERSION = "DOCUMENT_LIBRARY_FILE_VERSION";
 
@@ -116,6 +122,8 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 
 	public static final String FACEBOOK_CANVAS_PAGE_URL = "FACEBOOK_CANVAS_PAGE_URL";
 
+	public static final String FACEBOOK_INCOMPLETE_USER_ID = "FACEBOOK_INCOMPLETE_USER_ID";
+
 	public static final String FACEBOOK_USER_EMAIL_ADDRESS = "FACEBOOK_USER_EMAIL_ADDRESS";
 
 	public static final String FACEBOOK_USER_ID = "FACEBOOK_USER_ID";
@@ -142,27 +150,25 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 
 	public static final String IFRAME_SRC = "IFRAME_SRC";
 
-	public static final String IMAGE_GALLERY_FOLDER = "IMAGE_GALLERY_FOLDER";
-
-	public static final String IMAGE_GALLERY_IMAGE = "IMAGE_GALLERY_IMAGE";
-
-	public static final String JOURNAL_ARTICLE = "JOURNAL_ARTICLE";
-
 	public static final String JOURNAL_ARTICLE_CONTENT = "JOURNAL_ARTICLE_CONTENT";
 
 	public static final String JOURNAL_ARTICLE_CONTENT_EL = "JOURNAL_ARTICLE_CONTENT_EL";
 
-	public static final String JOURNAL_ARTICLE_DISPLAY = "JOURNAL_ARTICLE_DISPLAY";
-
 	public static final String JOURNAL_ARTICLE_GROUP_ID = "JOURNAL_ARTICLE_GROUP_ID";
+
+	public static final String JOURNAL_ARTICLES = "JOURNAL_ARTICLES";
 
 	public static final String JOURNAL_FEED = "JOURNAL_FEED";
 
+	public static final String JOURNAL_FOLDER = "JOURNAL_FOLDER";
+
+	public static final String JOURNAL_FOLDERS = "JOURNAL_FOLDERS";
+
 	public static final String JOURNAL_RECENT_ARTICLES = "JOURNAL_RECENT_ARTICLES";
 
-	public static final String JOURNAL_RECENT_STRUCTURES = "JOURNAL_RECENT_STRUCTURES";
+	public static final String JOURNAL_RECENT_DYNAMIC_DATA_MAPPING_STRUCTURES = "JOURNAL_RECENT_DYNAMIC_DATA_MAPPING_STRUCTURES";
 
-	public static final String JOURNAL_RECENT_TEMPLATES = "JOURNAL_RECENT_TEMPLATES";
+	public static final String JOURNAL_RECENT_DYNAMIC_DATA_MAPPING_TEMPLATES = "JOURNAL_RECENT_DYNAMIC_DATA_MAPPING_TEMPLATES";
 
 	public static final String JOURNAL_STRUCTURE = "JOURNAL_STRUCTURE";
 
@@ -188,6 +194,8 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 
 	public static final String JOURNAL_STRUCTURE_EL_PARENT_ID = "JOURNAL_STRUCTURE_EL_PARENT_ID";
 
+	public static final String JOURNAL_STRUCTURE_EL_REPEAT_COUNT_MAP = "JOURNAL_STRUCTURE_EL_REPEAT_COUNT_MAP";
+
 	public static final String JOURNAL_STRUCTURE_EL_REPEATABLE = "JOURNAL_STRUCTURE_EL_REPEATABLE";
 
 	public static final String JOURNAL_STRUCTURE_EL_REPEATABLE_PROTOTYPE = "JOURNAL_STRUCTURE_EL_REPEATABLE_PROTOTYPE";
@@ -200,7 +208,8 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 
 	public static final String JOURNAL_TEMPLATE_ID = "JOURNAL_TEMPLATE_ID";
 
-	public static final String LAYOUT_ASSET_ENTRY = "LAYOUT_ASSET_ENTRY";
+	@Distributed
+	public static final String LAYOUT_ASSET_ENTRY = "LIFERAY_SHARED_LAYOUT_ASSET_ENTRY";
 
 	public static final String LAYOUT_CONTENT = "LAYOUT_CONTENT";
 
@@ -213,12 +222,6 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 	public static final String LAYOUT_PROTOTYPE = "LAYOUT_PROTOTYPE";
 
 	public static final String LAYOUT_REVISION = "LAYOUT_REVISION";
-
-	public static final String LIVE_SESSION_USERS = "LIVE_SESSION_USERS";
-
-	public static final String LIVE_USER_TRACKERS = "LIVE_USER_TRACKERS";
-
-	public static final String LIVE_USERS = "LIVE_USERS";
 
 	public static final String LOGOUT = "LOGOUT";
 
@@ -262,11 +265,31 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 
 	public static final String MESSAGE_BOARDS_TREE_WALKER_LAST_NODE = "MESSAGE_BOARDS_TREE_WALKER_LAST_NODE";
 
-	public static final String MESSAGE_BOARDS_TREE_WALKER_MESSAGE_FLAG = "MESSAGE_BOARDS_TREE_WALKER_MESSAGE_FLAG";
-
 	public static final String MESSAGE_BOARDS_TREE_WALKER_SEL_MESSAGE = "MESSAGE_BOARDS_TREE_WALKER_SEL_MESSAGE";
 
 	public static final String MESSAGE_BOARDS_TREE_WALKER_THREAD = "MESSAGE_BOARDS_TREE_WALKER_THREAD";
+
+	public static final String MESSAGE_BOARDS_TREE_WALKER_THREAD_FLAG = "MESSAGE_BOARDS_TREE_WALKER_THREAD_FLAG";
+
+	public static final String MESSAGE_BOARDS_TREE_WALKER_VIEWABLE_THREAD = "MESSAGE_BOARDS_TREE_WALKER_VIEWABLE_THREAD";
+
+	public static final String MOBILE_DEVICE_RULES_RULE = "MOBILE_DEVICE_RULES_RULE";
+
+	public static final String MOBILE_DEVICE_RULES_RULE_EDITOR_JSP = "MOBILE_DEVICE_RULES_RULE_EDITOR_JSP";
+
+	public static final String MOBILE_DEVICE_RULES_RULE_GROUP = "MOBILE_DEVICE_RULES_RULE_GROUP";
+
+	public static final String MOBILE_DEVICE_RULES_RULE_GROUP_ACTION = "MOBILE_DEVICE_RULES_RULE_GROUP_ACTION";
+
+	public static final String MOBILE_DEVICE_RULES_RULE_GROUP_ACTION_EDITOR_JSP = "MOBILE_DEVICE_RULES_RULE_GROUP_ACTION_EDITOR_JSP";
+
+	public static final String MOBILE_DEVICE_RULES_RULE_GROUP_ACTION_TYPE = "MOBILE_DEVICE_RULES_RULE_GROUP_ACTION_TYPE";
+
+	public static final String MOBILE_DEVICE_RULES_RULE_GROUP_INSTANCE = "MOBILE_DEVICE_RULES_RULE_GROUP_INSTANCE";
+
+	public static final String MOBILE_DEVICE_RULES_RULE_INSTANCE = "MOBILE_DEVICE_RULES_RULE_INSTANCE";
+
+	public static final String MOBILE_DEVICE_RULES_RULE_TYPE = "MOBILE_DEVICE_RULES_RULE_TYPE";
 
 	public static final String NESTED_PORTLET_VELOCITY_TEMPLATE_CONTENT = "NESTED_PORTLET_VELOCITY_TEMPLATE_CONTENT";
 
@@ -298,15 +321,17 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 
 	public static final String PHONE = "PHONE";
 
-	public static final String PLUGIN_REPOSITORY_REPORT = "PLUGIN_REPOSITORY_REPORT";
-
 	public static final String POLLS_QUESTION = "POLLS_QUESTION";
 
 	public static final String PORTAL_PREFERENCES = "PORTAL_PREFERENCES";
 
 	public static final String PORTAL_REQUEST_DATA_SAMPLE = "PORTAL_REQUEST_DATA_SAMPLE";
 
-	public static final String PORTLET_BREADCRUMBS = "PORTLET_BREADCRUMBS";
+	public static final String PORTAL_RESILIENCY_ACTION = "PORTAL_RESILIENCY_ACTION";
+
+	public static final String PORTLET_AJAX_RENDER = "PORTLET_AJAX_RENDER";
+
+	public static final String PORTLET_BREADCRUMBS = "LIFERAY_SHARED_PORTLET_BREADCRUMBS";
 
 	public static final String PORTLET_CATEGORY = "PORTLET_CATEGORY";
 
@@ -330,6 +355,7 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 
 	public static final String PORTLET_STRUTS_EXECUTE = "PORTLET_STRUTS_EXECUTE";
 
+	@Distributed(direction = Direction.DUPLEX, matchType = MatchType.POSTFIX)
 	public static final String PORTLET_STRUTS_FORWARD = "PORTLET_STRUTS_FORWARD";
 
 	public static final String PORTLET_STRUTS_PROCESSOR = "PORTLET_STRUTS_PROCESSOR";
@@ -342,7 +368,7 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 
 	public static final String PUBLIC_RENDER_PARAMETERS_POOL = "PUBLIC_RENDER_PARAMETERS_POOL_";
 
-	public static final String REFERER = "referer";
+	public static final String REDIRECT_TO_DEFAULT_LAYOUT = "REDIRECT_TO_DEFAULT_LAYOUT";
 
 	public static final String REQUESTED_LAYOUT = "REQUESTED_LAYOUT";
 
@@ -354,6 +380,16 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 
 	public static final String SESSION_LISTENER = "SESSION_LISTENER";
 
+	public static final String SESSION_MAX_ALLOWED = "SESSION_MAX_ALLOWED";
+
+	public static final String SETUP_WIZARD_DEFAULT_LOCALE = "SETUP_WIZARD_DEFAULT_LOCALE";
+
+	public static final String SETUP_WIZARD_PASSWORD_UPDATED = "SETUP_WIZARD_PASSWORD_UPDATED";
+
+	public static final String SETUP_WIZARD_PROPERTIES = "SETUP_WIZARD_PROPERTIES";
+
+	public static final String SETUP_WIZARD_PROPERTIES_FILE_CREATED = "SETUP_WIZARD_PROPERTIES_FILE_CREATED";
+
 	public static final String SHOPPING_CATEGORY = "SHOPPING_CATEGORY";
 
 	public static final String SHOPPING_COUPON = "SHOPPING_COUPON";
@@ -362,7 +398,9 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 
 	public static final String SHOPPING_ORDER = "SHOPPING_ORDER";
 
-	public static final String SOCIAL_EQUITY_ACTION_MAPPINGS_MAP = "SOCIAL_EQUITY_ACTION_MAPPINGS_MAP";
+	public static final String SITE_ADMINISTRATION_CATEGORIES_MAP = "SITES_ADMINISTRATION_CATEGORIES_MAP";
+
+	public static final String SOCIAL_ACTIVITY_SETTINGS_MAP = "SOCIAL_ACTIVITY_SETTINGS_MAP";
 
 	public static final String SOCIAL_REQUESTS = "SOCIAL_REQUESTS";
 
@@ -380,15 +418,13 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 
 	public static final String STALE_SESSION = "STALE_SESSION";
 
-	public static final String STRING_SERVLET_RESPONSE = "STRING_SERVLET_RESPONSE";
+	public static final String STARTUP_FINISHED = "STARTUP_FINISHED";
 
 	public static final String STRUTS_BRIDGES_ATTRIBUTES = "STRUTS_BRIDGES_ATTRIBUTES";
 
 	public static final String SUBJECT = "SUBJECT";
 
 	public static final String TAB_INDEX = "TAB_INDEX";
-
-	public static final String TAGS_COMPILER_ENTRIES = "TAGS_COMPILER_ENTRIES";
 
 	public static final String TAGS_LAYOUT_ENTRIES = "TAGS_LAYOUT_ENTRIES";
 
@@ -403,6 +439,12 @@ public class WebKeys implements com.liferay.portal.kernel.util.WebKeys {
 	public static final String TITLE = "TITLE";
 
 	public static final String TRANSLATOR_TRANSLATION = "TRANSLATOR_TRANSLATION";
+
+	public static final String TRASH_CONTAINER_MODEL = "TRASH_CONTAINER_MODEL";
+
+	public static final String TRASH_ENTRY = "TRASH_ENTRY";
+
+	public static final String TRASH_RENDERER = "TRASH_RENDERER";
 
 	public static final String TREE_GROUP_ID = "TREE_GROUP_ID";
 

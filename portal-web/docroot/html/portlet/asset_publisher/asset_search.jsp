@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,12 +20,14 @@
 AssetSearch searchContainer = (AssetSearch)request.getAttribute("liferay-ui:search:searchContainer");
 
 AssetDisplayTerms displayTerms = (AssetDisplayTerms)searchContainer.getDisplayTerms();
+
+long[] selectedGroupIds = StringUtil.split(ParamUtil.getString(request, "selectedGroupIds"), 0L);
 %>
 
 <liferay-ui:search-toggle
-	id="toggle_id_asset_search"
-	displayTerms="<%= displayTerms %>"
 	buttonLabel="search"
+	displayTerms="<%= displayTerms %>"
+	id="toggle_id_asset_search"
 >
 	<aui:fieldset>
 		<aui:input name="<%= displayTerms.TITLE %>" size="20" type="text" value="<%= displayTerms.getTitle() %>" />
@@ -34,12 +36,19 @@ AssetDisplayTerms displayTerms = (AssetDisplayTerms)searchContainer.getDisplayTe
 
 		<aui:input name="<%= displayTerms.USER_NAME %>" size="20" type="text" value="<%= displayTerms.getUserName() %>" />
 
-		<aui:select label="my-sites" name="<%= displayTerms.GROUP_ID %>" showEmptyOption="<%= true %>">
-			<c:if test="<%= themeDisplay.getCompanyGroupId() != scopeGroupId %>">
-				<aui:option label="global" selected="<%= displayTerms.getGroupId() == themeDisplay.getCompanyGroupId() %>" value="<%= themeDisplay.getCompanyGroupId() %>" />
-			</c:if>
+		<aui:select label="my-sites" name="<%= displayTerms.GROUP_ID %>">
 
-			<aui:option label="<%= themeDisplay.getScopeGroupName() %>" selected="<%= displayTerms.getGroupId() == scopeGroupId %>" value="<%= scopeGroupId %>" />
+			<%
+			for (long groupId : selectedGroupIds) {
+				Group group = GroupLocalServiceUtil.getGroup(groupId);
+			%>
+
+				<aui:option label="<%= HtmlUtil.escape(group.getDescriptiveName(locale)) %>" selected="<%= displayTerms.getGroupId() == groupId %>" value="<%= groupId %>" />
+
+			<%
+			}
+			%>
+
 		</aui:select>
 	</aui:fieldset>
 </liferay-ui:search-toggle>

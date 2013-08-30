@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -37,6 +37,32 @@ public class WebDAVPropsImpl extends WebDAVPropsBaseImpl {
 	}
 
 	@Override
+	public void addProp(String name, String prefix, String uri)
+		throws Exception {
+
+		Namespace namespace = WebDAVUtil.createNamespace(prefix, uri);
+
+		QName qname = SAXReaderUtil.createQName(name, namespace);
+
+		Element root = _removeExisting(qname);
+
+		root.addElement(qname);
+	}
+
+	@Override
+	public void addProp(String name, String prefix, String uri, String text)
+		throws Exception {
+
+		Namespace namespace = WebDAVUtil.createNamespace(prefix, uri);
+
+		QName qname = SAXReaderUtil.createQName(name, namespace);
+
+		Element root = _removeExisting(qname);
+
+		root.addElement(qname).addText(text);
+	}
+
+	@Override
 	public String getProps() {
 		String props = super.getProps();
 
@@ -48,6 +74,7 @@ public class WebDAVPropsImpl extends WebDAVPropsBaseImpl {
 		}
 	}
 
+	@Override
 	public Set<QName> getPropsSet() throws Exception {
 		Set<QName> propsSet = new HashSet<QName>();
 
@@ -67,6 +94,7 @@ public class WebDAVPropsImpl extends WebDAVPropsBaseImpl {
 		return propsSet;
 	}
 
+	@Override
 	public String getText(String name, String prefix, String uri)
 		throws Exception {
 
@@ -83,30 +111,7 @@ public class WebDAVPropsImpl extends WebDAVPropsBaseImpl {
 		return prop.getText();
 	}
 
-	public void addProp(String name, String prefix, String uri)
-		throws Exception {
-
-		Namespace namespace = WebDAVUtil.createNamespace(prefix, uri);
-
-		QName qname = SAXReaderUtil.createQName(name, namespace);
-
-		Element root = _removeExisting(qname);
-
-		root.addElement(qname);
-	}
-
-	public void addProp(String name, String prefix, String uri, String text)
-		throws Exception {
-
-		Namespace namespace = WebDAVUtil.createNamespace(prefix, uri);
-
-		QName qname = SAXReaderUtil.createQName(name, namespace);
-
-		Element root = _removeExisting(qname);
-
-		root.addElement(qname).addText(text);
-	}
-
+	@Override
 	public void removeProp(String name, String prefix, String uri)
 		throws Exception {
 
@@ -117,6 +122,7 @@ public class WebDAVPropsImpl extends WebDAVPropsBaseImpl {
 		_removeExisting(qname);
 	}
 
+	@Override
 	public void store() throws Exception {
 		if (_document != null) {
 			String xml = _document.formattedString(StringPool.FOUR_SPACES);

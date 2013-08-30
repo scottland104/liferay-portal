@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,11 @@ import com.liferay.portal.model.CacheModel;
 
 import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -29,10 +34,11 @@ import java.util.Date;
  * @see DDMStructure
  * @generated
  */
-public class DDMStructureCacheModel implements CacheModel<DDMStructure> {
+public class DDMStructureCacheModel implements CacheModel<DDMStructure>,
+	Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(29);
+		StringBundler sb = new StringBundler(33);
 
 		sb.append("{uuid=");
 		sb.append(uuid);
@@ -50,6 +56,8 @@ public class DDMStructureCacheModel implements CacheModel<DDMStructure> {
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
+		sb.append(", parentStructureId=");
+		sb.append(parentStructureId);
 		sb.append(", classNameId=");
 		sb.append(classNameId);
 		sb.append(", structureKey=");
@@ -62,11 +70,14 @@ public class DDMStructureCacheModel implements CacheModel<DDMStructure> {
 		sb.append(xsd);
 		sb.append(", storageType=");
 		sb.append(storageType);
+		sb.append(", type=");
+		sb.append(type);
 		sb.append("}");
 
 		return sb.toString();
 	}
 
+	@Override
 	public DDMStructure toEntityModel() {
 		DDMStructureImpl ddmStructureImpl = new DDMStructureImpl();
 
@@ -103,6 +114,7 @@ public class DDMStructureCacheModel implements CacheModel<DDMStructure> {
 			ddmStructureImpl.setModifiedDate(new Date(modifiedDate));
 		}
 
+		ddmStructureImpl.setParentStructureId(parentStructureId);
 		ddmStructureImpl.setClassNameId(classNameId);
 
 		if (structureKey == null) {
@@ -140,9 +152,111 @@ public class DDMStructureCacheModel implements CacheModel<DDMStructure> {
 			ddmStructureImpl.setStorageType(storageType);
 		}
 
+		ddmStructureImpl.setType(type);
+
 		ddmStructureImpl.resetOriginalValues();
 
+		ddmStructureImpl.setDocument(_document);
+
+		ddmStructureImpl.setLocalizedFieldsMap(_localizedFieldsMap);
+
+		ddmStructureImpl.setLocalizedTransientFieldsMap(_localizedTransientFieldsMap);
+
 		return ddmStructureImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+		uuid = objectInput.readUTF();
+		structureId = objectInput.readLong();
+		groupId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		userId = objectInput.readLong();
+		userName = objectInput.readUTF();
+		createDate = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
+		parentStructureId = objectInput.readLong();
+		classNameId = objectInput.readLong();
+		structureKey = objectInput.readUTF();
+		name = objectInput.readUTF();
+		description = objectInput.readUTF();
+		xsd = objectInput.readUTF();
+		storageType = objectInput.readUTF();
+		type = objectInput.readInt();
+
+		_document = (com.liferay.portal.kernel.xml.Document)objectInput.readObject();
+		_localizedFieldsMap = (java.util.Map<java.lang.String, java.util.Map<java.lang.String, java.util.Map<java.lang.String, java.lang.String>>>)objectInput.readObject();
+		_localizedTransientFieldsMap = (java.util.Map<java.lang.String, java.util.Map<java.lang.String, java.util.Map<java.lang.String, java.lang.String>>>)objectInput.readObject();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		if (uuid == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
+
+		objectOutput.writeLong(structureId);
+		objectOutput.writeLong(groupId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(userId);
+
+		if (userName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(userName);
+		}
+
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(modifiedDate);
+		objectOutput.writeLong(parentStructureId);
+		objectOutput.writeLong(classNameId);
+
+		if (structureKey == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(structureKey);
+		}
+
+		if (name == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(name);
+		}
+
+		if (description == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(description);
+		}
+
+		if (xsd == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(xsd);
+		}
+
+		if (storageType == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(storageType);
+		}
+
+		objectOutput.writeInt(type);
+
+		objectOutput.writeObject(_document);
+		objectOutput.writeObject(_localizedFieldsMap);
+		objectOutput.writeObject(_localizedTransientFieldsMap);
 	}
 
 	public String uuid;
@@ -153,10 +267,15 @@ public class DDMStructureCacheModel implements CacheModel<DDMStructure> {
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
+	public long parentStructureId;
 	public long classNameId;
 	public String structureKey;
 	public String name;
 	public String description;
 	public String xsd;
 	public String storageType;
+	public int type;
+	public com.liferay.portal.kernel.xml.Document _document;
+	public java.util.Map<java.lang.String, java.util.Map<java.lang.String, java.util.Map<java.lang.String, java.lang.String>>> _localizedFieldsMap;
+	public java.util.Map<java.lang.String, java.util.Map<java.lang.String, java.util.Map<java.lang.String, java.lang.String>>> _localizedTransientFieldsMap;
 }

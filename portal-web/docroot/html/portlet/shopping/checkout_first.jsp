@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -71,8 +71,8 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 
 	<aui:model-context bean="<%= order %>" model="<%= ShoppingOrder.class %>" />
 
-	<liferay-ui:panel-container extended="<%= true %>" persistState="<%= true %>">
-		<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" persistState="<%= true %>" title="billing-address">
+	<liferay-ui:panel-container extended="<%= true %>" id="shoppingCheckoutPanelContainer" persistState="<%= true %>">
+		<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id="shoppingCheckoutBillingAddressPanel" persistState="<%= true %>" title="billing-address">
 			<liferay-ui:error exception="<%= BillingCityException.class %>" message="please-enter-a-valid-city" />
 			<liferay-ui:error exception="<%= BillingCountryException.class %>" message="please-enter-a-valid-country" />
 			<liferay-ui:error exception="<%= BillingEmailAddressException.class %>" message="please-enter-a-valid-email-address" />
@@ -81,9 +81,9 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 			<liferay-ui:error exception="<%= BillingPhoneException.class %>" message="please-enter-a-valid-phone" />
 			<liferay-ui:error exception="<%= BillingStateException.class %>" message="please-enter-a-valid-state" />
 			<liferay-ui:error exception="<%= BillingStreetException.class %>" message="please-enter-a-valid-street" />
-			<liferay-ui:error exception="<%= BillingZipException.class %>" message="please-enter-a-valid-zip" />
+			<liferay-ui:error exception="<%= BillingZipException.class %>" message="please-enter-a-valid-postal-code" />
 
-			<aui:fieldset>
+			<aui:fieldset column="<%= true %>">
 				<c:if test="<%= !addresses.isEmpty() %>">
 
 					<%
@@ -107,8 +107,8 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 					</aui:select>
 				</c:if>
 
-				<aui:column>
-					<aui:input label="first-name" name="billingFirstName" />
+				<aui:col width="<%= 50 %>">
+					<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" label="first-name" name="billingFirstName" />
 
 					<aui:input label="last-name" name="billingLastName" />
 
@@ -119,9 +119,9 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 					<aui:input label="street" name="billingStreet" />
 
 					<aui:input label="city" name="billingCity" />
-				</aui:column>
+				</aui:col>
 
-				<aui:column>
+				<aui:col width="<%= 50 %>">
 					<aui:select label="state" name="billingStateSel">
 						<aui:option label="outside-us" />
 
@@ -134,20 +134,21 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 						<%
 						}
 						%>
+
 					</aui:select>
 
 					<aui:input bean="<%= null %>" label="other-state" name="billingState" value="<%= billingState %>" />
 
-					<aui:input label="zip" name="billingZip" />
+					<aui:input label="postal-code" name="billingZip" />
 
 					<aui:input label="country" name="billingCountry" />
 
 					<aui:input label="phone" name="billingPhone" />
-				</aui:column>
+				</aui:col>
 			</aui:fieldset>
 		</liferay-ui:panel>
 
-		<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" persistState="<%= true %>" title="shipping-address">
+		<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id="shoppingCheckoutShippingAddressPanel" persistState="<%= true %>" title="shipping-address">
 			<liferay-ui:error exception="<%= ShippingCityException.class %>" message="please-enter-a-valid-city" />
 			<liferay-ui:error exception="<%= ShippingCountryException.class %>" message="please-enter-a-valid-country" />
 			<liferay-ui:error exception="<%= ShippingEmailAddressException.class %>" message="please-enter-a-valid-email-address" />
@@ -156,9 +157,9 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 			<liferay-ui:error exception="<%= ShippingPhoneException.class %>" message="please-enter-a-valid-phone" />
 			<liferay-ui:error exception="<%= ShippingStateException.class %>" message="please-enter-a-valid-state" />
 			<liferay-ui:error exception="<%= ShippingStreetException.class %>" message="please-enter-a-valid-street" />
-			<liferay-ui:error exception="<%= ShippingZipException.class %>" message="please-enter-a-valid-zip" />
+			<liferay-ui:error exception="<%= ShippingZipException.class %>" message="please-enter-a-valid-postal-code" />
 
-			<aui:fieldset>
+			<aui:fieldset column="<%= true %>">
 				<c:if test="<%= !addresses.isEmpty() %>">
 
 					<%
@@ -182,7 +183,7 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 					</aui:select>
 				</c:if>
 
-				<aui:column>
+				<aui:col width="<%= 50 %>">
 					<aui:input label="first-name" name="shippingFirstName" />
 
 					<aui:input label="last-name" name="shippingLastName" />
@@ -196,9 +197,9 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 					<aui:input label="city" name="shippingCity" />
 
 					<aui:input label="same-as-billing" name="shipToBilling" />
-				</aui:column>
+				</aui:col>
 
-				<aui:column>
+				<aui:col width="<%= 50 %>">
 					<aui:select label="state" name="shippingStateSel">
 						<aui:option label="outside-us" />
 
@@ -216,12 +217,12 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 
 					<aui:input bean="<%= null %>" label="other-state" name="shippingState" value="<%= shippingState %>" />
 
-					<aui:input label="zip" name="shippingZip" />
+					<aui:input label="postal-code" name="shippingZip" />
 
 					<aui:input label="country" name="shippingCountry" />
 
 					<aui:input label="phone" name="shippingPhone" />
-				</aui:column>
+				</aui:col>
 			</aui:fieldset>
 		</liferay-ui:panel>
 
@@ -230,13 +231,13 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 		%>
 
 		<c:if test="<%= !shoppingPrefs.usePayPal() && (ccTypes.length > 0) %>">
-			<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" persistState="<%= true %>" title="credit-card">
+			<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id="shoppingCheckoutCreditCardPanel" persistState="<%= true %>" title="credit-card">
 				<liferay-ui:error exception="<%= CCExpirationException.class %>" message="please-enter-a-valid-credit-card-expiration-date" />
 				<liferay-ui:error exception="<%= CCNameException.class %>" message="please-enter-the-full-name-exactly-as-it-is-appears-on-your-credit-card" />
 				<liferay-ui:error exception="<%= CCNumberException.class %>" message="please-enter-a-valid-credit-card-number" />
 				<liferay-ui:error exception="<%= CCTypeException.class %>" message="please-enter-a-valid-credit-card-type" />
 
-				<aui:fieldset>
+				<aui:fieldset column="<%= true %>">
 
 					<%
 					for (int i = 0; i < ccTypes.length; i++) {
@@ -267,7 +268,7 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 					<aui:input bean="<%= null %>" label="number" name="ccNumber" />
 
 					<aui:field-wrapper label="expiration-date">
-						<aui:column>
+						<aui:col width="<%= 50 %>">
 							<aui:select label="" name="ccExpMonth">
 
 								<%
@@ -283,9 +284,9 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 								%>
 
 							</aui:select>
-						</aui:column>
+						</aui:col>
 
-						<aui:column>
+						<aui:col width="<%= 50 %>">
 							<aui:select label="" name="ccExpYear">
 
 								<%
@@ -301,7 +302,7 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 								%>
 
 							</aui:select>
-						</aui:column>
+						</aui:col>
 					</aui:field-wrapper>
 
 					<img alt="" src="<%= themeDisplay.getPathThemeImages() %>/shopping/cc_ver_number.png" />
@@ -311,11 +312,13 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 			</liferay-ui:panel>
 		</c:if>
 
-		<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" persistState="<%= true %>" title="comments">
-			<aui:fieldset>
-				<aui:input label="" name="comments" />
-			</aui:fieldset>
-		</liferay-ui:panel>
+		<c:if test="<%= PropsValues.SHOPPING_ORDER_COMMENTS_ENABLED %>">
+			<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id="shoppingCheckoutCommentsPanel" persistState="<%= true %>" title="comments">
+				<aui:fieldset>
+					<aui:input label="" name="comments" />
+				</aui:fieldset>
+			</liferay-ui:panel>
+		</c:if>
 	</liferay-ui:panel-container>
 
 	<aui:button-row>
@@ -361,8 +364,4 @@ List addresses = AddressServiceUtil.getAddresses(Contact.class.getName(), contac
 		%>
 
 	}
-
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />billingFirstName);
-	</c:if>
 </aui:script>

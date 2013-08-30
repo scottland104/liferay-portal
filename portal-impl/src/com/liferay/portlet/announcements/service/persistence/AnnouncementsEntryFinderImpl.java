@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -48,21 +48,22 @@ public class AnnouncementsEntryFinderImpl
 	extends BasePersistenceImpl<AnnouncementsEntry>
 	implements AnnouncementsEntryFinder {
 
-	public static String COUNT_BY_HIDDEN =
+	public static final String COUNT_BY_HIDDEN =
 		AnnouncementsEntryFinder.class.getName() + ".countByHidden";
 
-	public static String COUNT_BY_NOT_HIDDEN =
+	public static final String COUNT_BY_NOT_HIDDEN =
 		AnnouncementsEntryFinder.class.getName() + ".countByNotHidden";
 
-	public static String FIND_BY_DISPLAY_DATE =
+	public static final String FIND_BY_DISPLAY_DATE =
 		AnnouncementsEntryFinder.class.getName() + ".findByDisplayDate";
 
-	public static String FIND_BY_HIDDEN =
+	public static final String FIND_BY_HIDDEN =
 		AnnouncementsEntryFinder.class.getName() + ".findByHidden";
 
-	public static String FIND_BY_NOT_HIDDEN =
+	public static final String FIND_BY_NOT_HIDDEN =
 		AnnouncementsEntryFinder.class.getName() + ".findByNotHidden";
 
+	@Override
 	public int countByScope(
 			long userId, long classNameId, long[] classPKs,
 			int displayDateMonth, int displayDateDay, int displayDateYear,
@@ -105,7 +106,7 @@ public class AnnouncementsEntryFinderImpl
 			qPos.add(userId);
 			qPos.add(AnnouncementsFlagConstants.HIDDEN);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -125,6 +126,7 @@ public class AnnouncementsEntryFinderImpl
 		}
 	}
 
+	@Override
 	public int countByScopes(
 			long userId, LinkedHashMap<Long, long[]> scopes,
 			int displayDateMonth, int displayDateDay, int displayDateYear,
@@ -166,7 +168,7 @@ public class AnnouncementsEntryFinderImpl
 			qPos.add(userId);
 			qPos.add(AnnouncementsFlagConstants.HIDDEN);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -186,6 +188,7 @@ public class AnnouncementsEntryFinderImpl
 		}
 	}
 
+	@Override
 	public List<AnnouncementsEntry> findByDisplayDate(
 			Date displayDateLT, Date displayDateGT)
 		throws SystemException {
@@ -209,7 +212,7 @@ public class AnnouncementsEntryFinderImpl
 			qPos.add(displayDateGT_TS);
 			qPos.add(displayDateLT_TS);
 
-			return q.list();
+			return q.list(true);
 		}
 		catch (Exception e) {
 			throw new SystemException(e);
@@ -219,6 +222,7 @@ public class AnnouncementsEntryFinderImpl
 		}
 	}
 
+	@Override
 	public List<AnnouncementsEntry> findByScope(
 			long userId, long classNameId, long[] classPKs,
 			int displayDateMonth, int displayDateDay, int displayDateYear,
@@ -272,6 +276,7 @@ public class AnnouncementsEntryFinderImpl
 		}
 	}
 
+	@Override
 	public List<AnnouncementsEntry> findByScopes(
 			long userId, LinkedHashMap<Long, long[]> scopes,
 			int displayDateMonth, int displayDateDay, int displayDateYear,
@@ -324,6 +329,28 @@ public class AnnouncementsEntryFinderImpl
 		}
 	}
 
+	protected String getClassPKs(LinkedHashMap<Long, long[]> scopes) {
+		if ((scopes == null) || scopes.isEmpty()) {
+			return StringPool.BLANK;
+		}
+
+		StringBundler sb = new StringBundler(scopes.size() * 4);
+
+		for (Map.Entry<Long, long[]> entry : scopes.entrySet()) {
+			Long classNameId = entry.getKey();
+			long[] classPKs = entry.getValue();
+
+			sb.append(StringPool.OPEN_PARENTHESIS);
+			sb.append(getClassPKs(classNameId.longValue(), classPKs));
+			sb.append(StringPool.CLOSE_PARENTHESIS);
+			sb.append(" OR ");
+		}
+
+		sb.setIndex(sb.index() - 1);
+
+		return sb.toString();
+	}
+
 	protected String getClassPKs(long classNameId, long[] classPKs) {
 		if (classPKs.length == 0) {
 			return "(AnnouncementsEntry.classNameId = ?) AND (";
@@ -340,48 +367,11 @@ public class AnnouncementsEntryFinderImpl
 				sb.append(" OR ");
 			}
 			else {
-				sb.append(")");
+				sb.append(StringPool.CLOSE_PARENTHESIS);
 			}
 		}
 
 		return sb.toString();
-	}
-
-	protected String getClassPKs(LinkedHashMap<Long, long[]> scopes) {
-		if ((scopes == null) || scopes.isEmpty()) {
-			return StringPool.BLANK;
-		}
-
-		StringBundler sb = new StringBundler(scopes.size() * 4 - 1);
-
-		Iterator<Map.Entry<Long, long[]>> itr = scopes.entrySet().iterator();
-
-		while (itr.hasNext()) {
-			Map.Entry<Long, long[]> entry = itr.next();
-
-			Long classNameId = entry.getKey();
-			long[] classPKs = entry.getValue();
-
-			sb.append("(");
-			sb.append(getClassPKs(classNameId.longValue(), classPKs));
-			sb.append(")");
-
-			if (itr.hasNext()) {
-				sb.append(" OR ");
-			}
-		}
-
-		return sb.toString();
-	}
-
-	protected void setClassPKs(
-		QueryPos qPos, long classNameId, long[] classPKs) {
-
-		qPos.add(classNameId);
-
-		for (int i = 0; i < classPKs.length; i++) {
-			qPos.add(classPKs[i]);
-		}
 	}
 
 	protected void setClassPKs(
@@ -391,15 +381,21 @@ public class AnnouncementsEntryFinderImpl
 			return;
 		}
 
-		Iterator<Map.Entry<Long, long[]>> itr = scopes.entrySet().iterator();
-
-		while (itr.hasNext()) {
-			Map.Entry<Long, long[]> entry = itr.next();
-
+		for (Map.Entry<Long, long[]> entry : scopes.entrySet()) {
 			Long classNameId = entry.getKey();
 			long[] classPKs = entry.getValue();
 
 			setClassPKs(qPos, classNameId.longValue(), classPKs);
+		}
+	}
+
+	protected void setClassPKs(
+		QueryPos qPos, long classNameId, long[] classPKs) {
+
+		qPos.add(classNameId);
+
+		for (int i = 0; i < classPKs.length; i++) {
+			qPos.add(classPKs[i]);
 		}
 	}
 
@@ -414,9 +410,12 @@ public class AnnouncementsEntryFinderImpl
 		try {
 			displayDate = PortalUtil.getDate(
 				displayDateMonth, displayDateDay, displayDateYear,
-				displayDateHour, displayDateMinute, new PortalException());
+				displayDateHour, displayDateMinute, null);
 		}
 		catch (PortalException pe) {
+		}
+
+		if (displayDate == null) {
 			displayDate = new Date();
 		}
 
@@ -427,10 +426,12 @@ public class AnnouncementsEntryFinderImpl
 		try {
 			expirationDate = PortalUtil.getDate(
 				expirationDateMonth, expirationDateDay, expirationDateYear,
-				expirationDateHour, expirationDateMinute,
-				new PortalException());
+				expirationDateHour, expirationDateMinute, null);
 		}
 		catch (PortalException pe) {
+		}
+
+		if (expirationDate == null) {
 			expirationDate = new Date();
 		}
 

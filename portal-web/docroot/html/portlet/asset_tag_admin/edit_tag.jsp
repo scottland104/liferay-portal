@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -102,9 +102,9 @@ else {
 
 								<div class="lfr-form-row lfr-form-row-inline">
 									<div class="row-fields">
-										<aui:input fieldParam='<%= "key" + tagPropertiesIndex %>' name="key" />
+										<aui:input fieldParam='<%= "key" + tagPropertiesIndex %>' id='<%= "key" + tagPropertiesIndex %>' name="key" />
 
-										<aui:input fieldParam='<%= "value" + tagPropertiesIndex %>' name="value" />
+										<aui:input fieldParam='<%= "value" + tagPropertiesIndex %>' id='<%= "value" + tagPropertiesIndex %>' name="value" />
 									</div>
 								</div>
 
@@ -121,11 +121,11 @@ else {
 					<aui:button type="submit" />
 
 					<c:if test="<%= tag != null %>">
-						<c:if test="<%= permissionChecker.hasPermission(scopeGroupId, AssetTag.class.getName(), tag.getTagId(), ActionKeys.DELETE) %>">
+						<c:if test="<%= AssetTagPermission.contains(permissionChecker, tag, ActionKeys.DELETE) %>">
 							<aui:button id="deleteTagButton" value="delete" />
 						</c:if>
 
-						<c:if test="<%= permissionChecker.hasPermission(scopeGroupId, AssetTag.class.getName(), tag.getTagId(), ActionKeys.PERMISSIONS) %>">
+						<c:if test="<%= AssetTagPermission.contains(permissionChecker, tag, ActionKeys.PERMISSIONS) %>">
 							<liferay-security:permissionsURL
 								modelResource="<%= AssetTag.class.getName() %>"
 								modelResourceDescription="<%= tag.getName() %>"
@@ -148,12 +148,12 @@ else {
 <aui:script use="liferay-auto-fields">
 	var autoFields = new Liferay.AutoFields(
 		{
-			contentBox: 'fieldset#tagProperties',
+			contentBox: 'fieldset#<portlet:namespace />tagProperties',
 			fieldIndexes: '<portlet:namespace />tagPropertiesIndexes'
 		}
 	).render();
 
-	var tagPropertiesTrigger = A.one('fieldset#tagProperties');
+	var tagPropertiesTrigger = A.one('fieldset#<portlet:namespace />tagProperties');
 
 	if (tagPropertiesTrigger) {
 		tagPropertiesTrigger.setData('autoFieldsInstance', autoFields);

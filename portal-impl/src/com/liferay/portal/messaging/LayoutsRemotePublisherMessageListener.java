@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,13 +20,19 @@ import com.liferay.portal.kernel.messaging.MessageStatus;
 import com.liferay.portal.kernel.messaging.sender.MessageSender;
 import com.liferay.portal.kernel.messaging.sender.SingleDestinationMessageSender;
 import com.liferay.portal.kernel.staging.StagingUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.model.CompanyConstants;
+import com.liferay.portal.model.LayoutSet;
 import com.liferay.portal.model.User;
+import com.liferay.portal.security.auth.CompanyThreadLocal;
 import com.liferay.portal.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.security.permission.PermissionThreadLocal;
+import com.liferay.portal.service.LayoutSetLocalServiceUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextThreadLocal;
 import com.liferay.portal.service.UserLocalServiceUtil;
@@ -48,7 +54,7 @@ public class LayoutsRemotePublisherMessageListener
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.1.0
 	 */
 	public LayoutsRemotePublisherMessageListener(
 		SingleDestinationMessageSender statusSender,
@@ -73,6 +79,7 @@ public class LayoutsRemotePublisherMessageListener
 		Map<String, String[]> parameterMap = publisherRequest.getParameterMap();
 		String remoteAddress = publisherRequest.getRemoteAddress();
 		int remotePort = publisherRequest.getRemotePort();
+		String remotePathContext = publisherRequest.getRemotePathContext();
 		boolean secureConnection = publisherRequest.isSecureConnection();
 		long remoteGroupId = publisherRequest.getRemoteGroupId();
 		boolean remotePrivateLayout = publisherRequest.isRemotePrivateLayout();
@@ -81,12 +88,29 @@ public class LayoutsRemotePublisherMessageListener
 
 		String range = MapUtil.getString(parameterMap, "range");
 
-		if (range.equals("last")) {
+		if (range.equals("fromLastPublishDate")) {
+			LayoutSet layoutSet = LayoutSetLocalServiceUtil.getLayoutSet(
+				sourceGroupId, privateLayout);
+
+			long lastPublishDate = GetterUtil.getLong(
+				layoutSet.getSettingsProperty("last-publish-date"));
+
+			if (lastPublishDate > 0) {
+				endDate = new Date();
+
+				startDate = new Date(lastPublishDate);
+			}
+		}
+		else if (range.equals("last")) {
 			int last = MapUtil.getInteger(parameterMap, "last");
 
 			if (last > 0) {
 				Date scheduledFireTime =
 					publisherRequest.getScheduledFireTime();
+
+				if (scheduledFireTime == null) {
+					scheduledFireTime = new Date();
+				}
 
 				startDate = new Date(
 					scheduledFireTime.getTime() - (last * Time.HOUR));
@@ -95,14 +119,33 @@ public class LayoutsRemotePublisherMessageListener
 			}
 		}
 
-		PrincipalThreadLocal.setName(userId);
+		initThreadLocals(userId, parameterMap);
+
+		try {
+			StagingUtil.copyRemoteLayouts(
+				sourceGroupId, privateLayout, layoutIdMap, parameterMap,
+				remoteAddress, remotePort, remotePathContext, secureConnection,
+				remoteGroupId, remotePrivateLayout, startDate, endDate);
+		}
+		finally {
+			resetThreadLocals();
+		}
+	}
+
+	protected void initThreadLocals(
+			long userId, Map<String, String[]> parameterMap)
+		throws Exception {
 
 		User user = UserLocalServiceUtil.getUserById(userId);
 
+		CompanyThreadLocal.setCompanyId(user.getCompanyId());
+
 		PermissionChecker permissionChecker =
-			PermissionCheckerFactoryUtil.create(user, false);
+			PermissionCheckerFactoryUtil.create(user);
 
 		PermissionThreadLocal.setPermissionChecker(permissionChecker);
+
+		PrincipalThreadLocal.setName(user.getUserId());
 
 		ServiceContext serviceContext = new ServiceContext();
 
@@ -118,7 +161,7 @@ public class LayoutsRemotePublisherMessageListener
 			String param = entry.getKey();
 			String[] values = entry.getValue();
 
-			if ((values != null) && (values.length > 0)) {
+			if (ArrayUtil.isNotEmpty(values)) {
 				if (values.length == 1) {
 					attributes.put(param, values[0]);
 				}
@@ -131,17 +174,13 @@ public class LayoutsRemotePublisherMessageListener
 		serviceContext.setAttributes(attributes);
 
 		ServiceContextThreadLocal.pushServiceContext(serviceContext);
+	}
 
-		try {
-			StagingUtil.copyRemoteLayouts(
-				sourceGroupId, privateLayout, layoutIdMap, parameterMap,
-				remoteAddress, remotePort, secureConnection, remoteGroupId,
-				remotePrivateLayout, startDate, endDate);
-		}
-		finally {
-			PrincipalThreadLocal.setName(null);
-			PermissionThreadLocal.setPermissionChecker(null);
-		}
+	protected void resetThreadLocals() {
+		CompanyThreadLocal.setCompanyId(CompanyConstants.SYSTEM);
+		PermissionThreadLocal.setPermissionChecker(null);
+		PrincipalThreadLocal.setName(null);
+		ServiceContextThreadLocal.popServiceContext();
 	}
 
 }

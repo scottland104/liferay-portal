@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.UserTrackerPath;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -28,7 +33,8 @@ import java.util.Date;
  * @see UserTrackerPath
  * @generated
  */
-public class UserTrackerPathCacheModel implements CacheModel<UserTrackerPath> {
+public class UserTrackerPathCacheModel implements CacheModel<UserTrackerPath>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(9);
@@ -46,6 +52,7 @@ public class UserTrackerPathCacheModel implements CacheModel<UserTrackerPath> {
 		return sb.toString();
 	}
 
+	@Override
 	public UserTrackerPath toEntityModel() {
 		UserTrackerPathImpl userTrackerPathImpl = new UserTrackerPathImpl();
 
@@ -69,6 +76,30 @@ public class UserTrackerPathCacheModel implements CacheModel<UserTrackerPath> {
 		userTrackerPathImpl.resetOriginalValues();
 
 		return userTrackerPathImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		userTrackerPathId = objectInput.readLong();
+		userTrackerId = objectInput.readLong();
+		path = objectInput.readUTF();
+		pathDate = objectInput.readLong();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(userTrackerPathId);
+		objectOutput.writeLong(userTrackerId);
+
+		if (path == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(path);
+		}
+
+		objectOutput.writeLong(pathDate);
 	}
 
 	public long userTrackerPathId;

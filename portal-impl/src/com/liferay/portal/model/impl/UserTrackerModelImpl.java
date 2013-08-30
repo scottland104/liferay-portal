@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portal.model.impl;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -30,11 +31,11 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the UserTracker service. Represents a row in the &quot;UserTracker&quot; database table, with each column mapped to a property of this class.
@@ -69,6 +70,8 @@ public class UserTrackerModelImpl extends BaseModelImpl<UserTracker>
 		};
 	public static final String TABLE_SQL_CREATE = "create table UserTracker (userTrackerId LONG not null primary key,companyId LONG,userId LONG,modifiedDate DATE null,sessionId VARCHAR(200) null,remoteAddr VARCHAR(75) null,remoteHost VARCHAR(75) null,userAgent VARCHAR(200) null)";
 	public static final String TABLE_SQL_DROP = "drop table UserTracker";
+	public static final String ORDER_BY_JPQL = " ORDER BY userTracker.userTrackerId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY UserTracker.userTrackerId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -78,77 +81,191 @@ public class UserTrackerModelImpl extends BaseModelImpl<UserTracker>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.UserTracker"),
 			true);
-
-	public Class<?> getModelClass() {
-		return UserTracker.class;
-	}
-
-	public String getModelClassName() {
-		return UserTracker.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.UserTracker"),
+			true);
+	public static long COMPANYID_COLUMN_BITMASK = 1L;
+	public static long SESSIONID_COLUMN_BITMASK = 2L;
+	public static long USERID_COLUMN_BITMASK = 4L;
+	public static long USERTRACKERID_COLUMN_BITMASK = 8L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.UserTracker"));
 
 	public UserTrackerModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _userTrackerId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setUserTrackerId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_userTrackerId);
+		return _userTrackerId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return UserTracker.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return UserTracker.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("userTrackerId", getUserTrackerId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("userId", getUserId());
+		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("sessionId", getSessionId());
+		attributes.put("remoteAddr", getRemoteAddr());
+		attributes.put("remoteHost", getRemoteHost());
+		attributes.put("userAgent", getUserAgent());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long userTrackerId = (Long)attributes.get("userTrackerId");
+
+		if (userTrackerId != null) {
+			setUserTrackerId(userTrackerId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long userId = (Long)attributes.get("userId");
+
+		if (userId != null) {
+			setUserId(userId);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
+		}
+
+		String sessionId = (String)attributes.get("sessionId");
+
+		if (sessionId != null) {
+			setSessionId(sessionId);
+		}
+
+		String remoteAddr = (String)attributes.get("remoteAddr");
+
+		if (remoteAddr != null) {
+			setRemoteAddr(remoteAddr);
+		}
+
+		String remoteHost = (String)attributes.get("remoteHost");
+
+		if (remoteHost != null) {
+			setRemoteHost(remoteHost);
+		}
+
+		String userAgent = (String)attributes.get("userAgent");
+
+		if (userAgent != null) {
+			setUserAgent(userAgent);
+		}
+	}
+
+	@Override
 	public long getUserTrackerId() {
 		return _userTrackerId;
 	}
 
+	@Override
 	public void setUserTrackerId(long userTrackerId) {
 		_userTrackerId = userTrackerId;
 	}
 
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
+		_columnBitmask |= COMPANYID_COLUMN_BITMASK;
+
+		if (!_setOriginalCompanyId) {
+			_setOriginalCompanyId = true;
+
+			_originalCompanyId = _companyId;
+		}
+
 		_companyId = companyId;
 	}
 
+	public long getOriginalCompanyId() {
+		return _originalCompanyId;
+	}
+
+	@Override
 	public long getUserId() {
 		return _userId;
 	}
 
+	@Override
 	public void setUserId(long userId) {
+		_columnBitmask |= USERID_COLUMN_BITMASK;
+
+		if (!_setOriginalUserId) {
+			_setOriginalUserId = true;
+
+			_originalUserId = _userId;
+		}
+
 		_userId = userId;
 	}
 
+	@Override
 	public String getUserUuid() throws SystemException {
 		return PortalUtil.getUserValue(getUserId(), "uuid", _userUuid);
 	}
 
+	@Override
 	public void setUserUuid(String userUuid) {
 		_userUuid = userUuid;
 	}
 
+	public long getOriginalUserId() {
+		return _originalUserId;
+	}
+
+	@Override
 	public Date getModifiedDate() {
 		return _modifiedDate;
 	}
 
+	@Override
 	public void setModifiedDate(Date modifiedDate) {
 		_modifiedDate = modifiedDate;
 	}
 
+	@Override
 	public String getSessionId() {
 		if (_sessionId == null) {
 			return StringPool.BLANK;
@@ -158,10 +275,22 @@ public class UserTrackerModelImpl extends BaseModelImpl<UserTracker>
 		}
 	}
 
+	@Override
 	public void setSessionId(String sessionId) {
+		_columnBitmask |= SESSIONID_COLUMN_BITMASK;
+
+		if (_originalSessionId == null) {
+			_originalSessionId = _sessionId;
+		}
+
 		_sessionId = sessionId;
 	}
 
+	public String getOriginalSessionId() {
+		return GetterUtil.getString(_originalSessionId);
+	}
+
+	@Override
 	public String getRemoteAddr() {
 		if (_remoteAddr == null) {
 			return StringPool.BLANK;
@@ -171,10 +300,12 @@ public class UserTrackerModelImpl extends BaseModelImpl<UserTracker>
 		}
 	}
 
+	@Override
 	public void setRemoteAddr(String remoteAddr) {
 		_remoteAddr = remoteAddr;
 	}
 
+	@Override
 	public String getRemoteHost() {
 		if (_remoteHost == null) {
 			return StringPool.BLANK;
@@ -184,10 +315,12 @@ public class UserTrackerModelImpl extends BaseModelImpl<UserTracker>
 		}
 	}
 
+	@Override
 	public void setRemoteHost(String remoteHost) {
 		_remoteHost = remoteHost;
 	}
 
+	@Override
 	public String getUserAgent() {
 		if (_userAgent == null) {
 			return StringPool.BLANK;
@@ -197,39 +330,36 @@ public class UserTrackerModelImpl extends BaseModelImpl<UserTracker>
 		}
 	}
 
+	@Override
 	public void setUserAgent(String userAgent) {
 		_userAgent = userAgent;
 	}
 
-	@Override
-	public UserTracker toEscapedModel() {
-		if (isEscapedModel()) {
-			return (UserTracker)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (UserTracker)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					UserTracker.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			UserTracker.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public UserTracker toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (UserTracker)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -250,6 +380,7 @@ public class UserTrackerModelImpl extends BaseModelImpl<UserTracker>
 		return userTrackerImpl;
 	}
 
+	@Override
 	public int compareTo(UserTracker userTracker) {
 		long primaryKey = userTracker.getPrimaryKey();
 
@@ -266,18 +397,15 @@ public class UserTrackerModelImpl extends BaseModelImpl<UserTracker>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof UserTracker)) {
 			return false;
 		}
 
-		UserTracker userTracker = null;
-
-		try {
-			userTracker = (UserTracker)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		UserTracker userTracker = (UserTracker)obj;
 
 		long primaryKey = userTracker.getPrimaryKey();
 
@@ -296,6 +424,19 @@ public class UserTrackerModelImpl extends BaseModelImpl<UserTracker>
 
 	@Override
 	public void resetOriginalValues() {
+		UserTrackerModelImpl userTrackerModelImpl = this;
+
+		userTrackerModelImpl._originalCompanyId = userTrackerModelImpl._companyId;
+
+		userTrackerModelImpl._setOriginalCompanyId = false;
+
+		userTrackerModelImpl._originalUserId = userTrackerModelImpl._userId;
+
+		userTrackerModelImpl._setOriginalUserId = false;
+
+		userTrackerModelImpl._originalSessionId = userTrackerModelImpl._sessionId;
+
+		userTrackerModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -377,6 +518,7 @@ public class UserTrackerModelImpl extends BaseModelImpl<UserTracker>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(28);
 
@@ -423,18 +565,23 @@ public class UserTrackerModelImpl extends BaseModelImpl<UserTracker>
 	}
 
 	private static ClassLoader _classLoader = UserTracker.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			UserTracker.class
 		};
 	private long _userTrackerId;
 	private long _companyId;
+	private long _originalCompanyId;
+	private boolean _setOriginalCompanyId;
 	private long _userId;
 	private String _userUuid;
+	private long _originalUserId;
+	private boolean _setOriginalUserId;
 	private Date _modifiedDate;
 	private String _sessionId;
+	private String _originalSessionId;
 	private String _remoteAddr;
 	private String _remoteHost;
 	private String _userAgent;
-	private transient ExpandoBridge _expandoBridge;
-	private UserTracker _escapedModelProxy;
+	private long _columnBitmask;
+	private UserTracker _escapedModel;
 }

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,84 +17,84 @@
 <%@ include file="/html/portlet/asset_category_admin/init.jsp" %>
 
 <aui:form name="fm">
+	<aui:nav-bar>
+		<aui:nav>
+			<c:if test="<%= AssetPermission.contains(permissionChecker, themeDisplay.getSiteGroupId(), ActionKeys.ADD_VOCABULARY) %>">
+				<aui:nav-item id="addVocabularyButton" label="add-vocabulary" />
+			</c:if>
 
-<div class="categories-admin-container">
-	<div class="lfr-header-row">
-		<div class="lfr-header-row-content">
-			<div class="toolbar">
-				<aui:button-row cssClass="categories-admin-actions">
-					<c:if test="<%= AssetPermission.contains(permissionChecker, themeDisplay.getParentGroupId(), ActionKeys.ADD_VOCABULARY) %>">
-						<aui:button cssClass="add-vocabulary-button" name="addVocabularyButton" value="add-vocabulary" />
-					</c:if>
+			<c:if test="<%= AssetPermission.contains(permissionChecker, themeDisplay.getSiteGroupId(), ActionKeys.ADD_CATEGORY) %>">
+				<aui:nav-item disabled="<%= true %>" id="addCategoryButton" label="add-category" />
+			</c:if>
 
-					<c:if test="<%= AssetPermission.contains(permissionChecker, themeDisplay.getParentGroupId(), ActionKeys.ADD_CATEGORY) %>">
-						<aui:button cssClass="add-category-button" name="addCategoryButton" value="add-category" />
-					</c:if>
+			<c:if test="<%= AssetPermission.contains(permissionChecker, themeDisplay.getSiteGroupId(), ActionKeys.PERMISSIONS) && GroupPermissionUtil.contains(permissionChecker, themeDisplay.getSiteGroupId(), ActionKeys.PERMISSIONS) %>">
+				<liferay-security:permissionsURL
+					modelResource="com.liferay.portlet.asset"
+					modelResourceDescription="<%= themeDisplay.getScopeGroupName() %>"
+					resourcePrimKey="<%= String.valueOf(themeDisplay.getSiteGroupId()) %>"
+					var="permissionsURL"
+					windowState="<%= LiferayWindowState.POP_UP.toString() %>"
+				/>
 
-					<c:if test="<%= GroupPermissionUtil.contains(permissionChecker, themeDisplay.getParentGroupId(), ActionKeys.PERMISSIONS) %>">
-						<liferay-security:permissionsURL
-							modelResource="com.liferay.portlet.asset"
-							modelResourceDescription="<%= themeDisplay.getScopeGroupName() %>"
-							resourcePrimKey="<%= String.valueOf(themeDisplay.getParentGroupId()) %>"
-							var="permissionsURL"
-							windowState="<%= LiferayWindowState.POP_UP.toString() %>"
-						/>
+				<aui:nav-item data-url="<%= permissionsURL %>" id="categoryPermissionsButton" label="permissions" />
+			</c:if>
 
-						<aui:button data-url="<%= permissionsURL %>" name="categoryPermissionsButton" value="permissions" />
-					</c:if>
-				</aui:button-row>
-			</div>
+			<aui:nav-item dropdown="<%= true %>" label="actions">
+				<aui:nav-item iconClass="icon-remove" id="deleteSelectedItems" label="delete" />
+			</aui:nav-item>
+		</aui:nav>
 
-			<div class="lfr-search-combobox search-button-container categories-search-combobox">
-				<aui:input cssClass="first keywords lfr-search-combobox-item categories-admin-search" label="" name="categoriesAdminSearchInput" type="text" />
+		<div class="navbar-search pull-right">
+			<aui:select cssClass="categories-admin-select-search" label="" name="categoriesAdminSelectSearch">
+				<aui:option label="categories" />
+				<aui:option label="vocabularies" selected="<%= true %>" />
+			</aui:select>
 
-				<aui:select cssClass="categories-admin-select-search" label="" name="categoriesAdminSelectSearch">
-					<aui:option label="categories" />
-					<aui:option label="vocabularies" selected="<%= true %>" />
-				</aui:select>
-			</div>
+			<liferay-ui:input-search cssClass="form-search" id="categoriesAdminSearchInput" name="tagsAdminSearchInput" showButton="<%= false %>" />
 		</div>
-	</div>
+	</aui:nav-bar>
 
-	<div class="categories-admin-content-wrapper">
-		<aui:layout cssClass="categories-admin-content">
-			<aui:column columnWidth="25" cssClass="vocabulary-list-container">
-				<div class="results-header"><liferay-ui:message key="vocabularies" /></div>
+	<aui:row cssClass="categories-admin-content">
+		<aui:col cssClass="vocabulary-list-container" width="<%= 25 %>">
+			<span class="select-vocabularies-container">
+				<aui:input cssClass="select-vocabularies" inline="<%= true %>" label="" name="checkAllVocabularies" title='<%= LanguageUtil.get(pageContext, "check-all-vocabularies") %>' type="checkbox" />
+			</span>
 
-				<div class="vocabulary-list lfr-component"></div>
-			</aui:column>
+			<h3 class="vocabularies-header"><%= LanguageUtil.get(pageContext, "vocabularies") %></h3>
 
-			<aui:column columnWidth="75" cssClass="vocabulary-categories-container">
-				<div class="results-header"><liferay-ui:message key="categories" /></div>
+					<div class="unstyled vocabulary-message"></div>
 
-				<div class="vocabulary-categories"></div>
-			</aui:column>
+					<div class="unstyled vocabulary-list"></div>
 
-			<aui:column columnWidth="35" cssClass="aui-helper-hidden vocabulary-edit-category">
-				<div class="results-header">
-					<liferay-ui:message key="category-details" />
+			<div class="vocabularies-pagination"></div>
+		</aui:col>
 
-					<div class="category-view-close">
-						<span>
-							<liferay-ui:icon
-								id="category-view-close"
-								image="close"
-							/>
-						</span>
-					</div>
-				</div>
+		<aui:col cssClass="vocabulary-categories-container" width="<%= 40 %>">
+			<span class="select-vocabularies-container">
+				<aui:input cssClass="select-categories" inline="<%= true %>" label="" name="checkAllCategories" title='<%= LanguageUtil.get(pageContext, "check-all-categories") %>' type="checkbox" />
+			</span>
 
-				<div class="category-view"></div>
-			</aui:column>
-		</aui:layout>
-	</div>
-</div>
+			<h3 class="categories-header"><%= LanguageUtil.get(pageContext, "categories") %></h3>
 
+			<div class="vocabulary-categories"></div>
+		</aui:col>
+
+		<aui:col cssClass="hide vocabulary-edit-category" width="<%= 35 %>">
+			<h3><%= LanguageUtil.get(pageContext, "category-details") %></h3>
+
+			<aui:button cssClass="category-view-close close" icon="icon-remove" />
+
+			<div class="category-view"></div>
+		</aui:col>
+	</aui:row>
 </aui:form>
 
 <aui:script use="liferay-category-admin">
 	new Liferay.Portlet.AssetCategoryAdmin(
 		{
+			baseActionURL: '<%= PortletURLFactoryUtil.create(request, portletDisplay.getId(), themeDisplay.getPlid(), PortletRequest.ACTION_PHASE) %>',
+			baseRenderURL: '<%= PortletURLFactoryUtil.create(request, portletDisplay.getId(), themeDisplay.getPlid(), PortletRequest.RENDER_PHASE) %>',
+			itemsPerPage: <%= SearchContainer.DEFAULT_DELTA %>,
 			portletId: '<%= portletDisplay.getId() %>'
 		}
 	);

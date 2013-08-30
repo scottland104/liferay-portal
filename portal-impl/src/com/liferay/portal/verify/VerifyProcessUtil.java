@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,7 +21,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.NotificationThreadLocal;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.workflow.WorkflowThreadLocal;
-import com.liferay.portal.service.persistence.BatchSessionUtil;
+import com.liferay.portal.staging.StagingAdvicesThreadLocal;
 import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 
@@ -36,48 +36,57 @@ public class VerifyProcessUtil {
 			boolean ranUpgradeProcess, boolean verified)
 		throws VerifyException {
 
-		boolean ranVerifyProcess = false;
-
 		int verifyFrequency = GetterUtil.getInteger(
 			PropsUtil.get(PropsKeys.VERIFY_FREQUENCY));
 
 		if ((verifyFrequency == VerifyProcess.ALWAYS) ||
 			((verifyFrequency == VerifyProcess.ONCE) && !verified) ||
-			(ranUpgradeProcess)) {
+			ranUpgradeProcess) {
 
-			if (ranUpgradeProcess && PropsValues.INDEX_ON_UPGRADE) {
-				PropsUtil.set(
-					PropsKeys.INDEX_ON_STARTUP, Boolean.TRUE.toString());
-			}
+			return _verifyProcess(ranUpgradeProcess);
+		}
 
+		return false;
+	}
+
+	private static boolean _verifyProcess(boolean ranUpgradeProcess)
+		throws VerifyException {
+
+		boolean ranVerifyProcess = false;
+
+		if (ranUpgradeProcess && PropsValues.INDEX_ON_UPGRADE) {
+			PropsUtil.set(PropsKeys.INDEX_ON_STARTUP, Boolean.TRUE.toString());
+
+			PropsValues.INDEX_ON_STARTUP = true;
+		}
+
+		boolean tempIndexReadOnly = SearchEngineUtil.isIndexReadOnly();
+
+		SearchEngineUtil.setIndexReadOnly(true);
+
+		NotificationThreadLocal.setEnabled(false);
+		StagingAdvicesThreadLocal.setEnabled(false);
+		WorkflowThreadLocal.setEnabled(false);
+
+		try {
 			String[] verifyProcessClassNames = PropsUtil.getArray(
 				PropsKeys.VERIFY_PROCESSES);
 
-			BatchSessionUtil.setEnabled(true);
-			NotificationThreadLocal.setEnabled(false);
-			WorkflowThreadLocal.setEnabled(false);
+			for (String verifyProcessClassName : verifyProcessClassNames) {
+				boolean tempRanVerifyProcess = _verifyProcess(
+					verifyProcessClassName);
 
-			boolean tempIndexReadOnly = SearchEngineUtil.isIndexReadOnly();
-
-			SearchEngineUtil.setIndexReadOnly(true);
-
-			try {
-				for (String verifyProcessClassName : verifyProcessClassNames) {
-					boolean tempRanVerifyProcess = _verifyProcess(
-						verifyProcessClassName);
-
-					if (tempRanVerifyProcess) {
-						ranVerifyProcess = true;
-					}
+				if (tempRanVerifyProcess) {
+					ranVerifyProcess = true;
 				}
 			}
-			finally {
-				BatchSessionUtil.setEnabled(false);
-				NotificationThreadLocal.setEnabled(true);
-				WorkflowThreadLocal.setEnabled(true);
+		}
+		finally {
+			SearchEngineUtil.setIndexReadOnly(tempIndexReadOnly);
 
-				SearchEngineUtil.setIndexReadOnly(tempIndexReadOnly);
-			}
+			NotificationThreadLocal.setEnabled(true);
+			StagingAdvicesThreadLocal.setEnabled(true);
+			WorkflowThreadLocal.setEnabled(true);
 		}
 
 		return ranVerifyProcess;

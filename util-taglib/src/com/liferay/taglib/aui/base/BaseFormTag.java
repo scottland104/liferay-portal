@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -49,12 +49,20 @@ public class BaseFormTag extends com.liferay.taglib.util.IncludeTag {
 		return _inlineLabels;
 	}
 
+	public java.lang.String getMethod() {
+		return _method;
+	}
+
 	public java.lang.String getName() {
 		return _name;
 	}
 
 	public java.lang.String getOnSubmit() {
 		return _onSubmit;
+	}
+
+	public java.lang.String getPortletNamespace() {
+		return _portletNamespace;
 	}
 
 	public boolean getUseNamespace() {
@@ -85,6 +93,12 @@ public class BaseFormTag extends com.liferay.taglib.util.IncludeTag {
 		setScopedAttribute("inlineLabels", inlineLabels);
 	}
 
+	public void setMethod(java.lang.String method) {
+		_method = method;
+
+		setScopedAttribute("method", method);
+	}
+
 	public void setName(java.lang.String name) {
 		_name = name;
 
@@ -95,6 +109,12 @@ public class BaseFormTag extends com.liferay.taglib.util.IncludeTag {
 		_onSubmit = onSubmit;
 
 		setScopedAttribute("onSubmit", onSubmit);
+	}
+
+	public void setPortletNamespace(java.lang.String portletNamespace) {
+		_portletNamespace = portletNamespace;
+
+		setScopedAttribute("portletNamespace", portletNamespace);
 	}
 
 	public void setUseNamespace(boolean useNamespace) {
@@ -109,8 +129,10 @@ public class BaseFormTag extends com.liferay.taglib.util.IncludeTag {
 		_cssClass = null;
 		_escapeXml = true;
 		_inlineLabels = false;
+		_method = "post";
 		_name = "fm";
 		_onSubmit = null;
+		_portletNamespace = null;
 		_useNamespace = true;
 	}
 
@@ -130,8 +152,10 @@ public class BaseFormTag extends com.liferay.taglib.util.IncludeTag {
 		setNamespacedAttribute(request, "cssClass", _cssClass);
 		setNamespacedAttribute(request, "escapeXml", _escapeXml);
 		setNamespacedAttribute(request, "inlineLabels", _inlineLabels);
+		setNamespacedAttribute(request, "method", _method);
 		setNamespacedAttribute(request, "name", _name);
 		setNamespacedAttribute(request, "onSubmit", _onSubmit);
+		setNamespacedAttribute(request, "portletNamespace", _portletNamespace);
 		setNamespacedAttribute(request, "useNamespace", _useNamespace);
 	}
 
@@ -147,8 +171,10 @@ public class BaseFormTag extends com.liferay.taglib.util.IncludeTag {
 	private java.lang.String _cssClass = null;
 	private boolean _escapeXml = true;
 	private boolean _inlineLabels = false;
+	private java.lang.String _method = "post";
 	private java.lang.String _name = "fm";
 	private java.lang.String _onSubmit = null;
+	private java.lang.String _portletNamespace = null;
 	private boolean _useNamespace = true;
 
 }

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,25 +17,23 @@
 <%@ include file="/html/portlet/layout_prototypes/init.jsp" %>
 
 <%
-String toolbarItem = ParamUtil.getString(request, "toolbarItem", "view-all");
+String toolbarItem = ParamUtil.getString(request, "toolbarItem");
 %>
 
-<div class="lfr-portlet-toolbar">
-	<portlet:renderURL var="viewRolesURL">
-		<portlet:param name="struts_action" value="/layout_prototypes/view" />
-	</portlet:renderURL>
-
-	<span class="lfr-toolbar-button view-button <%= toolbarItem.equals("view-all") ? "current" : StringPool.BLANK %>">
-		<a href="<%= viewRolesURL %>"><liferay-ui:message key="view-all" /></a>
-	</span>
-
-	<c:if test="<%= PortalPermissionUtil.contains(permissionChecker, ActionKeys.ADD_LAYOUT_PROTOTYPE) %>">
-		<portlet:renderURL var="addLayoutPrototypeURL">
-			<portlet:param name="struts_action" value="/layout_prototypes/edit_layout_prototype" />
-			<portlet:param name="redirect" value="<%= currentURL %>" />
-			<portlet:param name="backURL" value="<%= currentURL %>" />
+<aui:nav-bar>
+	<aui:nav>
+		<portlet:renderURL var="viewLayoutPrototypesURL">
+			<portlet:param name="struts_action" value="/layout_prototypes/view" />
 		</portlet:renderURL>
 
-		<span class="lfr-toolbar-button add-button <%= toolbarItem.equals("add") ? "current" : StringPool.BLANK %>"><a href="<%= addLayoutPrototypeURL %>"><liferay-ui:message key="add" /></a></span>
-	</c:if>
-</div>
+		<c:if test="<%= PortalPermissionUtil.contains(permissionChecker, ActionKeys.ADD_LAYOUT_PROTOTYPE) %>">
+			<portlet:renderURL var="addLayoutPrototypeURL">
+				<portlet:param name="struts_action" value="/layout_prototypes/edit_layout_prototype" />
+				<portlet:param name="redirect" value="<%= viewLayoutPrototypesURL %>" />
+				<portlet:param name="backURL" value="<%= viewLayoutPrototypesURL %>" />
+			</portlet:renderURL>
+
+			<aui:nav-item href="<%= addLayoutPrototypeURL %>" iconClass="icon-plus" label="add" selected='<%= toolbarItem.equals("add") %>' />
+		</c:if>
+	</aui:nav>
+</aui:nav-bar>

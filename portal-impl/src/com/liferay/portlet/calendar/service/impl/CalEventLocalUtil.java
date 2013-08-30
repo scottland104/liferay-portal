@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,8 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portlet.calendar.model.CalEvent;
 
+import java.io.Serializable;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,8 +32,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class CalEventLocalUtil {
 
-	public static final String CACHE_NAME = CalEventLocalUtil.class.getName();
-
 	protected static void clearEventsPool(long groupId) {
 		String key = _encodeKey(groupId);
 
@@ -41,24 +41,26 @@ public class CalEventLocalUtil {
 	protected static Map<String, List<CalEvent>> getEventsPool(long groupId) {
 		String key = _encodeKey(groupId);
 
-		Map <String, List<CalEvent>> eventsPool =
-			(Map<String, List<CalEvent>>)_portalCache.get(key);
+		Map<String, List<CalEvent>> eventsPool =
+			(ConcurrentHashMap<String, List<CalEvent>>)_portalCache.get(key);
 
 		if (eventsPool == null) {
 			eventsPool = new ConcurrentHashMap<String, List<CalEvent>>();
 
-			_portalCache.put(key, eventsPool);
+			_portalCache.put(key, (Serializable)eventsPool);
 		}
 
 		return eventsPool;
 	}
 
 	private static String _encodeKey(long groupId) {
-		return CACHE_NAME.concat(StringPool.POUND).concat(
+		return _CACHE_NAME.concat(StringPool.POUND).concat(
 			StringUtil.toHexString(groupId));
 	}
 
-	private static PortalCache _portalCache = MultiVMPoolUtil.getCache(
-		CACHE_NAME);
+	private static final String _CACHE_NAME = CalEventLocalUtil.class.getName();
+
+	private static PortalCache<String, Serializable> _portalCache =
+		MultiVMPoolUtil.getCache(_CACHE_NAME);
 
 }

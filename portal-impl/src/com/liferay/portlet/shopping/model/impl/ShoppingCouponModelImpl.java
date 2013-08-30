@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -34,13 +35,13 @@ import com.liferay.portlet.shopping.model.ShoppingCouponSoap;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base model implementation for the ShoppingCoupon service. Represents a row in the &quot;ShoppingCoupon&quot; database table, with each column mapped to a property of this class.
@@ -97,6 +98,12 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portlet.shopping.model.ShoppingCoupon"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portlet.shopping.model.ShoppingCoupon"),
+			true);
+	public static long CODE_COLUMN_BITMASK = 1L;
+	public static long GROUPID_COLUMN_BITMASK = 2L;
+	public static long CREATEDATE_COLUMN_BITMASK = 4L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -105,6 +112,10 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 	 * @return the normal model instance
 	 */
 	public static ShoppingCoupon toModel(ShoppingCouponSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		ShoppingCoupon model = new ShoppingCouponImpl();
 
 		model.setCouponId(soapModel.getCouponId());
@@ -136,6 +147,10 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 	 * @return the normal model instances
 	 */
 	public static List<ShoppingCoupon> toModels(ShoppingCouponSoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<ShoppingCoupon> models = new ArrayList<ShoppingCoupon>(soapModels.length);
 
 		for (ShoppingCouponSoap soapModel : soapModels) {
@@ -145,81 +160,247 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 		return models;
 	}
 
-	public Class<?> getModelClass() {
-		return ShoppingCoupon.class;
-	}
-
-	public String getModelClassName() {
-		return ShoppingCoupon.class.getName();
-	}
-
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portlet.shopping.model.ShoppingCoupon"));
 
 	public ShoppingCouponModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _couponId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setCouponId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_couponId);
+		return _couponId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return ShoppingCoupon.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return ShoppingCoupon.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("couponId", getCouponId());
+		attributes.put("groupId", getGroupId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("userId", getUserId());
+		attributes.put("userName", getUserName());
+		attributes.put("createDate", getCreateDate());
+		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("code", getCode());
+		attributes.put("name", getName());
+		attributes.put("description", getDescription());
+		attributes.put("startDate", getStartDate());
+		attributes.put("endDate", getEndDate());
+		attributes.put("active", getActive());
+		attributes.put("limitCategories", getLimitCategories());
+		attributes.put("limitSkus", getLimitSkus());
+		attributes.put("minOrder", getMinOrder());
+		attributes.put("discount", getDiscount());
+		attributes.put("discountType", getDiscountType());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long couponId = (Long)attributes.get("couponId");
+
+		if (couponId != null) {
+			setCouponId(couponId);
+		}
+
+		Long groupId = (Long)attributes.get("groupId");
+
+		if (groupId != null) {
+			setGroupId(groupId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long userId = (Long)attributes.get("userId");
+
+		if (userId != null) {
+			setUserId(userId);
+		}
+
+		String userName = (String)attributes.get("userName");
+
+		if (userName != null) {
+			setUserName(userName);
+		}
+
+		Date createDate = (Date)attributes.get("createDate");
+
+		if (createDate != null) {
+			setCreateDate(createDate);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
+		}
+
+		String code = (String)attributes.get("code");
+
+		if (code != null) {
+			setCode(code);
+		}
+
+		String name = (String)attributes.get("name");
+
+		if (name != null) {
+			setName(name);
+		}
+
+		String description = (String)attributes.get("description");
+
+		if (description != null) {
+			setDescription(description);
+		}
+
+		Date startDate = (Date)attributes.get("startDate");
+
+		if (startDate != null) {
+			setStartDate(startDate);
+		}
+
+		Date endDate = (Date)attributes.get("endDate");
+
+		if (endDate != null) {
+			setEndDate(endDate);
+		}
+
+		Boolean active = (Boolean)attributes.get("active");
+
+		if (active != null) {
+			setActive(active);
+		}
+
+		String limitCategories = (String)attributes.get("limitCategories");
+
+		if (limitCategories != null) {
+			setLimitCategories(limitCategories);
+		}
+
+		String limitSkus = (String)attributes.get("limitSkus");
+
+		if (limitSkus != null) {
+			setLimitSkus(limitSkus);
+		}
+
+		Double minOrder = (Double)attributes.get("minOrder");
+
+		if (minOrder != null) {
+			setMinOrder(minOrder);
+		}
+
+		Double discount = (Double)attributes.get("discount");
+
+		if (discount != null) {
+			setDiscount(discount);
+		}
+
+		String discountType = (String)attributes.get("discountType");
+
+		if (discountType != null) {
+			setDiscountType(discountType);
+		}
+	}
+
 	@JSON
+	@Override
 	public long getCouponId() {
 		return _couponId;
 	}
 
+	@Override
 	public void setCouponId(long couponId) {
 		_couponId = couponId;
 	}
 
 	@JSON
+	@Override
 	public long getGroupId() {
 		return _groupId;
 	}
 
+	@Override
 	public void setGroupId(long groupId) {
+		_columnBitmask |= GROUPID_COLUMN_BITMASK;
+
+		if (!_setOriginalGroupId) {
+			_setOriginalGroupId = true;
+
+			_originalGroupId = _groupId;
+		}
+
 		_groupId = groupId;
 	}
 
+	public long getOriginalGroupId() {
+		return _originalGroupId;
+	}
+
 	@JSON
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
 		_companyId = companyId;
 	}
 
 	@JSON
+	@Override
 	public long getUserId() {
 		return _userId;
 	}
 
+	@Override
 	public void setUserId(long userId) {
 		_userId = userId;
 	}
 
+	@Override
 	public String getUserUuid() throws SystemException {
 		return PortalUtil.getUserValue(getUserId(), "uuid", _userUuid);
 	}
 
+	@Override
 	public void setUserUuid(String userUuid) {
 		_userUuid = userUuid;
 	}
 
 	@JSON
+	@Override
 	public String getUserName() {
 		if (_userName == null) {
 			return StringPool.BLANK;
@@ -229,29 +410,37 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 		}
 	}
 
+	@Override
 	public void setUserName(String userName) {
 		_userName = userName;
 	}
 
 	@JSON
+	@Override
 	public Date getCreateDate() {
 		return _createDate;
 	}
 
+	@Override
 	public void setCreateDate(Date createDate) {
+		_columnBitmask = -1L;
+
 		_createDate = createDate;
 	}
 
 	@JSON
+	@Override
 	public Date getModifiedDate() {
 		return _modifiedDate;
 	}
 
+	@Override
 	public void setModifiedDate(Date modifiedDate) {
 		_modifiedDate = modifiedDate;
 	}
 
 	@JSON
+	@Override
 	public String getCode() {
 		if (_code == null) {
 			return StringPool.BLANK;
@@ -261,7 +450,10 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 		}
 	}
 
+	@Override
 	public void setCode(String code) {
+		_columnBitmask |= CODE_COLUMN_BITMASK;
+
 		if (_originalCode == null) {
 			_originalCode = _code;
 		}
@@ -274,6 +466,7 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 	}
 
 	@JSON
+	@Override
 	public String getName() {
 		if (_name == null) {
 			return StringPool.BLANK;
@@ -283,11 +476,13 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 		}
 	}
 
+	@Override
 	public void setName(String name) {
 		_name = name;
 	}
 
 	@JSON
+	@Override
 	public String getDescription() {
 		if (_description == null) {
 			return StringPool.BLANK;
@@ -297,42 +492,51 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 		}
 	}
 
+	@Override
 	public void setDescription(String description) {
 		_description = description;
 	}
 
 	@JSON
+	@Override
 	public Date getStartDate() {
 		return _startDate;
 	}
 
+	@Override
 	public void setStartDate(Date startDate) {
 		_startDate = startDate;
 	}
 
 	@JSON
+	@Override
 	public Date getEndDate() {
 		return _endDate;
 	}
 
+	@Override
 	public void setEndDate(Date endDate) {
 		_endDate = endDate;
 	}
 
 	@JSON
+	@Override
 	public boolean getActive() {
 		return _active;
 	}
 
+	@Override
 	public boolean isActive() {
 		return _active;
 	}
 
+	@Override
 	public void setActive(boolean active) {
 		_active = active;
 	}
 
 	@JSON
+	@Override
 	public String getLimitCategories() {
 		if (_limitCategories == null) {
 			return StringPool.BLANK;
@@ -342,11 +546,13 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 		}
 	}
 
+	@Override
 	public void setLimitCategories(String limitCategories) {
 		_limitCategories = limitCategories;
 	}
 
 	@JSON
+	@Override
 	public String getLimitSkus() {
 		if (_limitSkus == null) {
 			return StringPool.BLANK;
@@ -356,29 +562,35 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 		}
 	}
 
+	@Override
 	public void setLimitSkus(String limitSkus) {
 		_limitSkus = limitSkus;
 	}
 
 	@JSON
+	@Override
 	public double getMinOrder() {
 		return _minOrder;
 	}
 
+	@Override
 	public void setMinOrder(double minOrder) {
 		_minOrder = minOrder;
 	}
 
 	@JSON
+	@Override
 	public double getDiscount() {
 		return _discount;
 	}
 
+	@Override
 	public void setDiscount(double discount) {
 		_discount = discount;
 	}
 
 	@JSON
+	@Override
 	public String getDiscountType() {
 		if (_discountType == null) {
 			return StringPool.BLANK;
@@ -388,39 +600,36 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 		}
 	}
 
+	@Override
 	public void setDiscountType(String discountType) {
 		_discountType = discountType;
 	}
 
-	@Override
-	public ShoppingCoupon toEscapedModel() {
-		if (isEscapedModel()) {
-			return (ShoppingCoupon)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (ShoppingCoupon)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					ShoppingCoupon.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			ShoppingCoupon.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public ShoppingCoupon toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (ShoppingCoupon)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -451,6 +660,7 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 		return shoppingCouponImpl;
 	}
 
+	@Override
 	public int compareTo(ShoppingCoupon shoppingCoupon) {
 		int value = 0;
 
@@ -466,18 +676,15 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof ShoppingCoupon)) {
 			return false;
 		}
 
-		ShoppingCoupon shoppingCoupon = null;
-
-		try {
-			shoppingCoupon = (ShoppingCoupon)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		ShoppingCoupon shoppingCoupon = (ShoppingCoupon)obj;
 
 		long primaryKey = shoppingCoupon.getPrimaryKey();
 
@@ -498,7 +705,13 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 	public void resetOriginalValues() {
 		ShoppingCouponModelImpl shoppingCouponModelImpl = this;
 
+		shoppingCouponModelImpl._originalGroupId = shoppingCouponModelImpl._groupId;
+
+		shoppingCouponModelImpl._setOriginalGroupId = false;
+
 		shoppingCouponModelImpl._originalCode = shoppingCouponModelImpl._code;
+
+		shoppingCouponModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -659,6 +872,7 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(58);
 
@@ -745,11 +959,13 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 	}
 
 	private static ClassLoader _classLoader = ShoppingCoupon.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			ShoppingCoupon.class
 		};
 	private long _couponId;
 	private long _groupId;
+	private long _originalGroupId;
+	private boolean _setOriginalGroupId;
 	private long _companyId;
 	private long _userId;
 	private String _userUuid;
@@ -768,6 +984,6 @@ public class ShoppingCouponModelImpl extends BaseModelImpl<ShoppingCoupon>
 	private double _minOrder;
 	private double _discount;
 	private String _discountType;
-	private transient ExpandoBridge _expandoBridge;
-	private ShoppingCoupon _escapedModelProxy;
+	private long _columnBitmask;
+	private ShoppingCoupon _escapedModel;
 }

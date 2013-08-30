@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,8 +18,6 @@
 
 <%
 String redirect = ParamUtil.getString(request, "redirect");
-
-List<AssetRendererFactory> assetRendererFactories = AssetRendererFactoryRegistryUtil.getAssetRendererFactories();
 %>
 
 <liferay-portlet:actionURL portletConfiguration="true" var="configurationURL" />
@@ -29,20 +27,22 @@ List<AssetRendererFactory> assetRendererFactories = AssetRendererFactoryRegistry
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 
 	<aui:fieldset>
-		<ul class="lfr-tree lfr-component">
+		<ul class="lfr-tree unstyled">
 			<li class="tree-item">
-				<aui:input label="show-tags-with-zero-assets" name="preferences--showZeroAssetCount--" type="checkbox" value="<%= showZeroAssetCount %>" />
+				<aui:input label="show-unused-tags" name="preferences--showZeroAssetCount--" type="checkbox" value="<%= showZeroAssetCount %>" />
 			</li>
 
 			<li class="tree-item">
 				<aui:input name="preferences--showAssetCount--" type="checkbox" value="<%= showAssetCount %>" />
 
-				<ul class="lfr-tree lfr-component aui-helper-hidden" id="<portlet:namespace />assetCountOptions">
+				<ul class="lfr-tree hide unstyled" id="<portlet:namespace />assetCountOptions">
 					<li class="tree-item">
 						<aui:select helpMessage="asset-type-asset-count-help" label="asset-type" name="preferences--classNameId--">
 							<aui:option label="any" value="<%= classNameId == 0 %>" />
 
 							<%
+							List<AssetRendererFactory> assetRendererFactories = AssetRendererFactoryRegistryUtil.getAssetRendererFactories(company.getCompanyId());
+
 							for (AssetRendererFactory assetRendererFactory : assetRendererFactories) {
 							%>
 
@@ -54,13 +54,30 @@ List<AssetRendererFactory> assetRendererFactories = AssetRendererFactoryRegistry
 
 						</aui:select>
 					</li>
+				</ul>
+			</li>
 
-					<li class="tree-item">
-						<aui:select name="preferences--displayStyle--">
-							<aui:option label="number" selected='<%= displayStyle.equals("number") %>' />
-							<aui:option label="cloud" selected='<%= displayStyle.equals("cloud") %>' />
-						</aui:select>
-					</li>
+			<li class="tree-item">
+				<ul class="lfr-tree unstyled" id="<portlet:namespace />displayTemplateSettings">
+					<div class="display-template">
+
+						<%
+						TemplateHandler templateHandler = TemplateHandlerRegistryUtil.getTemplateHandler(AssetTag.class.getName());
+
+						List<String> displayStyles = new ArrayList<String>();
+
+						displayStyles.add("number");
+						displayStyles.add("cloud");
+						%>
+
+						<liferay-ui:ddm-template-selector
+							classNameId="<%= PortalUtil.getClassNameId(templateHandler.getClassName()) %>"
+							displayStyle="<%= displayStyle %>"
+							displayStyleGroupId="<%= displayStyleGroupId %>"
+							displayStyles="<%= displayStyles %>"
+							refreshURL="<%= currentURL %>"
+						/>
+					</div>
 				</ul>
 			</li>
 

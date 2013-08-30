@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,8 +23,8 @@ import java.util.List;
 /**
  * This class is used by SOAP remote services, specifically {@link com.liferay.portal.service.http.ImageServiceSoap}.
  *
- * @author    Brian Wing Shun Chan
- * @see       com.liferay.portal.service.http.ImageServiceSoap
+ * @author Brian Wing Shun Chan
+ * @see com.liferay.portal.service.http.ImageServiceSoap
  * @generated
  */
 public class ImageSoap implements Serializable {
@@ -33,7 +33,6 @@ public class ImageSoap implements Serializable {
 
 		soapModel.setImageId(model.getImageId());
 		soapModel.setModifiedDate(model.getModifiedDate());
-		soapModel.setText(model.getText());
 		soapModel.setType(model.getType());
 		soapModel.setHeight(model.getHeight());
 		soapModel.setWidth(model.getWidth());
@@ -106,14 +105,6 @@ public class ImageSoap implements Serializable {
 		_modifiedDate = modifiedDate;
 	}
 
-	public String getText() {
-		return _text;
-	}
-
-	public void setText(String text) {
-		_text = text;
-	}
-
 	public String getType() {
 		return _type;
 	}
@@ -148,7 +139,6 @@ public class ImageSoap implements Serializable {
 
 	private long _imageId;
 	private Date _modifiedDate;
-	private String _text;
 	private String _type;
 	private int _height;
 	private int _width;

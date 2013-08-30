@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -47,15 +47,18 @@ import javax.servlet.http.HttpServletRequest;
  */
 public abstract class BaseOpenSearchImpl implements OpenSearch {
 
+	@Override
 	public boolean isEnabled() {
 		return _enabled;
 	}
 
+	@Override
 	public abstract String search(
 			HttpServletRequest request, long groupId, long userId,
 			String keywords, int startPage, int itemsPerPage, String format)
 		throws SearchException;
 
+	@Override
 	public String search(
 			HttpServletRequest request, long userId, String keywords,
 			int startPage, int itemsPerPage, String format)
@@ -65,6 +68,7 @@ public abstract class BaseOpenSearchImpl implements OpenSearch {
 			request, 0, userId, keywords, startPage, itemsPerPage, format);
 	}
 
+	@Override
 	public String search(HttpServletRequest request, String url)
 		throws SearchException {
 
@@ -268,7 +272,7 @@ public abstract class BaseOpenSearchImpl implements OpenSearch {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.1.0
 	 */
 	protected Object[] addSearchResults(
 		String keywords, int startPage, int itemsPerPage, int total, int start,
@@ -287,7 +291,7 @@ public abstract class BaseOpenSearchImpl implements OpenSearch {
 
 		int totalPages = 0;
 
-		if (total % itemsPerPage == 0) {
+		if ((total % itemsPerPage) == 0) {
 			totalPages = total / itemsPerPage;
 		}
 		else {
@@ -525,8 +529,8 @@ public abstract class BaseOpenSearchImpl implements OpenSearch {
 		PortletURL portletURL = PortletURLFactoryUtil.create(
 			request, portletId, plid, PortletRequest.RENDER_PHASE);
 
-		portletURL.setWindowState(WindowState.MAXIMIZED);
 		portletURL.setPortletMode(PortletMode.VIEW);
+		portletURL.setWindowState(WindowState.MAXIMIZED);
 
 		return portletURL;
 	}

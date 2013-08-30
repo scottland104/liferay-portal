@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,6 +26,8 @@ import com.liferay.portlet.wiki.model.WikiPage;
 import com.liferay.portlet.wiki.model.WikiPageDisplay;
 import com.liferay.portlet.wiki.service.WikiPageLocalServiceUtil;
 
+import java.io.Serializable;
+
 import java.util.Map;
 
 import javax.portlet.PortletURL;
@@ -36,8 +38,6 @@ import org.apache.commons.lang.time.StopWatch;
  * @author Jorge Ferrer
  */
 public class WikiCacheUtil {
-
-	public static final String CACHE_NAME = WikiCacheUtil.class.getName();
 
 	public static void clearCache(long nodeId) {
 		_portalCache.removeAll();
@@ -92,7 +92,7 @@ public class WikiCacheUtil {
 		if (links == null) {
 			links = WikiUtil.getLinks(page);
 
-			_portalCache.put(key, links);
+			_portalCache.put(key, (Serializable)links);
 		}
 
 		return links;
@@ -103,7 +103,7 @@ public class WikiCacheUtil {
 
 		StringBundler sb = new StringBundler(6);
 
-		sb.append(CACHE_NAME);
+		sb.append(_CACHE_NAME);
 		sb.append(StringPool.POUND);
 		sb.append(StringUtil.toHexString(nodeId));
 		sb.append(title);
@@ -141,11 +141,13 @@ public class WikiCacheUtil {
 		}
 	}
 
+	private static final String _CACHE_NAME = WikiCacheUtil.class.getName();
+
 	private static final String _OUTGOING_LINKS = "OUTGOING_LINKS";
 
-	private static Log _log = LogFactoryUtil.getLog(WikiUtil.class);
+	private static Log _log = LogFactoryUtil.getLog(WikiCacheUtil.class);
 
-	private static PortalCache _portalCache = MultiVMPoolUtil.getCache(
-		CACHE_NAME);
+	private static PortalCache<String, Serializable> _portalCache =
+		MultiVMPoolUtil.getCache(_CACHE_NAME);
 
 }

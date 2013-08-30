@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,6 +34,7 @@ public interface FileEntry extends RepositoryModel<FileEntry> {
 
 		new Accessor<FileEntry, Long>() {
 
+			@Override
 			public Long get(FileEntry fileEntry) {
 				return fileEntry.getFileEntryId();
 			}
@@ -44,6 +45,7 @@ public interface FileEntry extends RepositoryModel<FileEntry> {
 			PermissionChecker permissionChecker, String actionId)
 		throws PortalException, SystemException;
 
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -53,6 +55,8 @@ public interface FileEntry extends RepositoryModel<FileEntry> {
 	 * state.
 	 *
 	 * @return content stream of the current file version
+	 * @throws PortalException if a portal exception occurred
+	 * @throws SystemException if a system exception occurred
 	 * @see    #getFileVersion()
 	 */
 	public InputStream getContentStream()
@@ -61,6 +65,7 @@ public interface FileEntry extends RepositoryModel<FileEntry> {
 	public InputStream getContentStream(String version)
 		throws PortalException, SystemException;
 
+	@Override
 	public Date getCreateDate();
 
 	public String getDescription();
@@ -78,6 +83,8 @@ public interface FileEntry extends RepositoryModel<FileEntry> {
 	 * may function identically.
 	 *
 	 * @return current file version
+	 * @throws PortalException if a portal exception occurred
+	 * @throws SystemException if a system exception occurred
 	 */
 	public FileVersion getFileVersion() throws PortalException, SystemException;
 
@@ -91,6 +98,7 @@ public interface FileEntry extends RepositoryModel<FileEntry> {
 
 	public long getFolderId();
 
+	@Override
 	public long getGroupId();
 
 	public String getIcon();
@@ -102,6 +110,8 @@ public interface FileEntry extends RepositoryModel<FileEntry> {
 	 * #getFileVersion()}.
 	 *
 	 * @return latest file version
+	 * @throws PortalException if a portal exception occurred
+	 * @throws SystemException if a system exception occurred
 	 */
 	public FileVersion getLatestFileVersion()
 		throws PortalException, SystemException;
@@ -112,6 +122,7 @@ public interface FileEntry extends RepositoryModel<FileEntry> {
 
 	public String getMimeType(String version);
 
+	@Override
 	public Date getModifiedDate();
 
 	public int getReadCount();
@@ -122,12 +133,16 @@ public interface FileEntry extends RepositoryModel<FileEntry> {
 
 	public String getTitle();
 
+	@Override
 	public long getUserId();
 
+	@Override
 	public String getUserName();
 
+	@Override
 	public String getUserUuid() throws SystemException;
 
+	@Override
 	public String getUuid();
 
 	public String getVersion();
@@ -143,6 +158,8 @@ public interface FileEntry extends RepositoryModel<FileEntry> {
 	public boolean isCheckedOut();
 
 	public boolean isDefaultRepository();
+
+	public boolean isManualCheckInRequired();
 
 	public boolean isSupportsLocking();
 

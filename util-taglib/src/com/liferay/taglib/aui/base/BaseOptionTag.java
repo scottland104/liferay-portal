@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -37,6 +37,10 @@ public class BaseOptionTag extends com.liferay.taglib.util.IncludeTag {
 		return _cssClass;
 	}
 
+	public java.util.Map<java.lang.String, java.lang.Object> getData() {
+		return _data;
+	}
+
 	public boolean getDisabled() {
 		return _disabled;
 	}
@@ -53,6 +57,10 @@ public class BaseOptionTag extends com.liferay.taglib.util.IncludeTag {
 		return _style;
 	}
 
+	public boolean getUseModelValue() {
+		return _useModelValue;
+	}
+
 	public java.lang.Object getValue() {
 		return _value;
 	}
@@ -61,6 +69,12 @@ public class BaseOptionTag extends com.liferay.taglib.util.IncludeTag {
 		_cssClass = cssClass;
 
 		setScopedAttribute("cssClass", cssClass);
+	}
+
+	public void setData(java.util.Map<java.lang.String, java.lang.Object> data) {
+		_data = data;
+
+		setScopedAttribute("data", data);
 	}
 
 	public void setDisabled(boolean disabled) {
@@ -87,6 +101,12 @@ public class BaseOptionTag extends com.liferay.taglib.util.IncludeTag {
 		setScopedAttribute("style", style);
 	}
 
+	public void setUseModelValue(boolean useModelValue) {
+		_useModelValue = useModelValue;
+
+		setScopedAttribute("useModelValue", useModelValue);
+	}
+
 	public void setValue(java.lang.Object value) {
 		_value = value;
 
@@ -96,10 +116,12 @@ public class BaseOptionTag extends com.liferay.taglib.util.IncludeTag {
 	@Override
 	protected void cleanUp() {
 		_cssClass = null;
+		_data = null;
 		_disabled = false;
 		_label = null;
 		_selected = false;
 		_style = null;
+		_useModelValue = true;
 		_value = null;
 	}
 
@@ -116,10 +138,12 @@ public class BaseOptionTag extends com.liferay.taglib.util.IncludeTag {
 	@Override
 	protected void setAttributes(HttpServletRequest request) {
 		setNamespacedAttribute(request, "cssClass", _cssClass);
+		setNamespacedAttribute(request, "data", _data);
 		setNamespacedAttribute(request, "disabled", _disabled);
 		setNamespacedAttribute(request, "label", _label);
 		setNamespacedAttribute(request, "selected", _selected);
 		setNamespacedAttribute(request, "style", _style);
+		setNamespacedAttribute(request, "useModelValue", _useModelValue);
 		setNamespacedAttribute(request, "value", _value);
 	}
 
@@ -132,10 +156,12 @@ public class BaseOptionTag extends com.liferay.taglib.util.IncludeTag {
 		"/html/taglib/aui/option/start.jsp";
 
 	private java.lang.String _cssClass = null;
+	private java.util.Map<java.lang.String, java.lang.Object> _data = null;
 	private boolean _disabled = false;
 	private java.lang.Object _label = null;
 	private boolean _selected = false;
 	private java.lang.String _style = null;
+	private boolean _useModelValue = true;
 	private java.lang.Object _value = null;
 
 }

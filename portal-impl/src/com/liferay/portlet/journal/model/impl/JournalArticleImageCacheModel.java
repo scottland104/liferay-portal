@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,11 @@ import com.liferay.portal.model.CacheModel;
 
 import com.liferay.portlet.journal.model.JournalArticleImage;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing JournalArticleImage in entity cache.
  *
@@ -27,7 +32,8 @@ import com.liferay.portlet.journal.model.JournalArticleImage;
  * @see JournalArticleImage
  * @generated
  */
-public class JournalArticleImageCacheModel implements CacheModel<JournalArticleImage> {
+public class JournalArticleImageCacheModel implements CacheModel<JournalArticleImage>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(17);
@@ -53,6 +59,7 @@ public class JournalArticleImageCacheModel implements CacheModel<JournalArticleI
 		return sb.toString();
 	}
 
+	@Override
 	public JournalArticleImage toEntityModel() {
 		JournalArticleImageImpl journalArticleImageImpl = new JournalArticleImageImpl();
 
@@ -94,6 +101,57 @@ public class JournalArticleImageCacheModel implements CacheModel<JournalArticleI
 		journalArticleImageImpl.resetOriginalValues();
 
 		return journalArticleImageImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		articleImageId = objectInput.readLong();
+		groupId = objectInput.readLong();
+		articleId = objectInput.readUTF();
+		version = objectInput.readDouble();
+		elInstanceId = objectInput.readUTF();
+		elName = objectInput.readUTF();
+		languageId = objectInput.readUTF();
+		tempImage = objectInput.readBoolean();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(articleImageId);
+		objectOutput.writeLong(groupId);
+
+		if (articleId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(articleId);
+		}
+
+		objectOutput.writeDouble(version);
+
+		if (elInstanceId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(elInstanceId);
+		}
+
+		if (elName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(elName);
+		}
+
+		if (languageId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(languageId);
+		}
+
+		objectOutput.writeBoolean(tempImage);
 	}
 
 	public long articleImageId;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -35,14 +35,14 @@ import java.util.Map;
  */
 public class UserWorkflowHandler extends BaseWorkflowHandler {
 
-	public static final String CLASS_NAME = User.class.getName();
-
+	@Override
 	public String getClassName() {
-		return CLASS_NAME;
+		return User.class.getName();
 	}
 
+	@Override
 	public String getType(Locale locale) {
-		return ResourceActionsUtil.getModelResource(locale, CLASS_NAME);
+		return ResourceActionsUtil.getModelResource(locale, getClassName());
 	}
 
 	@Override
@@ -50,6 +50,7 @@ public class UserWorkflowHandler extends BaseWorkflowHandler {
 		return false;
 	}
 
+	@Override
 	public Object updateStatus(
 			int status, Map<String, Serializable> workflowContext)
 		throws PortalException, SystemException {
@@ -58,16 +59,19 @@ public class UserWorkflowHandler extends BaseWorkflowHandler {
 			(String)workflowContext.get(
 				WorkflowConstants.CONTEXT_ENTRY_CLASS_PK));
 
-		ServiceContext serviceContext = (ServiceContext)workflowContext.get(
-			WorkflowConstants.CONTEXT_SERVICE_CONTEXT);
-
 		User user = UserLocalServiceUtil.getUser(userId);
 
 		if (((user.getStatus() == WorkflowConstants.STATUS_DRAFT) ||
 			 (user.getStatus() == WorkflowConstants.STATUS_PENDING)) &&
 			(status == WorkflowConstants.STATUS_APPROVED)) {
 
+			ServiceContext serviceContext = (ServiceContext)workflowContext.get(
+				WorkflowConstants.CONTEXT_SERVICE_CONTEXT);
+
 			UserLocalServiceUtil.completeUserRegistration(user, serviceContext);
+
+			serviceContext.setAttribute(
+				"passwordUnencrypted", user.getPasswordUnencrypted());
 		}
 
 		return UserLocalServiceUtil.updateStatus(userId, status);

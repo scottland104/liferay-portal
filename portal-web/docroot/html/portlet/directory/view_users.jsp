@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,18 +32,19 @@ if (Validator.isNotNull(viewUsersRedirect)) {
 
 <liferay-ui:search-container
 	searchContainer="<%= new UserSearch(renderRequest, portletURL) %>"
+	var="userSearchContainer"
 >
-	<aui:input name="usersRedirect" type="hidden" value="<%= portletURL.toString() %>" />
+	<aui:input disabled="<%= true %>" name="usersRedirect" type="hidden" value="<%= portletURL.toString() %>" />
 
 	<%
-	UserSearchTerms searchTerms = (UserSearchTerms)searchContainer.getSearchTerms();
+	UserSearchTerms searchTerms = (UserSearchTerms)userSearchContainer.getSearchTerms();
 
 	long organizationId = searchTerms.getOrganizationId();
 	long userGroupId = searchTerms.getUserGroupId();
 
 	Organization organization = null;
 
-	if ((organizationId > 0)) {
+	if (organizationId > 0) {
 		try {
 			organization = OrganizationLocalServiceUtil.getOrganization(organizationId);
 		}
@@ -79,7 +80,7 @@ if (Validator.isNotNull(viewUsersRedirect)) {
 	/>
 
 	<%
-	LinkedHashMap userParams = new LinkedHashMap();
+	LinkedHashMap<String, Object> userParams = new LinkedHashMap<String, Object>();
 
 	if (organizationId > 0) {
 		userParams.put("usersOrgs", new Long(organizationId));
@@ -88,11 +89,32 @@ if (Validator.isNotNull(viewUsersRedirect)) {
 	if (userGroupId > 0) {
 		userParams.put("usersUserGroups", new Long(userGroupId));
 	}
+
+	if (portletName.equals(PortletKeys.FRIENDS_DIRECTORY)) {
+		userParams.put("socialRelationType", new Long[] {themeDisplay.getUserId(), new Long(SocialRelationConstants.TYPE_BI_FRIEND)});
+	}
+	else if (portletName.equals(PortletKeys.MY_SITES_DIRECTORY) && (organizationId == 0) && (userGroupId == 0)) {
+		LinkedHashMap<String, Object> groupParams = new LinkedHashMap<String, Object>();
+
+		groupParams.put("inherit", Boolean.FALSE);
+		groupParams.put("site", Boolean.TRUE);
+		groupParams.put("usersGroups", user.getUserId());
+
+		userParams.put("inherit", Boolean.TRUE);
+
+		List<Group> groups = GroupLocalServiceUtil.search(user.getCompanyId(), groupParams, QueryUtil.ALL_POS,QueryUtil.ALL_POS);
+
+		userParams.put("usersGroups", SitesUtil.filterGroups(groups, PropsValues.MY_SITES_DIRECTORY_SITE_EXCLUDES));
+	}
+	else if (portletName.equals(PortletKeys.SITE_MEMBERS_DIRECTORY) && (organizationId == 0) && (userGroupId == 0)) {
+		userParams.put("inherit", Boolean.TRUE);
+		userParams.put("usersGroups", new Long(themeDisplay.getScopeGroupId()));
+	}
 	%>
 
 	<liferay-ui:search-container-results>
 		<c:choose>
-			<c:when test="<%= PropsValues.USERS_SEARCH_WITH_INDEX %>">
+			<c:when test="<%= portletName.equals(PortletKeys.DIRECTORY) && PropsValues.USERS_INDEXER_ENABLED && PropsValues.USERS_SEARCH_WITH_INDEX %>">
 				<%@ include file="/html/portlet/users_admin/user_search_results_index.jspf" %>
 			</c:when>
 			<c:otherwise>
@@ -106,11 +128,12 @@ if (Validator.isNotNull(viewUsersRedirect)) {
 		escapedModel="<%= true %>"
 		keyProperty="userId"
 		modelVar="user2"
+		rowIdProperty="screenName"
 	>
 		<liferay-portlet:renderURL varImpl="rowURL">
 			<portlet:param name="struts_action" value="/directory/view_user" />
 			<portlet:param name="tabs1" value="<%= HtmlUtil.escape(tabs1) %>" />
-			<portlet:param name="redirect" value="<%= searchContainer.getIteratorURL().toString() %>" />
+			<portlet:param name="redirect" value="<%= userSearchContainer.getIteratorURL().toString() %>" />
 			<portlet:param name="p_u_i_d" value="<%= String.valueOf(user2.getUserId()) %>" />
 		</liferay-portlet:renderURL>
 

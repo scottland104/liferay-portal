@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,7 @@
 
 package com.liferay.portlet.mypages.action;
 
+import com.liferay.portal.kernel.servlet.DynamicServletRequest;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.User;
@@ -23,7 +24,6 @@ import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.RenderRequestImpl;
 import com.liferay.portlet.sites.action.ActionUtil;
-import com.liferay.util.servlet.DynamicServletRequest;
 
 import javax.portlet.PortletConfig;
 import javax.portlet.RenderRequest;
@@ -42,16 +42,17 @@ public class ViewAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		if (renderRequest.getRemoteUser() == null) {
-			return mapping.findForward("portlet.my_pages.view");
+			return actionMapping.findForward("portlet.my_pages.view");
 		}
 
 		if (!renderRequest.getWindowState().equals(WindowState.MAXIMIZED)) {
-			return mapping.findForward("portlet.my_pages.view");
+			return actionMapping.findForward("portlet.my_pages.view");
 		}
 
 		User user = PortalUtil.getUser(renderRequest);
@@ -70,9 +71,8 @@ public class ViewAction extends PortletAction {
 			user.getUserId(), user.getCompanyId(), RoleConstants.POWER_USER,
 			true);
 
-		if (!PropsValues.LAYOUT_USER_PUBLIC_LAYOUTS_MODIFIABLE ||
-			(PropsValues.LAYOUT_USER_PUBLIC_LAYOUTS_POWER_USER_REQUIRED &&
-			 !hasPowerUserRole)) {
+		if (PropsValues.LAYOUT_USER_PUBLIC_LAYOUTS_POWER_USER_REQUIRED &&
+			!hasPowerUserRole) {
 
 			tabs1 = "private-pages";
 		}
@@ -86,7 +86,7 @@ public class ViewAction extends PortletAction {
 
 		ActionUtil.getGroup(renderRequest);
 
-		return mapping.findForward("portlet.my_pages.edit_layouts");
+		return actionMapping.findForward("portlet.my_pages.edit_layouts");
 	}
 
 }

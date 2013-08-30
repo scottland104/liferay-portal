@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.dao.orm.SQLQuery;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.dao.orm.Type;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -38,15 +39,17 @@ import java.util.List;
 public class ShoppingItemFinderImpl
 	extends BasePersistenceImpl<ShoppingItem> implements ShoppingItemFinder {
 
-	public static String COUNT_BY_G_C =
+	public static final String COUNT_BY_G_C =
 		ShoppingItemFinder.class.getName() + ".countByG_C";
 
+	@Override
 	public int countByG_C(long groupId, List<Long> categoryIds)
 		throws SystemException {
 
 		return doCountByG_C(groupId, categoryIds, false);
 	}
 
+	@Override
 	public int countByFeatured(long groupId, long[] categoryIds)
 		throws SystemException {
 
@@ -61,13 +64,13 @@ public class ShoppingItemFinderImpl
 			query.append("WHERE ");
 			query.append("ShoppingItem.groupId = ? AND (");
 
-			if ((categoryIds != null) && (categoryIds.length > 0)) {
-				query.append("(");
+			if (ArrayUtil.isNotEmpty(categoryIds)) {
+				query.append(StringPool.OPEN_PARENTHESIS);
 
 				for (int i = 0; i < categoryIds.length; i++) {
 					query.append("ShoppingItem.categoryId = ? ");
 
-					if (i + 1 < categoryIds.length) {
+					if ((i + 1) < categoryIds.length) {
 						query.append("OR ");
 					}
 				}
@@ -93,7 +96,7 @@ public class ShoppingItemFinderImpl
 			qPos.add(true);
 			qPos.add(true);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -113,6 +116,7 @@ public class ShoppingItemFinderImpl
 		}
 	}
 
+	@Override
 	public int countByKeywords(
 			long groupId, long[] categoryIds, String keywords)
 		throws SystemException {
@@ -128,13 +132,13 @@ public class ShoppingItemFinderImpl
 			query.append("WHERE ");
 			query.append("ShoppingItem.groupId = ? AND (");
 
-			if ((categoryIds != null) && (categoryIds.length > 0)) {
-				query.append("(");
+			if (ArrayUtil.isNotEmpty(categoryIds)) {
+				query.append(StringPool.OPEN_PARENTHESIS);
 
 				for (int i = 0; i < categoryIds.length; i++) {
 					query.append("ShoppingItem.categoryId = ? ");
 
-					if (i + 1 < categoryIds.length) {
+					if ((i + 1) < categoryIds.length) {
 						query.append("OR ");
 					}
 				}
@@ -164,7 +168,7 @@ public class ShoppingItemFinderImpl
 			qPos.add(keywords);
 			qPos.add(keywords);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -184,6 +188,7 @@ public class ShoppingItemFinderImpl
 		}
 	}
 
+	@Override
 	public int countBySale(long groupId, long[] categoryIds)
 		throws SystemException {
 
@@ -198,13 +203,13 @@ public class ShoppingItemFinderImpl
 			query.append("WHERE ");
 			query.append("ShoppingItem.groupId = ? AND (");
 
-			if ((categoryIds != null) && (categoryIds.length > 0)) {
-				query.append("(");
+			if (ArrayUtil.isNotEmpty(categoryIds)) {
+				query.append(StringPool.OPEN_PARENTHESIS);
 
 				for (int i = 0; i < categoryIds.length; i++) {
 					query.append("ShoppingItem.categoryId = ? ");
 
-					if (i + 1 < categoryIds.length) {
+					if ((i + 1) < categoryIds.length) {
 						query.append("OR ");
 					}
 				}
@@ -230,7 +235,7 @@ public class ShoppingItemFinderImpl
 			qPos.add(true);
 			qPos.add(true);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -250,12 +255,14 @@ public class ShoppingItemFinderImpl
 		}
 	}
 
+	@Override
 	public int filterCountByG_C(long groupId, List<Long> categoryIds)
 		throws SystemException {
 
 		return doCountByG_C(groupId, categoryIds, true);
 	}
 
+	@Override
 	public List<ShoppingItem> findByFeatured(
 			long groupId, long[] categoryIds, int numOfItems)
 		throws SystemException {
@@ -273,13 +280,13 @@ public class ShoppingItemFinderImpl
 			query.append("WHERE ");
 			query.append("ShoppingItem.groupId = ? AND (");
 
-			if ((categoryIds != null) && (categoryIds.length > 0)) {
-				query.append("(");
+			if (ArrayUtil.isNotEmpty(categoryIds)) {
+				query.append(StringPool.OPEN_PARENTHESIS);
 
 				for (int i = 0; i < categoryIds.length; i++) {
 					query.append("ShoppingItem.categoryId = ? ");
 
-					if (i + 1 < categoryIds.length) {
+					if ((i + 1) < categoryIds.length) {
 						query.append("OR ");
 					}
 				}
@@ -316,6 +323,7 @@ public class ShoppingItemFinderImpl
 		}
 	}
 
+	@Override
 	public List<ShoppingItem> findByKeywords(
 			long groupId, long[] categoryIds, String keywords, int start,
 			int end)
@@ -332,13 +340,13 @@ public class ShoppingItemFinderImpl
 			query.append("WHERE ");
 			query.append("ShoppingItem.groupId = ? AND (");
 
-			if ((categoryIds != null) && (categoryIds.length > 0)) {
-				query.append("(");
+			if (ArrayUtil.isNotEmpty(categoryIds)) {
+				query.append(StringPool.OPEN_PARENTHESIS);
 
 				for (int i = 0; i < categoryIds.length; i++) {
 					query.append("ShoppingItem.categoryId = ? ");
 
-					if (i + 1 < categoryIds.length) {
+					if ((i + 1) < categoryIds.length) {
 						query.append("OR ");
 					}
 				}
@@ -379,6 +387,7 @@ public class ShoppingItemFinderImpl
 		}
 	}
 
+	@Override
 	public List<ShoppingItem> findBySale(
 			long groupId, long[] categoryIds, int numOfItems)
 		throws SystemException {
@@ -396,13 +405,13 @@ public class ShoppingItemFinderImpl
 			query.append("WHERE ");
 			query.append("ShoppingItem.groupId = ? AND (");
 
-			if ((categoryIds != null) && (categoryIds.length > 0)) {
-				query.append("(");
+			if (ArrayUtil.isNotEmpty(categoryIds)) {
+				query.append(StringPool.OPEN_PARENTHESIS);
 
 				for (int i = 0; i < categoryIds.length; i++) {
 					query.append("ShoppingItem.categoryId = ? ");
 
-					if (i + 1 < categoryIds.length) {
+					if ((i + 1) < categoryIds.length) {
 						query.append("OR ");
 					}
 				}
@@ -473,7 +482,7 @@ public class ShoppingItemFinderImpl
 				qPos.add(categoryId);
 			}
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();

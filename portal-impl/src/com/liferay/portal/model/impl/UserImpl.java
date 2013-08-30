@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,14 +15,13 @@
 package com.liferay.portal.model.impl;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
-import com.liferay.portal.kernel.cache.Lifecycle;
-import com.liferay.portal.kernel.cache.ThreadLocalCache;
-import com.liferay.portal.kernel.cache.ThreadLocalCacheManager;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.dao.shard.ShardUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.Digester;
 import com.liferay.portal.kernel.util.DigesterUtil;
+import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.SetUtil;
@@ -36,6 +35,7 @@ import com.liferay.portal.model.Address;
 import com.liferay.portal.model.Company;
 import com.liferay.portal.model.CompanyConstants;
 import com.liferay.portal.model.Contact;
+import com.liferay.portal.model.EmailAddress;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Organization;
 import com.liferay.portal.model.PasswordPolicy;
@@ -52,8 +52,10 @@ import com.liferay.portal.security.auth.FullNameGeneratorFactory;
 import com.liferay.portal.service.AddressLocalServiceUtil;
 import com.liferay.portal.service.CompanyLocalServiceUtil;
 import com.liferay.portal.service.ContactLocalServiceUtil;
+import com.liferay.portal.service.EmailAddressLocalServiceUtil;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.GroupServiceUtil;
+import com.liferay.portal.service.LayoutLocalServiceUtil;
 import com.liferay.portal.service.OrganizationLocalServiceUtil;
 import com.liferay.portal.service.PasswordPolicyLocalServiceUtil;
 import com.liferay.portal.service.PhoneLocalServiceUtil;
@@ -63,20 +65,16 @@ import com.liferay.portal.service.UserGroupLocalServiceUtil;
 import com.liferay.portal.service.WebsiteLocalServiceUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.Portal;
+import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.portlet.social.model.SocialEquityValue;
-import com.liferay.portlet.social.service.SocialEquityUserLocalServiceUtil;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Brian Wing Shun Chan
@@ -88,15 +86,18 @@ public class UserImpl extends UserBaseImpl {
 	public UserImpl() {
 	}
 
+	@Override
 	public List<Address> getAddresses() throws SystemException {
 		return AddressLocalServiceUtil.getAddresses(
 			getCompanyId(), Contact.class.getName(), getContactId());
 	}
 
+	@Override
 	public Date getBirthday() throws PortalException, SystemException {
 		return getContact().getBirthday();
 	}
 
+	@Override
 	public String getCompanyMx() throws PortalException, SystemException {
 		Company company = CompanyLocalServiceUtil.getCompanyById(
 			getCompanyId());
@@ -104,8 +105,16 @@ public class UserImpl extends UserBaseImpl {
 		return company.getMx();
 	}
 
+	@Override
 	public Contact getContact() throws PortalException, SystemException {
-		return ContactLocalServiceUtil.getContact(getContactId());
+		try {
+			ShardUtil.pushCompanyService(getCompanyId());
+
+			return ContactLocalServiceUtil.getContact(getContactId());
+		}
+		finally {
+			ShardUtil.popCompanyService();
+		}
 	}
 
 	@Override
@@ -119,6 +128,7 @@ public class UserImpl extends UserBaseImpl {
 		return digest;
 	}
 
+	@Override
 	public String getDigest(String password) {
 		if (Validator.isNull(getScreenName())) {
 			throw new IllegalStateException("Screen name cannot be null");
@@ -150,6 +160,7 @@ public class UserImpl extends UserBaseImpl {
 		return sb.toString();
 	}
 
+	@Override
 	public String getDisplayEmailAddress() {
 		String emailAddress = super.getEmailAddress();
 
@@ -163,18 +174,27 @@ public class UserImpl extends UserBaseImpl {
 		return emailAddress;
 	}
 
-	public String getDisplayURL(ThemeDisplay themeDisplay)
+	@Override
+	public String getDisplayURL(String portalURL, String mainPath)
 		throws PortalException, SystemException {
 
-		return getDisplayURL(
-			themeDisplay.getPortalURL(), themeDisplay.getPathMain());
+		return getDisplayURL(portalURL, mainPath, false);
 	}
 
-	public String getDisplayURL(String portalURL, String mainPath)
+	@Override
+	public String getDisplayURL(
+			String portalURL, String mainPath, boolean privateLayout)
 		throws PortalException, SystemException {
 
 		if (isDefaultUser()) {
 			return StringPool.BLANK;
+		}
+
+		String profileFriendlyURL = getProfileFriendlyURL();
+
+		if (Validator.isNotNull(profileFriendlyURL)) {
+			return portalURL.concat(PortalUtil.getPathContext()).concat(
+				profileFriendlyURL);
 		}
 
 		Group group = getGroup();
@@ -188,7 +208,13 @@ public class UserImpl extends UserBaseImpl {
 			sb.append(mainPath);
 			sb.append("/my_sites/view?groupId=");
 			sb.append(group.getGroupId());
-			sb.append("&privateLayout=0");
+
+			if (privateLayout) {
+				sb.append("&privateLayout=1");
+			}
+			else {
+				sb.append("&privateLayout=0");
+			}
 
 			return sb.toString();
 		}
@@ -196,11 +222,37 @@ public class UserImpl extends UserBaseImpl {
 		return StringPool.BLANK;
 	}
 
+	@Override
+	public String getDisplayURL(ThemeDisplay themeDisplay)
+		throws PortalException, SystemException {
+
+		return getDisplayURL(
+			themeDisplay.getPortalURL(), themeDisplay.getPathMain(), false);
+	}
+
+	@Override
+	public String getDisplayURL(
+			ThemeDisplay themeDisplay, boolean privateLayout)
+		throws PortalException, SystemException {
+
+		return getDisplayURL(
+			themeDisplay.getPortalURL(), themeDisplay.getPathMain(),
+			privateLayout);
+	}
+
+	@Override
+	public List<EmailAddress> getEmailAddresses() throws SystemException {
+		return EmailAddressLocalServiceUtil.getEmailAddresses(
+			getCompanyId(), Contact.class.getName(), getContactId());
+	}
+
+	@Override
 	public boolean getFemale() throws PortalException, SystemException {
 		return !getMale();
 	}
 
 	@AutoEscape
+	@Override
 	public String getFullName() {
 		FullNameGenerator fullNameGenerator =
 			FullNameGeneratorFactory.getInstance();
@@ -209,11 +261,20 @@ public class UserImpl extends UserBaseImpl {
 			getFirstName(), getMiddleName(), getLastName());
 	}
 
+	@Override
 	public Group getGroup() throws PortalException, SystemException {
 		return GroupLocalServiceUtil.getUserGroup(getCompanyId(), getUserId());
 	}
 
-	public long[] getGroupIds() throws PortalException, SystemException {
+	@Override
+	public long getGroupId() throws PortalException, SystemException {
+		Group group = getGroup();
+
+		return group.getGroupId();
+	}
+
+	@Override
+	public long[] getGroupIds() throws SystemException {
 		List<Group> groups = getGroups();
 
 		long[] groupIds = new long[groups.size()];
@@ -227,14 +288,17 @@ public class UserImpl extends UserBaseImpl {
 		return groupIds;
 	}
 
-	public List<Group> getGroups() throws PortalException, SystemException {
+	@Override
+	public List<Group> getGroups() throws SystemException {
 		return GroupLocalServiceUtil.getUserGroups(getUserId());
 	}
 
+	@Override
 	public Locale getLocale() {
 		return _locale;
 	}
 
+	@Override
 	public String getLogin() throws PortalException, SystemException {
 		String login = null;
 
@@ -254,49 +318,111 @@ public class UserImpl extends UserBaseImpl {
 		return login;
 	}
 
+	@Override
 	public boolean getMale() throws PortalException, SystemException {
 		return getContact().getMale();
 	}
 
-	public List<Group> getMySites() throws PortalException, SystemException {
-		return getMySites(null, QueryUtil.ALL_POS);
+	@Override
+	public List<Group> getMySiteGroups()
+		throws PortalException, SystemException {
+
+		return getMySiteGroups(null, false, QueryUtil.ALL_POS);
 	}
 
+	@Override
+	public List<Group> getMySiteGroups(boolean includeControlPanel, int max)
+		throws PortalException, SystemException {
+
+		return getMySiteGroups(null, includeControlPanel, max);
+	}
+
+	@Override
+	public List<Group> getMySiteGroups(int max)
+		throws PortalException, SystemException {
+
+		return getMySiteGroups(null, false, max);
+	}
+
+	@Override
+	public List<Group> getMySiteGroups(
+			String[] classNames, boolean includeControlPanel, int max)
+		throws PortalException, SystemException {
+
+		return GroupServiceUtil.getUserSitesGroups(
+			getUserId(), classNames, includeControlPanel, max);
+	}
+
+	@Override
+	public List<Group> getMySiteGroups(String[] classNames, int max)
+		throws PortalException, SystemException {
+
+		return getMySiteGroups(classNames, false, max);
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getMySiteGroups}
+	 */
+	@Override
+	public List<Group> getMySites() throws PortalException, SystemException {
+		return getMySiteGroups();
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getMySiteGroups(boolean,
+	 *             int)}
+	 */
+	@Override
+	public List<Group> getMySites(boolean includeControlPanel, int max)
+		throws PortalException, SystemException {
+
+		return getMySiteGroups(includeControlPanel, max);
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getMySiteGroups(int)}
+	 */
+	@Override
 	public List<Group> getMySites(int max)
 		throws PortalException, SystemException {
 
-		return getMySites(null, max);
+		return getMySiteGroups(max);
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getMySiteGroups(String[],
+	 *             boolean, int)}
+	 */
+	@Override
+	public List<Group> getMySites(
+			String[] classNames, boolean includeControlPanel, int max)
+		throws PortalException, SystemException {
+
+		return getMySiteGroups(classNames, includeControlPanel, max);
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getMySiteGroups(String[],
+	 *             int)}
+	 */
+	@Override
 	public List<Group> getMySites(String[] classNames, int max)
 		throws PortalException, SystemException {
 
-		ThreadLocalCache<List<Group>> threadLocalCache =
-			ThreadLocalCacheManager.getThreadLocalCache(
-				Lifecycle.REQUEST, _GET_MY_SITES_CACHE_NAME);
-
-		String key = StringUtil.toHexString(max);
-
-		if ((classNames != null) && (classNames.length > 0)) {
-			key = StringUtil.merge(classNames).concat(StringPool.POUND).concat(
-				key);
-		}
-
-		List<Group> myPlaces = threadLocalCache.get(key);
-
-		if (myPlaces != null) {
-			return myPlaces;
-		}
-
-		myPlaces = GroupServiceUtil.getUserPlaces(getUserId(), classNames, max);
-
-		threadLocalCache.put(key, myPlaces);
-
-		return myPlaces;
+		return getMySiteGroups(classNames, max);
 	}
 
+	@Override
 	public long[] getOrganizationIds() throws PortalException, SystemException {
-		List<Organization> organizations = getOrganizations();
+		return getOrganizationIds(false);
+	}
+
+	@Override
+	public long[] getOrganizationIds(boolean includeAdministrative)
+		throws PortalException, SystemException {
+
+		List<Organization> organizations = getOrganizations(
+			includeAdministrative);
 
 		long[] organizationIds = new long[organizations.size()];
 
@@ -309,33 +435,51 @@ public class UserImpl extends UserBaseImpl {
 		return organizationIds;
 	}
 
+	@Override
 	public List<Organization> getOrganizations()
 		throws PortalException, SystemException {
 
-		return OrganizationLocalServiceUtil.getUserOrganizations(
-			getUserId());
+		return getOrganizations(false);
 	}
 
+	@Override
+	public List<Organization> getOrganizations(boolean includeAdministrative)
+		throws PortalException, SystemException {
+
+		return OrganizationLocalServiceUtil.getUserOrganizations(
+			getUserId(), includeAdministrative);
+	}
+
+	@Override
 	public boolean getPasswordModified() {
 		return _passwordModified;
 	}
 
+	@Override
 	public PasswordPolicy getPasswordPolicy()
 		throws PortalException, SystemException {
 
-		return PasswordPolicyLocalServiceUtil.getPasswordPolicyByUserId(
-			getUserId());
+		if (_passwordPolicy == null) {
+			_passwordPolicy =
+				PasswordPolicyLocalServiceUtil.getPasswordPolicyByUserId(
+					getUserId());
+		}
+
+		return _passwordPolicy;
 	}
 
+	@Override
 	public String getPasswordUnencrypted() {
 		return _passwordUnencrypted;
 	}
 
+	@Override
 	public List<Phone> getPhones() throws SystemException {
 		return PhoneLocalServiceUtil.getPhones(
 			getCompanyId(), Contact.class.getName(), getContactId());
 	}
 
+	@Override
 	public String getPortraitURL(ThemeDisplay themeDisplay)
 		throws PortalException, SystemException {
 
@@ -343,30 +487,28 @@ public class UserImpl extends UserBaseImpl {
 			themeDisplay.getPathImage(), isMale(), getPortraitId());
 	}
 
+	@Override
 	public int getPrivateLayoutsPageCount()
 		throws PortalException, SystemException {
 
-		Group group = getGroup();
-
-		return group.getPrivateLayoutsPageCount();
+		return LayoutLocalServiceUtil.getLayoutsCount(this, true);
 	}
 
+	@Override
 	public int getPublicLayoutsPageCount()
 		throws PortalException, SystemException {
 
-		Group group = getGroup();
-
-		return group.getPublicLayoutsPageCount();
+		return LayoutLocalServiceUtil.getLayoutsCount(this, false);
 	}
 
+	@Override
 	public Set<String> getReminderQueryQuestions()
 		throws PortalException, SystemException {
 
 		Set<String> questions = new TreeSet<String>();
 
 		List<Organization> organizations =
-			OrganizationLocalServiceUtil.getUserOrganizations(
-				getUserId(), true);
+			OrganizationLocalServiceUtil.getUserOrganizations(getUserId());
 
 		for (Organization organization : organizations) {
 			Set<String> organizationQuestions =
@@ -377,7 +519,7 @@ public class UserImpl extends UserBaseImpl {
 					organization.getParentOrganization();
 
 				while ((organizationQuestions.size() == 0) &&
-						(parentOrganization != null)) {
+					   (parentOrganization != null)) {
 
 					organizationQuestions =
 						parentOrganization.getReminderQueryQuestions(
@@ -401,6 +543,7 @@ public class UserImpl extends UserBaseImpl {
 		return questions;
 	}
 
+	@Override
 	public long[] getRoleIds() throws SystemException {
 		List<Role> roles = getRoles();
 
@@ -415,75 +558,25 @@ public class UserImpl extends UserBaseImpl {
 		return roleIds;
 	}
 
+	@Override
 	public List<Role> getRoles() throws SystemException {
 		return RoleLocalServiceUtil.getUserRoles(getUserId());
 	}
 
-	public double getSocialContributionEquity() {
-		return getSocialContributionEquity(0);
+	@Override
+	public List<Group> getSiteGroups() throws PortalException, SystemException {
+		return getSiteGroups(false);
 	}
 
-	public double getSocialContributionEquity(long groupId) {
-		AtomicReference<Double> socialContributionEquity =
-			_socialContributionEquities.get(groupId);
+	@Override
+	public List<Group> getSiteGroups(boolean includeAdministrative)
+		throws PortalException, SystemException {
 
-		if (socialContributionEquity == null) {
-			try {
-				SocialEquityValue socialEquityValue =
-					SocialEquityUserLocalServiceUtil.getContributionEquity(
-						getUserId(), groupId);
-
-				socialContributionEquity = new AtomicReference<Double>(
-					socialEquityValue.getValue());
-
-				_socialContributionEquities.put(
-					groupId, socialContributionEquity);
-			}
-			catch (SystemException se) {
-				return 0;
-			}
-		}
-
-		return socialContributionEquity.get();
+		return GroupLocalServiceUtil.getUserSitesGroups(
+			getUserId(), includeAdministrative);
 	}
 
-	public double getSocialParticipationEquity() {
-		return getSocialParticipationEquity(0);
-	}
-
-	public double getSocialParticipationEquity(long groupId) {
-		AtomicReference<Double> socialParticipationEquity =
-			_socialParticipationEquities.get(groupId);
-
-		if (socialParticipationEquity == null) {
-			try {
-				SocialEquityValue socialEquityValue =
-					SocialEquityUserLocalServiceUtil.getParticipationEquity(
-						getUserId(), groupId);
-
-				socialParticipationEquity = new AtomicReference<Double>(
-					socialEquityValue.getValue());
-
-				_socialParticipationEquities.put(
-					groupId, socialParticipationEquity);
-			}
-			catch (SystemException se) {
-				return 0;
-			}
-		}
-
-		return socialParticipationEquity.get();
-	}
-
-	public double getSocialPersonalEquity() {
-		return getSocialContributionEquity() + getSocialParticipationEquity();
-	}
-
-	public double getSocialPersonalEquity(long groupId) {
-		return getSocialContributionEquity(groupId) +
-			getSocialParticipationEquity(groupId);
-	}
-
+	@Override
 	public long[] getTeamIds() throws SystemException {
 		List<Team> teams = getTeams();
 
@@ -498,10 +591,17 @@ public class UserImpl extends UserBaseImpl {
 		return teamIds;
 	}
 
+	@Override
 	public List<Team> getTeams() throws SystemException {
 		return TeamLocalServiceUtil.getUserTeams(getUserId());
 	}
 
+	@Override
+	public TimeZone getTimeZone() {
+		return _timeZone;
+	}
+
+	@Override
 	public long[] getUserGroupIds() throws SystemException {
 		List<UserGroup> userGroups = getUserGroups();
 
@@ -516,18 +616,23 @@ public class UserImpl extends UserBaseImpl {
 		return userGroupIds;
 	}
 
+	@Override
 	public List<UserGroup> getUserGroups() throws SystemException {
 		return UserGroupLocalServiceUtil.getUserUserGroups(getUserId());
 	}
 
-	public TimeZone getTimeZone() {
-		return _timeZone;
+	@Override
+	public List<Website> getWebsites() throws SystemException {
+		return WebsiteLocalServiceUtil.getWebsites(
+			getCompanyId(), Contact.class.getName(), getContactId());
 	}
 
+	@Override
 	public boolean hasCompanyMx() throws PortalException, SystemException {
 		return hasCompanyMx(getEmailAddress());
 	}
 
+	@Override
 	public boolean hasCompanyMx(String emailAddress)
 		throws PortalException, SystemException {
 
@@ -541,48 +646,45 @@ public class UserImpl extends UserBaseImpl {
 		return company.hasCompanyMx(emailAddress);
 	}
 
+	@Override
 	public boolean hasMySites() throws PortalException, SystemException {
 		if (isDefaultUser()) {
 			return false;
 		}
 
-		List<Group> groups = getMySites(PropsValues.MY_SITES_MAX_ELEMENTS);
+		int max = PropsValues.MY_SITES_MAX_ELEMENTS;
 
-		if (groups.size() > 0) {
-			return true;
+		if (max == 1) {
+
+			// Increment so that we return more than just the Control Panel
+			// group
+
+			max++;
 		}
-		else {
-			return false;
-		}
+
+		List<Group> groups = getMySiteGroups(true, max);
+
+		return !groups.isEmpty();
 	}
 
+	@Override
 	public boolean hasOrganization() throws PortalException, SystemException {
-		if (getOrganizations().size() > 0) {
-			return true;
-		}
-		else {
-			return false;
-		}
+		List<Organization> organizations = getOrganizations();
+
+		return !organizations.isEmpty();
 	}
 
+	@Override
 	public boolean hasPrivateLayouts() throws PortalException, SystemException {
-		if (getPrivateLayoutsPageCount() > 0) {
-			return true;
-		}
-		else {
-			return false;
-		}
+		return LayoutLocalServiceUtil.hasLayouts(this, true);
 	}
 
+	@Override
 	public boolean hasPublicLayouts() throws PortalException, SystemException {
-		if (getPublicLayoutsPageCount() > 0) {
-			return true;
-		}
-		else {
-			return false;
-		}
+		return LayoutLocalServiceUtil.hasLayouts(this, false);
 	}
 
+	@Override
 	public boolean hasReminderQuery() {
 		if (Validator.isNotNull(getReminderQueryQuestion()) &&
 			Validator.isNotNull(getReminderQueryAnswer())) {
@@ -594,6 +696,7 @@ public class UserImpl extends UserBaseImpl {
 		}
 	}
 
+	@Override
 	public boolean isActive() {
 		if (getStatus() == WorkflowConstants.STATUS_APPROVED) {
 			return true;
@@ -603,14 +706,17 @@ public class UserImpl extends UserBaseImpl {
 		}
 	}
 
+	@Override
 	public boolean isFemale() throws PortalException, SystemException {
 		return getFemale();
 	}
 
+	@Override
 	public boolean isMale() throws PortalException, SystemException {
 		return getMale();
 	}
 
+	@Override
 	public boolean isPasswordModified() {
 		return _passwordModified;
 	}
@@ -622,10 +728,12 @@ public class UserImpl extends UserBaseImpl {
 		super.setLanguageId(LocaleUtil.toLanguageId(_locale));
 	}
 
+	@Override
 	public void setPasswordModified(boolean passwordModified) {
 		_passwordModified = passwordModified;
 	}
 
+	@Override
 	public void setPasswordUnencrypted(String passwordUnencrypted) {
 		_passwordUnencrypted = passwordUnencrypted;
 	}
@@ -641,59 +749,23 @@ public class UserImpl extends UserBaseImpl {
 		super.setTimeZoneId(timeZoneId);
 	}
 
-	public void updateSocialContributionEquity(long groupId, double value) {
-		double currentValue = 0;
-		double newValue = 0;
-
-		AtomicReference<Double> socialContributionEquity =
-			_socialContributionEquities.get(groupId);
-
-		if (socialContributionEquity == null) {
-			return;
+	protected String getProfileFriendlyURL() {
+		if (Validator.isNull(PropsValues.USERS_PROFILE_FRIENDLY_URL)) {
+			return null;
 		}
 
-		do {
-			currentValue = socialContributionEquity.get();
-
-			newValue = currentValue + value;
-		}
-		while (!socialContributionEquity.compareAndSet(currentValue, newValue));
+		return StringUtil.replace(
+			PropsValues.USERS_PROFILE_FRIENDLY_URL,
+			new String[] {"${liferay:screenName}", "${liferay:userId}"},
+			new String[] {
+				HtmlUtil.escapeURL(getScreenName()), String.valueOf(getUserId())
+			});
 	}
-
-	public void updateSocialParticipationEquity(long groupId, double value) {
-		double currentValue = 0;
-		double newValue = 0;
-
-		AtomicReference<Double> socialParticipationEquity =
-			_socialParticipationEquities.get(groupId);
-
-		if (socialParticipationEquity == null) {
-			return;
-		}
-
-		do {
-			currentValue = socialParticipationEquity.get();
-
-			newValue = currentValue + value;
-		}
-		while (!socialParticipationEquity.compareAndSet(
-					currentValue, newValue));
-	}
-
-	public List<Website> getWebsites() throws SystemException {
-		return WebsiteLocalServiceUtil.getWebsites(
-			getCompanyId(), Contact.class.getName(), getContactId());
-	}
-
-	private static final String _GET_MY_SITES_CACHE_NAME = "GET_MY_SITES";
 
 	private Locale _locale;
 	private boolean _passwordModified;
+	private PasswordPolicy _passwordPolicy;
 	private String _passwordUnencrypted;
-	private Map<Long, AtomicReference<Double>> _socialContributionEquities =
-		new HashMap<Long, AtomicReference<Double>>();
-	private Map<Long, AtomicReference<Double>> _socialParticipationEquities =
-		new HashMap<Long, AtomicReference<Double>>();
 	private TimeZone _timeZone;
 
 }

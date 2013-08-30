@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,16 +14,26 @@
 
 package com.liferay.portal.dao.jdbc;
 
+import com.liferay.portal.dao.jdbc.util.DataSourceWrapper;
+import com.liferay.portal.kernel.configuration.Filter;
 import com.liferay.portal.kernel.dao.jdbc.DataSourceFactory;
 import com.liferay.portal.kernel.jndi.JNDIUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
+import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.SortedProperties;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.util.FileImpl;
+import com.liferay.portal.util.HttpImpl;
+import com.liferay.portal.util.JarUtil;
 import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.util.PwdGenerator;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
@@ -36,6 +46,7 @@ import java.util.Properties;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import javax.naming.Context;
 import javax.naming.InitialContext;
 
 import javax.sql.DataSource;
@@ -46,15 +57,21 @@ import org.apache.commons.dbcp.BasicDataSourceFactory;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.apache.tomcat.jdbc.pool.jmx.ConnectionPool;
 
-import uk.org.primrose.pool.datasource.GenericDataSourceFactory;
-
 /**
  * @author Brian Wing Shun Chan
  * @author Shuyang Zhou
  */
+@DoPrivileged
 public class DataSourceFactoryImpl implements DataSourceFactory {
 
+	@Override
 	public void destroyDataSource(DataSource dataSource) throws Exception {
+		while (dataSource instanceof DataSourceWrapper) {
+			DataSourceWrapper dataSourceWrapper = (DataSourceWrapper)dataSource;
+
+			dataSource = dataSourceWrapper.getWrappedDataSource();
+		}
+
 		if (dataSource instanceof ComboPooledDataSource) {
 			ComboPooledDataSource comboPooledDataSource =
 				(ComboPooledDataSource)dataSource;
@@ -69,6 +86,7 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 		}
 	}
 
+	@Override
 	public DataSource initDataSource(Properties properties) throws Exception {
 		Properties defaultProperties = PropsUtil.getProperties(
 			"jdbc.default.", true);
@@ -81,13 +99,28 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 
 		if (Validator.isNotNull(jndiName)) {
 			try {
-				return (DataSource)JNDIUtil.lookup(
-					new InitialContext(), jndiName);
+				Properties jndiEnvironmentProperties = PropsUtil.getProperties(
+					PropsKeys.JNDI_ENVIRONMENT, true);
+
+				Context context = new InitialContext(jndiEnvironmentProperties);
+
+				return (DataSource)JNDIUtil.lookup(context, jndiName);
 			}
 			catch (Exception e) {
 				_log.error("Unable to lookup " + jndiName, e);
 			}
 		}
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("Data source properties:\n");
+
+			SortedProperties sortedProperties = new SortedProperties(
+				properties);
+
+			_log.debug(PropertiesUtil.toString(sortedProperties));
+		}
+
+		testClassForName(properties);
 
 		DataSource dataSource = null;
 
@@ -110,13 +143,6 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 
 			dataSource = initDataSourceDBCP(properties);
 		}
-		else if (liferayPoolProvider.equalsIgnoreCase("primrose")) {
-			if (_log.isDebugEnabled()) {
-				_log.debug("Initializing Primrose data source");
-			}
-
-			dataSource = initDataSourcePrimrose(properties);
-		}
 		else {
 			if (_log.isDebugEnabled()) {
 				_log.debug("Initializing Tomcat data source");
@@ -126,21 +152,16 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 		}
 
 		if (_log.isDebugEnabled()) {
-			_log.debug(
-				"Created data source " + dataSource.getClass().getName());
-
-			SortedProperties sortedProperties = new SortedProperties(
-				properties);
-
-			sortedProperties.list(System.out);
+			_log.debug("Created data source " + dataSource.getClass());
 		}
 
-		return dataSource;
+		return _pacl.getDataSource(dataSource);
 	}
 
+	@Override
 	public DataSource initDataSource(
 			String driverClassName, String url, String userName,
-			String password)
+			String password, String jndiName)
 		throws Exception {
 
 		Properties properties = new Properties();
@@ -149,6 +170,7 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 		properties.setProperty("url", url);
 		properties.setProperty("username", userName);
 		properties.setProperty("password", password);
+		properties.setProperty("jndi.name", jndiName);
 
 		return initDataSource(properties);
 	}
@@ -159,7 +181,7 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 		ComboPooledDataSource comboPooledDataSource =
 			new ComboPooledDataSource();
 
-		String identityToken = PwdGenerator.getPassword(PwdGenerator.KEY2, 8);
+		String identityToken = StringUtil.randomString();
 
 		comboPooledDataSource.setIdentityToken(identityToken);
 
@@ -194,12 +216,6 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 				continue;
 			}
 
-			// Ignore Primrose properties
-
-			if (isPropertyPrimrose(key)) {
-				continue;
-			}
-
 			// Ignore Tomcat
 
 			if (isPropertyTomcat(key)) {
@@ -226,42 +242,6 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 		return BasicDataSourceFactory.createDataSource(properties);
 	}
 
-	protected DataSource initDataSourcePrimrose(Properties properties)
-		throws Exception {
-
-		String poolName = PwdGenerator.getPassword(PwdGenerator.KEY2, 8);
-
-		properties.setProperty("poolName", poolName);
-
-		Enumeration<String> enu =
-			(Enumeration<String>)properties.propertyNames();
-
-		while (enu.hasMoreElements()) {
-			String key = enu.nextElement();
-
-			String value = properties.getProperty(key);
-
-			// Map org.apache.commons.dbcp.BasicDataSource to Primrose
-
-			if (key.equalsIgnoreCase("driverClassName")) {
-				key = "driverClass";
-			}
-			else if (key.equalsIgnoreCase("url")) {
-				key = "driverURL";
-			}
-			else if (key.equalsIgnoreCase("username")) {
-				key = "user";
-			}
-
-			properties.setProperty(key, value);
-		}
-
-		GenericDataSourceFactory genericDataSourceFactory =
-			new GenericDataSourceFactory();
-
-		return genericDataSourceFactory.loadPool(poolName, properties);
-	}
-
 	protected DataSource initDataSourceTomcat(Properties properties)
 		throws Exception {
 
@@ -283,12 +263,6 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 				continue;
 			}
 
-			// Ignore Primrose properties
-
-			if (isPropertyPrimrose(key)) {
-				continue;
-			}
-
 			try {
 				BeanUtil.setProperty(poolProperties, key, value);
 			}
@@ -301,7 +275,7 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 			}
 		}
 
-		String poolName = PwdGenerator.getPassword(PwdGenerator.KEY2, 8);
+		String poolName = StringUtil.randomString();
 
 		poolProperties.setName(poolName);
 
@@ -328,6 +302,8 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 
 	protected boolean isPropertyC3PO(String key) {
 		if (key.equalsIgnoreCase("acquireIncrement") ||
+			key.equalsIgnoreCase("acquireRetryAttempts") ||
+			key.equalsIgnoreCase("acquireRetryDelay") ||
 			key.equalsIgnoreCase("connectionCustomizerClassName") ||
 			key.equalsIgnoreCase("idleConnectionTestPeriod") ||
 			key.equalsIgnoreCase("maxIdleTime") ||
@@ -367,19 +343,6 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 		}
 	}
 
-	protected boolean isPropertyPrimrose(String key) {
-		if (key.equalsIgnoreCase("base") ||
-			key.equalsIgnoreCase("connectionTransactionIsolation") ||
-			key.equalsIgnoreCase("idleTime") ||
-			key.equalsIgnoreCase("numberOfConnectionsToInitializeWith")) {
-
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-
 	protected boolean isPropertyTomcat(String key) {
 		if (key.equalsIgnoreCase("fairQueue") ||
 			key.equalsIgnoreCase("jdbcInterceptors") ||
@@ -394,10 +357,65 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 		}
 	}
 
+	protected void testClassForName(Properties properties) throws Exception {
+		String driverClassName = properties.getProperty("driverClassName");
+
+		try {
+			Class.forName(driverClassName);
+		}
+		catch (ClassNotFoundException cnfe) {
+			if (!ServerDetector.isGeronimo() && !ServerDetector.isJetty() &&
+				!ServerDetector.isTomcat()) {
+
+				throw cnfe;
+			}
+
+			String url = PropsUtil.get(
+				PropsKeys.SETUP_DATABASE_JAR_URL, new Filter(driverClassName));
+			String name = PropsUtil.get(
+				PropsKeys.SETUP_DATABASE_JAR_NAME, new Filter(driverClassName));
+
+			if (Validator.isNull(url) || Validator.isNull(name)) {
+				throw cnfe;
+			}
+
+			if (HttpUtil.getHttp() == null) {
+				HttpUtil httpUtil = new HttpUtil();
+
+				httpUtil.setHttp(new HttpImpl());
+			}
+
+			if (FileUtil.getFile() == null) {
+				FileUtil fileUtil = new FileUtil();
+
+				fileUtil.setFile(new FileImpl());
+			}
+
+			JarUtil.downloadAndInstallJar(true, url, name, null);
+		}
+	}
+
 	private static final String _TOMCAT_JDBC_POOL_OBJECT_NAME_PREFIX =
 		"TomcatJDBCPool:type=ConnectionPool,name=";
 
 	private static Log _log = LogFactoryUtil.getLog(
 		DataSourceFactoryImpl.class);
+
+	private static PACL _pacl = new NoPACL();
+
+	private static class NoPACL implements PACL {
+
+		@Override
+		public DataSource getDataSource(DataSource dataSource) {
+			return dataSource;
+		}
+
+	}
+
+	public static interface PACL {
+
+		public DataSource getDataSource(DataSource dataSource);
+
+	}
 
 }

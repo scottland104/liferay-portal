@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portal.dao.orm.jpa;
 
 import com.liferay.portal.dao.orm.common.SQLTransformer;
 import com.liferay.portal.kernel.dao.orm.CacheMode;
+import com.liferay.portal.kernel.dao.orm.LockMode;
 import com.liferay.portal.kernel.dao.orm.ORMException;
 import com.liferay.portal.kernel.dao.orm.Query;
 import com.liferay.portal.kernel.dao.orm.ScrollableResults;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.persistence.FlushModeType;
+import javax.persistence.LockModeType;
 
 /**
  * @author Prashant Dighe
@@ -49,22 +51,25 @@ public class QueryImpl implements Query {
 		this.strictName = strictName;
 	}
 
+	@Override
 	public int executeUpdate() throws ORMException {
 		try {
 			return sessionImpl.executeUpdate(
 				queryString, positionalParameterMap, namedParameterMap,
-				strictName, firstResult, maxResults, flushModeType, sqlQuery,
-				entityClass);
+				strictName, firstResult, maxResults, flushModeType,
+				lockModeType, sqlQuery, entityClass);
 		}
 		catch (Exception e) {
 			throw ExceptionTranslator.translate(e);
 		}
 	}
 
+	@Override
 	public Iterator<?> iterate() throws ORMException {
 		return iterate(true);
 	}
 
+	@Override
 	public Iterator<?> iterate(boolean unmodifiable) throws ORMException {
 		try {
 			return list(unmodifiable).iterator();
@@ -74,29 +79,52 @@ public class QueryImpl implements Query {
 		}
 	}
 
-	public List<?> list() throws ORMException {
-		return list(true);
+	@Override
+	public Object iterateNext() throws ORMException {
+		Iterator<?> iterator = iterate(false);
+
+		if (iterator.hasNext()) {
+			return iterator.next();
+		}
+
+		return null;
 	}
 
+	@Override
+	public List<?> list() throws ORMException {
+		return list(false, false);
+	}
+
+	@Override
 	public List<?> list(boolean unmodifiable) throws ORMException {
+		return list(true, unmodifiable);
+	}
+
+	@Override
+	public List<?> list(boolean copy, boolean unmodifiable)
+		throws ORMException {
+
 		try {
 			List<?> list = sessionImpl.list(
 				queryString, positionalParameterMap, namedParameterMap,
-				strictName, firstResult, maxResults, flushModeType, sqlQuery,
-				entityClass);
+				strictName, firstResult, maxResults, flushModeType,
+				lockModeType, sqlQuery, entityClass);
 
 			if (unmodifiable) {
-				return new UnmodifiableList<Object>(list);
+				list = new UnmodifiableList<Object>(list);
 			}
-			else {
-				return ListUtil.copy(list);
+			else if (copy) {
+				list = ListUtil.copy(list);
 			}
+
+			return list;
 		}
 		catch (Exception e) {
 			throw ExceptionTranslator.translate(e);
 		}
 	}
 
+	@Override
 	public ScrollableResults scroll() throws ORMException {
 		try {
 			return new ScrollableResultsImpl(list());
@@ -106,54 +134,64 @@ public class QueryImpl implements Query {
 		}
 	}
 
+	@Override
 	public Query setBoolean(int pos, boolean value) {
 		positionalParameterMap.put(pos, value);
 
 		return this;
 	}
 
+	@Override
 	public Query setBoolean(String name, boolean value) {
 		namedParameterMap.put(name, value);
 
 		return this;
 	}
 
+	@Override
 	public Query setCacheable(boolean cacheable) {
 		return this;
 	}
 
+	@Override
 	public Query setCacheMode(CacheMode cacheMode) {
 		return this;
 	}
 
+	@Override
 	public Query setCacheRegion(String cacheRegion) {
 		return this;
 	}
 
+	@Override
 	public Query setDouble(int pos, double value) {
 		positionalParameterMap.put(pos, Double.valueOf(value));
 
 		return this;
 	}
 
+	@Override
 	public Query setDouble(String name, double value) {
 		namedParameterMap.put(name, Double.valueOf(value));
 
 		return this;
 	}
 
+	@Override
 	public Query setFirstResult(int firstResult) {
 		this.firstResult = firstResult;
 
 		return this;
 	}
 
+	@Override
 	public Query setFloat(int pos, float value) {
 		positionalParameterMap.put(pos, Float.valueOf(value));
 
 		return this;
 	}
 
+	@Override
 	public Query setFloat(String name, float value) {
 		namedParameterMap.put(name, Float.valueOf(value));
 
@@ -166,72 +204,91 @@ public class QueryImpl implements Query {
 		return this;
 	}
 
+	@Override
 	public Query setInteger(int pos, int value) {
 		positionalParameterMap.put(pos, Integer.valueOf(value));
 
 		return this;
 	}
 
+	@Override
 	public Query setInteger(String name, int value) {
 		namedParameterMap.put(name, Integer.valueOf(value));
 
 		return this;
 	}
 
+	@Override
+	public Query setLockMode(String alias, LockMode lockMode) {
+		lockModeType = LockModeTranslator.translate(lockMode);
+
+		return this;
+	}
+
+	@Override
 	public Query setLong(int pos, long value) {
 		positionalParameterMap.put(pos, Long.valueOf(value));
 
 		return this;
 	}
 
+	@Override
 	public Query setLong(String name, long value) {
 		namedParameterMap.put(name, Long.valueOf(value));
 
 		return this;
 	}
 
+	@Override
 	public Query setMaxResults(int maxResults) {
 		this.maxResults = maxResults;
 
 		return this;
 	}
 
+	@Override
 	public Query setSerializable(int pos, Serializable value) {
 		positionalParameterMap.put(pos, value);
 
 		return this;
 	}
 
+	@Override
 	public Query setSerializable(String name, Serializable value) {
 		namedParameterMap.put(name, value);
 
 		return this;
 	}
 
+	@Override
 	public Query setShort(int pos, short value) {
 		positionalParameterMap.put(pos, Short.valueOf(value));
 
 		return this;
 	}
 
+	@Override
 	public Query setShort(String name, short value) {
 		namedParameterMap.put(name, Short.valueOf(value));
 
 		return this;
 	}
 
+	@Override
 	public Query setString(int pos, String value) {
 		positionalParameterMap.put(pos, value);
 
 		return this;
 	}
 
+	@Override
 	public Query setString(String name, String value) {
 		namedParameterMap.put(name, value);
 
 		return this;
 	}
 
+	@Override
 	public Query setTimestamp(int pos, Timestamp value) {
 		Date date = null;
 
@@ -244,6 +301,7 @@ public class QueryImpl implements Query {
 		return this;
 	}
 
+	@Override
 	public Query setTimestamp(String name, Timestamp value) {
 		Date date = null;
 
@@ -256,12 +314,13 @@ public class QueryImpl implements Query {
 		return this;
 	}
 
+	@Override
 	public Object uniqueResult() throws ORMException {
 		try {
 			return sessionImpl.uniqueResult(
 				queryString, positionalParameterMap, namedParameterMap,
-				strictName, firstResult, maxResults, flushModeType, sqlQuery,
-				entityClass);
+				strictName, firstResult, maxResults, flushModeType,
+				lockModeType, sqlQuery, entityClass);
 		}
 		catch (Exception e) {
 			throw ExceptionTranslator.translate(e);
@@ -271,6 +330,7 @@ public class QueryImpl implements Query {
 	protected Class<?> entityClass;
 	protected int firstResult = -1;
 	protected FlushModeType flushModeType;
+	protected LockModeType lockModeType;
 	protected int maxResults = -1;
 	protected Map<String, Object> namedParameterMap =
 		new HashMap<String, Object>();

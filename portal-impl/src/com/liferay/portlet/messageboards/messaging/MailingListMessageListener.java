@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,13 +14,13 @@
 
 package com.liferay.portlet.messageboards.messaging;
 
-import com.liferay.portal.NoSuchUserException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.mail.Account;
 import com.liferay.portal.kernel.messaging.BaseMessageListener;
-import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
+import com.liferay.portal.kernel.util.StreamUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.User;
 import com.liferay.portal.security.permission.PermissionCheckerUtil;
@@ -38,7 +38,7 @@ import com.liferay.portlet.messageboards.util.MBUtil;
 import com.liferay.portlet.messageboards.util.MailingListThreadLocal;
 import com.liferay.util.mail.MailEngine;
 
-import java.io.File;
+import java.io.InputStream;
 
 import java.util.List;
 
@@ -102,22 +102,18 @@ public class MailingListMessageListener extends BaseMessageListener {
 				try {
 					store.close();
 				}
-				catch (MessagingException e) {
+				catch (MessagingException me) {
 				}
 			}
 		}
 	}
 
 	protected Folder getFolder(Store store) throws Exception {
-		Folder defaultFolder = store.getDefaultFolder();
+		Folder folder = store.getFolder("INBOX");
 
-		Folder[] folders = defaultFolder.list();
-
-		if ((folders != null) && (folders.length == 0)) {
+		if (!folder.exists()) {
 			throw new MessagingException("Inbox not found");
 		}
-
-		Folder folder = folders[0];
 
 		folder.open(Folder.READ_WRITE);
 
@@ -162,7 +158,7 @@ public class MailingListMessageListener extends BaseMessageListener {
 
 		Address[] addresses = mailMessage.getFrom();
 
-		if ((addresses != null) && (addresses.length > 0)) {
+		if (ArrayUtil.isNotEmpty(addresses)) {
 			Address address = addresses[0];
 
 			if (address instanceof InternetAddress) {
@@ -183,18 +179,18 @@ public class MailingListMessageListener extends BaseMessageListener {
 
 		boolean anonymous = false;
 
-		User user = UserLocalServiceUtil.getUserById(
-			companyId, mailingListRequest.getUserId());
+		User user = UserLocalServiceUtil.fetchUserByEmailAddress(
+			companyId, from);
 
-		try {
-			user = UserLocalServiceUtil.getUserByEmailAddress(companyId, from);
-		}
-		catch (NoSuchUserException nsue) {
-			anonymous = true;
-
+		if (user == null) {
 			if (!mailingListRequest.isAllowAnonymous()) {
 				return;
 			}
+
+			anonymous = true;
+
+			user = UserLocalServiceUtil.getUserById(
+				companyId, mailingListRequest.getUserId());
 		}
 
 		long parentMessageId = MBUtil.getParentMessageId(mailMessage);
@@ -218,9 +214,9 @@ public class MailingListMessageListener extends BaseMessageListener {
 			_log.debug("Parent message " + parentMessage);
 		}
 
-		MBMailMessage collector = new MBMailMessage();
+		MBMailMessage mbMailMessage = new MBMailMessage();
 
-		MBUtil.collectPartContent(mailMessage, collector);
+		MBUtil.collectPartContent(mailMessage, mbMailMessage);
 
 		PermissionCheckerUtil.setThreadValues(user);
 
@@ -236,28 +232,30 @@ public class MailingListMessageListener extends BaseMessageListener {
 			PortalUtil.getLayoutFullURL(groupId, PortletKeys.MESSAGE_BOARDS));
 		serviceContext.setScopeGroupId(groupId);
 
-		List<ObjectValuePair<String, File>> files = collector.getFiles();
+		List<ObjectValuePair<String, InputStream>> inputStreamOVPs =
+			mbMailMessage.getInputStreamOVPs();
 
 		try {
 			if (parentMessage == null) {
 				MBMessageServiceUtil.addMessage(
-					groupId, categoryId, subject, collector.getBody(),
-					MBMessageConstants.DEFAULT_FORMAT, files, anonymous, 0.0,
-					true, serviceContext);
+					groupId, categoryId, subject, mbMailMessage.getBody(),
+					MBMessageConstants.DEFAULT_FORMAT, inputStreamOVPs,
+					anonymous, 0.0, true, serviceContext);
 			}
 			else {
 				MBMessageServiceUtil.addMessage(
-					groupId, categoryId, parentMessage.getThreadId(),
-					parentMessage.getMessageId(), subject, collector.getBody(),
-					MBMessageConstants.DEFAULT_FORMAT, files, anonymous, 0.0,
-					true, serviceContext);
+					parentMessage.getMessageId(), subject,
+					mbMailMessage.getBody(), MBMessageConstants.DEFAULT_FORMAT,
+					inputStreamOVPs, anonymous, 0.0, true, serviceContext);
 			}
 		}
 		finally {
-			for (ObjectValuePair<String, File> ovp : files) {
-				File file = ovp.getValue();
+			for (ObjectValuePair<String, InputStream> inputStreamOVP :
+					inputStreamOVPs) {
 
-				FileUtil.delete(file);
+				InputStream inputStream = inputStreamOVP.getValue();
+
+				StreamUtil.cleanUp(inputStream);
 			}
 		}
 	}

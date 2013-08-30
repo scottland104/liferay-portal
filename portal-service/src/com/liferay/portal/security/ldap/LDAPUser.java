@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -47,7 +47,7 @@ public class LDAPUser {
 		return _contact;
 	}
 
-	public Map<String, String> getContactExpandoAttributes() {
+	public Map<String, String[]> getContactExpandoAttributes() {
 		return _contactExpandoAttributes;
 	}
 
@@ -123,6 +123,10 @@ public class LDAPUser {
 		return _organizationIds;
 	}
 
+	public byte[] getPortraitBytes() {
+		return _portraitBytes;
+	}
+
 	public int getPrefixId() {
 		return _contact.getPrefixId();
 	}
@@ -155,6 +159,10 @@ public class LDAPUser {
 		return _contact.getSmsSn();
 	}
 
+	public int getStatus() {
+		return _user.getStatus();
+	}
+
 	public int getSuffixId() {
 		return _contact.getSuffixId();
 	}
@@ -171,7 +179,7 @@ public class LDAPUser {
 		return _user;
 	}
 
-	public Map<String, String> getUserExpandoAttributes() {
+	public Map<String, String[]> getUserExpandoAttributes() {
 		return _userExpandoAttributes;
 	}
 
@@ -199,8 +207,11 @@ public class LDAPUser {
 		return _contact.isMale();
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #setMale(boolean)}
+	 */
 	public void isMale(boolean male) {
-		_contact.setMale(male);
+		setMale(male);
 	}
 
 	public boolean isPasswordReset() {
@@ -213,6 +224,10 @@ public class LDAPUser {
 
 	public boolean isUpdatePassword() {
 		return _updatePassword;
+	}
+
+	public boolean isUpdatePortrait() {
+		return _updatePortrait;
 	}
 
 	public void setAimSn(String aimSn) {
@@ -240,7 +255,7 @@ public class LDAPUser {
 	}
 
 	public void setContactExpandoAttributes(
-		Map<String, String> contactExpandoAttributes) {
+		Map<String, String[]> contactExpandoAttributes) {
 
 		_contactExpandoAttributes = contactExpandoAttributes;
 	}
@@ -262,7 +277,7 @@ public class LDAPUser {
 	}
 
 	public void setFirstName(String firstName) {
-		_contact.setFirstName(firstName);
+		_user.setFirstName(firstName);
 	}
 
 	public void setGreeting(String greeting) {
@@ -290,15 +305,19 @@ public class LDAPUser {
 	}
 
 	public void setLastName(String lastName) {
-		_contact.setLastName(lastName);
+		_user.setLastName(lastName);
 	}
 
 	public void setLocale(Locale locale) {
 		_user.setLanguageId(LocaleUtil.toLanguageId(locale));
 	}
 
+	public void setMale(boolean male) {
+		_contact.setMale(male);
+	}
+
 	public void setMiddleName(String middleName) {
-		_contact.setMiddleName(middleName);
+		_user.setMiddleName(middleName);
 	}
 
 	public void setMsnSn(String msnSn) {
@@ -319,6 +338,10 @@ public class LDAPUser {
 
 	public void setPasswordReset(boolean passwordReset) {
 		_passwordReset = passwordReset;
+	}
+
+	public void setPortraitBytes(byte[] portraitBytes) {
+		_portraitBytes = portraitBytes;
 	}
 
 	public void setPrefixId(int prefixId) {
@@ -357,6 +380,10 @@ public class LDAPUser {
 		_contact.setSmsSn(smsSn);
 	}
 
+	public void setStatus(int status) {
+		_user.setStatus(status);
+	}
+
 	public void setSuffixId(int suffixId) {
 		_contact.setSuffixId(suffixId);
 	}
@@ -373,12 +400,16 @@ public class LDAPUser {
 		_updatePassword = updatePassword;
 	}
 
+	public void setUpdatePortrait(boolean updatePortrait) {
+		_updatePortrait = updatePortrait;
+	}
+
 	public void setUser(User user) {
 		_user = user;
 	}
 
 	public void setUserExpandoAttributes(
-		Map<String, String> userExpandoAttributes) {
+		Map<String, String[]> userExpandoAttributes) {
 
 		_userExpandoAttributes = userExpandoAttributes;
 	}
@@ -398,17 +429,19 @@ public class LDAPUser {
 	private boolean _autoPassword;
 	private boolean _autoScreenName;
 	private Contact _contact;
-	private Map<String, String> _contactExpandoAttributes;
+	private Map<String, String[]> _contactExpandoAttributes;
 	private long _creatorUserId;
 	private long[] _groupIds;
 	private long[] _organizationIds;
 	private boolean _passwordReset;
+	private byte[] _portraitBytes;
 	private long[] _roleIds;
 	private boolean _sendEmail;
 	private ServiceContext _serviceContext;
 	private boolean _updatePassword;
+	private boolean _updatePortrait;
 	private User _user;
-	private Map<String, String> _userExpandoAttributes;
+	private Map<String, String[]> _userExpandoAttributes;
 	private long[] _userGroupIds;
 	private List<UserGroupRole> _userGroupRoles;
 

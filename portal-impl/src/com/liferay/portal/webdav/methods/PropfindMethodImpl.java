@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -31,7 +31,7 @@ import com.liferay.portal.webdav.InvalidRequestException;
 import com.liferay.util.xml.XMLFormatter;
 
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,75 +43,18 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class PropfindMethodImpl extends BasePropMethodImpl implements Method {
 
-	public int process(WebDAVRequest webDavRequest) throws WebDAVException {
+	@Override
+	public int process(WebDAVRequest webDAVRequest) throws WebDAVException {
 		try {
-			Set<QName> props = getProps(webDavRequest);
+			Set<QName> props = getProps(webDAVRequest);
 
-			return writeResponseXML(webDavRequest, props);
+			return writeResponseXML(webDAVRequest, props);
 		}
 		catch (InvalidRequestException ire) {
 			return HttpServletResponse.SC_BAD_REQUEST;
 		}
 		catch (Exception e) {
 			throw new WebDAVException(e);
-		}
-	}
-
-	protected Set<QName> getProps(WebDAVRequest webDavRequest)
-		throws InvalidRequestException {
-
-		try {
-			Set<QName> props = new HashSet<QName>();
-
-			HttpServletRequest request = webDavRequest.getHttpServletRequest();
-
-			String xml = new String(
-				FileUtil.getBytes(request.getInputStream()));
-
-			if (Validator.isNull(xml)) {
-
-				// Windows XP does not generate an xml request so the PROPFIND
-				// must be generated manually. See LEP-4920.
-
-				return generateProps(props);
-			}
-
-			if (_log.isDebugEnabled()) {
-				_log.debug(
-					"Request XML: \n" +
-						XMLFormatter.toString(xml, StringPool.FOUR_SPACES));
-			}
-
-			Document doc = SAXReaderUtil.read(xml);
-
-			Element root = doc.getRootElement();
-
-			if (root.element(ALLPROP.getName()) != null) {
-
-				// Generate props if <allprop> tag is used. See LEP-6162.
-
-				return generateProps(props);
-			}
-
-			Element prop = root.element("prop");
-
-			Iterator<Element> itr = prop.elements().iterator();
-
-			while (itr.hasNext()) {
-				Element el = itr.next();
-
-				String prefix = el.getNamespacePrefix();
-				String uri = el.getNamespaceURI();
-
-				Namespace namespace = WebDAVUtil.createNamespace(prefix, uri);
-
-				props.add(SAXReaderUtil.createQName(el.getName(), namespace));
-			}
-
-			return props;
-		}
-		catch (Exception e) {
-			throw new InvalidRequestException(e);
 		}
 	}
 
@@ -130,6 +73,63 @@ public class PropfindMethodImpl extends BasePropMethodImpl implements Method {
 		//props.add(new Tuple("version-name", WebDAVUtil.DAV_URI));
 
 		return props;
+	}
+
+	protected Set<QName> getProps(WebDAVRequest webDAVRequest)
+		throws InvalidRequestException {
+
+		try {
+			Set<QName> props = new HashSet<QName>();
+
+			HttpServletRequest request = webDAVRequest.getHttpServletRequest();
+
+			String xml = new String(
+				FileUtil.getBytes(request.getInputStream()));
+
+			if (Validator.isNull(xml)) {
+
+				// Windows XP does not generate an xml request so the PROPFIND
+				// must be generated manually. See LEP-4920.
+
+				return generateProps(props);
+			}
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Request XML: \n" +
+						XMLFormatter.toString(xml, StringPool.FOUR_SPACES));
+			}
+
+			Document document = SAXReaderUtil.read(xml);
+
+			Element rootElement = document.getRootElement();
+
+			if (rootElement.element(ALLPROP.getName()) != null) {
+
+				// Generate props if <allprop> tag is used. See LEP-6162.
+
+				return generateProps(props);
+			}
+
+			Element propElement = rootElement.element("prop");
+
+			List<Element> elements = propElement.elements();
+
+			for (Element element : elements) {
+				String prefix = element.getNamespacePrefix();
+				String uri = element.getNamespaceURI();
+
+				Namespace namespace = WebDAVUtil.createNamespace(prefix, uri);
+
+				props.add(
+					SAXReaderUtil.createQName(element.getName(), namespace));
+			}
+
+			return props;
+		}
+		catch (Exception e) {
+			throw new InvalidRequestException(e);
+		}
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(PropfindMethodImpl.class);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -46,21 +46,25 @@ public class ViewAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
-			PortletPreferences preferences = renderRequest.getPreferences();
+			PortletPreferences portletPreferences =
+				renderRequest.getPreferences();
 
 			ThemeDisplay themeDisplay =
 				(ThemeDisplay)renderRequest.getAttribute(WebKeys.THEME_DISPLAY);
 
 			long nodeId = GetterUtil.getLong(
-				preferences.getValue("nodeId", StringPool.BLANK));
+				portletPreferences.getValue("nodeId", StringPool.BLANK));
 			String title = ParamUtil.getString(
 				renderRequest, "title",
-				preferences.getValue("title", WikiPageConstants.FRONT_PAGE));
+				portletPreferences.getValue(
+					"title", WikiPageConstants.FRONT_PAGE));
+			double version = ParamUtil.getDouble(renderRequest, "version");
 
 			WikiNode node = WikiNodeServiceUtil.getNode(nodeId);
 
@@ -68,31 +72,31 @@ public class ViewAction extends PortletAction {
 				throw new NoSuchNodeException();
 			}
 
-			WikiPage wikiPage = null;
+			WikiPage page = null;
 
 			try {
-				wikiPage = WikiPageServiceUtil.getPage(nodeId, title);
+				page = WikiPageServiceUtil.getPage(nodeId, title, version);
 			}
 			catch (NoSuchPageException nspe) {
-				wikiPage = WikiPageServiceUtil.getPage(
+				page = WikiPageServiceUtil.getPage(
 					nodeId, WikiPageConstants.FRONT_PAGE);
 			}
 
 			renderRequest.setAttribute(WebKeys.WIKI_NODE, node);
-			renderRequest.setAttribute(WebKeys.WIKI_PAGE, wikiPage);
+			renderRequest.setAttribute(WebKeys.WIKI_PAGE, page);
 
-			return mapping.findForward("portlet.wiki_display.view");
+			return actionMapping.findForward("portlet.wiki_display.view");
 		}
 		catch (NoSuchNodeException nsne) {
-			return mapping.findForward("/portal/portlet_not_setup");
+			return actionMapping.findForward("/portal/portlet_not_setup");
 		}
-		catch (NoSuchPageException nsne) {
-			return mapping.findForward("/portal/portlet_not_setup");
+		catch (NoSuchPageException nspe) {
+			return actionMapping.findForward("/portal/portlet_not_setup");
 		}
 		catch (PrincipalException pe) {
-			SessionErrors.add(renderRequest, pe.getClass().getName());
+			SessionErrors.add(renderRequest, pe.getClass());
 
-			return mapping.findForward("portlet.wiki_display.error");
+			return actionMapping.findForward("portlet.wiki_display.error");
 		}
 	}
 

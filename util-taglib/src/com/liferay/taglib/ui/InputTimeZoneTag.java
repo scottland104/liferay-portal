@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,6 +25,16 @@ import javax.servlet.http.HttpServletRequest;
  * @author Brian Wing Shun Chan
  */
 public class InputTimeZoneTag extends IncludeTag {
+
+	public InputTimeZoneTag() {
+		TimeZone timeZone = TimeZoneUtil.getDefault();
+
+		_value = timeZone.getID();
+	}
+
+	public void setAutoFocus(boolean autoFocus) {
+		_autoFocus = autoFocus;
+	}
 
 	public void setCssClass(String cssClass) {
 		_cssClass = cssClass;
@@ -56,13 +66,17 @@ public class InputTimeZoneTag extends IncludeTag {
 
 	@Override
 	protected void cleanUp() {
+		_autoFocus = false;
 		_cssClass = null;
 		_daylight = false;
 		_disabled = false;
 		_displayStyle = TimeZone.LONG;
 		_name = null;
 		_nullable = false;
-		_value = TimeZoneUtil.getDefault().getID();
+
+		TimeZone timeZone = TimeZoneUtil.getDefault();
+
+		_value = timeZone.getID();
 	}
 
 	@Override
@@ -72,6 +86,8 @@ public class InputTimeZoneTag extends IncludeTag {
 
 	@Override
 	protected void setAttributes(HttpServletRequest request) {
+		request.setAttribute(
+			"liferay-ui:input-time-zone:autoFocus", String.valueOf(_autoFocus));
 		request.setAttribute("liferay-ui:input-time-zone:cssClass", _cssClass);
 		request.setAttribute(
 			"liferay-ui:input-time-zone:daylight", String.valueOf(_daylight));
@@ -89,12 +105,13 @@ public class InputTimeZoneTag extends IncludeTag {
 	private static final String _PAGE =
 		"/html/taglib/ui/input_time_zone/page.jsp";
 
+	private boolean _autoFocus;
 	private String _cssClass;
 	private boolean _daylight;
 	private boolean _disabled;
 	private int _displayStyle = TimeZone.LONG;
 	private String _name;
 	private boolean _nullable;
-	private String _value = TimeZoneUtil.getDefault().getID();
+	private String _value;
 
 }

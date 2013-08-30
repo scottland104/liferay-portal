@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -44,7 +44,6 @@ else {
 		List<String> headerNames = new ArrayList<String>();
 
 		headerNames.add("user");
-		//headerNames.add("place");
 		headerNames.add("posts");
 		headerNames.add("date");
 
@@ -61,15 +60,11 @@ else {
 				Group group = GroupLocalServiceUtil.getGroup(statsUser.getGroupId());
 				User user2 = UserLocalServiceUtil.getUserById(statsUser.getUserId());
 
-				String blogType = LanguageUtil.get(pageContext, "personal");
+				Date now = new Date();
 
-				if (group.isOrganization() || group.isRegularSite()) {
-					blogType = group.getDescriptiveName();// + " " + LanguageUtil.get(pageContext, "site");
-				}
+				int entryCount = BlogsEntryLocalServiceUtil.getGroupUserEntriesCount(group.getGroupId(), user2.getUserId(), now, WorkflowConstants.STATUS_APPROVED);
 
-				int entryCount = BlogsEntryLocalServiceUtil.getGroupUserEntriesCount(group.getGroupId(), user2.getUserId(), WorkflowConstants.STATUS_APPROVED);
-
-				List entries = BlogsEntryLocalServiceUtil.getGroupUserEntries(group.getGroupId(), user2.getUserId(), WorkflowConstants.STATUS_APPROVED, 0, 1);
+				List entries = BlogsEntryLocalServiceUtil.getGroupUserEntries(group.getGroupId(), user2.getUserId(), now, WorkflowConstants.STATUS_APPROVED, 0, 1);
 
 				if (entries.size() == 1) {
 					BlogsEntry entry = (BlogsEntry)entries.get(0);
@@ -91,17 +86,13 @@ else {
 
 						row.addText(HtmlUtil.escape(user2.getFullName()), rowHREF);
 
-						// Type
-
-						//row.addText(blogType, rowHREF);
-
 						// Number of posts
 
 						row.addText(String.valueOf(entryCount), rowHREF);
 
 						// Last post date
 
-						row.addText(dateFormatDate.format(entry.getModifiedDate()), rowHREF);
+						row.addDate(entry.getModifiedDate(), rowHREF);
 					}
 					else {
 
@@ -120,6 +111,6 @@ else {
 		}
 		%>
 
-		<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" paginate="<%= false %>" />
+		<liferay-ui:search-iterator paginate="<%= false %>" searchContainer="<%= searchContainer %>" />
 	</c:otherwise>
 </c:choose>

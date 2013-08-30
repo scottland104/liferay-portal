@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -31,10 +31,14 @@ import java.nio.charset.CharsetEncoder;
 public class OutputStreamWriter extends Writer {
 
 	public OutputStreamWriter(OutputStream outputStream) {
-		this(outputStream, StringPool.UTF8);
+		this(outputStream, StringPool.DEFAULT_CHARSET_NAME);
 	}
 
 	public OutputStreamWriter(OutputStream outputStream, String charsetName) {
+		if (charsetName == null) {
+			charsetName = StringPool.DEFAULT_CHARSET_NAME;
+		}
+
 		_outputStream = outputStream;
 		_charsetName = charsetName;
 		_charsetEncoder = CharsetEncoderUtil.getCharsetEncoder(charsetName);
@@ -75,7 +79,7 @@ public class OutputStreamWriter extends Writer {
 		throws IOException {
 
 		ByteBuffer byteBuffer = _charsetEncoder.encode(
-			CharBuffer.wrap(string, offset, length));
+			CharBuffer.wrap(string, offset, offset + length));
 
 		_outputStream.write(byteBuffer.array(), 0, byteBuffer.limit());
 	}

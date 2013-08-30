@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -36,7 +36,7 @@ Map<Locale, String> reminderQueriesMap = LocalizationUtil.getLocalizedParameter(
 
 <h3><liferay-ui:message key="reminder-queries" /></h3>
 
-<div class="portlet-msg-info">
+<div class="alert alert-info">
 	<liferay-ui:message key="specify-custom-reminder-queries-for-the-users-of-this-organization" />
 </div>
 

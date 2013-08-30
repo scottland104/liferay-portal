@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,112 +18,138 @@
 
 <%
 long groupId = ParamUtil.getLong(request, "groupId");
-
+long[] selectedGroupIds = StringUtil.split(ParamUtil.getString(request, "selectedGroupIds"), 0L);
 long refererAssetEntryId = ParamUtil.getLong(request, "refererAssetEntryId");
 String typeSelection = ParamUtil.getString(request, "typeSelection");
-String callback = ParamUtil.getString(request, "callback");
+String eventName = ParamUtil.getString(request, "eventName", liferayPortletResponse.getNamespace() + "selectAsset");
 
 PortletURL portletURL = renderResponse.createRenderURL();
 
-portletURL.setParameter("struts_action", "/portlet_configuration/search");
+portletURL.setParameter("struts_action", "/asset_browser/view");
+portletURL.setParameter("groupId", String.valueOf(groupId));
+portletURL.setParameter("selectedGroupIds", StringUtil.merge(selectedGroupIds));
+portletURL.setParameter("refererAssetEntryId", String.valueOf(refererAssetEntryId));
 portletURL.setParameter("typeSelection", typeSelection);
+
+request.setAttribute("view.jsp-portletURL", portletURL);
 %>
 
-<liferay-ui:header
-	title='<%= LanguageUtil.get(pageContext, "select") + StringPool.COLON + StringPool.SPACE + ResourceActionsUtil.getModelResource(locale, typeSelection) %>'
-/>
+<liferay-util:include page="/html/portlet/asset_browser/toolbar.jsp">
+	<liferay-util:param name="groupId" value="<%= String.valueOf(groupId) %>" />
+	<liferay-util:param name="typeSelection" value="<%= typeSelection %>" />
+</liferay-util:include>
 
 <div class="asset-search">
-	<liferay-portlet:renderURL varImpl="searchURL">
-		<portlet:param name="struts_action" value="/asset_browser/view" />
-		<portlet:param name="callback" value="<%= callback%>" />
-	</liferay-portlet:renderURL>
-
-	<aui:form action="<%= searchURL %>" method="post" name="searchFm">
+	<aui:form action="<%= portletURL %>" method="post" name="selectAssetFm">
 		<aui:input name="typeSelection" type="hidden" value="<%= typeSelection %>" />
 
-		<%
-		AssetSearch searchContainer = new AssetSearch(renderRequest, portletURL);
-		%>
+		<liferay-ui:search-container
+			searchContainer="<%= new AssetSearch(renderRequest, portletURL) %>"
+		>
+			<liferay-ui:search-form
+				page="/html/portlet/asset_publisher/asset_search.jsp"
+			/>
 
-		<liferay-ui:search-form
-			page="/html/portlet/asset_browser/asset_search.jsp"
-			searchContainer="<%= searchContainer %>"
-		/>
+			<%
+			AssetSearchTerms searchTerms = (AssetSearchTerms)searchContainer.getSearchTerms();
 
-		<%
-		AssetSearchTerms searchTerms = (AssetSearchTerms)searchContainer.getSearchTerms();
+			long[] groupIds = selectedGroupIds;
 
-		long[] groupIds = new long[] {groupId};
-		%>
+			AssetRendererFactory assetRendererFactory = AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(typeSelection);
+			%>
 
-		<%@ include file="/html/portlet/asset_publisher/asset_search_results.jspf" %>
+			<liferay-ui:search-container-results>
+				<%@ include file="/html/portlet/asset_publisher/asset_search_results.jspf" %>
+			</liferay-ui:search-container-results>
 
-		<div class="separator"><!-- --></div>
+			<div class="separator"><!-- --></div>
 
-		<%
-		List resultRows = searchContainer.getResultRows();
+			<liferay-ui:search-container-row
+				className="com.liferay.portal.kernel.search.Document"
+				escapedModel="<%= true %>"
+				modelVar="doc"
+			>
 
-		for (int i = 0; i < results.getDocs().length; i++) {
-			Document doc = results.doc(i);
+				<%
+				long assetEntryId = 0;
 
-			ResultRow row = new ResultRow(doc, i, i);
+				if (typeSelection.equals(JournalArticle.class.getName())) {
+					assetEntryId = GetterUtil.getLong(doc.get(Field.ROOT_ENTRY_CLASS_PK));
+				}
+				else {
+					assetEntryId = GetterUtil.getLong(doc.get(Field.ENTRY_CLASS_PK));
+				}
 
-			long assetEntryId = 0;
+				AssetEntry assetEntry = AssetEntryLocalServiceUtil.fetchEntry(typeSelection, assetEntryId);
 
-			if (typeSelection.equals(JournalArticle.class.getName())) {
-				assetEntryId = GetterUtil.getLong(doc.get(Field.ROOT_ENTRY_CLASS_PK));
-			}
-			else {
-				assetEntryId = GetterUtil.getLong(doc.get(Field.ENTRY_CLASS_PK));
-			}
+				if ((assetEntry == null) || !assetEntry.isVisible()) {
+					continue;
+				}
 
-			AssetEntry assetEntry = AssetEntryLocalServiceUtil.getEntry(typeSelection, assetEntryId);
+				Group group = GroupLocalServiceUtil.getGroup(assetEntry.getGroupId());
+				%>
 
-			if (assetEntry.getEntryId() == refererAssetEntryId) {
-				continue;
-			}
+				<liferay-ui:search-container-column-text
+					name="title"
+					value="<%= HtmlUtil.escape(assetEntry.getTitle(locale)) %>"
+				/>
 
-			assetEntry = assetEntry.toEscapedModel();
+				<liferay-ui:search-container-column-text
+					name="description"
+					value="<%= HtmlUtil.stripHtml(assetEntry.getDescription(locale)) %>"
+				/>
 
-			AssetRenderer assetRenderer = assetRendererFactory.getAssetRenderer(assetEntry.getClassPK());
+				<liferay-ui:search-container-column-text
+					name="userName"
+					value="<%= PortalUtil.getUserName(assetEntry) %>"
+				/>
 
-			StringBundler sb = new StringBundler(9);
+				<liferay-ui:search-container-column-date
+					name="modifiedDate"
+					value="<%= assetEntry.getModifiedDate() %>"
+				/>
 
-			sb.append("javascript:Liferay.Util.getOpener().");
-			sb.append(callback);
-			sb.append("('");
-			sb.append(assetEntry.getEntryId());
-			sb.append("', '");
-			sb.append(ResourceActionsUtil.getModelResource(locale, assetEntry.getClassName()));
-			sb.append("', '");
-			sb.append(assetRenderer.getTitle(locale));
-			sb.append("');Liferay.Util.getWindow().close();");
+				<liferay-ui:search-container-column-text
+					name="descriptiveName"
+					value="<%= HtmlUtil.escape(group.getDescriptiveName(locale)) %>"
+				/>
 
-			String rowHREF = sb.toString();
+				<c:if test="<%= assetEntry.getEntryId() != refererAssetEntryId %>">
+					<liferay-ui:search-container-column-text>
 
-			// Title
+						<%
+						Map<String, Object> data = new HashMap<String, Object>();
 
-			row.addText(assetRenderer.getTitle(locale), rowHREF);
+						data.put("assetentryid", assetEntry.getEntryId());
+						data.put("assetclassname", assetEntry.getClassName());
+						data.put("assettype", assetRendererFactory.getTypeName(locale, true));
+						data.put("assettitle", HtmlUtil.escape(assetEntry.getTitle(locale)));
+						data.put("groupdescriptivename", HtmlUtil.escape(group.getDescriptiveName(locale)));
+						%>
 
-			// Description
+						<aui:button cssClass="selector-button" data="<%= data %>" value="choose" />
+					</liferay-ui:search-container-column-text>
+				</c:if>
 
-			row.addText(assetRenderer.getSummary(locale), rowHREF);
+			</liferay-ui:search-container-row>
 
-			// User name
-
-			row.addText(HtmlUtil.escape(PortalUtil.getUserName(assetEntry.getUserId(), assetEntry.getUserName())), rowHREF);
-
-			// Modified date
-
-			row.addText(dateFormatDate.format(assetEntry.getModifiedDate()), rowHREF);
-
-			// Add result row
-
-			resultRows.add(row);
-		}
-		%>
-
-		<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
+			<liferay-ui:search-iterator />
+		</liferay-ui:search-container>
 	</aui:form>
 </div>
+
+<aui:script use="aui-base">
+	var Util = Liferay.Util;
+
+	A.one('#<portlet:namespace />selectAssetFm').delegate(
+		'click',
+		function(event) {
+			var result = Util.getAttributes(event.currentTarget, 'data-');
+
+			Util.getOpener().Liferay.fire('<%= HtmlUtil.escapeJS(eventName) %>', result);
+
+			Util.getWindow().hide();
+		},
+		'.selector-button'
+	);
+</aui:script>

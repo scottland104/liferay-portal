@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.Ticket;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -28,7 +33,7 @@ import java.util.Date;
  * @see Ticket
  * @generated
  */
-public class TicketCacheModel implements CacheModel<Ticket> {
+public class TicketCacheModel implements CacheModel<Ticket>, Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(19);
@@ -56,6 +61,7 @@ public class TicketCacheModel implements CacheModel<Ticket> {
 		return sb.toString();
 	}
 
+	@Override
 	public Ticket toEntityModel() {
 		TicketImpl ticketImpl = new TicketImpl();
 
@@ -98,6 +104,47 @@ public class TicketCacheModel implements CacheModel<Ticket> {
 		ticketImpl.resetOriginalValues();
 
 		return ticketImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		ticketId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		createDate = objectInput.readLong();
+		classNameId = objectInput.readLong();
+		classPK = objectInput.readLong();
+		key = objectInput.readUTF();
+		type = objectInput.readInt();
+		extraInfo = objectInput.readUTF();
+		expirationDate = objectInput.readLong();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(ticketId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(classNameId);
+		objectOutput.writeLong(classPK);
+
+		if (key == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(key);
+		}
+
+		objectOutput.writeInt(type);
+
+		if (extraInfo == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(extraInfo);
+		}
+
+		objectOutput.writeLong(expirationDate);
 	}
 
 	public long ticketId;

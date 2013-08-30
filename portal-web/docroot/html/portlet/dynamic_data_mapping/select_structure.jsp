@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,20 +16,31 @@
 
 <%@ include file="/html/portlet/dynamic_data_mapping/init.jsp" %>
 
+<%
+long groupId = ParamUtil.getLong(request, "groupId", scopeGroupId);
+long classPK = ParamUtil.getLong(request, "classPK");
+String eventName = ParamUtil.getString(request, "eventName", "selectStructure");
+%>
+
 <liferay-portlet:renderURL varImpl="portletURL">
 	<portlet:param name="struts_action" value="/dynamic_data_mapping/select_structure" />
+	<portlet:param name="classPK" value="<%= String.valueOf(classPK) %>" />
+	<portlet:param name="eventName" value="<%= eventName %>" />
 </liferay-portlet:renderURL>
 
-<aui:form action="<%= portletURL.toString() %>" method="post" name="fm">
+<aui:form action="<%= portletURL.toString() %>" method="post" name="selectStructureFm">
+	<c:if test="<%= !showToolbar %>">
+		<liferay-ui:header
+			localizeTitle="<%= false %>"
+			title="<%= ddmDisplay.getStructureName(locale) %>"
+		/>
+	</c:if>
 
-	<liferay-ui:header
-		localizeTitle="<%= false %>"
-		title="<%= scopeStructureName %>"
-	/>
-
-	<liferay-ui:search-form
-		page="/html/portlet/dynamic_data_mapping/structure_search.jsp"
-	/>
+	<c:if test="<%= showToolbar %>">
+		<liferay-util:include page="/html/portlet/dynamic_data_mapping/structure_toolbar.jsp">
+			<liferay-util:param name="groupId" value="<%= String.valueOf(groupId) %>" />
+		</liferay-util:include>
+	</c:if>
 
 	<div class="separator"><!-- --></div>
 
@@ -46,32 +57,40 @@
 			modelVar="structure"
 		>
 
-			<%
-			StringBundler sb = new StringBundler(7);
-
-			sb.append("javascript:Liferay.Util.getOpener().");
-			sb.append(saveCallback);
-			sb.append("('");
-			sb.append(structure.getStructureId());
-			sb.append("', '");
-			sb.append(HtmlUtil.escapeJS(structure.getName(locale)));
-			sb.append("', Liferay.Util.getWindow());");
-
-			String rowHREF = sb.toString();
-			%>
-
 			<liferay-ui:search-container-column-text
-				href="<%= rowHREF %>"
 				name="id"
 				value="<%= String.valueOf(structure.getStructureId()) %>"
 			/>
 
 			<liferay-ui:search-container-column-text
-				href="<%= rowHREF %>"
 				name="name"
-				value="<%= structure.getName(locale) %>"
+				value="<%= HtmlUtil.escape(structure.getName(locale)) %>"
 			/>
 
+			<liferay-ui:search-container-column-text
+				name="description"
+				value="<%= HtmlUtil.escape(structure.getDescription(locale)) %>"
+			/>
+
+			<liferay-ui:search-container-column-date
+				name="modified-date"
+				value="<%= structure.getModifiedDate() %>"
+			/>
+
+			<liferay-ui:search-container-column-text>
+				<c:if test="<%= (structure.getStructureId() != classPK) && ((classPK == 0) || (structure.getParentStructureId() == 0) || (structure.getParentStructureId() != classPK)) %>">
+
+					<%
+					Map<String, Object> data = new HashMap<String, Object>();
+
+					data.put("ddmstructureid", structure.getStructureId());
+					data.put("ddmstructurekey", structure.getStructureKey());
+					data.put("name", HtmlUtil.escapeAttribute(structure.getName(locale)));
+					%>
+
+					<aui:button cssClass="selector-button" data="<%= data %>" value="choose" />
+				</c:if>
+			</liferay-ui:search-container-column-text>
 		</liferay-ui:search-container-row>
 
 		<liferay-ui:search-iterator />
@@ -79,5 +98,21 @@
 </aui:form>
 
 <aui:script>
-	Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />searchStructureId);
+	Liferay.Util.focusFormField(document.<portlet:namespace />selectStructureFm.<portlet:namespace />toggle_id_ddm_structure_searchkeywords);
+</aui:script>
+
+<aui:script use="aui-base">
+	var Util = Liferay.Util;
+
+	A.one('#<portlet:namespace />selectStructureFm').delegate(
+		'click',
+		function(event) {
+			var result = Util.getAttributes(event.currentTarget, 'data-');
+
+			Util.getOpener().Liferay.fire('<%= HtmlUtil.escapeJS(eventName) %>', result);
+
+			Util.getWindow().destroy();
+		},
+		'.selector-button'
+	);
 </aui:script>

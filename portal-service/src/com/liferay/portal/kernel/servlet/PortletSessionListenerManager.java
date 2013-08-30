@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,10 @@ import com.liferay.portal.kernel.servlet.filters.compoundsessionid.CompoundSessi
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.servlet.http.HttpSessionActivationListener;
+import javax.servlet.http.HttpSessionAttributeListener;
+import javax.servlet.http.HttpSessionBindingEvent;
+import javax.servlet.http.HttpSessionBindingListener;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
@@ -30,13 +34,52 @@ import javax.servlet.http.HttpSessionListener;
  *
  * @author Olaf Fricke
  * @author Brian Wing Shun Chan
+ * @author Raymond Augé
  */
-public class PortletSessionListenerManager implements HttpSessionListener {
+public class PortletSessionListenerManager
+	implements HttpSessionActivationListener, HttpSessionAttributeListener,
+			   HttpSessionBindingListener, HttpSessionListener {
+
+	public static void addHttpSessionActivationListener(
+		HttpSessionActivationListener httpSessionActivationListener) {
+
+		_httpSessionActivationListeners.add(httpSessionActivationListener);
+	}
+
+	public static void addHttpSessionAttributeListener(
+		HttpSessionAttributeListener httpSessionAttributeListener) {
+
+		_httpSessionAttributeListeners.add(httpSessionAttributeListener);
+	}
+
+	public static void addHttpSessionBindingListener(
+		HttpSessionBindingListener httpSessionBindingListener) {
+
+		_httpSessionBindingListeners.add(httpSessionBindingListener);
+	}
 
 	public static void addHttpSessionListener(
 		HttpSessionListener httpSessionListener) {
 
 		_httpSessionListeners.add(httpSessionListener);
+	}
+
+	public static void removeHttpSessionActivationListener(
+		HttpSessionActivationListener httpSessionActivationListener) {
+
+		_httpSessionActivationListeners.remove(httpSessionActivationListener);
+	}
+
+	public static void removeHttpSessionAttributeListener(
+		HttpSessionAttributeListener httpSessionAttributeListener) {
+
+		_httpSessionAttributeListeners.remove(httpSessionAttributeListener);
+	}
+
+	public static void removeHttpSessionBindingListener(
+		HttpSessionBindingListener httpSessionBindingListener) {
+
+		_httpSessionBindingListeners.remove(httpSessionBindingListener);
 	}
 
 	public static void removeHttpSessionListener(
@@ -45,6 +88,52 @@ public class PortletSessionListenerManager implements HttpSessionListener {
 		_httpSessionListeners.remove(httpSessionListener);
 	}
 
+	@Override
+	public void attributeAdded(
+		HttpSessionBindingEvent httpSessionBindingEvent) {
+
+		httpSessionBindingEvent = getHttpSessionBindingEvent(
+			httpSessionBindingEvent);
+
+		for (HttpSessionAttributeListener httpSessionAttributeListener :
+				_httpSessionAttributeListeners) {
+
+			httpSessionAttributeListener.attributeAdded(
+				httpSessionBindingEvent);
+		}
+	}
+
+	@Override
+	public void attributeRemoved(
+		HttpSessionBindingEvent httpSessionBindingEvent) {
+
+		httpSessionBindingEvent = getHttpSessionBindingEvent(
+			httpSessionBindingEvent);
+
+		for (HttpSessionAttributeListener httpSessionAttributeListener :
+				_httpSessionAttributeListeners) {
+
+			httpSessionAttributeListener.attributeRemoved(
+				httpSessionBindingEvent);
+		}
+	}
+
+	@Override
+	public void attributeReplaced(
+		HttpSessionBindingEvent httpSessionBindingEvent) {
+
+		httpSessionBindingEvent = getHttpSessionBindingEvent(
+			httpSessionBindingEvent);
+
+		for (HttpSessionAttributeListener httpSessionAttributeListener :
+				_httpSessionAttributeListeners) {
+
+			httpSessionAttributeListener.attributeReplaced(
+				httpSessionBindingEvent);
+		}
+	}
+
+	@Override
 	public void sessionCreated(HttpSessionEvent httpSessionEvent) {
 		httpSessionEvent = getHttpSessionEvent(httpSessionEvent);
 
@@ -70,12 +159,76 @@ public class PortletSessionListenerManager implements HttpSessionListener {
 		}
 	}
 
+	@Override
 	public void sessionDestroyed(HttpSessionEvent httpSessionEvent) {
 		httpSessionEvent = getHttpSessionEvent(httpSessionEvent);
 
 		for (HttpSessionListener httpSessionListener : _httpSessionListeners) {
 			httpSessionListener.sessionDestroyed(httpSessionEvent);
 		}
+	}
+
+	@Override
+	public void sessionDidActivate(HttpSessionEvent httpSessionEvent) {
+		httpSessionEvent = getHttpSessionEvent(httpSessionEvent);
+
+		for (HttpSessionActivationListener httpSessionActivationListener :
+				_httpSessionActivationListeners) {
+
+			httpSessionActivationListener.sessionDidActivate(httpSessionEvent);
+		}
+	}
+
+	@Override
+	public void sessionWillPassivate(HttpSessionEvent httpSessionEvent) {
+		httpSessionEvent = getHttpSessionEvent(httpSessionEvent);
+
+		for (HttpSessionActivationListener httpSessionActivationListener :
+				_httpSessionActivationListeners) {
+
+			httpSessionActivationListener.sessionWillPassivate(
+				httpSessionEvent);
+		}
+	}
+
+	@Override
+	public void valueBound(HttpSessionBindingEvent httpSessionBindingEvent) {
+		httpSessionBindingEvent = getHttpSessionBindingEvent(
+			httpSessionBindingEvent);
+
+		for (HttpSessionBindingListener httpSessionBindingListener :
+				_httpSessionBindingListeners) {
+
+			httpSessionBindingListener.valueBound(httpSessionBindingEvent);
+		}
+	}
+
+	@Override
+	public void valueUnbound(HttpSessionBindingEvent httpSessionBindingEvent) {
+		httpSessionBindingEvent = getHttpSessionBindingEvent(
+			httpSessionBindingEvent);
+
+		for (HttpSessionBindingListener httpSessionBindingListener :
+				_httpSessionBindingListeners) {
+
+			httpSessionBindingListener.valueUnbound(httpSessionBindingEvent);
+		}
+	}
+
+	protected HttpSessionBindingEvent getHttpSessionBindingEvent(
+		HttpSessionBindingEvent httpSessionBindingEvent) {
+
+		if (CompoundSessionIdSplitterUtil.hasSessionDelimiter()) {
+			CompoundSessionIdHttpSession compoundSessionIdHttpSession =
+				new CompoundSessionIdHttpSession(
+					httpSessionBindingEvent.getSession());
+
+			httpSessionBindingEvent = new HttpSessionBindingEvent(
+				compoundSessionIdHttpSession, httpSessionBindingEvent.getName(),
+				httpSessionBindingEvent.getValue());
+		}
+
+		return httpSessionBindingEvent;
 	}
 
 	protected HttpSessionEvent getHttpSessionEvent(
@@ -92,6 +245,15 @@ public class PortletSessionListenerManager implements HttpSessionListener {
 		return httpSessionEvent;
 	}
 
+	private static List<HttpSessionActivationListener>
+		_httpSessionActivationListeners =
+			new ArrayList<HttpSessionActivationListener>();
+	private static List<HttpSessionAttributeListener>
+		_httpSessionAttributeListeners =
+			new ArrayList<HttpSessionAttributeListener>();
+	private static List<HttpSessionBindingListener>
+		_httpSessionBindingListeners =
+			new ArrayList<HttpSessionBindingListener>();
 	private static List<HttpSessionListener> _httpSessionListeners =
 		new ArrayList<HttpSessionListener>();
 

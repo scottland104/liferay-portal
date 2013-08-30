@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,6 @@
 
 package com.liferay.portal.kernel.bean;
 
-import java.lang.Object;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -32,7 +31,8 @@ public class ReadOnlyBeanHandler implements InvocationHandler {
 		return _bean;
 	}
 
-	public Object invoke(Object proxy, Method method, Object[] args)
+	@Override
+	public Object invoke(Object proxy, Method method, Object[] arguments)
 		throws Throwable {
 
 		if (method.getName().startsWith("set")) {
@@ -41,7 +41,7 @@ public class ReadOnlyBeanHandler implements InvocationHandler {
 		}
 
 		try {
-			return method.invoke(_bean, args);
+			return method.invoke(_bean, arguments);
 		}
 		catch (InvocationTargetException ite) {
 			throw ite.getTargetException();

@@ -1,45 +1,144 @@
-<!-- Tag libraries -->
+<#-- Tag libraries -->
 
-<#assign aui = PortalJspTagLibs["/WEB-INF/tld/liferay-aui.tld"] />
+<#assign aui = PortalJspTagLibs["/WEB-INF/tld/aui.tld"] />
+<#assign liferay_portlet = PortalJspTagLibs["/WEB-INF/tld/liferay-portlet.tld"] />
 <#assign liferay_ui = PortalJspTagLibs["/WEB-INF/tld/liferay-ui.tld"] />
 
-<!-- CSS class -->
+<#-- CSS class -->
 
-<#assign cssClass = field.fieldCssClass!"">
+<#assign cssClass = "">
 
-<!-- Field name -->
+<#if fieldStructure.width??>
+	<#assign cssClass = "w" + fieldStructure.width>
+</#if>
 
-<#assign fieldName = field.name>
+<#-- Repeatable -->
 
-<#assign parentName = parentField.name!"">
-<#assign parentType = parentField.type!"">
+<#assign repeatable = false>
 
-<#if parentName?? && (parentName != "") && ((parentType == "radio") || (parentType == "select"))>
+<#if fieldStructure.repeatable?? && (fieldStructure.repeatable == "true") && (!ignoreRepeatable?? || !ignoreRepeatable)>
+	<#assign repeatable = true>
+</#if>
+
+<#-- Field name -->
+
+<#assign fieldNamespace = "_INSTANCE_" + fieldStructure.fieldNamespace>
+
+<#assign fieldName = fieldStructure.name>
+
+<#assign parentName = parentFieldStructure.name!"">
+<#assign parentType = parentFieldStructure.type!"">
+
+<#assign isChildField = parentName?? && (parentName != "") && ((parentType == "radio") || (parentType == "select"))>
+
+<#if isChildField>
 	<#assign fieldName = parentName>
 </#if>
 
-<#assign namespacedFieldName = "${namespace}${fieldName}">
+<#assign namespace = namespace!"">
 
-<!-- Field value -->
+<#assign namespacedFieldName = "${namespace}${fieldName}${fieldNamespace}">
 
-<#assign fieldValue = "">
+<#assign namespacedParentName = "${namespace}${parentName}">
 
-<#if fields?? && fields.get(fieldName)??>
-	<#assign fieldValue = fields.get(fieldName).getValue()>
+<#-- Data -->
+
+<#assign data = {
+	"fieldName": fieldStructure.name,
+	"fieldNamespace": fieldNamespace,
+	"repeatable": repeatable?string
+}>
+
+<#-- Predefined value -->
+
+<#assign predefinedValue = fieldStructure.predefinedValue!"">
+
+<#if isChildField>
+	<#assign predefinedValue = parentFieldStructure.predefinedValue!"">
 </#if>
 
-<!-- Label -->
+<#-- Field value -->
 
-<#assign label = field.label!"">
+<#assign fieldValue = predefinedValue>
+<#assign fieldRawValue = "">
 
-<#if field.showLabel?? && (field.showLabel == "false")>
+<#if fields?? && fields.get(fieldName)??>
+	<#assign field = fields.get(fieldName)>
+
+	<#assign valueIndex = getterUtil.getInteger(fieldStructure.valueIndex)>
+
+	<#assign fieldValue = field.getRenderedValue(requestedLocale, valueIndex)>
+	<#assign fieldRawValue = field.getValue(requestedLocale, valueIndex)!>
+</#if>
+
+<#-- Label -->
+
+<#assign label = fieldStructure.label!"">
+
+<#if fieldStructure.showLabel?? && (fieldStructure.showLabel == "false")>
 	<#assign label = "">
 </#if>
 
-<!-- Required -->
+<#-- Required -->
 
 <#assign required = false>
 
-<#if field.required?? && (field.required == "true")>
+<#if fieldStructure.required?? && (fieldStructure.required == "true")>
 	<#assign required = true>
 </#if>
+
+<#-- Util -->
+
+<#function escape value="">
+	<#if value?is_string>
+		<#return htmlUtil.escape(value)>
+	<#else>
+		<#return value>
+	</#if>
+</#function>
+
+<#function escapeAttribute value="">
+	<#if value?is_string>
+		<#return htmlUtil.escapeAttribute(value)>
+	<#else>
+		<#return value>
+	</#if>
+</#function>
+
+<#function escapeCSS value="">
+	<#if value?is_string>
+		<#return htmlUtil.escapeCSS(value)>
+	<#else>
+		<#return value>
+	</#if>
+</#function>
+
+<#function escapeJS value="">
+	<#if value?is_string>
+		<#return htmlUtil.escapeJS(value)>
+	<#else>
+		<#return value>
+	</#if>
+</#function>
+
+<#assign dlAppServiceUtil = serviceLocator.findService("com.liferay.portlet.documentlibrary.service.DLAppService")>
+
+<#function getFileEntry fileJSONObject>
+	<#assign fileEntryUUID = fileJSONObject.getString("uuid")>
+
+	<#if (fileJSONObject.getLong("groupId") > 0)>
+		<#assign fileEntryGroupId = fileJSONObject.getLong("groupId")>
+	<#else>
+		<#assign fileEntryGroupId = scopeGroupId>
+	</#if>
+
+	<#return dlAppServiceUtil.getFileEntryByUuidAndGroupId(fileEntryUUID, fileEntryGroupId)!"">
+</#function>
+
+<#function getFileEntryURL fileEntry>
+	<#return themeDisplay.getPathContext() + "/documents/" + fileEntry.getRepositoryId()?c + "/" + fileEntry.getFolderId()?c + "/" +  httpUtil.encodeURL(htmlUtil.unescape(fileEntry.getTitle()), true) + "/" + fileEntry.getUuid()>
+</#function>
+
+<#function getFileJSONObject fieldValue>
+	<#return jsonFactoryUtil.createJSONObject(fieldValue)>>
+</#function>

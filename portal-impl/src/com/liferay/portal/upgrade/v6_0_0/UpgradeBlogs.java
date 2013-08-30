@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,7 +19,7 @@ import com.liferay.portal.kernel.upgrade.util.TempUpgradeColumnImpl;
 import com.liferay.portal.kernel.upgrade.util.UpgradeColumn;
 import com.liferay.portal.kernel.upgrade.util.UpgradeTable;
 import com.liferay.portal.kernel.upgrade.util.UpgradeTableFactoryUtil;
-import com.liferay.portal.upgrade.v5_1_0.util.BlogsEntryUrlTitleUpgradeColumnImpl;
+import com.liferay.portal.upgrade.util.BlogsEntryUrlTitleUpgradeColumnImpl;
 import com.liferay.portal.upgrade.v6_0_0.util.BlogsEntryTable;
 
 /**
@@ -33,6 +33,7 @@ public class UpgradeBlogs extends UpgradeProcess {
 			runSQL("drop index IX_E0D90212 on BlogsEntry");
 			runSQL("drop index IX_DA53AFD4 on BlogsEntry");
 			runSQL("drop index IX_B88E740E on BlogsEntry");
+
 			runSQL("alter table BlogsEntry drop column draft");
 		}
 		catch (Exception e) {

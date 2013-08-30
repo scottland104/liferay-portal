@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,23 +17,43 @@ package com.liferay.portal.kernel.cluster;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.messaging.Message;
+import com.liferay.portal.kernel.security.pacl.permission.PortalRuntimePermission;
+
+import java.net.InetAddress;
 
 import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Shuyang Zhou
+ * @author Raymond Augé
  */
 public class ClusterLinkUtil {
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             ClusterLink#CLUSTER_FORWARD_MESSAGE}
+	 */
 	public static final String CLUSTER_FORWARD_MESSAGE =
-		"CLUSTER_FORWARD_MESSAGE";
+		ClusterLink.CLUSTER_FORWARD_MESSAGE;
 
 	public static Address getAddress(Message message) {
 		return (Address)message.get(_ADDRESS);
 	}
 
+	public static InetAddress getBindInetAddress() {
+		ClusterLink clusterLink = getClusterLink();
+
+		if (clusterLink == null) {
+			return null;
+		}
+
+		return clusterLink.getBindInetAddress();
+	}
+
 	public static ClusterLink getClusterLink() {
+		PortalRuntimePermission.checkGetBeanProperty(ClusterLinkUtil.class);
+
 		if ((_clusterLink == null) || !_clusterLink.isEnabled()) {
 			if (_log.isWarnEnabled()) {
 				_log.warn("ClusterLinkUtil has not been initialized");
@@ -46,50 +66,42 @@ public class ClusterLinkUtil {
 	}
 
 	public static List<Address> getLocalTransportAddresses() {
-		if ((_clusterLink == null) || !_clusterLink.isEnabled()) {
-			if (_log.isWarnEnabled()) {
-				_log.warn("ClusterLinkUtil has not been initialized");
-			}
+		ClusterLink clusterLink = getClusterLink();
 
+		if (clusterLink == null) {
 			return Collections.emptyList();
 		}
 
-		return _clusterLink.getLocalTransportAddresses();
+		return clusterLink.getLocalTransportAddresses();
 	}
 
 	public static List<Address> getTransportAddresses(Priority priority) {
-		if ((_clusterLink == null) || !_clusterLink.isEnabled()) {
-			if (_log.isWarnEnabled()) {
-				_log.warn("ClusterLinkUtil has not been initialized");
-			}
+		ClusterLink clusterLink = getClusterLink();
 
+		if (clusterLink == null) {
 			return Collections.emptyList();
 		}
 
-		return _clusterLink.getTransportAddresses(priority);
+		return clusterLink.getTransportAddresses(priority);
 	}
 
 	public static boolean isForwardMessage(Message message) {
-		return message.getBoolean(CLUSTER_FORWARD_MESSAGE);
+		return message.getBoolean(ClusterLink.CLUSTER_FORWARD_MESSAGE);
 	}
 
 	public static void sendMulticastMessage(
 		Message message, Priority priority) {
 
-		if ((_clusterLink == null) || !_clusterLink.isEnabled()) {
-			if (_log.isWarnEnabled()) {
-				_log.warn("ClusterLinkUtil has not been initialized");
-			}
+		ClusterLink clusterLink = getClusterLink();
 
+		if (clusterLink == null) {
 			return;
 		}
 
-		_clusterLink.sendMulticastMessage(message, priority);
+		clusterLink.sendMulticastMessage(message, priority);
 	}
 
-	public static void sendMulticastMessage(
-		Object payload, Priority priority) {
-
+	public static void sendMulticastMessage(Object payload, Priority priority) {
 		Message message = new Message();
 
 		message.setPayload(payload);
@@ -100,15 +112,13 @@ public class ClusterLinkUtil {
 	public static void sendUnicastMessage(
 		Address address, Message message, Priority priority) {
 
-		if ((_clusterLink == null) || !_clusterLink.isEnabled()) {
-			if (_log.isWarnEnabled()) {
-				_log.warn("ClusterLinkUtil has not been initialized");
-			}
+		ClusterLink clusterLink = getClusterLink();
 
+		if (clusterLink == null) {
 			return;
 		}
 
-		_clusterLink.sendUnicastMessage(address, message, priority);
+		clusterLink.sendUnicastMessage(address, message, priority);
 	}
 
 	public static Message setAddress(Message message, Address address) {
@@ -118,10 +128,12 @@ public class ClusterLinkUtil {
 	}
 
 	public static void setForwardMessage(Message message) {
-		message.put(CLUSTER_FORWARD_MESSAGE, true);
+		message.put(ClusterLink.CLUSTER_FORWARD_MESSAGE, true);
 	}
 
 	public void setClusterLink(ClusterLink clusterLink) {
+		PortalRuntimePermission.checkSetBeanProperty(getClass());
+
 		_clusterLink = clusterLink;
 	}
 

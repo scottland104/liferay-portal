@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,12 +24,12 @@ import com.liferay.portal.service.LayoutBranchLocalServiceUtil;
 /**
  * @author Brian Wing Shun Chan
  */
-public class LayoutBranchPermissionImpl
-	implements LayoutBranchPermission {
+public class LayoutBranchPermissionImpl implements LayoutBranchPermission {
 
+	@Override
 	public void check(
-			PermissionChecker permissionChecker,
-			LayoutBranch layoutBranch, String actionId)
+			PermissionChecker permissionChecker, LayoutBranch layoutBranch,
+			String actionId)
 		throws PortalException {
 
 		if (!contains(permissionChecker, layoutBranch, actionId)) {
@@ -37,18 +37,18 @@ public class LayoutBranchPermissionImpl
 		}
 	}
 
+	@Override
 	public void check(
 			PermissionChecker permissionChecker, long layoutBranchId,
 			String actionId)
 		throws PortalException, SystemException {
 
-		if (!contains(
-				permissionChecker, layoutBranchId, actionId)) {
-
+		if (!contains(permissionChecker, layoutBranchId, actionId)) {
 			throw new PrincipalException();
 		}
 	}
 
+	@Override
 	public boolean contains(
 		PermissionChecker permissionChecker, LayoutBranch layoutBranch,
 		String actionId) {
@@ -58,6 +58,7 @@ public class LayoutBranchPermissionImpl
 			layoutBranch.getLayoutBranchId(), actionId);
 	}
 
+	@Override
 	public boolean contains(
 			PermissionChecker permissionChecker, long layoutBranchId,
 			String actionId)

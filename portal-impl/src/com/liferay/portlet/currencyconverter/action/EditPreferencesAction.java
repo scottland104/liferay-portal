@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,7 @@
 
 package com.liferay.portlet.currencyconverter.action;
 
+import com.liferay.portal.kernel.portlet.LiferayPortletConfig;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.util.Constants;
@@ -40,8 +41,9 @@ public class EditPreferencesAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
@@ -50,15 +52,15 @@ public class EditPreferencesAction extends PortletAction {
 			return;
 		}
 
-		PortletPreferences preferences = actionRequest.getPreferences();
+		PortletPreferences portletPreferences = actionRequest.getPreferences();
 
 		String[] symbols = StringUtil.split(
 			ParamUtil.getString(actionRequest, "symbols").toUpperCase());
 
-		preferences.setValues("symbols", symbols);
+		portletPreferences.setValues("symbols", symbols);
 
 		try {
-			preferences.store();
+			portletPreferences.store();
 		}
 		catch (ValidatorException ve) {
 			SessionErrors.add(
@@ -67,17 +69,23 @@ public class EditPreferencesAction extends PortletAction {
 			return;
 		}
 
+		LiferayPortletConfig liferayPortletConfig =
+			(LiferayPortletConfig)portletConfig;
+
 		SessionMessages.add(
-			actionRequest, portletConfig.getPortletName() + ".doEdit");
+			actionRequest,
+			liferayPortletConfig.getPortletId() +
+				SessionMessages.KEY_SUFFIX_UPDATED_PREFERENCES);
 	}
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
-		return mapping.findForward("portlet.currency_converter.edit");
+		return actionMapping.findForward("portlet.currency_converter.edit");
 	}
 
 }

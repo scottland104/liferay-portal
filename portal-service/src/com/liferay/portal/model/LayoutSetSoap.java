@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,13 +17,14 @@ package com.liferay.portal.model;
 import java.io.Serializable;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
  * This class is used by SOAP remote services, specifically {@link com.liferay.portal.service.http.LayoutSetServiceSoap}.
  *
- * @author    Brian Wing Shun Chan
- * @see       com.liferay.portal.service.http.LayoutSetServiceSoap
+ * @author Brian Wing Shun Chan
+ * @see com.liferay.portal.service.http.LayoutSetServiceSoap
  * @generated
  */
 public class LayoutSetSoap implements Serializable {
@@ -33,6 +34,8 @@ public class LayoutSetSoap implements Serializable {
 		soapModel.setLayoutSetId(model.getLayoutSetId());
 		soapModel.setGroupId(model.getGroupId());
 		soapModel.setCompanyId(model.getCompanyId());
+		soapModel.setCreateDate(model.getCreateDate());
+		soapModel.setModifiedDate(model.getModifiedDate());
 		soapModel.setPrivateLayout(model.getPrivateLayout());
 		soapModel.setLogo(model.getLogo());
 		soapModel.setLogoId(model.getLogoId());
@@ -119,6 +122,22 @@ public class LayoutSetSoap implements Serializable {
 
 	public void setCompanyId(long companyId) {
 		_companyId = companyId;
+	}
+
+	public Date getCreateDate() {
+		return _createDate;
+	}
+
+	public void setCreateDate(Date createDate) {
+		_createDate = createDate;
+	}
+
+	public Date getModifiedDate() {
+		return _modifiedDate;
+	}
+
+	public void setModifiedDate(Date modifiedDate) {
+		_modifiedDate = modifiedDate;
 	}
 
 	public boolean getPrivateLayout() {
@@ -233,6 +252,8 @@ public class LayoutSetSoap implements Serializable {
 	private long _layoutSetId;
 	private long _groupId;
 	private long _companyId;
+	private Date _createDate;
+	private Date _modifiedDate;
 	private boolean _privateLayout;
 	private boolean _logo;
 	private long _logoId;

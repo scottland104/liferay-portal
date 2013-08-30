@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.PortalPreferences;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing PortalPreferences in entity cache.
  *
@@ -26,7 +31,8 @@ import com.liferay.portal.model.PortalPreferences;
  * @see PortalPreferences
  * @generated
  */
-public class PortalPreferencesCacheModel implements CacheModel<PortalPreferences> {
+public class PortalPreferencesCacheModel implements CacheModel<PortalPreferences>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(9);
@@ -44,6 +50,7 @@ public class PortalPreferencesCacheModel implements CacheModel<PortalPreferences
 		return sb.toString();
 	}
 
+	@Override
 	public PortalPreferences toEntityModel() {
 		PortalPreferencesImpl portalPreferencesImpl = new PortalPreferencesImpl();
 
@@ -61,6 +68,29 @@ public class PortalPreferencesCacheModel implements CacheModel<PortalPreferences
 		portalPreferencesImpl.resetOriginalValues();
 
 		return portalPreferencesImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		portalPreferencesId = objectInput.readLong();
+		ownerId = objectInput.readLong();
+		ownerType = objectInput.readInt();
+		preferences = objectInput.readUTF();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(portalPreferencesId);
+		objectOutput.writeLong(ownerId);
+		objectOutput.writeInt(ownerType);
+
+		if (preferences == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(preferences);
+		}
 	}
 
 	public long portalPreferencesId;

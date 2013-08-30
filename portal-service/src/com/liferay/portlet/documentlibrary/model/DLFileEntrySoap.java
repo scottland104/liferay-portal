@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,8 +23,8 @@ import java.util.List;
 /**
  * This class is used by SOAP remote services, specifically {@link com.liferay.portlet.documentlibrary.service.http.DLFileEntryServiceSoap}.
  *
- * @author    Brian Wing Shun Chan
- * @see       com.liferay.portlet.documentlibrary.service.http.DLFileEntryServiceSoap
+ * @author Brian Wing Shun Chan
+ * @see com.liferay.portlet.documentlibrary.service.http.DLFileEntryServiceSoap
  * @generated
  */
 public class DLFileEntrySoap implements Serializable {
@@ -37,10 +37,10 @@ public class DLFileEntrySoap implements Serializable {
 		soapModel.setCompanyId(model.getCompanyId());
 		soapModel.setUserId(model.getUserId());
 		soapModel.setUserName(model.getUserName());
-		soapModel.setVersionUserId(model.getVersionUserId());
-		soapModel.setVersionUserName(model.getVersionUserName());
 		soapModel.setCreateDate(model.getCreateDate());
 		soapModel.setModifiedDate(model.getModifiedDate());
+		soapModel.setClassNameId(model.getClassNameId());
+		soapModel.setClassPK(model.getClassPK());
 		soapModel.setRepositoryId(model.getRepositoryId());
 		soapModel.setFolderId(model.getFolderId());
 		soapModel.setName(model.getName());
@@ -53,6 +53,11 @@ public class DLFileEntrySoap implements Serializable {
 		soapModel.setVersion(model.getVersion());
 		soapModel.setSize(model.getSize());
 		soapModel.setReadCount(model.getReadCount());
+		soapModel.setSmallImageId(model.getSmallImageId());
+		soapModel.setLargeImageId(model.getLargeImageId());
+		soapModel.setCustom1ImageId(model.getCustom1ImageId());
+		soapModel.setCustom2ImageId(model.getCustom2ImageId());
+		soapModel.setManualCheckInRequired(model.getManualCheckInRequired());
 
 		return soapModel;
 	}
@@ -153,22 +158,6 @@ public class DLFileEntrySoap implements Serializable {
 		_userName = userName;
 	}
 
-	public long getVersionUserId() {
-		return _versionUserId;
-	}
-
-	public void setVersionUserId(long versionUserId) {
-		_versionUserId = versionUserId;
-	}
-
-	public String getVersionUserName() {
-		return _versionUserName;
-	}
-
-	public void setVersionUserName(String versionUserName) {
-		_versionUserName = versionUserName;
-	}
-
 	public Date getCreateDate() {
 		return _createDate;
 	}
@@ -183,6 +172,22 @@ public class DLFileEntrySoap implements Serializable {
 
 	public void setModifiedDate(Date modifiedDate) {
 		_modifiedDate = modifiedDate;
+	}
+
+	public long getClassNameId() {
+		return _classNameId;
+	}
+
+	public void setClassNameId(long classNameId) {
+		_classNameId = classNameId;
+	}
+
+	public long getClassPK() {
+		return _classPK;
+	}
+
+	public void setClassPK(long classPK) {
+		_classPK = classPK;
 	}
 
 	public long getRepositoryId() {
@@ -281,16 +286,60 @@ public class DLFileEntrySoap implements Serializable {
 		_readCount = readCount;
 	}
 
+	public long getSmallImageId() {
+		return _smallImageId;
+	}
+
+	public void setSmallImageId(long smallImageId) {
+		_smallImageId = smallImageId;
+	}
+
+	public long getLargeImageId() {
+		return _largeImageId;
+	}
+
+	public void setLargeImageId(long largeImageId) {
+		_largeImageId = largeImageId;
+	}
+
+	public long getCustom1ImageId() {
+		return _custom1ImageId;
+	}
+
+	public void setCustom1ImageId(long custom1ImageId) {
+		_custom1ImageId = custom1ImageId;
+	}
+
+	public long getCustom2ImageId() {
+		return _custom2ImageId;
+	}
+
+	public void setCustom2ImageId(long custom2ImageId) {
+		_custom2ImageId = custom2ImageId;
+	}
+
+	public boolean getManualCheckInRequired() {
+		return _manualCheckInRequired;
+	}
+
+	public boolean isManualCheckInRequired() {
+		return _manualCheckInRequired;
+	}
+
+	public void setManualCheckInRequired(boolean manualCheckInRequired) {
+		_manualCheckInRequired = manualCheckInRequired;
+	}
+
 	private String _uuid;
 	private long _fileEntryId;
 	private long _groupId;
 	private long _companyId;
 	private long _userId;
 	private String _userName;
-	private long _versionUserId;
-	private String _versionUserName;
 	private Date _createDate;
 	private Date _modifiedDate;
+	private long _classNameId;
+	private long _classPK;
 	private long _repositoryId;
 	private long _folderId;
 	private String _name;
@@ -303,4 +352,9 @@ public class DLFileEntrySoap implements Serializable {
 	private String _version;
 	private long _size;
 	private int _readCount;
+	private long _smallImageId;
+	private long _largeImageId;
+	private long _custom1ImageId;
+	private long _custom2ImageId;
+	private boolean _manualCheckInRequired;
 }

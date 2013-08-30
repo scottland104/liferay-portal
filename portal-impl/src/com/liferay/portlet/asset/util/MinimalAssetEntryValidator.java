@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,7 +15,9 @@
 package com.liferay.portlet.asset.util;
 
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portlet.asset.AssetTagException;
+import com.liferay.portlet.messageboards.model.MBDiscussion;
 
 /**
  * @author Brian Wing Shun Chan
@@ -28,7 +30,9 @@ public class MinimalAssetEntryValidator extends BaseAssetEntryValidator {
 			String[] tagNames)
 		throws PortalException {
 
-		if ((tagNames == null) || (tagNames.length == 0)) {
+		if (!className.equals(MBDiscussion.class.getName()) &&
+			ArrayUtil.isEmpty(tagNames)) {
+
 			throw new AssetTagException(AssetTagException.AT_LEAST_ONE_TAG);
 		}
 	}

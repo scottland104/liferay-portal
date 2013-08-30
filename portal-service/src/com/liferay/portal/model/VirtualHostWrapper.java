@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,26 +14,73 @@
 
 package com.liferay.portal.model;
 
+import com.liferay.portal.kernel.util.Validator;
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * <p>
  * This class is a wrapper for {@link VirtualHost}.
  * </p>
  *
- * @author    Brian Wing Shun Chan
- * @see       VirtualHost
+ * @author Brian Wing Shun Chan
+ * @see VirtualHost
  * @generated
  */
-public class VirtualHostWrapper implements VirtualHost {
+public class VirtualHostWrapper implements VirtualHost,
+	ModelWrapper<VirtualHost> {
 	public VirtualHostWrapper(VirtualHost virtualHost) {
 		_virtualHost = virtualHost;
 	}
 
+	@Override
 	public Class<?> getModelClass() {
 		return VirtualHost.class;
 	}
 
+	@Override
 	public String getModelClassName() {
 		return VirtualHost.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("virtualHostId", getVirtualHostId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("layoutSetId", getLayoutSetId());
+		attributes.put("hostname", getHostname());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long virtualHostId = (Long)attributes.get("virtualHostId");
+
+		if (virtualHostId != null) {
+			setVirtualHostId(virtualHostId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long layoutSetId = (Long)attributes.get("layoutSetId");
+
+		if (layoutSetId != null) {
+			setLayoutSetId(layoutSetId);
+		}
+
+		String hostname = (String)attributes.get("hostname");
+
+		if (hostname != null) {
+			setHostname(hostname);
+		}
 	}
 
 	/**
@@ -41,6 +88,7 @@ public class VirtualHostWrapper implements VirtualHost {
 	*
 	* @return the primary key of this virtual host
 	*/
+	@Override
 	public long getPrimaryKey() {
 		return _virtualHost.getPrimaryKey();
 	}
@@ -50,6 +98,7 @@ public class VirtualHostWrapper implements VirtualHost {
 	*
 	* @param primaryKey the primary key of this virtual host
 	*/
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		_virtualHost.setPrimaryKey(primaryKey);
 	}
@@ -59,6 +108,7 @@ public class VirtualHostWrapper implements VirtualHost {
 	*
 	* @return the virtual host ID of this virtual host
 	*/
+	@Override
 	public long getVirtualHostId() {
 		return _virtualHost.getVirtualHostId();
 	}
@@ -68,6 +118,7 @@ public class VirtualHostWrapper implements VirtualHost {
 	*
 	* @param virtualHostId the virtual host ID of this virtual host
 	*/
+	@Override
 	public void setVirtualHostId(long virtualHostId) {
 		_virtualHost.setVirtualHostId(virtualHostId);
 	}
@@ -77,6 +128,7 @@ public class VirtualHostWrapper implements VirtualHost {
 	*
 	* @return the company ID of this virtual host
 	*/
+	@Override
 	public long getCompanyId() {
 		return _virtualHost.getCompanyId();
 	}
@@ -86,6 +138,7 @@ public class VirtualHostWrapper implements VirtualHost {
 	*
 	* @param companyId the company ID of this virtual host
 	*/
+	@Override
 	public void setCompanyId(long companyId) {
 		_virtualHost.setCompanyId(companyId);
 	}
@@ -95,6 +148,7 @@ public class VirtualHostWrapper implements VirtualHost {
 	*
 	* @return the layout set ID of this virtual host
 	*/
+	@Override
 	public long getLayoutSetId() {
 		return _virtualHost.getLayoutSetId();
 	}
@@ -104,6 +158,7 @@ public class VirtualHostWrapper implements VirtualHost {
 	*
 	* @param layoutSetId the layout set ID of this virtual host
 	*/
+	@Override
 	public void setLayoutSetId(long layoutSetId) {
 		_virtualHost.setLayoutSetId(layoutSetId);
 	}
@@ -113,6 +168,7 @@ public class VirtualHostWrapper implements VirtualHost {
 	*
 	* @return the hostname of this virtual host
 	*/
+	@Override
 	public java.lang.String getHostname() {
 		return _virtualHost.getHostname();
 	}
@@ -122,46 +178,64 @@ public class VirtualHostWrapper implements VirtualHost {
 	*
 	* @param hostname the hostname of this virtual host
 	*/
+	@Override
 	public void setHostname(java.lang.String hostname) {
 		_virtualHost.setHostname(hostname);
 	}
 
+	@Override
 	public boolean isNew() {
 		return _virtualHost.isNew();
 	}
 
+	@Override
 	public void setNew(boolean n) {
 		_virtualHost.setNew(n);
 	}
 
+	@Override
 	public boolean isCachedModel() {
 		return _virtualHost.isCachedModel();
 	}
 
+	@Override
 	public void setCachedModel(boolean cachedModel) {
 		_virtualHost.setCachedModel(cachedModel);
 	}
 
+	@Override
 	public boolean isEscapedModel() {
 		return _virtualHost.isEscapedModel();
 	}
 
-	public void setEscapedModel(boolean escapedModel) {
-		_virtualHost.setEscapedModel(escapedModel);
-	}
-
+	@Override
 	public java.io.Serializable getPrimaryKeyObj() {
 		return _virtualHost.getPrimaryKeyObj();
 	}
 
+	@Override
 	public void setPrimaryKeyObj(java.io.Serializable primaryKeyObj) {
 		_virtualHost.setPrimaryKeyObj(primaryKeyObj);
 	}
 
+	@Override
 	public com.liferay.portlet.expando.model.ExpandoBridge getExpandoBridge() {
 		return _virtualHost.getExpandoBridge();
 	}
 
+	@Override
+	public void setExpandoBridgeAttributes(
+		com.liferay.portal.model.BaseModel<?> baseModel) {
+		_virtualHost.setExpandoBridgeAttributes(baseModel);
+	}
+
+	@Override
+	public void setExpandoBridgeAttributes(
+		com.liferay.portlet.expando.model.ExpandoBridge expandoBridge) {
+		_virtualHost.setExpandoBridgeAttributes(expandoBridge);
+	}
+
+	@Override
 	public void setExpandoBridgeAttributes(
 		com.liferay.portal.service.ServiceContext serviceContext) {
 		_virtualHost.setExpandoBridgeAttributes(serviceContext);
@@ -172,6 +246,7 @@ public class VirtualHostWrapper implements VirtualHost {
 		return new VirtualHostWrapper((VirtualHost)_virtualHost.clone());
 	}
 
+	@Override
 	public int compareTo(com.liferay.portal.model.VirtualHost virtualHost) {
 		return _virtualHost.compareTo(virtualHost);
 	}
@@ -181,12 +256,19 @@ public class VirtualHostWrapper implements VirtualHost {
 		return _virtualHost.hashCode();
 	}
 
+	@Override
 	public com.liferay.portal.model.CacheModel<com.liferay.portal.model.VirtualHost> toCacheModel() {
 		return _virtualHost.toCacheModel();
 	}
 
+	@Override
 	public com.liferay.portal.model.VirtualHost toEscapedModel() {
 		return new VirtualHostWrapper(_virtualHost.toEscapedModel());
+	}
+
+	@Override
+	public com.liferay.portal.model.VirtualHost toUnescapedModel() {
+		return new VirtualHostWrapper(_virtualHost.toUnescapedModel());
 	}
 
 	@Override
@@ -194,19 +276,49 @@ public class VirtualHostWrapper implements VirtualHost {
 		return _virtualHost.toString();
 	}
 
+	@Override
 	public java.lang.String toXmlString() {
 		return _virtualHost.toXmlString();
 	}
 
+	@Override
 	public void persist()
 		throws com.liferay.portal.kernel.exception.SystemException {
 		_virtualHost.persist();
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof VirtualHostWrapper)) {
+			return false;
+		}
+
+		VirtualHostWrapper virtualHostWrapper = (VirtualHostWrapper)obj;
+
+		if (Validator.equals(_virtualHost, virtualHostWrapper._virtualHost)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedModel}
+	 */
 	public VirtualHost getWrappedVirtualHost() {
 		return _virtualHost;
 	}
 
+	@Override
+	public VirtualHost getWrappedModel() {
+		return _virtualHost;
+	}
+
+	@Override
 	public void resetOriginalValues() {
 		_virtualHost.resetOriginalValues();
 	}

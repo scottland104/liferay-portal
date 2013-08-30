@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -78,6 +78,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 *
 	 * @return the company ID of this subscription
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -85,6 +86,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param companyId the company ID of this subscription
 	 */
+	@Override
 	public void setCompanyId(long companyId);
 
 	/**
@@ -92,6 +94,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 *
 	 * @return the user ID of this subscription
 	 */
+	@Override
 	public long getUserId();
 
 	/**
@@ -99,6 +102,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param userId the user ID of this subscription
 	 */
+	@Override
 	public void setUserId(long userId);
 
 	/**
@@ -107,6 +111,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 * @return the user uuid of this subscription
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getUserUuid() throws SystemException;
 
 	/**
@@ -114,6 +119,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param userUuid the user uuid of this subscription
 	 */
+	@Override
 	public void setUserUuid(String userUuid);
 
 	/**
@@ -122,6 +128,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 * @return the user name of this subscription
 	 */
 	@AutoEscape
+	@Override
 	public String getUserName();
 
 	/**
@@ -129,6 +136,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param userName the user name of this subscription
 	 */
+	@Override
 	public void setUserName(String userName);
 
 	/**
@@ -136,6 +144,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 *
 	 * @return the create date of this subscription
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -143,6 +152,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param createDate the create date of this subscription
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -150,6 +160,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 *
 	 * @return the modified date of this subscription
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -157,6 +168,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param modifiedDate the modified date of this subscription
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
@@ -164,13 +176,17 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 *
 	 * @return the fully qualified class name of this subscription
 	 */
+	@Override
 	public String getClassName();
+
+	public void setClassName(String className);
 
 	/**
 	 * Returns the class name ID of this subscription.
 	 *
 	 * @return the class name ID of this subscription
 	 */
+	@Override
 	public long getClassNameId();
 
 	/**
@@ -178,6 +194,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param classNameId the class name ID of this subscription
 	 */
+	@Override
 	public void setClassNameId(long classNameId);
 
 	/**
@@ -185,6 +202,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 *
 	 * @return the class p k of this subscription
 	 */
+	@Override
 	public long getClassPK();
 
 	/**
@@ -192,6 +210,7 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param classPK the class p k of this subscription
 	 */
+	@Override
 	public void setClassPK(long classPK);
 
 	/**
@@ -209,37 +228,60 @@ public interface SubscriptionModel extends AttachedModel, AuditedModel,
 	 */
 	public void setFrequency(String frequency);
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(Subscription subscription);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<Subscription> toCacheModel();
 
+	@Override
 	public Subscription toEscapedModel();
 
+	@Override
+	public Subscription toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

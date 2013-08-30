@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -44,6 +44,7 @@ import org.antlr.runtime.RecognitionException;
  */
 public class CreoleWikiEngine implements WikiEngine {
 
+	@Override
 	public String convert(
 		WikiPage page, PortletURL viewPageURL, PortletURL editPageURL,
 		String attachmentURLPrefix) {
@@ -51,10 +52,11 @@ public class CreoleWikiEngine implements WikiEngine {
 		XhtmlTranslator xhtmlTranslator = new XhtmlTranslator();
 
 		return xhtmlTranslator.translate(
-			page, viewPageURL, editPageURL, attachmentURLPrefix, parse(
-			page.getContent()));
+			page, viewPageURL, editPageURL, attachmentURLPrefix,
+			parse(page.getContent()));
 	}
 
+	@Override
 	public Map<String, Boolean> getOutgoingLinks(WikiPage page)
 		throws PageContentException {
 
@@ -80,7 +82,11 @@ public class CreoleWikiEngine implements WikiEngine {
 					existingLink = true;
 				}
 
-				outgoingLinks.put(title.toLowerCase(), existingLink);
+				if (existingLink) {
+					title = title.toLowerCase();
+				}
+
+				outgoingLinks.put(title, existingLink);
 			}
 		}
 		catch (SystemException se) {
@@ -90,12 +96,15 @@ public class CreoleWikiEngine implements WikiEngine {
 		return outgoingLinks;
 	}
 
+	@Override
 	public void setInterWikiConfiguration(String interWikiConfiguration) {
 	}
 
+	@Override
 	public void setMainConfiguration(String mainConfiguration) {
 	}
 
+	@Override
 	public boolean validate(long nodeId, String content) {
 		return true;
 	}
@@ -120,12 +129,16 @@ public class CreoleWikiEngine implements WikiEngine {
 		catch (RecognitionException re) {
 			if (_log.isDebugEnabled()) {
 				_log.debug("Unable to parse:\n" + creoleCode, re);
+
+				for (String error : creole10Parser.getErrors()) {
+					_log.debug(error);
+				}
 			}
 		}
 
 		return creole10Parser.getWikiPageNode();
 	}
 
-	private Log _log = LogFactoryUtil.getLog(CreoleWikiEngine.class);
+	private static Log _log = LogFactoryUtil.getLog(CreoleWikiEngine.class);
 
 }

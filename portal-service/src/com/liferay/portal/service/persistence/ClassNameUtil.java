@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -94,27 +94,87 @@ public class ClassNameUtil {
 	}
 
 	/**
-	 * @see com.liferay.portal.service.persistence.BasePersistence#remove(com.liferay.portal.model.BaseModel)
+	 * @see com.liferay.portal.service.persistence.BasePersistence#update(com.liferay.portal.model.BaseModel)
 	 */
-	public static ClassName remove(ClassName className)
+	public static ClassName update(ClassName className)
 		throws SystemException {
-		return getPersistence().remove(className);
+		return getPersistence().update(className);
 	}
 
 	/**
-	 * @see com.liferay.portal.service.persistence.BasePersistence#update(com.liferay.portal.model.BaseModel, boolean)
+	 * @see com.liferay.portal.service.persistence.BasePersistence#update(com.liferay.portal.model.BaseModel, ServiceContext)
 	 */
-	public static ClassName update(ClassName className, boolean merge)
-		throws SystemException {
-		return getPersistence().update(className, merge);
-	}
-
-	/**
-	 * @see com.liferay.portal.service.persistence.BasePersistence#update(com.liferay.portal.model.BaseModel, boolean, ServiceContext)
-	 */
-	public static ClassName update(ClassName className, boolean merge,
+	public static ClassName update(ClassName className,
 		ServiceContext serviceContext) throws SystemException {
-		return getPersistence().update(className, merge, serviceContext);
+		return getPersistence().update(className, serviceContext);
+	}
+
+	/**
+	* Returns the class name where value = &#63; or throws a {@link com.liferay.portal.NoSuchClassNameException} if it could not be found.
+	*
+	* @param value the value
+	* @return the matching class name
+	* @throws com.liferay.portal.NoSuchClassNameException if a matching class name could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ClassName findByValue(
+		java.lang.String value)
+		throws com.liferay.portal.NoSuchClassNameException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().findByValue(value);
+	}
+
+	/**
+	* Returns the class name where value = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	*
+	* @param value the value
+	* @return the matching class name, or <code>null</code> if a matching class name could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ClassName fetchByValue(
+		java.lang.String value)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().fetchByValue(value);
+	}
+
+	/**
+	* Returns the class name where value = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	*
+	* @param value the value
+	* @param retrieveFromCache whether to use the finder cache
+	* @return the matching class name, or <code>null</code> if a matching class name could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ClassName fetchByValue(
+		java.lang.String value, boolean retrieveFromCache)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().fetchByValue(value, retrieveFromCache);
+	}
+
+	/**
+	* Removes the class name where value = &#63; from the database.
+	*
+	* @param value the value
+	* @return the class name that was removed
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.model.ClassName removeByValue(
+		java.lang.String value)
+		throws com.liferay.portal.NoSuchClassNameException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().removeByValue(value);
+	}
+
+	/**
+	* Returns the number of class names where value = &#63;.
+	*
+	* @param value the value
+	* @return the number of matching class names
+	* @throws SystemException if a system exception occurred
+	*/
+	public static int countByValue(java.lang.String value)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getPersistence().countByValue(value);
 	}
 
 	/**
@@ -161,9 +221,9 @@ public class ClassNameUtil {
 	}
 
 	public static com.liferay.portal.model.ClassName updateImpl(
-		com.liferay.portal.model.ClassName className, boolean merge)
+		com.liferay.portal.model.ClassName className)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().updateImpl(className, merge);
+		return getPersistence().updateImpl(className);
 	}
 
 	/**
@@ -195,48 +255,6 @@ public class ClassNameUtil {
 	}
 
 	/**
-	* Returns the class name where value = &#63; or throws a {@link com.liferay.portal.NoSuchClassNameException} if it could not be found.
-	*
-	* @param value the value
-	* @return the matching class name
-	* @throws com.liferay.portal.NoSuchClassNameException if a matching class name could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ClassName findByValue(
-		java.lang.String value)
-		throws com.liferay.portal.NoSuchClassNameException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().findByValue(value);
-	}
-
-	/**
-	* Returns the class name where value = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
-	*
-	* @param value the value
-	* @return the matching class name, or <code>null</code> if a matching class name could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ClassName fetchByValue(
-		java.lang.String value)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().fetchByValue(value);
-	}
-
-	/**
-	* Returns the class name where value = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
-	*
-	* @param value the value
-	* @param retrieveFromCache whether to use the finder cache
-	* @return the matching class name, or <code>null</code> if a matching class name could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.ClassName fetchByValue(
-		java.lang.String value, boolean retrieveFromCache)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().fetchByValue(value, retrieveFromCache);
-	}
-
-	/**
 	* Returns all the class names.
 	*
 	* @return the class names
@@ -251,7 +269,7 @@ public class ClassNameUtil {
 	* Returns a range of all the class names.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ClassNameModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param start the lower bound of the range of class names
@@ -269,7 +287,7 @@ public class ClassNameUtil {
 	* Returns an ordered range of all the class names.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ClassNameModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param start the lower bound of the range of class names
@@ -286,18 +304,6 @@ public class ClassNameUtil {
 	}
 
 	/**
-	* Removes the class name where value = &#63; from the database.
-	*
-	* @param value the value
-	* @throws SystemException if a system exception occurred
-	*/
-	public static void removeByValue(java.lang.String value)
-		throws com.liferay.portal.NoSuchClassNameException,
-			com.liferay.portal.kernel.exception.SystemException {
-		getPersistence().removeByValue(value);
-	}
-
-	/**
 	* Removes all the class names from the database.
 	*
 	* @throws SystemException if a system exception occurred
@@ -305,18 +311,6 @@ public class ClassNameUtil {
 	public static void removeAll()
 		throws com.liferay.portal.kernel.exception.SystemException {
 		getPersistence().removeAll();
-	}
-
-	/**
-	* Returns the number of class names where value = &#63;.
-	*
-	* @param value the value
-	* @return the number of matching class names
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int countByValue(java.lang.String value)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getPersistence().countByValue(value);
 	}
 
 	/**
@@ -341,10 +335,10 @@ public class ClassNameUtil {
 		return _persistence;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setPersistence(ClassNamePersistence persistence) {
-		_persistence = persistence;
-
-		ReferenceRegistry.registerReference(ClassNameUtil.class, "_persistence");
 	}
 
 	private static ClassNamePersistence _persistence;

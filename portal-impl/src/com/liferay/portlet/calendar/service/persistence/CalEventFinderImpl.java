@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -44,18 +44,19 @@ import java.util.List;
 public class CalEventFinderImpl
 	extends BasePersistenceImpl<CalEvent> implements CalEventFinder {
 
-	public static String COUNT_BY_G_SD_T =
+	public static final String COUNT_BY_G_SD_T =
 		CalEventFinder.class.getName() + ".countByG_SD_T";
 
-	public static String FIND_BY_FUTURE_REMINDERS =
+	public static final String FIND_BY_FUTURE_REMINDERS =
 		CalEventFinder.class.getName() + ".findByFutureReminders";
 
-	public static String FIND_BY_NO_ASSETS =
+	public static final String FIND_BY_NO_ASSETS =
 		CalEventFinder.class.getName() + ".findByNoAssets";
 
-	public static String FIND_BY_G_SD_T =
+	public static final String FIND_BY_G_SD_T =
 		CalEventFinder.class.getName() + ".findByG_SD_T";
 
+	@Override
 	public int countByG_SD_T(
 			long groupId, Date startDateGT, Date startDateLT,
 			boolean timeZoneSensitive, String[] types)
@@ -93,7 +94,7 @@ public class CalEventFinderImpl
 				}
 			}
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -113,6 +114,7 @@ public class CalEventFinderImpl
 		}
 	}
 
+	@Override
 	public List<CalEvent> findByFutureReminders() throws SystemException {
 		Calendar calendar = Calendar.getInstance();
 
@@ -137,7 +139,7 @@ public class CalEventFinderImpl
 			qPos.add(calendar_TS);
 			qPos.add(calendar_TS);
 
-			return q.list();
+			return q.list(true);
 		}
 		catch (Exception e) {
 			throw new SystemException(e);
@@ -147,6 +149,7 @@ public class CalEventFinderImpl
 		}
 	}
 
+	@Override
 	public List<CalEvent> findByNoAssets() throws SystemException {
 		Session session = null;
 
@@ -159,7 +162,7 @@ public class CalEventFinderImpl
 
 			q.addEntity("CalEvent", CalEventImpl.class);
 
-			return q.list();
+			return q.list(true);
 		}
 		catch (Exception e) {
 			throw new SystemException(e);
@@ -169,6 +172,7 @@ public class CalEventFinderImpl
 		}
 	}
 
+	@Override
 	public List<CalEvent> findByG_SD_T(
 			long groupId, Date startDateGT, Date startDateLT,
 			boolean timeZoneSensitive, String[] types)
@@ -179,6 +183,7 @@ public class CalEventFinderImpl
 			QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 	}
 
+	@Override
 	public List<CalEvent> findByG_SD_T(
 			long groupId, Date startDateGT, Date startDateLT,
 			boolean timeZoneSensitive, String[] types, int start, int end)
@@ -242,7 +247,7 @@ public class CalEventFinderImpl
 				}
 			}
 
-			sb.append(")");
+			sb.append(StringPool.CLOSE_PARENTHESIS);
 
 			return sb.toString();
 		}

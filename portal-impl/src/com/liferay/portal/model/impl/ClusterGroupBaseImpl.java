@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -37,7 +37,13 @@ public abstract class ClusterGroupBaseImpl extends ClusterGroupModelImpl
 	 *
 	 * Never modify or reference this class directly. All methods that expect a cluster group model instance should use the {@link ClusterGroup} interface instead.
 	 */
+	@Override
 	public void persist() throws SystemException {
-		ClusterGroupLocalServiceUtil.updateClusterGroup(this);
+		if (this.isNew()) {
+			ClusterGroupLocalServiceUtil.addClusterGroup(this);
+		}
+		else {
+			ClusterGroupLocalServiceUtil.updateClusterGroup(this);
+		}
 	}
 }

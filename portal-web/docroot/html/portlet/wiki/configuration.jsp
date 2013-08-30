@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,41 +17,44 @@
 <%@ include file="/html/portlet/wiki/init.jsp" %>
 
 <%
-String tabs2 = ParamUtil.getString(request, "tabs2", "email-from");
+String tabs2 = ParamUtil.getString(request, "tabs2", "display-settings");
 
 String redirect = ParamUtil.getString(request, "redirect");
 
-String emailFromName = ParamUtil.getString(request, "emailFromName", WikiUtil.getEmailFromName(preferences));
-String emailFromAddress = ParamUtil.getString(request, "emailFromAddress", WikiUtil.getEmailFromAddress(preferences));
+String emailFromName = ParamUtil.getString(request, "preferences--emailFromName--", WikiUtil.getEmailFromName(portletPreferences, company.getCompanyId()));
+String emailFromAddress = ParamUtil.getString(request, "preferences--emailFromAddress--", WikiUtil.getEmailFromAddress(portletPreferences, company.getCompanyId()));
 
-String emailPageAddedSubjectPrefix = ParamUtil.getString(request, "emailPageAddedSubjectPrefix", WikiUtil.getEmailPageAddedSubjectPrefix(preferences));
-String emailPageAddedBody = ParamUtil.getString(request, "emailPageAddedBody", WikiUtil.getEmailPageAddedBody(preferences));
-String emailPageAddedSignature = ParamUtil.getString(request, "emailPageAddedSignature", WikiUtil.getEmailPageAddedSignature(preferences));
+boolean emailPageAddedEnabled = ParamUtil.getBoolean(request, "preferences--emailPageAddedEnabled--", WikiUtil.getEmailPageAddedEnabled(portletPreferences));
+boolean emailPageUpdatedEnabled = ParamUtil.getBoolean(request, "preferences--emailPageUpdatedEnabled--", WikiUtil.getEmailPageUpdatedEnabled(portletPreferences));
 
-String emailPageUpdatedSubjectPrefix = ParamUtil.getString(request, "emailPageUpdatedSubjectPrefix", WikiUtil.getEmailPageUpdatedSubjectPrefix(preferences));
-String emailPageUpdatedBody = ParamUtil.getString(request, "emailPageUpdatedBody", WikiUtil.getEmailPageUpdatedBody(preferences));
-String emailPageUpdatedSignature = ParamUtil.getString(request, "emailPageUpdatedSignature", WikiUtil.getEmailPageUpdatedSignature(preferences));
-
-String bodyEditorParam = StringPool.BLANK;
-String bodyEditorBody = StringPool.BLANK;
-String signatureEditorParam = StringPool.BLANK;
-String signatureEditorBody = StringPool.BLANK;
+String emailParam = StringPool.BLANK;
+String defaultEmailSubject = StringPool.BLANK;
+String defaultEmailBody = StringPool.BLANK;
+String defaultEmailSignature = StringPool.BLANK;
 
 if (tabs2.equals("page-added-email")) {
-	bodyEditorParam = "emailPageAddedBody";
-	bodyEditorBody = emailPageAddedBody;
-	signatureEditorParam = "emailPageAddedSignature";
-	signatureEditorBody = emailPageAddedSignature;
+	emailParam = "emailPageAdded";
+	defaultEmailSubject = ContentUtil.get(PropsValues.WIKI_EMAIL_PAGE_ADDED_SUBJECT);
+	defaultEmailBody = ContentUtil.get(PropsValues.WIKI_EMAIL_PAGE_ADDED_BODY);
+	defaultEmailSignature = ContentUtil.get(PropsValues.WIKI_EMAIL_PAGE_ADDED_SIGNATURE);
 }
 else if (tabs2.equals("page-updated-email")) {
-	bodyEditorParam = "emailPageUpdatedBody";
-	bodyEditorBody = emailPageUpdatedBody;
-	signatureEditorParam = "emailPageUpdatedSignature";
-	signatureEditorBody = emailPageUpdatedSignature;
+	emailParam = "emailPageUpdated";
+	defaultEmailSubject = ContentUtil.get(PropsValues.WIKI_EMAIL_PAGE_UPDATED_SUBJECT);
+	defaultEmailBody = ContentUtil.get(PropsValues.WIKI_EMAIL_PAGE_UPDATED_BODY);
+	defaultEmailSignature = ContentUtil.get(PropsValues.WIKI_EMAIL_PAGE_UPDATED_SIGNATURE);
 }
+
+String emailSubjectParam = emailParam + "Subject";
+String emailBodyParam = emailParam + "Body";
+String emailSignatureParam = emailParam + "Signature";
+
+String emailSubject = PrefsParamUtil.getString(portletPreferences, request, emailSubjectParam, defaultEmailSubject);
+String emailBody = PrefsParamUtil.getString(portletPreferences, request, emailBodyParam, defaultEmailBody);
+String emailSignature = PrefsParamUtil.getString(portletPreferences, request, emailSignatureParam, defaultEmailSignature);
 %>
 
-<liferay-portlet:renderURL var="portletURL" portletConfiguration="true">
+<liferay-portlet:renderURL portletConfiguration="true" var="portletURL">
 	<portlet:param name="tabs2" value="<%= tabs2 %>" />
 	<portlet:param name="redirect" value="<%= redirect %>" />
 </liferay-portlet:renderURL>
@@ -63,8 +66,16 @@ else if (tabs2.equals("page-updated-email")) {
 	<aui:input name="tabs2" type="hidden" value="<%= tabs2 %>" />
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 
+	<%
+	String tabs2Names = "display-settings,email-from,page-added-email,page-updated-email";
+
+	if (PortalUtil.isRSSFeedsEnabled()) {
+		tabs2Names += ",rss";
+	}
+	%>
+
 	<liferay-ui:tabs
-		names="email-from,page-added-email,page-updated-email,display-settings,rss"
+		names="<%= tabs2Names %>"
 		param="tabs2"
 		url="<%= portletURL %>"
 	/>
@@ -73,13 +84,16 @@ else if (tabs2.equals("page-updated-email")) {
 	<liferay-ui:error key="emailFromName" message="please-enter-a-valid-name" />
 	<liferay-ui:error key="emailPageAddedBody" message="please-enter-a-valid-body" />
 	<liferay-ui:error key="emailPageAddedSignature" message="please-enter-a-valid-signature" />
-	<liferay-ui:error key="emailPageAddedSubjectPrefix" message="please-enter-a-valid-subject" />
+	<liferay-ui:error key="emailPageAddedSubject" message="please-enter-a-valid-subject" />
 	<liferay-ui:error key="emailPageUpdatedBody" message="please-enter-a-valid-body" />
 	<liferay-ui:error key="emailPageUpdatedSignature" message="please-enter-a-valid-signature" />
-	<liferay-ui:error key="emailPageUpdatedSubjectPrefix" message="please-enter-a-valid-subject" />
+	<liferay-ui:error key="emailPageUpdatedSubject" message="please-enter-a-valid-subject" />
 	<liferay-ui:error key="visibleNodesCount" message="please-specify-at-least-one-visible-node" />
 
 	<c:choose>
+		<c:when test='<%= tabs2.equals("display-settings") %>'>
+			<%@ include file="/html/portlet/wiki/display_settings.jspf" %>
+		</c:when>
 		<c:when test='<%= tabs2.equals("email-from") %>'>
 			<aui:fieldset>
 				<aui:input cssClass="lfr-input-text-container" label="name" name="preferences--emailFromName--" value="<%= emailFromName %>" />
@@ -140,25 +154,18 @@ else if (tabs2.equals("page-updated-email")) {
 			<aui:fieldset>
 				<c:choose>
 					<c:when test='<%= tabs2.equals("page-added-email") %>'>
-						<aui:input label="enabled" name="preferences--emailPageAddedEnabled--" type="checkbox" value="<%= WikiUtil.getEmailPageAddedEnabled(preferences) %>" />
+						<aui:input label="enabled" name="preferences--emailPageAddedEnabled--" type="checkbox" value="<%= emailPageAddedEnabled %>" />
 					</c:when>
 					<c:when test='<%= tabs2.equals("page-updated-email") %>'>
-						<aui:input label="enabled" name="preferences--emailPageUpdatedEnabled--" type="checkbox" value="<%= WikiUtil.getEmailPageUpdatedEnabled(preferences) %>" />
+						<aui:input label="enabled" name="preferences--emailPageUpdatedEnabled--" type="checkbox" value="<%= emailPageUpdatedEnabled %>" />
 					</c:when>
 				</c:choose>
 
-				<c:choose>
-					<c:when test='<%= tabs2.equals("page-added-email") %>'>
-						<aui:input cssClass="lfr-input-text-container" label="subject-prefix" name="preferences--emailPageAddedSubjectPrefix--" type="text" value="<%= emailPageAddedSubjectPrefix %>" />
-					</c:when>
-					<c:when test='<%= tabs2.equals("page-updated-email") %>'>
-						<aui:input cssClass="lfr-input-text-container" label="subject-prefix" name="preferences--emailPageUpdatedSubjectPrefix--" type="text" value="<%= emailPageUpdatedSubjectPrefix %>" />
-					</c:when>
-				</c:choose>
+				<aui:input cssClass="lfr-input-text-container" label="subject" name='<%= "preferences--" + emailSubjectParam + "--" %>' value="<%= emailSubject %>" />
 
-				<aui:input cssClass="lfr-textarea-container" label="body" name='<%= "preferences--" + bodyEditorParam + "--" %>' type="textarea" value="<%= bodyEditorBody %>" />
+				<aui:input cssClass="lfr-textarea-container" label="body" name='<%= "preferences--" + emailBodyParam + "--" %>' type="textarea" value="<%= emailBody %>" />
 
-				<aui:input cssClass="lfr-textarea-container" label="signature" name='<%= "preferences--" + signatureEditorParam + "--" %>' type="textarea" value="<%= signatureEditorBody %>" wrap="soft" />
+				<aui:input cssClass="lfr-textarea-container" label="signature" name='<%= "preferences--" + emailSignatureParam + "--" %>' type="textarea" value="<%= emailSignature %>" wrap="soft" />
 			</aui:fieldset>
 
 			<div class="definition-of-terms">
@@ -294,108 +301,13 @@ else if (tabs2.equals("page-updated-email")) {
 				</dl>
 			</div>
 		</c:when>
-		<c:when test='<%= tabs2.equals("display-settings") %>'>
-			<aui:fieldset>
-				<aui:input name="preferences--enableRelatedAssets--" type="checkbox" value="<%= enableRelatedAssets %>" />
-
-				<c:if test="<%= PropsValues.WIKI_PAGE_RATINGS_ENABLED || PropsValues.WIKI_PAGE_COMMENTS_ENABLED %>">
-					<c:if test="<%= PropsValues.WIKI_PAGE_RATINGS_ENABLED %>">
-						<aui:input name="preferences--enablePageRatings--" type="checkbox" value="<%= enablePageRatings %>" />
-					</c:if>
-
-					<c:if test="<%= PropsValues.WIKI_PAGE_COMMENTS_ENABLED %>">
-						<aui:input name="preferences--enableComments--" type="checkbox" value="<%= enableComments %>" />
-
-						<aui:input name="preferences--enableCommentRatings--" type="checkbox" value="<%= enableCommentRatings %>" />
-					</c:if>
-				</c:if>
-			</aui:fieldset>
-
-			<aui:fieldset label="visible-wikis">
-				<aui:input name="preferences--visibleNodes--" type="hidden" />
-				<aui:input name="preferences--hiddenNodes--" type="hidden" />
-
-				<%
-				Set<String> currentVisibleNodes = new HashSet<String>(allNodeNames);
-
-				// Left list
-
-				List<KeyValuePair> leftList = new ArrayList<KeyValuePair>();
-
-				for (String folderColumn : visibleNodes) {
-					if (currentVisibleNodes.contains(folderColumn)) {
-						leftList.add(new KeyValuePair(folderColumn, LanguageUtil.get(pageContext, folderColumn)));
-					}
-				}
-
-				Arrays.sort(visibleNodes);
-				Arrays.sort(hiddenNodes);
-
-				Iterator<String> itr = currentVisibleNodes.iterator();
-
-				while (itr.hasNext()) {
-					String folderColumn = itr.next();
-
-					if ((Arrays.binarySearch(hiddenNodes, folderColumn) < 0) && (Arrays.binarySearch(visibleNodes, folderColumn) < 0)) {
-						leftList.add(new KeyValuePair(folderColumn, LanguageUtil.get(pageContext, folderColumn)));
-					}
-				}
-
-				// Right list
-
-				List<KeyValuePair> rightList = new ArrayList<KeyValuePair>();
-
-				for (String folderColumn : hiddenNodes) {
-					if (currentVisibleNodes.contains(folderColumn)) {
-						if (Arrays.binarySearch(visibleNodes, folderColumn) < 0) {
-							rightList.add(new KeyValuePair(folderColumn, LanguageUtil.get(pageContext, folderColumn)));
-						}
-					}
-				}
-
-				rightList = ListUtil.sort(rightList, new KeyValuePairComparator(false, true));
-
-				%>
-
-				<liferay-ui:input-move-boxes
-					leftTitle="visible"
-					rightTitle="hidden"
-					leftBoxName="currentVisibleNodes"
-					rightBoxName="availableVisibleNodes"
-					leftReorder="true"
-					leftList="<%= leftList %>"
-					rightList="<%= rightList %>"
-				/>
-			</aui:fieldset>
-		</c:when>
 		<c:when test='<%= tabs2.equals("rss") %>'>
-			<aui:fieldset>
-				<aui:select label="maximum-items-to-display" name="preferences--rssDelta--">
-					<aui:option label="1" selected="<%= rssDelta == 1 %>" />
-					<aui:option label="2" selected="<%= rssDelta == 2 %>" />
-					<aui:option label="3" selected="<%= rssDelta == 3 %>" />
-					<aui:option label="4" selected="<%= rssDelta == 4 %>" />
-					<aui:option label="5" selected="<%= rssDelta == 5 %>" />
-					<aui:option label="10" selected="<%= rssDelta == 10 %>" />
-					<aui:option label="15" selected="<%= rssDelta == 15 %>" />
-					<aui:option label="20" selected="<%= rssDelta == 20 %>" />
-					<aui:option label="25" selected="<%= rssDelta == 25 %>" />
-					<aui:option label="30" selected="<%= rssDelta == 30 %>" />
-					<aui:option label="40" selected="<%= rssDelta == 40 %>" />
-					<aui:option label="50" selected="<%= rssDelta == 50 %>" />
-					<aui:option label="60" selected="<%= rssDelta == 60 %>" />
-					<aui:option label="70" selected="<%= rssDelta == 70 %>" />
-					<aui:option label="80" selected="<%= rssDelta == 80 %>" />
-					<aui:option label="90" selected="<%= rssDelta == 90 %>" />
-					<aui:option label="100" selected="<%= rssDelta == 100 %>" />
-				</aui:select>
-
-				<aui:select label="display-style" name="preferences--rssDisplayStyle--">
-					<aui:option label="<%= RSSUtil.DISPLAY_STYLE_FULL_CONTENT %>" selected="<%= rssDisplayStyle.equals(RSSUtil.DISPLAY_STYLE_FULL_CONTENT) %>" />
-					<aui:option label="<%= RSSUtil.DISPLAY_STYLE_ABSTRACT %>" selected="<%= rssDisplayStyle.equals(RSSUtil.DISPLAY_STYLE_ABSTRACT) %>" />
-					<aui:option label="<%= RSSUtil.DISPLAY_STYLE_TITLE %>" selected="<%= rssDisplayStyle.equals(RSSUtil.DISPLAY_STYLE_TITLE) %>" />
-				</aui:select>
-			</aui:fieldset>
+			<liferay-ui:rss-settings
+				delta="<%= rssDelta %>"
+				displayStyle="<%= rssDisplayStyle %>"
+				enabled="<%= enableRSS %>"
+				feedType="<%= rssFeedType %>"
+			/>
 		</c:when>
 	</c:choose>
 

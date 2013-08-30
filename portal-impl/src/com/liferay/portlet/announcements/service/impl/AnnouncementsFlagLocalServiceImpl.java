@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -29,6 +29,7 @@ import java.util.List;
 public class AnnouncementsFlagLocalServiceImpl
 	extends AnnouncementsFlagLocalServiceBaseImpl {
 
+	@Override
 	public AnnouncementsFlag addFlag(long userId, long entryId, int value)
 		throws SystemException {
 
@@ -41,15 +42,17 @@ public class AnnouncementsFlagLocalServiceImpl
 		flag.setEntryId(entryId);
 		flag.setValue(value);
 
-		announcementsFlagPersistence.update(flag, false);
+		announcementsFlagPersistence.update(flag);
 
 		return flag;
 	}
 
+	@Override
 	public void deleteFlag(AnnouncementsFlag flag) throws SystemException {
 		announcementsFlagPersistence.remove(flag);
 	}
 
+	@Override
 	public void deleteFlag(long flagId)
 		throws PortalException, SystemException {
 
@@ -59,6 +62,7 @@ public class AnnouncementsFlagLocalServiceImpl
 		deleteFlag(flag);
 	}
 
+	@Override
 	public void deleteFlags(long entryId) throws SystemException {
 		List<AnnouncementsFlag> flags =
 			announcementsFlagPersistence.findByEntryId(entryId);
@@ -68,11 +72,11 @@ public class AnnouncementsFlagLocalServiceImpl
 		}
 	}
 
+	@Override
 	public AnnouncementsFlag getFlag(long userId, long entryId, int value)
 		throws PortalException, SystemException {
 
-		return announcementsFlagPersistence.findByU_E_V(
-			userId, entryId, value);
+		return announcementsFlagPersistence.findByU_E_V(userId, entryId, value);
 	}
 
 }

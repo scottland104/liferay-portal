@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,14 +32,7 @@ import java.util.Map;
  */
 public class DefaultWorkflowTask implements Serializable, WorkflowTask {
 
-	public void addWorkflowTaskForm(WorkflowTaskForm workflowTaskForm) {
-		if (_workflowTaskForms == null) {
-			_workflowTaskForms = new ArrayList<WorkflowTaskForm>();
-		}
-
-		_workflowTaskForms.add(workflowTaskForm);
-	}
-
+	@Override
 	public long getAssigneeUserId() {
 		if (!isAssignedToSingleUser()) {
 			return -1;
@@ -51,46 +44,57 @@ public class DefaultWorkflowTask implements Serializable, WorkflowTask {
 		return workflowTaskAssignee.getAssigneeClassPK();
 	}
 
+	@Override
 	public Date getCompletionDate() {
 		return _completionDate;
 	}
 
+	@Override
 	public Date getCreateDate() {
 		return _createDate;
 	}
 
+	@Override
 	public String getDescription() {
 		return _description;
 	}
 
+	@Override
 	public Date getDueDate() {
 		return _dueDate;
 	}
 
+	@Override
 	public String getName() {
 		return _name;
 	}
 
+	@Override
 	public Map<String, Serializable> getOptionalAttributes() {
 		return _optionalAttributes;
 	}
 
+	@Override
 	public long getWorkflowDefinitionId() {
 		return _workflowDefinitionId;
 	}
 
+	@Override
 	public String getWorkflowDefinitionName() {
 		return _workflowDefinitionName;
 	}
 
+	@Override
 	public int getWorkflowDefinitionVersion() {
 		return _workflowDefinitionVersion;
 	}
 
+	@Override
 	public long getWorkflowInstanceId() {
 		return _workflowInstanceId;
 	}
 
+	@Override
 	public List<WorkflowTaskAssignee> getWorkflowTaskAssignees() {
 		if (_workflowTaskAssignees == null) {
 			return Collections.emptyList();
@@ -99,14 +103,12 @@ public class DefaultWorkflowTask implements Serializable, WorkflowTask {
 		return _workflowTaskAssignees;
 	}
 
-	public List<WorkflowTaskForm> getWorkflowTaskForms() {
-		return _workflowTaskForms;
-	}
-
+	@Override
 	public long getWorkflowTaskId() {
 		return _workflowTaskId;
 	}
 
+	@Override
 	public boolean isAssignedToSingleUser() {
 		if (_workflowTaskAssignees == null) {
 			return false;
@@ -129,10 +131,12 @@ public class DefaultWorkflowTask implements Serializable, WorkflowTask {
 		}
 	}
 
+	@Override
 	public boolean isAsynchronous() {
 		return _asynchronous;
 	}
 
+	@Override
 	public boolean isCompleted() {
 		if (_completionDate != null) {
 			return true;
@@ -198,16 +202,6 @@ public class DefaultWorkflowTask implements Serializable, WorkflowTask {
 		_workflowTaskAssignees.addAll(workflowTaskAssignees);
 	}
 
-	public void setWorkflowTaskForms(
-		Collection<WorkflowTaskForm> workflowTaskForms) {
-
-		if (_workflowTaskAssignees == null) {
-			_workflowTaskForms = new ArrayList<WorkflowTaskForm>();
-		}
-
-		_workflowTaskForms.addAll(workflowTaskForms);
-	}
-
 	public void setWorkflowTaskId(long workflowTaskId) {
 		_workflowTaskId = workflowTaskId;
 	}
@@ -224,7 +218,6 @@ public class DefaultWorkflowTask implements Serializable, WorkflowTask {
 	private int _workflowDefinitionVersion;
 	private long _workflowInstanceId;
 	private List<WorkflowTaskAssignee> _workflowTaskAssignees;
-	private List<WorkflowTaskForm> _workflowTaskForms;
 	private long _workflowTaskId;
 
 }

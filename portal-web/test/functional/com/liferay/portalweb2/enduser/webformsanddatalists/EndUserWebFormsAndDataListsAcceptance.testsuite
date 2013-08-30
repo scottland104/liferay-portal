@@ -1,0 +1,7 @@
+<definition>
+	<execute test-suite="CPDynamicdatalistsAcceptance" />
+
+	<execute test-suite="PGDynamicdatalistsAcceptance" />
+
+	<execute test-suite="PGWebformAcceptance" />
+</definition>

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,16 +19,40 @@
 <%
 List<LayoutSetBranch> layoutSetBranches = LayoutSetBranchLocalServiceUtil.getLayoutSetBranches(stagingGroup.getGroupId(), privateLayout);
 
-LayoutSetBranch currentLayoutSetBranch = LayoutSetBranchLocalServiceUtil.getUserLayoutSetBranch(themeDisplay.getUserId(), stagingGroup.getGroupId(), privateLayout, 0);
+LayoutSetBranch currentLayoutSetBranch = LayoutSetBranchLocalServiceUtil.getUserLayoutSetBranch(themeDisplay.getUserId(), stagingGroup.getGroupId(), privateLayout, 0, 0);
 
 request.setAttribute("view_layout_set_branches.jsp-currentLayoutSetBranchId", String.valueOf(currentLayoutSetBranch.getLayoutSetBranchId()));
 %>
 
-<liferay-ui:error key="<%= LayoutSetBranchNameException.class.getName() + LayoutSetBranchNameException.DUPLICATE %>" message="a-site-pages-variation-with-that-name-already-exists" />
-<liferay-ui:error key="<%= LayoutSetBranchNameException.class.getName() + LayoutSetBranchNameException.TOO_LONG %>" message='<%= LanguageUtil.format(pageContext, "please-enter-a-value-between-x-and-x-characters-long", new Object[] {4, 100}) %>' />
-<liferay-ui:error key="<%= LayoutSetBranchNameException.class.getName() + LayoutSetBranchNameException.TOO_SHORT %>" message='<%= LanguageUtil.format(pageContext, "please-enter-a-value-between-x-and-x-characters-long", new Object[] {4, 100}) %>' />
+<liferay-ui:success key="sitePageVariationAdded" message="site-page-variation-was-added" />
+<liferay-ui:success key="sitePageVariationDeleted" message="site-page-variation-was-deleted" />
+<liferay-ui:success key="sitePageVariationMerged" message="site-page-variation-was-merged" />
+<liferay-ui:success key="sitePageVariationUpdated" message="site-page-variation-was-updated" />
 
-<div class="portlet-msg-info">
+<liferay-ui:error exception="<%= LayoutSetBranchNameException.class %>">
+
+	<%
+	LayoutSetBranchNameException lsbne = (LayoutSetBranchNameException)errorException;
+	%>
+
+	<c:if test="<%= lsbne.getType() == LayoutSetBranchNameException.DUPLICATE %>">
+		<liferay-ui:message key="a-site-pages-variation-with-that-name-already-exists" />
+	</c:if>
+
+	<c:if test="<%= lsbne.getType() == LayoutSetBranchNameException.MASTER %>">
+		<liferay-ui:message key="only-one-site-pages-variation-can-be-the-main-one" />
+	</c:if>
+
+	<c:if test="<%= lsbne.getType() == LayoutSetBranchNameException.TOO_LONG %>">
+		<liferay-ui:message arguments="<%= new Object[] {4, 100} %>" key="please-enter-a-value-between-x-and-x-characters-long" />
+	</c:if>
+
+	<c:if test="<%= lsbne.getType() == LayoutSetBranchNameException.TOO_SHORT %>">
+		<liferay-ui:message arguments="<%= new Object[] {4, 100} %>" key="please-enter-a-value-between-x-and-x-characters-long" />
+	</c:if>
+</liferay-ui:error>
+
+<div class="alert alert-info">
 	<liferay-ui:message key="pages-variations-help" />
 </div>
 
@@ -94,32 +118,15 @@ request.setAttribute("view_layout_set_branches.jsp-currentLayoutSetBranchId", St
 			/>
 		</liferay-ui:search-container-row>
 
-		<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" paginate="<%= false %>" />
+		<liferay-ui:search-iterator paginate="<%= false %>" searchContainer="<%= searchContainer %>" />
 	</liferay-ui:search-container>
 </div>
 
 <aui:script position="inline" use="liferay-staging-branch">
 	Liferay.StagingBar.init(
 		{
-			namespace: '<portlet:namespace />'
+			namespace: '<portlet:namespace />',
+			portletId: '<%= portletDisplay.getId() %>'
 		}
 	);
 </aui:script>
-
-<c:if test='<%= themeDisplay.isStatePopUp() && SessionMessages.contains(renderRequest, portletName + ".doConfigure") %>'>
-	<aui:script use="aui-base">
-		if (window.parent) {
-			var stagingBarPortletBoundaryId = '#p_p_id_<%= PortletKeys.STAGING_BAR %>_';
-
-			var data;
-
-			<c:if test='<%= SessionMessages.contains(renderRequest, portletName + ".notAjaxable") %>'>
-				data = {
-					portletAjaxable: false
-				};
-			</c:if>
-
-			Liferay.Util.getOpener().Liferay.Portlet.refresh(stagingBarPortletBoundaryId, data);
-		}
-	</aui:script>
-</c:if>

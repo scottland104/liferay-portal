@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,11 +15,14 @@
 package com.liferay.portal.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.service.ServiceContext;
 
 import com.liferay.portlet.expando.model.ExpandoBridge;
 
 import java.io.Serializable;
+
+import java.util.Date;
 
 /**
  * The base model interface for the UserGroup service. Represents a row in the &quot;UserGroup&quot; database table, with each column mapped to a property of this class.
@@ -34,7 +37,7 @@ import java.io.Serializable;
  * @see com.liferay.portal.model.impl.UserGroupModelImpl
  * @generated
  */
-public interface UserGroupModel extends BaseModel<UserGroup> {
+public interface UserGroupModel extends BaseModel<UserGroup>, StagedAuditedModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -56,6 +59,23 @@ public interface UserGroupModel extends BaseModel<UserGroup> {
 	public void setPrimaryKey(long primaryKey);
 
 	/**
+	 * Returns the uuid of this user group.
+	 *
+	 * @return the uuid of this user group
+	 */
+	@AutoEscape
+	@Override
+	public String getUuid();
+
+	/**
+	 * Sets the uuid of this user group.
+	 *
+	 * @param uuid the uuid of this user group
+	 */
+	@Override
+	public void setUuid(String uuid);
+
+	/**
 	 * Returns the user group ID of this user group.
 	 *
 	 * @return the user group ID of this user group
@@ -74,6 +94,7 @@ public interface UserGroupModel extends BaseModel<UserGroup> {
 	 *
 	 * @return the company ID of this user group
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -81,7 +102,90 @@ public interface UserGroupModel extends BaseModel<UserGroup> {
 	 *
 	 * @param companyId the company ID of this user group
 	 */
+	@Override
 	public void setCompanyId(long companyId);
+
+	/**
+	 * Returns the user ID of this user group.
+	 *
+	 * @return the user ID of this user group
+	 */
+	@Override
+	public long getUserId();
+
+	/**
+	 * Sets the user ID of this user group.
+	 *
+	 * @param userId the user ID of this user group
+	 */
+	@Override
+	public void setUserId(long userId);
+
+	/**
+	 * Returns the user uuid of this user group.
+	 *
+	 * @return the user uuid of this user group
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public String getUserUuid() throws SystemException;
+
+	/**
+	 * Sets the user uuid of this user group.
+	 *
+	 * @param userUuid the user uuid of this user group
+	 */
+	@Override
+	public void setUserUuid(String userUuid);
+
+	/**
+	 * Returns the user name of this user group.
+	 *
+	 * @return the user name of this user group
+	 */
+	@AutoEscape
+	@Override
+	public String getUserName();
+
+	/**
+	 * Sets the user name of this user group.
+	 *
+	 * @param userName the user name of this user group
+	 */
+	@Override
+	public void setUserName(String userName);
+
+	/**
+	 * Returns the create date of this user group.
+	 *
+	 * @return the create date of this user group
+	 */
+	@Override
+	public Date getCreateDate();
+
+	/**
+	 * Sets the create date of this user group.
+	 *
+	 * @param createDate the create date of this user group
+	 */
+	@Override
+	public void setCreateDate(Date createDate);
+
+	/**
+	 * Returns the modified date of this user group.
+	 *
+	 * @return the modified date of this user group
+	 */
+	@Override
+	public Date getModifiedDate();
+
+	/**
+	 * Sets the modified date of this user group.
+	 *
+	 * @param modifiedDate the modified date of this user group
+	 */
+	@Override
+	public void setModifiedDate(Date modifiedDate);
 
 	/**
 	 * Returns the parent user group ID of this user group.
@@ -128,34 +232,6 @@ public interface UserGroupModel extends BaseModel<UserGroup> {
 	public void setDescription(String description);
 
 	/**
-	 * Returns the public layout set prototype ID of this user group.
-	 *
-	 * @return the public layout set prototype ID of this user group
-	 */
-	public long getPublicLayoutSetPrototypeId();
-
-	/**
-	 * Sets the public layout set prototype ID of this user group.
-	 *
-	 * @param publicLayoutSetPrototypeId the public layout set prototype ID of this user group
-	 */
-	public void setPublicLayoutSetPrototypeId(long publicLayoutSetPrototypeId);
-
-	/**
-	 * Returns the private layout set prototype ID of this user group.
-	 *
-	 * @return the private layout set prototype ID of this user group
-	 */
-	public long getPrivateLayoutSetPrototypeId();
-
-	/**
-	 * Sets the private layout set prototype ID of this user group.
-	 *
-	 * @param privateLayoutSetPrototypeId the private layout set prototype ID of this user group
-	 */
-	public void setPrivateLayoutSetPrototypeId(long privateLayoutSetPrototypeId);
-
-	/**
 	 * Returns the added by l d a p import of this user group.
 	 *
 	 * @return the added by l d a p import of this user group
@@ -176,37 +252,60 @@ public interface UserGroupModel extends BaseModel<UserGroup> {
 	 */
 	public void setAddedByLDAPImport(boolean addedByLDAPImport);
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(UserGroup userGroup);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<UserGroup> toCacheModel();
 
+	@Override
 	public UserGroup toEscapedModel();
 
+	@Override
+	public UserGroup toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

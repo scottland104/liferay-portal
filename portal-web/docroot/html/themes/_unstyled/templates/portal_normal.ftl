@@ -2,15 +2,19 @@
 
 <#include init />
 
-<html class="<@liferay.language key="lang.dir" />" dir="<@liferay.language key="lang.dir" />" lang="${w3c_language_id}">
+<html class="${root_css_class}" dir="<@liferay.language key="lang.dir" />" lang="${w3c_language_id}">
 
 <head>
 	<title>${the_title} - ${company_name}</title>
+
+	<meta content="initial-scale=1.0, width=device-width" name="viewport" />
 
 	${theme.include(top_head_include)}
 </head>
 
 <body class="${css_class}">
+
+<a href="#main-content" id="skip-to-content"><@liferay.language key="skip-to-content" /></a>
 
 ${theme.include(body_top_include)}
 
@@ -18,51 +22,37 @@ ${theme.include(body_top_include)}
 	<@liferay.dockbar />
 </#if>
 
-<div id="wrapper">
-	<a href="#main-content" id="skip-to-content"><@liferay.language key="skip-to-content" /></a>
-
+<div class="container-fluid" id="wrapper">
 	<header id="banner" role="banner">
-		<hgroup id="heading">
-			<h1 class="company-title">
-				<a class="logo" href="${company_url}" title="<@liferay.language key="go-to" /> ${company_name}">
-					<span>${company_name}</span>
+		<div id="heading">
+			<h1 class="site-title">
+				<a class="${logo_css_class}" href="${site_default_url}" title="<@liferay.language key="go-to" /> ${site_name}">
+					<img alt="${logo_description}" height="${site_logo_height}" src="${site_logo}" width="${site_logo_width}" />
 				</a>
+
+				<#if show_site_name>
+					<span class="site-name" title="<@liferay.language key="go-to" /> ${site_name}">
+						${site_name}
+					</span>
+				</#if>
 			</h1>
 
-			<h2 class="site-title">
-				<a href="${site_default_url}" title="<@liferay.language key="go-to" /> ${site_name}">
-					<span>${site_name}</span>
-				</a>
-			</h2>
-
-			<h3 class="page-title">
+			<h2 class="page-title">
 				<span>${the_title}</span>
-			</h3>
-		</hgroup>
+			</h2>
+		</div>
 
 		<#if !is_signed_in>
 			<a href="${sign_in_url}" id="sign-in" rel="nofollow">${sign_in_text}</a>
 		</#if>
 
-		<#if update_available_url??>
-			<div class="popup-alert-notice">
-				<a class="update-available" href="${update_available_url}"><@liferay.language key="updates-are-available-for-liferay" /></a>
-			</div>
-		</#if>
-
-		<#if has_navigation>
+		<#if has_navigation || is_signed_in>
 			<#include "${full_templates_path}/navigation.ftl" />
 		</#if>
 	</header>
 
 	<div id="content">
-		<nav class="site-breadcrumbs" id="breadcrumbs">
-			<h1>
-				<span><@liferay.language key="breadcrumbs" /></span>
-			</h1>
-
-			<@liferay.breadcrumbs />
-		</nav>
+		<nav id="breadcrumbs"><@liferay.breadcrumbs /></nav>
 
 		<#if selectable>
 			${theme.include(content_include)}
@@ -84,8 +74,8 @@ ${theme.include(body_top_include)}
 
 ${theme.include(body_bottom_include)}
 
-</body>
-
 ${theme.include(bottom_include)}
+
+</body>
 
 </html>

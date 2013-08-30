@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,49 +14,54 @@
 
 package com.liferay.portlet.wiki.model;
 
+import com.liferay.portal.kernel.repository.model.FileEntry;
+
 import java.io.Serializable;
+
+import java.util.List;
 
 /**
  * @author Jorge Ferrer
  */
 public interface WikiPageDisplay extends Serializable {
 
-	public long getUserId();
-
-	public void setUserId(long userId);
-
-	public long getNodeId();
-
-	public void setNodeId(long nodeId);
-
-	public String getTitle();
-
-	public void setTitle(String title);
-
-	public double getVersion();
-
-	public void setVersion(double version);
+	public List<FileEntry> getAttachmentsFileEntries();
 
 	public String getContent();
 
-	public void setContent(String content);
+	public String getFormat();
 
 	public String getFormattedContent();
 
-	public void setFormattedContent(String formattedContent);
-
-	public String getFormat();
-
-	public void setFormat(String format);
-
 	public boolean getHead();
+
+	public long getNodeId();
+
+	public String getTitle();
+
+	public long getUserId();
+
+	public double getVersion();
 
 	public boolean isHead();
 
+	public void setAttachmentsFileEntries(
+		List<FileEntry> attachmentsFileEntries);
+
+	public void setContent(String content);
+
+	public void setFormat(String format);
+
+	public void setFormattedContent(String formattedContent);
+
 	public void setHead(boolean head);
 
-	public String[] getAttachments();
+	public void setNodeId(long nodeId);
 
-	public void setAttachments(String[] attachments);
+	public void setTitle(String title);
+
+	public void setUserId(long userId);
+
+	public void setVersion(double version);
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,10 +14,12 @@
 
 package com.liferay.portal.servlet;
 
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
 import com.liferay.portal.kernel.servlet.BrowserSniffer;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,8 +32,10 @@ import javax.servlet.http.HttpServletRequest;
  * @author Eduardo Lundgren
  * @author Nate Cavanaugh
  */
+@DoPrivileged
 public class BrowserSnifferImpl implements BrowserSniffer {
 
+	@Override
 	public boolean acceptsGzip(HttpServletRequest request) {
 		String acceptEncoding = request.getHeader(HttpHeaders.ACCEPT_ENCODING);
 
@@ -43,6 +47,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		}
 	}
 
+	@Override
 	public String getBrowserId(HttpServletRequest request) {
 		if (isIe(request)) {
 			return BROWSER_ID_IE;
@@ -55,6 +60,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		}
 	}
 
+	@Override
 	public float getMajorVersion(HttpServletRequest request) {
 		float majorVersion = 0;
 
@@ -69,6 +75,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return majorVersion;
 	}
 
+	@Override
 	public String getRevision(HttpServletRequest request) {
 		String revision = StringPool.BLANK;
 
@@ -83,6 +90,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return revision;
 	}
 
+	@Override
 	public String getVersion(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
@@ -116,6 +124,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return version;
 	}
 
+	@Override
 	public boolean isAir(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
@@ -126,6 +135,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isChrome(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
@@ -136,6 +146,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isFirefox(HttpServletRequest request) {
 		if (!isMozilla(request)) {
 			return false;
@@ -152,6 +163,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isGecko(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
@@ -162,16 +174,38 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isIe(HttpServletRequest request) {
+		return isIe(getUserAgent(request));
+	}
+
+	@Override
+	public boolean isIeOnWin32(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
-		if (userAgent.contains("msie") && !userAgent.contains("opera")) {
+		if (isIe(userAgent) &&
+			!(userAgent.contains("wow64") || userAgent.contains("win64"))) {
+
 			return true;
 		}
 
 		return false;
 	}
 
+	@Override
+	public boolean isIeOnWin64(HttpServletRequest request) {
+		String userAgent = getUserAgent(request);
+
+		if (isIe(userAgent) &&
+			(userAgent.contains("wow64") || userAgent.contains("win64"))) {
+
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
 	public boolean isIphone(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
@@ -182,6 +216,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isLinux(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
@@ -192,6 +227,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isMac(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
@@ -202,6 +238,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isMobile(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
@@ -212,11 +249,13 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isMozilla(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
 		if (userAgent.contains("mozilla") &&
-			!(userAgent.equals("compatible") || userAgent.equals("webkit"))) {
+			!(userAgent.contains("compatible") ||
+			  userAgent.contains("webkit"))) {
 
 			return true;
 		}
@@ -224,6 +263,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isOpera(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
@@ -234,8 +274,13 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isRtf(HttpServletRequest request) {
 		float majorVersion = getMajorVersion(request);
+
+		if (isChrome(request)) {
+			return true;
+		}
 
 		if (isIe(request) && (majorVersion >= 5.5)) {
 			return true;
@@ -245,12 +290,20 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 			return true;
 		}
 
-		if (!isMobile(request)) {
-			if (isOpera(request) && (majorVersion >= 10.0)) {
+		if (isOpera(request)) {
+			if (isMobile(request) && (majorVersion >= 10.0)) {
 				return true;
 			}
+			else if (!isMobile(request)) {
+				return true;
+			}
+		}
 
-			if (isSafari(request) && (majorVersion >= 3.0)) {
+		if (isSafari(request)) {
+			if (isMobile(request) && (majorVersion >= 5.0)) {
+				return true;
+			}
+			else if (!isMobile(request) && (majorVersion >= 3.0)) {
 				return true;
 			}
 		}
@@ -258,6 +311,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isSafari(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
@@ -268,6 +322,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isSun(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
@@ -278,10 +333,12 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isWap(HttpServletRequest request) {
 		return isWapXhtml(request);
 	}
 
+	@Override
 	public boolean isWapXhtml(HttpServletRequest request) {
 		String accept = getAccept(request);
 
@@ -292,6 +349,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isWebKit(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
@@ -304,6 +362,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isWindows(HttpServletRequest request) {
 		String userAgent = getUserAgent(request);
 
@@ -316,6 +375,7 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 		return false;
 	}
 
+	@Override
 	public boolean isWml(HttpServletRequest request) {
 		String accept = getAccept(request);
 
@@ -329,22 +389,26 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 	protected String getAccept(HttpServletRequest request) {
 		String accept = StringPool.BLANK;
 
-		if (request != null) {
-			accept = (String)request.getAttribute(HttpHeaders.ACCEPT);
-
-			if (accept == null) {
-				String acceptHeader = request.getHeader(HttpHeaders.ACCEPT);
-
-				if (acceptHeader != null) {
-					accept = acceptHeader.toLowerCase();
-				}
-				else {
-					accept = StringPool.BLANK;
-				}
-
-				request.setAttribute(HttpHeaders.ACCEPT, accept);
-			}
+		if (request == null) {
+			return accept;
 		}
+
+		accept = String.valueOf(request.getAttribute(HttpHeaders.ACCEPT));
+
+		if (Validator.isNotNull(accept)) {
+			return accept;
+		}
+
+		accept = request.getHeader(HttpHeaders.ACCEPT);
+
+		if (accept != null) {
+			accept = accept.toLowerCase();
+		}
+		else {
+			accept = StringPool.BLANK;
+		}
+
+		request.setAttribute(HttpHeaders.ACCEPT, accept);
 
 		return accept;
 	}
@@ -352,25 +416,37 @@ public class BrowserSnifferImpl implements BrowserSniffer {
 	protected String getUserAgent(HttpServletRequest request) {
 		String userAgent = StringPool.BLANK;
 
-		if (request != null) {
-			userAgent = (String)request.getAttribute(HttpHeaders.USER_AGENT);
-
-			if (userAgent == null) {
-				String userAgentHeader = request.getHeader(
-					HttpHeaders.USER_AGENT);
-
-				if (userAgentHeader != null) {
-					userAgent = userAgentHeader.toLowerCase();
-				}
-				else {
-					userAgent = StringPool.BLANK;
-				}
-
-				request.setAttribute(HttpHeaders.USER_AGENT, userAgent);
-			}
+		if (request == null) {
+			return userAgent;
 		}
 
+		userAgent = String.valueOf(
+			request.getAttribute(HttpHeaders.USER_AGENT));
+
+		if (Validator.isNotNull(userAgent)) {
+			return userAgent;
+		}
+
+		userAgent = request.getHeader(HttpHeaders.USER_AGENT);
+
+		if (userAgent != null) {
+			userAgent = userAgent.toLowerCase();
+		}
+		else {
+			userAgent = StringPool.BLANK;
+		}
+
+		request.setAttribute(HttpHeaders.USER_AGENT, userAgent);
+
 		return userAgent;
+	}
+
+	protected boolean isIe(String userAgent) {
+		if (userAgent.contains("msie") && !userAgent.contains("opera")) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private static final String[] _FIREFOX_ALIASES = {

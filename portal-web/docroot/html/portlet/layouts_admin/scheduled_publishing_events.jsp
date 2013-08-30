@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,39 +25,37 @@ SearchContainer searchContainer = new SearchContainer();
 
 List<String> headerNames = new ArrayList<String>();
 
-headerNames.add("description");
+headerNames.add("title");
 headerNames.add("start-date");
 headerNames.add("end-date");
 headerNames.add(StringPool.BLANK);
 
 searchContainer.setHeaderNames(headerNames);
-searchContainer.setEmptyResultsMessage("there-are-no-scheduled-events");
+searchContainer.setEmptyResultsMessage("there-are-no-scheduled-publication-processes");
 
-List<SchedulerResponse> results = SchedulerEngineUtil.getScheduledJobs(StagingUtil.getSchedulerGroupName(destinationName, groupId), StorageType.PERSISTED);
+List<SchedulerResponse> scheduledJobs = SchedulerEngineHelperUtil.getScheduledJobs(StagingUtil.getSchedulerGroupName(destinationName, groupId), StorageType.PERSISTED);
 
 List resultRows = searchContainer.getResultRows();
 
-for (int i = 0; i < results.size(); i++) {
-	SchedulerResponse schedulerResponse = results.get(i);
+for (int i = 0; i < scheduledJobs.size(); i++) {
+	SchedulerResponse schedulerResponse = scheduledJobs.get(i);
 
 	ResultRow row = new ResultRow(schedulerResponse, schedulerResponse.getJobName(), i);
 
-	// Description
+	// Title
 
 	row.addText(schedulerResponse.getDescription());
 
 	// Start date
 
-	Date startDate = SchedulerEngineUtil.getStartTime(schedulerResponse);
-
-	row.addText(dateFormatDateTime.format(startDate));
+	row.addDate(SchedulerEngineHelperUtil.getStartTime(schedulerResponse));
 
 	// End date
 
-	Date endDate = SchedulerEngineUtil.getEndTime(schedulerResponse);
+	Date endDate = SchedulerEngineHelperUtil.getEndTime(schedulerResponse);
 
 	if (endDate != null) {
-		row.addText(dateFormatDateTime.format(endDate));
+		row.addDate(endDate);
 	}
 	else {
 		row.addText(LanguageUtil.get(pageContext, "no-end-date"));
@@ -78,4 +76,4 @@ for (int i = 0; i < results.size(); i++) {
 }
 %>
 
-<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" paginate="<%= false %>" />
+<liferay-ui:search-iterator paginate="<%= false %>" searchContainer="<%= searchContainer %>" />

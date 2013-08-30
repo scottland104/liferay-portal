@@ -1,5 +1,12 @@
 <#ftl strip_whitespace=true>
 
+<#--
+Use computer number format to prevent issues with locale settings. See
+LPS-30525.
+-->
+
+<#setting number_format="computer">
+
 <#assign css_main_file = "" />
 
 <#if themeDisplay??>
@@ -12,30 +19,50 @@
 	<#assign js_main_file = htmlUtil.escape(portalUtil.getStaticResourceURL(request, "${themeDisplay.getPathThemeJavaScript()}/main.js")) />
 </#if>
 
-<#macro css file_name>
-	<#assign file_id = "">
+<#function max x y>
+	<#if (x < y)>
+		<#return y>
+	<#else>
+		<#return x>
+	</#if>
+</#function>
 
+<#function min x y>
+	<#if (x > y)>
+		<#return y>
+	<#else>
+		<#return x>
+	</#if>
+</#function>
+
+<#macro css
+	file_name
+>
 	<#if file_name = css_main_file>
-		<#assign file_id = "mainLiferayThemeCSS" />
+		<link class="lfr-css-file" href="${file_name}" id="mainLiferayThemeCSS" rel="stylesheet" type="text/css" />
+	<#else>
+		<link class="lfr-css-file" href="${file_name}" rel="stylesheet" type="text/css" />
 	</#if>
-
-	<link class="lfr-css-file" href="${file_name}" id="${file_id}" rel="stylesheet" type="text/css" />
 </#macro>
 
-<#macro js file_name>
-	<#assign file_id = "" />
-
+<#macro js
+	file_name
+>
 	<#if file_name == js_main_file>
-		<#assign file_id = "mainLiferayThemeJavaScript" />
+		<script id="mainLiferayThemeJavaScript" src="${file_name}" type="text/javascript"></script>
+	<#else>
+		<script src="${file_name}" type="text/javascript"></script>
 	</#if>
-
-	<script id="${file_id}" src="${file_name}" type="text/javascript"></script>
 </#macro>
 
-<#macro language key>
+<#macro language
+	key
+>
 ${languageUtil.get(locale, key)}</#macro>
 
-<#macro date format>
+<#macro date
+	format
+>
 ${dateUtil.getCurrentDate(format, locale)}</#macro>
 
 <#macro ie6_png_fix>
@@ -84,7 +111,9 @@ img, .png {
 </#if>
 </#macro>
 
-<#macro breadcrumbs control_panel = "">
+<#macro breadcrumbs
+	control_panel = ""
+>
 	<#if control_panel = "control_panel">
 		${theme.breadcrumb(0, false, false, true, true)}
 	<#else>

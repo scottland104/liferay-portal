@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -33,6 +33,17 @@ public class AssetTagFinderUtil {
 		return getFinder().countByG_N_P(groupId, name, tagProperties);
 	}
 
+	public static int filterCountByG_N(long groupId, java.lang.String name)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getFinder().filterCountByG_N(groupId, name);
+	}
+
+	public static int filterCountByG_C_N(long groupId, long classNameId,
+		java.lang.String name)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getFinder().filterCountByG_C_N(groupId, classNameId, name);
+	}
+
 	public static int filterCountByG_N_P(long groupId, java.lang.String name,
 		java.lang.String[] tagProperties)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -56,18 +67,13 @@ public class AssetTagFinderUtil {
 	}
 
 	public static java.util.List<com.liferay.portlet.asset.model.AssetTag> filterFindByG_N_P(
-		long groupId, java.lang.String name, java.lang.String[] tagProperties,
-		int start, int end, com.liferay.portal.kernel.util.OrderByComparator obc)
+		long[] groupIds, java.lang.String name,
+		java.lang.String[] tagProperties, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator obc)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getFinder()
-				   .filterFindByG_N_P(groupId, name, tagProperties, start, end,
-			obc);
-	}
-
-	public static java.util.List<com.liferay.portlet.asset.model.AssetTag> findByEntryId(
-		long entryId)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getFinder().findByEntryId(entryId);
+				   .filterFindByG_N_P(groupIds, name, tagProperties, start,
+			end, obc);
 	}
 
 	public static com.liferay.portlet.asset.model.AssetTag findByG_N(
@@ -75,12 +81,6 @@ public class AssetTagFinderUtil {
 		throws com.liferay.portal.kernel.exception.SystemException,
 			com.liferay.portlet.asset.NoSuchTagException {
 		return getFinder().findByG_N(groupId, name);
-	}
-
-	public static java.util.List<com.liferay.portlet.asset.model.AssetTag> findByC_C(
-		long classNameId, long classPK)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getFinder().findByC_C(classNameId, classPK);
 	}
 
 	public static java.util.List<com.liferay.portlet.asset.model.AssetTag> findByG_C_N(
@@ -92,11 +92,21 @@ public class AssetTagFinderUtil {
 	}
 
 	public static java.util.List<com.liferay.portlet.asset.model.AssetTag> findByG_N_P(
-		long groupId, java.lang.String name, java.lang.String[] tagProperties,
-		int start, int end, com.liferay.portal.kernel.util.OrderByComparator obc)
+		long[] groupIds, java.lang.String name,
+		java.lang.String[] tagProperties, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator obc)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getFinder()
-				   .findByG_N_P(groupId, name, tagProperties, start, end, obc);
+				   .findByG_N_P(groupIds, name, tagProperties, start, end, obc);
+	}
+
+	public static java.util.List<com.liferay.portlet.asset.model.AssetTag> findByG_N_S_E(
+		long groupId, java.lang.String name, int startPeriod, int endPeriod,
+		int periodLength)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getFinder()
+				   .findByG_N_S_E(groupId, name, startPeriod, endPeriod,
+			periodLength);
 	}
 
 	public static AssetTagFinder getFinder() {

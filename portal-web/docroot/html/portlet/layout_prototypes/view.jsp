@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,16 +17,14 @@
 <%@ include file="/html/portlet/layout_prototypes/init.jsp" %>
 
 <%
-String keywords = ParamUtil.getString(request, "keywords");
-
 PortletURL portletURL = renderResponse.createRenderURL();
 
 portletURL.setParameter("struts_action", "/layout_prototypes/view");
 %>
 
-<liferay-util:include page="/html/portlet/layout_prototypes/toolbar.jsp">
-	<liferay-util:param name="toolbarItem" value="view-all" />
-</liferay-util:include>
+<liferay-ui:error exception="<%= RequiredLayoutPrototypeException.class %>" message="you-cannot-delete-page-templates-that-are-used-by-a-page" />
+
+<liferay-util:include page="/html/portlet/layout_prototypes/toolbar.jsp" />
 
 <aui:form action="<%= portletURL.toString() %>" method="get" name="fm">
 	<liferay-portlet:renderURLParams varImpl="portletURL" />
@@ -34,14 +32,15 @@ portletURL.setParameter("struts_action", "/layout_prototypes/view");
 	<aui:input name="redirect" type="hidden" value="<%= portletURL.toString() %>" />
 
 	<liferay-ui:search-container
-		searchContainer='<%= new SearchContainer(renderRequest, null, null, SearchContainer.DEFAULT_CUR_PARAM, SearchContainer.DEFAULT_DELTA, portletURL, null, LanguageUtil.get(pageContext, "no-page-templates-were-found")) %>'
+		emptyResultsMessage="no-page-templates-were-found"
 		headerNames="name"
+		iteratorURL="<%= portletURL %>"
+		total="<%= LayoutPrototypeLocalServiceUtil.searchCount(company.getCompanyId(), null) %>"
 	>
 		<aui:input name="deleteLayoutPrototypesIds" type="hidden" />
 
 		<liferay-ui:search-container-results
 			results="<%= LayoutPrototypeLocalServiceUtil.search(company.getCompanyId(), null, searchContainer.getStart(), searchContainer.getEnd(), null) %>"
-			total="<%= LayoutPrototypeLocalServiceUtil.searchCount(company.getCompanyId(), null) %>"
 		/>
 
 		<liferay-ui:search-container-row
@@ -58,11 +57,23 @@ portletURL.setParameter("struts_action", "/layout_prototypes/view");
 			</liferay-portlet:renderURL>
 
 			<liferay-ui:search-container-column-text
-				href="<%= rowURL %>"
 				name="name"
 				orderable="<%= true %>"
-				value="<%= HtmlUtil.escape(layoutPrototype.getName(locale)) %>"
-			/>
+			>
+
+				<aui:a href="<%= rowURL.toString() %>"><%= layoutPrototype.getName(locale) %></aui:a>
+
+				<%
+				int mergeFailCount = SitesUtil.getMergeFailCount(layoutPrototype);
+				%>
+
+				<c:if test="<%= mergeFailCount > PropsValues.LAYOUT_PROTOTYPE_MERGE_FAIL_THRESHOLD %>">
+					<liferay-ui:icon
+						image="../messages/alert"
+						message='<%= LanguageUtil.format(pageContext, "the-propagation-of-changes-from-the-x-has-been-disabled-temporarily-after-x-errors", new Object[] {mergeFailCount, "page-template"}) %>'
+					/>
+				</c:if>
+			</liferay-ui:search-container-column-text>
 
 			<liferay-ui:search-container-column-text
 				href="<%= rowURL %>"
@@ -80,3 +91,24 @@ portletURL.setParameter("struts_action", "/layout_prototypes/view");
 		<liferay-ui:search-iterator />
 	</liferay-ui:search-container>
 </aui:form>
+
+<aui:script use="aui-base,liferay-util-window">
+	A.getBody().delegate(
+		'click',
+		function(event) {
+			event.preventDefault();
+
+			var link = event.currentTarget;
+			var title = link.get('text');
+
+			Liferay.Util.openWindow(
+				{
+					id: '<portlet:namespace />' + title,
+					title: title,
+					uri: link.attr('href')
+				}
+			);
+		},
+		'.layout-prototype-action a'
+	);
+</aui:script>

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -46,37 +46,48 @@ else if (group.isStagingGroup()) {
 <c:if test="<%= liveGroup.isStaged() && !liveGroup.isStagedPortlet(portlet.getRootPortletId()) %>">
 	<c:choose>
 		<c:when test="<%= !liveGroup.isStagedRemotely() && inStaging %>">
-			<div class="portlet-msg-alert">
+			<div class="alert alert-block">
 				<liferay-ui:message key="this-portlet-is-not-staged-local-alert" />
 			</div>
 		</c:when>
 		<c:when test="<%= liveGroup.isStagedRemotely() && themeDisplay.isSignedIn() %>">
-			<div class="portlet-msg-alert">
+			<div class="alert alert-block">
 				<liferay-ui:message key="this-portlet-is-not-staged-remote-alert" />
 			</div>
 		</c:when>
 	</c:choose>
 </c:if>
 
-<c:if test='<%= SessionMessages.contains(renderRequest, "request_processed") %>'>
-	<div class="portlet-msg-success">
+<c:if test='<%= SessionMessages.contains(renderRequest, "requestProcessed") && !SessionMessages.contains(renderRequest, portlet.getPortletId() + SessionMessages.KEY_SUFFIX_HIDE_DEFAULT_SUCCESS_MESSAGE) %>'>
+	<div class="alert alert-success">
 
 		<%
-		String successMessage = (String)SessionMessages.get(renderRequest, "request_processed");
+		String successMessage = (String)SessionMessages.get(renderRequest, "requestProcessed");
 		%>
 
 		<c:choose>
 			<c:when test='<%= Validator.isNotNull(successMessage) && !successMessage.equals("request_processed") %>'>
-				<%= successMessage %>
+				<%= HtmlUtil.escape(successMessage) %>
 			</c:when>
 			<c:otherwise>
 				<liferay-ui:message key="your-request-completed-successfully" />
 			</c:otherwise>
 		</c:choose>
+
+		<c:if test="<%= themeDisplay.isStatePopUp() && SessionMessages.contains(renderRequest, portlet.getPortletId() + SessionMessages.KEY_SUFFIX_CLOSE_REDIRECT) %>">
+
+			<%
+			String taglibMessage = "class=\"lfr-hide-dialog\" href=\"javascript:;\"";
+			%>
+
+			<liferay-ui:message arguments="<%= taglibMessage %>" key="the-page-will-be-refreshed-when-you-close-this-dialog.alternatively-you-can-hide-this-dialog-x" />
+		</c:if>
 	</div>
 </c:if>
 
-<liferay-ui:success key='<%= portletName + ".doConfigure" %>' message="you-have-successfully-updated-the-setup" />
-<liferay-ui:success key='<%= portletName + ".doEdit" %>' message="you-have-successfully-updated-your-preferences" />
+<liferay-ui:success key="<%= portlet.getPortletId() + SessionMessages.KEY_SUFFIX_UPDATED_CONFIGURATION %>" message="you-have-successfully-updated-the-setup" />
+<liferay-ui:success key="<%= portlet.getPortletId() + SessionMessages.KEY_SUFFIX_UPDATED_PREFERENCES %>" message="you-have-successfully-updated-your-preferences" />
 
-<liferay-ui:error />
+<c:if test="<%= !SessionMessages.contains(renderRequest, portlet.getPortletId() + SessionMessages.KEY_SUFFIX_HIDE_DEFAULT_ERROR_MESSAGE) %>">
+	<liferay-ui:error />
+</c:if>

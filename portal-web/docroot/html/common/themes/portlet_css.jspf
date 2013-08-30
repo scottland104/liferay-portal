@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,13 +15,13 @@
 --%>
 
 <%
-JSONObject jsonObj = PortletSetupUtil.cssToJSON(portletSetup, portletSetupCss);
+JSONObject jsonObject = PortletSetupUtil.cssToJSONObject(portletSetup, portletSetupCss);
 
 List finalCSS = new ArrayList();
 
 // Background data
 
-JSONObject bgData = jsonObj.getJSONObject("bgData");
+JSONObject bgData = jsonObject.getJSONObject("bgData");
 
 String bgColor = bgData.getString("backgroundColor");
 String bgImage = bgData.getString("backgroundImage");
@@ -50,7 +50,8 @@ if (useBgImage) {
 
 // Border data
 
-JSONObject borderData = jsonObj.getJSONObject("borderData");
+JSONObject borderData = jsonObject.getJSONObject("borderData");
+
 JSONObject borderWidth = borderData.getJSONObject("borderWidth");
 JSONObject borderStyle = borderData.getJSONObject("borderStyle");
 JSONObject borderColor = borderData.getJSONObject("borderColor");
@@ -66,10 +67,26 @@ JSONObject borderWidthRight = borderWidth.getJSONObject(_RIGHT_KEY);
 JSONObject borderWidthBottom = borderWidth.getJSONObject(_BOTTOM_KEY);
 JSONObject borderWidthLeft = borderWidth.getJSONObject(_LEFT_KEY);
 
-String borderTopWidthValue = borderWidthTop.getString(_VALUE_KEY) + borderWidthTop.getString(_UNIT_KEY);
-String borderRightWidthValue = borderWidthRight.getString(_VALUE_KEY) + borderWidthRight.getString(_UNIT_KEY);
-String borderBottomWidthValue = borderWidthBottom.getString(_VALUE_KEY) + borderWidthBottom.getString(_UNIT_KEY);
-String borderLeftWidthValue = borderWidthLeft.getString(_VALUE_KEY) + borderWidthLeft.getString(_UNIT_KEY);
+String borderTopWidthValue = StringPool.BLANK;
+String borderRightWidthValue = StringPool.BLANK;
+String borderBottomWidthValue = StringPool.BLANK;
+String borderLeftWidthValue = StringPool.BLANK;
+
+if (Validator.isNotNull(borderWidthTop.getString(_VALUE_KEY))) {
+	borderTopWidthValue = borderWidthTop.getString(_VALUE_KEY) + borderWidthTop.getString(_UNIT_KEY);
+}
+
+if (Validator.isNotNull(borderWidthRight.getString(_VALUE_KEY))) {
+	borderRightWidthValue = borderWidthRight.getString(_VALUE_KEY) + borderWidthRight.getString(_UNIT_KEY);
+}
+
+if (Validator.isNotNull(borderWidthBottom.getString(_VALUE_KEY))) {
+	borderBottomWidthValue = borderWidthBottom.getString(_VALUE_KEY) + borderWidthBottom.getString(_UNIT_KEY);
+}
+
+if (Validator.isNotNull(borderWidthLeft.getString(_VALUE_KEY))) {
+	borderLeftWidthValue = borderWidthLeft.getString(_VALUE_KEY) + borderWidthLeft.getString(_UNIT_KEY);
+}
 
 // Style
 
@@ -85,10 +102,8 @@ String borderRightColorValue = borderColor.getString(_RIGHT_KEY);
 String borderBottomColorValue = borderColor.getString(_BOTTOM_KEY);
 String borderLeftColorValue = borderColor.getString(_LEFT_KEY);
 
-if (ufaBorderWidth) {
-	if (!_unitSet.contains(borderTopWidthValue)) {
-		finalCSS.add("border-width: " + borderTopWidthValue);
-	}
+if (ufaBorderWidth && !_unitSet.contains(borderTopWidthValue)) {
+	finalCSS.add("border-width: " + borderTopWidthValue);
 }
 else {
 	if (!_unitSet.contains(borderTopWidthValue)) {
@@ -154,7 +169,8 @@ else {
 
 // Spacing data
 
-JSONObject spacingData = jsonObj.getJSONObject("spacingData");
+JSONObject spacingData = jsonObject.getJSONObject("spacingData");
+
 JSONObject margin = spacingData.getJSONObject("margin");
 JSONObject padding = spacingData.getJSONObject("padding");
 
@@ -173,10 +189,8 @@ String marginRightValue = marginRight.getString(_VALUE_KEY) + marginRight.getStr
 String marginBottomValue = marginBottom.getString(_VALUE_KEY) + marginBottom.getString(_UNIT_KEY);
 String marginLeftValue = marginLeft.getString(_VALUE_KEY) + marginLeft.getString(_UNIT_KEY);
 
-if (ufaMargin) {
-	if (!_unitSet.contains(marginTopValue)) {
-		finalCSS.add("margin: " + marginTopValue);
-	}
+if (ufaMargin && !_unitSet.contains(marginTopValue)) {
+	finalCSS.add("margin: " + marginTopValue);
 }
 else {
 	if (!_unitSet.contains(marginTopValue)) {
@@ -208,10 +222,8 @@ String paddingRightValue = paddingRight.getString(_VALUE_KEY) + paddingRight.get
 String paddingBottomValue = paddingBottom.getString(_VALUE_KEY) + paddingBottom.getString(_UNIT_KEY);
 String paddingLeftValue = paddingLeft.getString(_VALUE_KEY) + paddingLeft.getString(_UNIT_KEY);
 
-if (ufaPadding) {
-	if (!_unitSet.contains(paddingTopValue)) {
-		finalCSS.add("padding: " + paddingTopValue);
-	}
+if (ufaPadding && !_unitSet.contains(paddingTopValue)) {
+	finalCSS.add("padding: " + paddingTopValue);
 }
 else {
 	if (!_unitSet.contains(paddingTopValue)) {
@@ -233,7 +245,7 @@ else {
 
 // Text data
 
-JSONObject textData = jsonObj.getJSONObject("textData");
+JSONObject textData = jsonObject.getJSONObject("textData");
 
 String color = textData.getString("color");
 String fontFamily = textData.getString("fontFamily");
@@ -288,7 +300,7 @@ if (Validator.isNotNull(wordSpacing)) {
 
 // Advanced styling
 
-JSONObject advancedData = jsonObj.getJSONObject("advancedData");
+JSONObject advancedData = jsonObject.getJSONObject("advancedData");
 
 String customCSS = advancedData.getString("customCSS");
 
@@ -300,9 +312,9 @@ customCSS = StringUtil.replace(
 
 // Portlet data
 
-JSONObject portletData = jsonObj.getJSONObject("portletData");
+JSONObject portletData = jsonObject.getJSONObject("portletData");
 
-boolean showBorders = portletData.getBoolean("showBorders");
+boolean showBorders = portletData.getBoolean("showBorders", PropsValues.THEME_PORTLET_DECORATE_DEFAULT);
 
 // Generated CSS
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,13 +22,11 @@ import com.liferay.portlet.shopping.service.ShoppingOrderServiceUtil;
 import java.rmi.RemoteException;
 
 /**
- * <p>
- * This class provides a SOAP utility for the
+ * Provides the SOAP utility for the
  * {@link com.liferay.portlet.shopping.service.ShoppingOrderServiceUtil} service utility. The
  * static methods of this class calls the same methods of the service utility.
  * However, the signatures are different because it is difficult for SOAP to
  * support certain types.
- * </p>
  *
  * <p>
  * ServiceBuilder follows certain rules in translating the methods. For example,
@@ -48,9 +46,8 @@ import java.rmi.RemoteException;
  * </p>
  *
  * <p>
- * You can see a list of services at
- * http://localhost:8080/tunnel-web/secure/axis. Set the property
- * <b>tunnel.servlet.hosts.allowed</b> in portal.properties to configure
+ * You can see a list of services at http://localhost:8080/api/axis. Set the
+ * property <b>axis.servlet.hosts.allowed</b> in portal.properties to configure
  * security.
  * </p>
  *
@@ -58,20 +55,23 @@ import java.rmi.RemoteException;
  * The SOAP utility is only generated for remote services.
  * </p>
  *
- * @author    Brian Wing Shun Chan
- * @see       ShoppingOrderServiceHttp
- * @see       com.liferay.portlet.shopping.model.ShoppingOrderSoap
- * @see       com.liferay.portlet.shopping.service.ShoppingOrderServiceUtil
+ * @author Brian Wing Shun Chan
+ * @see ShoppingOrderServiceHttp
+ * @see com.liferay.portlet.shopping.model.ShoppingOrderSoap
+ * @see com.liferay.portlet.shopping.service.ShoppingOrderServiceUtil
  * @generated
  */
 public class ShoppingOrderServiceSoap {
 	public static void completeOrder(long groupId, java.lang.String number,
 		java.lang.String ppTxnId, java.lang.String ppPaymentStatus,
 		double ppPaymentGross, java.lang.String ppReceiverEmail,
-		java.lang.String ppPayerEmail) throws RemoteException {
+		java.lang.String ppPayerEmail,
+		com.liferay.portal.service.ServiceContext serviceContext)
+		throws RemoteException {
 		try {
 			ShoppingOrderServiceUtil.completeOrder(groupId, number, ppTxnId,
-				ppPaymentStatus, ppPaymentGross, ppReceiverEmail, ppPayerEmail);
+				ppPaymentStatus, ppPaymentGross, ppReceiverEmail, ppPayerEmail,
+				serviceContext);
 		}
 		catch (Exception e) {
 			_log.error(e, e);
@@ -108,9 +108,12 @@ public class ShoppingOrderServiceSoap {
 	}
 
 	public static void sendEmail(long groupId, long orderId,
-		java.lang.String emailType) throws RemoteException {
+		java.lang.String emailType,
+		com.liferay.portal.service.ServiceContext serviceContext)
+		throws RemoteException {
 		try {
-			ShoppingOrderServiceUtil.sendEmail(groupId, orderId, emailType);
+			ShoppingOrderServiceUtil.sendEmail(groupId, orderId, emailType,
+				serviceContext);
 		}
 		catch (Exception e) {
 			_log.error(e, e);

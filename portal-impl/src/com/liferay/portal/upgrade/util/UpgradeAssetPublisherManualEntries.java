@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portal.upgrade.util;
 
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.upgrade.BaseUpgradePortletPreferences;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
@@ -36,43 +37,6 @@ import javax.portlet.PortletPreferences;
  */
 public class UpgradeAssetPublisherManualEntries
 	extends BaseUpgradePortletPreferences {
-
-	public static void upgradeToAssetEntryUuidElement(Element rootElement)
-		throws Exception {
-
-		Element assetEntryIdElement = rootElement.element("asset-entry-id");
-
-		long assetEntryId = GetterUtil.getLong(assetEntryIdElement.getText());
-
-		Connection con = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-
-		try {
-			con = DataAccess.getConnection();
-
-			ps = con.prepareStatement(
-				"select classUuid from AssetEntry where entryId = ?");
-
-			ps.setLong(1, assetEntryId);
-
-			rs = ps.executeQuery();
-
-			rs.next();
-
-			String classUuid = rs.getString("classUuid");
-
-			Element assetEntryUuidElement = rootElement.addElement(
-				"assetEntryUuid");
-
-			assetEntryUuidElement.addText(classUuid);
-
-			rootElement.remove(assetEntryIdElement);
-		}
-		finally {
-			DataAccess.cleanUp(con, ps, rs);
-		}
-	}
 
 	public static void upgradeToAssetEntryIdElement(Element rootElement) {
 		Element assetIdElement = rootElement.element("asset-id");
@@ -104,6 +68,43 @@ public class UpgradeAssetPublisherManualEntries
 		}
 	}
 
+	public static void upgradeToAssetEntryUuidElement(Element rootElement)
+		throws Exception {
+
+		Element assetEntryIdElement = rootElement.element("assetEntryId");
+
+		long assetEntryId = GetterUtil.getLong(assetEntryIdElement.getText());
+
+		Connection con = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			con = DataAccess.getUpgradeOptimizedConnection();
+
+			ps = con.prepareStatement(
+				"select classUuid from AssetEntry where entryId = ?");
+
+			ps.setLong(1, assetEntryId);
+
+			rs = ps.executeQuery();
+
+			if (rs.next()) {
+				String classUuid = rs.getString("classUuid");
+
+				Element assetEntryUuidElement = rootElement.addElement(
+					"assetEntryUuid");
+
+				assetEntryUuidElement.addText(classUuid);
+
+				rootElement.remove(assetEntryIdElement);
+			}
+		}
+		finally {
+			DataAccess.cleanUp(con, ps, rs);
+		}
+	}
+
 	protected String[] getAssetEntryXmls(String[] manualEntries)
 		throws Exception {
 
@@ -132,7 +133,7 @@ public class UpgradeAssetPublisherManualEntries
 	protected String getUpdatePortletPreferencesWhereClause() {
 		StringBundler sb = new StringBundler(5);
 
-		sb.append("(portletId like '101_INSTANCE_%') AND ((preferences like ");
+		sb.append("(portletId like '101_INSTANCE_%') and ((preferences like ");
 		sb.append("'%<preference><name>selection-style</name><value>manual");
 		sb.append("</value></preference>%') OR (preferences like ");
 		sb.append("'%<preference><name>selectionStyle</name><value>manual");
@@ -154,7 +155,7 @@ public class UpgradeAssetPublisherManualEntries
 		String[] assetEntryXmls = portletPreferences.getValues(
 			"asset-entry-xml", new String[0]);
 
-		if (Validator.isNull(assetEntryXmls)) {
+		if (ArrayUtil.isEmpty(assetEntryXmls)) {
 			assetEntryXmls = portletPreferences.getValues(
 				"assetEntryXml", new String[0]);
 		}
@@ -162,13 +163,13 @@ public class UpgradeAssetPublisherManualEntries
 		String[] manualEntries = portletPreferences.getValues(
 			"manual-entries", new String[0]);
 
-		if (Validator.isNull(manualEntries)) {
+		if (ArrayUtil.isEmpty(manualEntries)) {
 			manualEntries = portletPreferences.getValues(
 				"manualEntries", new String[0]);
 		}
 
-		if (Validator.isNull(assetEntryXmls) &&
-			Validator.isNotNull(manualEntries)) {
+		if (ArrayUtil.isEmpty(assetEntryXmls) &&
+			ArrayUtil.isNotEmpty(manualEntries)) {
 
 			assetEntryXmls = getAssetEntryXmls(manualEntries);
 

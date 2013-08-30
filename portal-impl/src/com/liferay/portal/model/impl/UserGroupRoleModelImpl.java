@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.UserGroupRole;
@@ -28,12 +29,12 @@ import com.liferay.portal.util.PortalUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base model implementation for the UserGroupRole service. Represents a row in the &quot;UserGroupRole&quot; database table, with each column mapped to a property of this class.
@@ -64,6 +65,8 @@ public class UserGroupRoleModelImpl extends BaseModelImpl<UserGroupRole>
 		};
 	public static final String TABLE_SQL_CREATE = "create table UserGroupRole (userId LONG not null,groupId LONG not null,roleId LONG not null,primary key (userId, groupId, roleId))";
 	public static final String TABLE_SQL_DROP = "drop table UserGroupRole";
+	public static final String ORDER_BY_JPQL = " ORDER BY userGroupRole.id.userId ASC, userGroupRole.id.groupId ASC, userGroupRole.id.roleId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY UserGroupRole.userId ASC, UserGroupRole.groupId ASC, UserGroupRole.roleId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -73,6 +76,12 @@ public class UserGroupRoleModelImpl extends BaseModelImpl<UserGroupRole>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.UserGroupRole"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.UserGroupRole"),
+			true);
+	public static long GROUPID_COLUMN_BITMASK = 1L;
+	public static long ROLEID_COLUMN_BITMASK = 2L;
+	public static long USERID_COLUMN_BITMASK = 4L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -81,6 +90,10 @@ public class UserGroupRoleModelImpl extends BaseModelImpl<UserGroupRole>
 	 * @return the normal model instance
 	 */
 	public static UserGroupRole toModel(UserGroupRoleSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		UserGroupRole model = new UserGroupRoleImpl();
 
 		model.setUserId(soapModel.getUserId());
@@ -97,6 +110,10 @@ public class UserGroupRoleModelImpl extends BaseModelImpl<UserGroupRole>
 	 * @return the normal model instances
 	 */
 	public static List<UserGroupRole> toModels(UserGroupRoleSoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<UserGroupRole> models = new ArrayList<UserGroupRole>(soapModels.length);
 
 		for (UserGroupRoleSoap soapModel : soapModels) {
@@ -106,87 +123,167 @@ public class UserGroupRoleModelImpl extends BaseModelImpl<UserGroupRole>
 		return models;
 	}
 
-	public Class<?> getModelClass() {
-		return UserGroupRole.class;
-	}
-
-	public String getModelClassName() {
-		return UserGroupRole.class.getName();
-	}
-
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.UserGroupRole"));
 
 	public UserGroupRoleModelImpl() {
 	}
 
+	@Override
 	public UserGroupRolePK getPrimaryKey() {
 		return new UserGroupRolePK(_userId, _groupId, _roleId);
 	}
 
+	@Override
 	public void setPrimaryKey(UserGroupRolePK primaryKey) {
 		setUserId(primaryKey.userId);
 		setGroupId(primaryKey.groupId);
 		setRoleId(primaryKey.roleId);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
 		return new UserGroupRolePK(_userId, _groupId, _roleId);
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey((UserGroupRolePK)primaryKeyObj);
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return UserGroupRole.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return UserGroupRole.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("userId", getUserId());
+		attributes.put("groupId", getGroupId());
+		attributes.put("roleId", getRoleId());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long userId = (Long)attributes.get("userId");
+
+		if (userId != null) {
+			setUserId(userId);
+		}
+
+		Long groupId = (Long)attributes.get("groupId");
+
+		if (groupId != null) {
+			setGroupId(groupId);
+		}
+
+		Long roleId = (Long)attributes.get("roleId");
+
+		if (roleId != null) {
+			setRoleId(roleId);
+		}
+	}
+
 	@JSON
+	@Override
 	public long getUserId() {
 		return _userId;
 	}
 
+	@Override
 	public void setUserId(long userId) {
+		_columnBitmask |= USERID_COLUMN_BITMASK;
+
+		if (!_setOriginalUserId) {
+			_setOriginalUserId = true;
+
+			_originalUserId = _userId;
+		}
+
 		_userId = userId;
 	}
 
+	@Override
 	public String getUserUuid() throws SystemException {
 		return PortalUtil.getUserValue(getUserId(), "uuid", _userUuid);
 	}
 
+	@Override
 	public void setUserUuid(String userUuid) {
 		_userUuid = userUuid;
 	}
 
+	public long getOriginalUserId() {
+		return _originalUserId;
+	}
+
 	@JSON
+	@Override
 	public long getGroupId() {
 		return _groupId;
 	}
 
+	@Override
 	public void setGroupId(long groupId) {
+		_columnBitmask |= GROUPID_COLUMN_BITMASK;
+
+		if (!_setOriginalGroupId) {
+			_setOriginalGroupId = true;
+
+			_originalGroupId = _groupId;
+		}
+
 		_groupId = groupId;
 	}
 
+	public long getOriginalGroupId() {
+		return _originalGroupId;
+	}
+
 	@JSON
+	@Override
 	public long getRoleId() {
 		return _roleId;
 	}
 
+	@Override
 	public void setRoleId(long roleId) {
+		_columnBitmask |= ROLEID_COLUMN_BITMASK;
+
+		if (!_setOriginalRoleId) {
+			_setOriginalRoleId = true;
+
+			_originalRoleId = _roleId;
+		}
+
 		_roleId = roleId;
+	}
+
+	public long getOriginalRoleId() {
+		return _originalRoleId;
+	}
+
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public UserGroupRole toEscapedModel() {
-		if (isEscapedModel()) {
-			return (UserGroupRole)this;
+		if (_escapedModel == null) {
+			_escapedModel = (UserGroupRole)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
 		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (UserGroupRole)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
 
-			return _escapedModelProxy;
-		}
+		return _escapedModel;
 	}
 
 	@Override
@@ -202,6 +299,7 @@ public class UserGroupRoleModelImpl extends BaseModelImpl<UserGroupRole>
 		return userGroupRoleImpl;
 	}
 
+	@Override
 	public int compareTo(UserGroupRole userGroupRole) {
 		UserGroupRolePK primaryKey = userGroupRole.getPrimaryKey();
 
@@ -210,18 +308,15 @@ public class UserGroupRoleModelImpl extends BaseModelImpl<UserGroupRole>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof UserGroupRole)) {
 			return false;
 		}
 
-		UserGroupRole userGroupRole = null;
-
-		try {
-			userGroupRole = (UserGroupRole)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		UserGroupRole userGroupRole = (UserGroupRole)obj;
 
 		UserGroupRolePK primaryKey = userGroupRole.getPrimaryKey();
 
@@ -240,6 +335,21 @@ public class UserGroupRoleModelImpl extends BaseModelImpl<UserGroupRole>
 
 	@Override
 	public void resetOriginalValues() {
+		UserGroupRoleModelImpl userGroupRoleModelImpl = this;
+
+		userGroupRoleModelImpl._originalUserId = userGroupRoleModelImpl._userId;
+
+		userGroupRoleModelImpl._setOriginalUserId = false;
+
+		userGroupRoleModelImpl._originalGroupId = userGroupRoleModelImpl._groupId;
+
+		userGroupRoleModelImpl._setOriginalGroupId = false;
+
+		userGroupRoleModelImpl._originalRoleId = userGroupRoleModelImpl._roleId;
+
+		userGroupRoleModelImpl._setOriginalRoleId = false;
+
+		userGroupRoleModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -270,6 +380,7 @@ public class UserGroupRoleModelImpl extends BaseModelImpl<UserGroupRole>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(13);
 
@@ -296,12 +407,19 @@ public class UserGroupRoleModelImpl extends BaseModelImpl<UserGroupRole>
 	}
 
 	private static ClassLoader _classLoader = UserGroupRole.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			UserGroupRole.class
 		};
 	private long _userId;
 	private String _userUuid;
+	private long _originalUserId;
+	private boolean _setOriginalUserId;
 	private long _groupId;
+	private long _originalGroupId;
+	private boolean _setOriginalGroupId;
 	private long _roleId;
-	private UserGroupRole _escapedModelProxy;
+	private long _originalRoleId;
+	private boolean _setOriginalRoleId;
+	private long _columnBitmask;
+	private UserGroupRole _escapedModel;
 }

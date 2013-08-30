@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,6 +23,9 @@ import com.liferay.portal.security.permission.PermissionChecker;
  */
 public class DDLPermission {
 
+	public static final String RESOURCE_NAME =
+		"com.liferay.portlet.dynamicdatalists";
+
 	public static void check(
 			PermissionChecker permissionChecker, long groupId, String actionId)
 		throws PortalException {
@@ -36,10 +39,7 @@ public class DDLPermission {
 		PermissionChecker permissionChecker, long groupId, String actionId) {
 
 		return permissionChecker.hasPermission(
-			groupId, _CLASS_NAME, groupId, actionId);
+			groupId, RESOURCE_NAME, groupId, actionId);
 	}
-
-	private static final String _CLASS_NAME =
-		"com.liferay.portlet.dynamicdatalists";
 
 }

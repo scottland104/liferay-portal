@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -80,7 +80,7 @@ public class Base64OutputStream extends OutputStream {
 		while (bytesLength > 0) {
 			encodeUnit(bytes[offset], bytes[offset + 1], bytes[offset + 2]);
 
-			bytesLength -=3 ;
+			bytesLength -= 3;
 			offset += 3;
 		}
 
@@ -167,15 +167,15 @@ public class Base64OutputStream extends OutputStream {
 	}
 
 	protected char getChar(int sixbit) {
-		if (sixbit >= 0 && sixbit <= 25) {
+		if ((sixbit >= 0) && (sixbit <= 25)) {
 			return (char)(65 + sixbit);
 		}
 
-		if (sixbit >= 26 && sixbit <= 51) {
+		if ((sixbit >= 26) && (sixbit <= 51)) {
 			return (char)(97 + (sixbit - 26));
 		}
 
-		if (sixbit >= 52 && sixbit <= 61) {
+		if ((sixbit >= 52) && (sixbit <= 61)) {
 			return (char)(48 + (sixbit - 52));
 		}
 

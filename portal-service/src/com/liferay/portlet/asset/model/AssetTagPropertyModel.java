@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -81,6 +81,7 @@ public interface AssetTagPropertyModel extends AuditedModel,
 	 *
 	 * @return the company ID of this asset tag property
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -88,6 +89,7 @@ public interface AssetTagPropertyModel extends AuditedModel,
 	 *
 	 * @param companyId the company ID of this asset tag property
 	 */
+	@Override
 	public void setCompanyId(long companyId);
 
 	/**
@@ -95,6 +97,7 @@ public interface AssetTagPropertyModel extends AuditedModel,
 	 *
 	 * @return the user ID of this asset tag property
 	 */
+	@Override
 	public long getUserId();
 
 	/**
@@ -102,6 +105,7 @@ public interface AssetTagPropertyModel extends AuditedModel,
 	 *
 	 * @param userId the user ID of this asset tag property
 	 */
+	@Override
 	public void setUserId(long userId);
 
 	/**
@@ -110,6 +114,7 @@ public interface AssetTagPropertyModel extends AuditedModel,
 	 * @return the user uuid of this asset tag property
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getUserUuid() throws SystemException;
 
 	/**
@@ -117,6 +122,7 @@ public interface AssetTagPropertyModel extends AuditedModel,
 	 *
 	 * @param userUuid the user uuid of this asset tag property
 	 */
+	@Override
 	public void setUserUuid(String userUuid);
 
 	/**
@@ -125,6 +131,7 @@ public interface AssetTagPropertyModel extends AuditedModel,
 	 * @return the user name of this asset tag property
 	 */
 	@AutoEscape
+	@Override
 	public String getUserName();
 
 	/**
@@ -132,6 +139,7 @@ public interface AssetTagPropertyModel extends AuditedModel,
 	 *
 	 * @param userName the user name of this asset tag property
 	 */
+	@Override
 	public void setUserName(String userName);
 
 	/**
@@ -139,6 +147,7 @@ public interface AssetTagPropertyModel extends AuditedModel,
 	 *
 	 * @return the create date of this asset tag property
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -146,6 +155,7 @@ public interface AssetTagPropertyModel extends AuditedModel,
 	 *
 	 * @param createDate the create date of this asset tag property
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -153,6 +163,7 @@ public interface AssetTagPropertyModel extends AuditedModel,
 	 *
 	 * @return the modified date of this asset tag property
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -160,6 +171,7 @@ public interface AssetTagPropertyModel extends AuditedModel,
 	 *
 	 * @param modifiedDate the modified date of this asset tag property
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
@@ -206,37 +218,60 @@ public interface AssetTagPropertyModel extends AuditedModel,
 	 */
 	public void setValue(String value);
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(AssetTagProperty assetTagProperty);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<AssetTagProperty> toCacheModel();
 
+	@Override
 	public AssetTagProperty toEscapedModel();
 
+	@Override
+	public AssetTagProperty toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

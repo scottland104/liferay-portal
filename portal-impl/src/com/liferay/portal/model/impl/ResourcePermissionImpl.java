@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -13,6 +13,9 @@
  */
 
 package com.liferay.portal.model.impl;
+
+import com.liferay.portal.model.ResourceAction;
+import com.liferay.portal.service.ResourceActionLocalServiceUtil;
 
 /**
  * Stores the permissions assigned to roles under permissions version 6. A
@@ -86,6 +89,24 @@ package com.liferay.portal.model.impl;
 public class ResourcePermissionImpl extends ResourcePermissionBaseImpl {
 
 	public ResourcePermissionImpl() {
+	}
+
+	@Override
+	public boolean hasActionId(String actionId) {
+		ResourceAction resourceAction =
+			ResourceActionLocalServiceUtil.fetchResourceAction(
+				getName(), actionId);
+
+		if (resourceAction != null) {
+			long actionIds = getActionIds();
+			long bitwiseValue = resourceAction.getBitwiseValue();
+
+			if ((actionIds & bitwiseValue) == bitwiseValue) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 }

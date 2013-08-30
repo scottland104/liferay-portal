@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.Account;
@@ -32,13 +33,13 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base model implementation for the Account service. Represents a row in the &quot;Account_&quot; database table, with each column mapped to a property of this class.
@@ -82,6 +83,8 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 		};
 	public static final String TABLE_SQL_CREATE = "create table Account_ (accountId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,parentAccountId LONG,name VARCHAR(75) null,legalName VARCHAR(75) null,legalId VARCHAR(75) null,legalType VARCHAR(75) null,sicCode VARCHAR(75) null,tickerSymbol VARCHAR(75) null,industry VARCHAR(75) null,type_ VARCHAR(75) null,size_ VARCHAR(75) null)";
 	public static final String TABLE_SQL_DROP = "drop table Account_";
+	public static final String ORDER_BY_JPQL = " ORDER BY account.accountId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY Account_.accountId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -91,6 +94,7 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.Account"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = false;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -99,6 +103,10 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 	 * @return the normal model instance
 	 */
 	public static Account toModel(AccountSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		Account model = new AccountImpl();
 
 		model.setAccountId(soapModel.getAccountId());
@@ -128,6 +136,10 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 	 * @return the normal model instances
 	 */
 	public static List<Account> toModels(AccountSoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<Account> models = new ArrayList<Account>(soapModels.length);
 
 		for (AccountSoap soapModel : soapModels) {
@@ -137,72 +149,210 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 		return models;
 	}
 
-	public Class<?> getModelClass() {
-		return Account.class;
-	}
-
-	public String getModelClassName() {
-		return Account.class.getName();
-	}
-
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.Account"));
 
 	public AccountModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _accountId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setAccountId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_accountId);
+		return _accountId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return Account.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return Account.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("accountId", getAccountId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("userId", getUserId());
+		attributes.put("userName", getUserName());
+		attributes.put("createDate", getCreateDate());
+		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("parentAccountId", getParentAccountId());
+		attributes.put("name", getName());
+		attributes.put("legalName", getLegalName());
+		attributes.put("legalId", getLegalId());
+		attributes.put("legalType", getLegalType());
+		attributes.put("sicCode", getSicCode());
+		attributes.put("tickerSymbol", getTickerSymbol());
+		attributes.put("industry", getIndustry());
+		attributes.put("type", getType());
+		attributes.put("size", getSize());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long accountId = (Long)attributes.get("accountId");
+
+		if (accountId != null) {
+			setAccountId(accountId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long userId = (Long)attributes.get("userId");
+
+		if (userId != null) {
+			setUserId(userId);
+		}
+
+		String userName = (String)attributes.get("userName");
+
+		if (userName != null) {
+			setUserName(userName);
+		}
+
+		Date createDate = (Date)attributes.get("createDate");
+
+		if (createDate != null) {
+			setCreateDate(createDate);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
+		}
+
+		Long parentAccountId = (Long)attributes.get("parentAccountId");
+
+		if (parentAccountId != null) {
+			setParentAccountId(parentAccountId);
+		}
+
+		String name = (String)attributes.get("name");
+
+		if (name != null) {
+			setName(name);
+		}
+
+		String legalName = (String)attributes.get("legalName");
+
+		if (legalName != null) {
+			setLegalName(legalName);
+		}
+
+		String legalId = (String)attributes.get("legalId");
+
+		if (legalId != null) {
+			setLegalId(legalId);
+		}
+
+		String legalType = (String)attributes.get("legalType");
+
+		if (legalType != null) {
+			setLegalType(legalType);
+		}
+
+		String sicCode = (String)attributes.get("sicCode");
+
+		if (sicCode != null) {
+			setSicCode(sicCode);
+		}
+
+		String tickerSymbol = (String)attributes.get("tickerSymbol");
+
+		if (tickerSymbol != null) {
+			setTickerSymbol(tickerSymbol);
+		}
+
+		String industry = (String)attributes.get("industry");
+
+		if (industry != null) {
+			setIndustry(industry);
+		}
+
+		String type = (String)attributes.get("type");
+
+		if (type != null) {
+			setType(type);
+		}
+
+		String size = (String)attributes.get("size");
+
+		if (size != null) {
+			setSize(size);
+		}
+	}
+
 	@JSON
+	@Override
 	public long getAccountId() {
 		return _accountId;
 	}
 
+	@Override
 	public void setAccountId(long accountId) {
 		_accountId = accountId;
 	}
 
 	@JSON
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
 		_companyId = companyId;
 	}
 
 	@JSON
+	@Override
 	public long getUserId() {
 		return _userId;
 	}
 
+	@Override
 	public void setUserId(long userId) {
 		_userId = userId;
 	}
 
+	@Override
 	public String getUserUuid() throws SystemException {
 		return PortalUtil.getUserValue(getUserId(), "uuid", _userUuid);
 	}
 
+	@Override
 	public void setUserUuid(String userUuid) {
 		_userUuid = userUuid;
 	}
 
 	@JSON
+	@Override
 	public String getUserName() {
 		if (_userName == null) {
 			return StringPool.BLANK;
@@ -212,38 +362,46 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 		}
 	}
 
+	@Override
 	public void setUserName(String userName) {
 		_userName = userName;
 	}
 
 	@JSON
+	@Override
 	public Date getCreateDate() {
 		return _createDate;
 	}
 
+	@Override
 	public void setCreateDate(Date createDate) {
 		_createDate = createDate;
 	}
 
 	@JSON
+	@Override
 	public Date getModifiedDate() {
 		return _modifiedDate;
 	}
 
+	@Override
 	public void setModifiedDate(Date modifiedDate) {
 		_modifiedDate = modifiedDate;
 	}
 
 	@JSON
+	@Override
 	public long getParentAccountId() {
 		return _parentAccountId;
 	}
 
+	@Override
 	public void setParentAccountId(long parentAccountId) {
 		_parentAccountId = parentAccountId;
 	}
 
 	@JSON
+	@Override
 	public String getName() {
 		if (_name == null) {
 			return StringPool.BLANK;
@@ -253,11 +411,13 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 		}
 	}
 
+	@Override
 	public void setName(String name) {
 		_name = name;
 	}
 
 	@JSON
+	@Override
 	public String getLegalName() {
 		if (_legalName == null) {
 			return StringPool.BLANK;
@@ -267,11 +427,13 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 		}
 	}
 
+	@Override
 	public void setLegalName(String legalName) {
 		_legalName = legalName;
 	}
 
 	@JSON
+	@Override
 	public String getLegalId() {
 		if (_legalId == null) {
 			return StringPool.BLANK;
@@ -281,11 +443,13 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 		}
 	}
 
+	@Override
 	public void setLegalId(String legalId) {
 		_legalId = legalId;
 	}
 
 	@JSON
+	@Override
 	public String getLegalType() {
 		if (_legalType == null) {
 			return StringPool.BLANK;
@@ -295,11 +459,13 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 		}
 	}
 
+	@Override
 	public void setLegalType(String legalType) {
 		_legalType = legalType;
 	}
 
 	@JSON
+	@Override
 	public String getSicCode() {
 		if (_sicCode == null) {
 			return StringPool.BLANK;
@@ -309,11 +475,13 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 		}
 	}
 
+	@Override
 	public void setSicCode(String sicCode) {
 		_sicCode = sicCode;
 	}
 
 	@JSON
+	@Override
 	public String getTickerSymbol() {
 		if (_tickerSymbol == null) {
 			return StringPool.BLANK;
@@ -323,11 +491,13 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 		}
 	}
 
+	@Override
 	public void setTickerSymbol(String tickerSymbol) {
 		_tickerSymbol = tickerSymbol;
 	}
 
 	@JSON
+	@Override
 	public String getIndustry() {
 		if (_industry == null) {
 			return StringPool.BLANK;
@@ -337,11 +507,13 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 		}
 	}
 
+	@Override
 	public void setIndustry(String industry) {
 		_industry = industry;
 	}
 
 	@JSON
+	@Override
 	public String getType() {
 		if (_type == null) {
 			return StringPool.BLANK;
@@ -351,11 +523,13 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 		}
 	}
 
+	@Override
 	public void setType(String type) {
 		_type = type;
 	}
 
 	@JSON
+	@Override
 	public String getSize() {
 		if (_size == null) {
 			return StringPool.BLANK;
@@ -365,39 +539,32 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 		}
 	}
 
+	@Override
 	public void setSize(String size) {
 		_size = size;
 	}
 
 	@Override
-	public Account toEscapedModel() {
-		if (isEscapedModel()) {
-			return (Account)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (Account)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
-	}
-
-	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					Account.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			Account.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public Account toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (Account)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -426,6 +593,7 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 		return accountImpl;
 	}
 
+	@Override
 	public int compareTo(Account account) {
 		long primaryKey = account.getPrimaryKey();
 
@@ -442,18 +610,15 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof Account)) {
 			return false;
 		}
 
-		Account account = null;
-
-		try {
-			account = (Account)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		Account account = (Account)obj;
 
 		long primaryKey = account.getPrimaryKey();
 
@@ -628,6 +793,7 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(52);
 
@@ -706,7 +872,7 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 	}
 
 	private static ClassLoader _classLoader = Account.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			Account.class
 		};
 	private long _accountId;
@@ -726,6 +892,5 @@ public class AccountModelImpl extends BaseModelImpl<Account>
 	private String _industry;
 	private String _type;
 	private String _size;
-	private transient ExpandoBridge _expandoBridge;
-	private Account _escapedModelProxy;
+	private Account _escapedModel;
 }

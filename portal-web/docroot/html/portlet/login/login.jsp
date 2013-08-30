@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,17 +22,17 @@
 		<%
 		String signedInAs = HtmlUtil.escape(user.getFullName());
 
-		if (themeDisplay.isShowMyAccountIcon()) {
+		if (themeDisplay.isShowMyAccountIcon() && Validator.isNotNull(themeDisplay.getURLMyAccount())) {
 			signedInAs = "<a href=\"" + HtmlUtil.escape(themeDisplay.getURLMyAccount().toString()) + "\">" + signedInAs + "</a>";
 		}
 		%>
 
-		<%= LanguageUtil.format(pageContext, "you-are-signed-in-as-x", signedInAs) %>
+		<%= LanguageUtil.format(pageContext, "you-are-signed-in-as-x", signedInAs, false) %>
 	</c:when>
 	<c:otherwise>
 
 		<%
-		String redirect = ParamUtil.getString(request, "redirect");
+		String redirect = ParamUtil.getString(request, "redirect", currentURL);
 
 		String login = LoginUtil.getLogin(request, "login", company);
 		String password = StringPool.BLANK;
@@ -44,23 +44,23 @@
 		%>
 
 		<portlet:actionURL secure="<%= PropsValues.COMPANY_SECURITY_AUTH_REQUIRES_HTTPS || request.isSecure() %>" var="loginURL">
-			<portlet:param name="saveLastPath" value="0" />
 			<portlet:param name="struts_action" value="/login/login" />
-			<portlet:param name="doActionAfterLogin" value="<%= portletName.equals(PortletKeys.FAST_LOGIN) ? Boolean.TRUE.toString() : Boolean.FALSE.toString() %>" />
 		</portlet:actionURL>
 
-		<aui:form action="<%= loginURL %>" method="post" name="fm">
+		<aui:form action="<%= loginURL %>" autocomplete='<%= PropsValues.COMPANY_SECURITY_LOGIN_FORM_AUTOCOMPLETE ? "on" : "off" %>' method="post" name="fm">
+			<aui:input name="saveLastPath" type="hidden" value="<%= false %>" />
 			<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
+			<aui:input name="doActionAfterLogin" type="hidden" value="<%= portletName.equals(PortletKeys.FAST_LOGIN) ? true : false %>" />
 
 			<c:choose>
-				<c:when test='<%= SessionMessages.contains(request, "user_added") %>'>
+				<c:when test='<%= SessionMessages.contains(request, "userAdded") %>'>
 
 					<%
-					String userEmailAddress = (String)SessionMessages.get(request, "user_added");
-					String userPassword = (String)SessionMessages.get(request, "user_added_password");
+					String userEmailAddress = (String)SessionMessages.get(request, "userAdded");
+					String userPassword = (String)SessionMessages.get(request, "userAddedPassword");
 					%>
 
-					<div class="portlet-msg-success">
+					<div class="alert alert-success">
 						<c:choose>
 							<c:when test="<%= company.isStrangersVerify() || Validator.isNull(userPassword) %>">
 								<%= LanguageUtil.get(pageContext, "thank-you-for-creating-an-account") %>
@@ -79,19 +79,20 @@
 						</c:if>
 					</div>
 				</c:when>
-				<c:when test='<%= SessionMessages.contains(request, "user_pending") %>'>
+				<c:when test='<%= SessionMessages.contains(request, "userPending") %>'>
 
 					<%
-					String userEmailAddress = (String)SessionMessages.get(request, "user_pending");
+					String userEmailAddress = (String)SessionMessages.get(request, "userPending");
 					%>
 
-					<div class="portlet-msg-success">
+					<div class="alert alert-success">
 						<%= LanguageUtil.format(pageContext, "thank-you-for-creating-an-account.-you-will-be-notified-via-email-at-x-when-your-account-has-been-approved", userEmailAddress) %>
 					</div>
 				</c:when>
 			</c:choose>
 
 			<liferay-ui:error exception="<%= AuthException.class %>" message="authentication-failed" />
+			<liferay-ui:error exception="<%= CompanyMaxUsersException.class %>" message="unable-to-login-because-the-maximum-number-of-users-has-been-reached" />
 			<liferay-ui:error exception="<%= CookieNotSupportedException.class %>" message="authentication-failed-please-enable-browser-cookies" />
 			<liferay-ui:error exception="<%= NoSuchUserException.class %>" message="authentication-failed" />
 			<liferay-ui:error exception="<%= PasswordExpiredException.class %>" message="your-password-has-expired" />
@@ -116,14 +117,18 @@
 				}
 				%>
 
-				<aui:input label="<%= loginLabel %>" name="login" type="text" value="<%= login %>" />
+				<aui:input autoFocus="<%= windowState.equals(LiferayWindowState.EXCLUSIVE) || windowState.equals(WindowState.MAXIMIZED) %>" label="<%= loginLabel %>" name="login" showRequiredLabel="<%= false %>" type="text" value="<%= login %>">
+					<aui:validator name="required" />
+				</aui:input>
 
-				<aui:input name="password" type="password" value="<%= password %>" />
+				<aui:input name="password" showRequiredLabel="<%= false %>" type="password" value="<%= password %>">
+					<aui:validator name="required" />
+				</aui:input>
 
 				<span id="<portlet:namespace />passwordCapsLockSpan" style="display: none;"><liferay-ui:message key="caps-lock-is-on" /></span>
 
 				<c:if test="<%= company.isAutoLogin() && !PropsValues.SESSION_DISABLED %>">
-					<aui:input checked="<%= rememberMe %>" inlineLabel="left" name="rememberMe" type="checkbox" />
+					<aui:input checked="<%= rememberMe %>" name="rememberMe" type="checkbox" />
 				</c:if>
 			</aui:fieldset>
 
@@ -133,12 +138,6 @@
 		</aui:form>
 
 		<liferay-util:include page="/html/portlet/login/navigation.jsp" />
-
-		<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-			<aui:script>
-				Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />login);
-			</aui:script>
-		</c:if>
 
 		<aui:script use="aui-base">
 			var password = A.one('#<portlet:namespace />password');

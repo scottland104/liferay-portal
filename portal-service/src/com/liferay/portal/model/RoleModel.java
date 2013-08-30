@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,13 +14,16 @@
 
 package com.liferay.portal.model;
 
+import com.liferay.portal.LocaleException;
 import com.liferay.portal.kernel.bean.AutoEscape;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.service.ServiceContext;
 
 import com.liferay.portlet.expando.model.ExpandoBridge;
 
 import java.io.Serializable;
 
+import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 
@@ -37,7 +40,8 @@ import java.util.Map;
  * @see com.liferay.portal.model.impl.RoleModelImpl
  * @generated
  */
-public interface RoleModel extends AttachedModel, BaseModel<Role> {
+public interface RoleModel extends AttachedModel, BaseModel<Role>,
+	StagedAuditedModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -59,6 +63,23 @@ public interface RoleModel extends AttachedModel, BaseModel<Role> {
 	public void setPrimaryKey(long primaryKey);
 
 	/**
+	 * Returns the uuid of this role.
+	 *
+	 * @return the uuid of this role
+	 */
+	@AutoEscape
+	@Override
+	public String getUuid();
+
+	/**
+	 * Sets the uuid of this role.
+	 *
+	 * @param uuid the uuid of this role
+	 */
+	@Override
+	public void setUuid(String uuid);
+
+	/**
 	 * Returns the role ID of this role.
 	 *
 	 * @return the role ID of this role
@@ -77,6 +98,7 @@ public interface RoleModel extends AttachedModel, BaseModel<Role> {
 	 *
 	 * @return the company ID of this role
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -84,20 +106,107 @@ public interface RoleModel extends AttachedModel, BaseModel<Role> {
 	 *
 	 * @param companyId the company ID of this role
 	 */
+	@Override
 	public void setCompanyId(long companyId);
+
+	/**
+	 * Returns the user ID of this role.
+	 *
+	 * @return the user ID of this role
+	 */
+	@Override
+	public long getUserId();
+
+	/**
+	 * Sets the user ID of this role.
+	 *
+	 * @param userId the user ID of this role
+	 */
+	@Override
+	public void setUserId(long userId);
+
+	/**
+	 * Returns the user uuid of this role.
+	 *
+	 * @return the user uuid of this role
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public String getUserUuid() throws SystemException;
+
+	/**
+	 * Sets the user uuid of this role.
+	 *
+	 * @param userUuid the user uuid of this role
+	 */
+	@Override
+	public void setUserUuid(String userUuid);
+
+	/**
+	 * Returns the user name of this role.
+	 *
+	 * @return the user name of this role
+	 */
+	@AutoEscape
+	@Override
+	public String getUserName();
+
+	/**
+	 * Sets the user name of this role.
+	 *
+	 * @param userName the user name of this role
+	 */
+	@Override
+	public void setUserName(String userName);
+
+	/**
+	 * Returns the create date of this role.
+	 *
+	 * @return the create date of this role
+	 */
+	@Override
+	public Date getCreateDate();
+
+	/**
+	 * Sets the create date of this role.
+	 *
+	 * @param createDate the create date of this role
+	 */
+	@Override
+	public void setCreateDate(Date createDate);
+
+	/**
+	 * Returns the modified date of this role.
+	 *
+	 * @return the modified date of this role
+	 */
+	@Override
+	public Date getModifiedDate();
+
+	/**
+	 * Sets the modified date of this role.
+	 *
+	 * @param modifiedDate the modified date of this role
+	 */
+	@Override
+	public void setModifiedDate(Date modifiedDate);
 
 	/**
 	 * Returns the fully qualified class name of this role.
 	 *
 	 * @return the fully qualified class name of this role
 	 */
+	@Override
 	public String getClassName();
+
+	public void setClassName(String className);
 
 	/**
 	 * Returns the class name ID of this role.
 	 *
 	 * @return the class name ID of this role
 	 */
+	@Override
 	public long getClassNameId();
 
 	/**
@@ -105,6 +214,7 @@ public interface RoleModel extends AttachedModel, BaseModel<Role> {
 	 *
 	 * @param classNameId the class name ID of this role
 	 */
+	@Override
 	public void setClassNameId(long classNameId);
 
 	/**
@@ -112,6 +222,7 @@ public interface RoleModel extends AttachedModel, BaseModel<Role> {
 	 *
 	 * @return the class p k of this role
 	 */
+	@Override
 	public long getClassPK();
 
 	/**
@@ -119,6 +230,7 @@ public interface RoleModel extends AttachedModel, BaseModel<Role> {
 	 *
 	 * @param classPK the class p k of this role
 	 */
+	@Override
 	public void setClassPK(long classPK);
 
 	/**
@@ -149,6 +261,7 @@ public interface RoleModel extends AttachedModel, BaseModel<Role> {
 	 * @param locale the locale of the language
 	 * @return the localized title of this role
 	 */
+	@AutoEscape
 	public String getTitle(Locale locale);
 
 	/**
@@ -158,6 +271,7 @@ public interface RoleModel extends AttachedModel, BaseModel<Role> {
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized title of this role. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getTitle(Locale locale, boolean useDefault);
 
 	/**
@@ -166,6 +280,7 @@ public interface RoleModel extends AttachedModel, BaseModel<Role> {
 	 * @param languageId the ID of the language
 	 * @return the localized title of this role
 	 */
+	@AutoEscape
 	public String getTitle(String languageId);
 
 	/**
@@ -175,7 +290,14 @@ public interface RoleModel extends AttachedModel, BaseModel<Role> {
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized title of this role
 	 */
+	@AutoEscape
 	public String getTitle(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getTitleCurrentLanguageId();
+
+	@AutoEscape
+	public String getTitleCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized titles of this role.
@@ -208,6 +330,8 @@ public interface RoleModel extends AttachedModel, BaseModel<Role> {
 	 */
 	public void setTitle(String title, Locale locale, Locale defaultLocale);
 
+	public void setTitleCurrentLanguageId(String languageId);
+
 	/**
 	 * Sets the localized titles of this role from the map of locales and localized titles.
 	 *
@@ -228,8 +352,58 @@ public interface RoleModel extends AttachedModel, BaseModel<Role> {
 	 *
 	 * @return the description of this role
 	 */
-	@AutoEscape
 	public String getDescription();
+
+	/**
+	 * Returns the localized description of this role in the language. Uses the default language if no localization exists for the requested language.
+	 *
+	 * @param locale the locale of the language
+	 * @return the localized description of this role
+	 */
+	@AutoEscape
+	public String getDescription(Locale locale);
+
+	/**
+	 * Returns the localized description of this role in the language, optionally using the default language if no localization exists for the requested language.
+	 *
+	 * @param locale the local of the language
+	 * @param useDefault whether to use the default language if no localization exists for the requested language
+	 * @return the localized description of this role. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
+	 */
+	@AutoEscape
+	public String getDescription(Locale locale, boolean useDefault);
+
+	/**
+	 * Returns the localized description of this role in the language. Uses the default language if no localization exists for the requested language.
+	 *
+	 * @param languageId the ID of the language
+	 * @return the localized description of this role
+	 */
+	@AutoEscape
+	public String getDescription(String languageId);
+
+	/**
+	 * Returns the localized description of this role in the language, optionally using the default language if no localization exists for the requested language.
+	 *
+	 * @param languageId the ID of the language
+	 * @param useDefault whether to use the default language if no localization exists for the requested language
+	 * @return the localized description of this role
+	 */
+	@AutoEscape
+	public String getDescription(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getDescriptionCurrentLanguageId();
+
+	@AutoEscape
+	public String getDescriptionCurrentValue();
+
+	/**
+	 * Returns a map of the locales and localized descriptions of this role.
+	 *
+	 * @return the locales and localized descriptions of this role
+	 */
+	public Map<Locale, String> getDescriptionMap();
 
 	/**
 	 * Sets the description of this role.
@@ -237,6 +411,42 @@ public interface RoleModel extends AttachedModel, BaseModel<Role> {
 	 * @param description the description of this role
 	 */
 	public void setDescription(String description);
+
+	/**
+	 * Sets the localized description of this role in the language.
+	 *
+	 * @param description the localized description of this role
+	 * @param locale the locale of the language
+	 */
+	public void setDescription(String description, Locale locale);
+
+	/**
+	 * Sets the localized description of this role in the language, and sets the default locale.
+	 *
+	 * @param description the localized description of this role
+	 * @param locale the locale of the language
+	 * @param defaultLocale the default locale
+	 */
+	public void setDescription(String description, Locale locale,
+		Locale defaultLocale);
+
+	public void setDescriptionCurrentLanguageId(String languageId);
+
+	/**
+	 * Sets the localized descriptions of this role from the map of locales and localized descriptions.
+	 *
+	 * @param descriptionMap the locales and localized descriptions of this role
+	 */
+	public void setDescriptionMap(Map<Locale, String> descriptionMap);
+
+	/**
+	 * Sets the localized descriptions of this role from the map of locales and localized descriptions, and sets the default locale.
+	 *
+	 * @param descriptionMap the locales and localized descriptions of this role
+	 * @param defaultLocale the default locale
+	 */
+	public void setDescriptionMap(Map<Locale, String> descriptionMap,
+		Locale defaultLocale);
 
 	/**
 	 * Returns the type of this role.
@@ -267,37 +477,69 @@ public interface RoleModel extends AttachedModel, BaseModel<Role> {
 	 */
 	public void setSubtype(String subtype);
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	public String[] getAvailableLanguageIds();
+
+	public String getDefaultLanguageId();
+
+	public void prepareLocalizedFieldsForImport() throws LocaleException;
+
+	public void prepareLocalizedFieldsForImport(Locale defaultImportLocale)
+		throws LocaleException;
+
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(Role role);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<Role> toCacheModel();
 
+	@Override
 	public Role toEscapedModel();
 
+	@Override
+	public Role toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

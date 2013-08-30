@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.FriendlyURLMapper;
 import com.liferay.portal.kernel.portlet.FriendlyURLMapperThreadLocal;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -64,22 +65,23 @@ import net.htmlparser.jericho.TextExtractor;
  */
 public class PingbackMethodImpl implements Method {
 
-	public static int ACCESS_DENIED = 49;
+	public static final int ACCESS_DENIED = 49;
 
-	public static int GENERIC_FAULT = 0;
+	public static final int GENERIC_FAULT = 0;
 
-	public static int PINGBACK_ALREADY_REGISTERED = 48;
+	public static final int PINGBACK_ALREADY_REGISTERED = 48;
 
-	public static int SERVER_ERROR = 50;
+	public static final int SERVER_ERROR = 50;
 
-	public static int SOURCE_URI_DOES_NOT_EXIST = 16;
+	public static final int SOURCE_URI_DOES_NOT_EXIST = 16;
 
-	public static int SOURCE_URI_INVALID = 17;
+	public static final int SOURCE_URI_INVALID = 17;
 
-	public static int TARGET_URI_DOES_NOT_EXIST = 32;
+	public static final int TARGET_URI_DOES_NOT_EXIST = 32;
 
-	public static int TARGET_URI_INVALID = 33;
+	public static final int TARGET_URI_INVALID = 33;
 
+	@Override
 	public Response execute(long companyId) {
 		if (!PropsValues.BLOGS_PINGBACK_ENABLED) {
 			return XmlRpcUtil.createFault(
@@ -118,7 +120,7 @@ public class PingbackMethodImpl implements Method {
 			long parentMessageId = thread.getRootMessageId();
 			String body =
 				"[...] " + getExcerpt() + " [...] [url=" + _sourceUri + "]" +
-					LanguageUtil.get(LocaleUtil.getDefault(), "read-more") +
+					LanguageUtil.get(LocaleUtil.getSiteDefault(), "read-more") +
 						"[/url]";
 
 			List<MBMessage> messages =
@@ -136,7 +138,7 @@ public class PingbackMethodImpl implements Method {
 			ServiceContext serviceContext = new ServiceContext();
 
 			String pingbackUserName = LanguageUtil.get(
-				LocaleUtil.getDefault(), "pingback");
+				LocaleUtil.getSiteDefault(), "pingback");
 
 			serviceContext.setAttribute("pingbackUserName", pingbackUserName);
 
@@ -176,14 +178,17 @@ public class PingbackMethodImpl implements Method {
 		}
 	}
 
+	@Override
 	public String getMethodName() {
 		return "pingback.ping";
 	}
 
+	@Override
 	public String getToken() {
 		return "pingback";
 	}
 
+	@Override
 	public boolean setArguments(Object[] arguments) {
 		try {
 			_sourceUri = (String)arguments[0];
@@ -217,8 +222,8 @@ public class PingbackMethodImpl implements Method {
 		FriendlyURLMapperThreadLocal.setPRPIdentifiers(
 			new HashMap<String, String>());
 
-		Portlet portlet =
-			PortletLocalServiceUtil.getPortletById(PortletKeys.BLOGS);
+		Portlet portlet = PortletLocalServiceUtil.getPortletById(
+			PortletKeys.BLOGS);
 
 		FriendlyURLMapper friendlyURLMapper =
 			portlet.getFriendlyURLMapperInstance();
@@ -300,7 +305,7 @@ public class PingbackMethodImpl implements Method {
 			paramArray = params.get(namespace + name);
 		}
 
-		if ((paramArray != null) && (paramArray.length > 0)) {
+		if (ArrayUtil.isNotEmpty(paramArray)) {
 			return paramArray[0];
 		}
 		else {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,14 +14,8 @@
 
 package com.liferay.portlet.softwarecatalog.service.persistence;
 
-import com.liferay.portal.NoSuchModelException;
 import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.cache.CacheRegistryUtil;
-import com.liferay.portal.kernel.dao.jdbc.MappingSqlQuery;
-import com.liferay.portal.kernel.dao.jdbc.MappingSqlQueryFactoryUtil;
-import com.liferay.portal.kernel.dao.jdbc.RowMapper;
-import com.liferay.portal.kernel.dao.jdbc.SqlUpdate;
-import com.liferay.portal.kernel.dao.jdbc.SqlUpdateFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
 import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
 import com.liferay.portal.kernel.dao.orm.FinderPath;
@@ -40,13 +34,13 @@ import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.UnmodifiableList;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.ModelListener;
 import com.liferay.portal.security.permission.InlineSQLHelperUtil;
-import com.liferay.portal.service.persistence.BatchSessionUtil;
-import com.liferay.portal.service.persistence.ResourcePersistence;
-import com.liferay.portal.service.persistence.UserPersistence;
 import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
+import com.liferay.portal.service.persistence.impl.TableMapper;
+import com.liferay.portal.service.persistence.impl.TableMapperFactory;
 
 import com.liferay.portlet.softwarecatalog.NoSuchLicenseException;
 import com.liferay.portlet.softwarecatalog.model.SCLicense;
@@ -80,365 +74,39 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * Never modify or reference this class directly. Always use {@link SCLicenseUtil} to access the s c license persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
 	 */
 	public static final String FINDER_CLASS_NAME_ENTITY = SCLicenseImpl.class.getName();
-	public static final String FINDER_CLASS_NAME_LIST = FINDER_CLASS_NAME_ENTITY +
-		".List";
-	public static final FinderPath FINDER_PATH_FIND_BY_ACTIVE = new FinderPath(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+	public static final String FINDER_CLASS_NAME_LIST_WITH_PAGINATION = FINDER_CLASS_NAME_ENTITY +
+		".List1";
+	public static final String FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION = FINDER_CLASS_NAME_ENTITY +
+		".List2";
+	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_ALL = new FinderPath(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
 			SCLicenseModelImpl.FINDER_CACHE_ENABLED, SCLicenseImpl.class,
-			FINDER_CLASS_NAME_LIST, "findByActive",
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0]);
+	public static final FinderPath FINDER_PATH_WITHOUT_PAGINATION_FIND_ALL = new FinderPath(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+			SCLicenseModelImpl.FINDER_CACHE_ENABLED, SCLicenseImpl.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll", new String[0]);
+	public static final FinderPath FINDER_PATH_COUNT_ALL = new FinderPath(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+			SCLicenseModelImpl.FINDER_CACHE_ENABLED, Long.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll", new String[0]);
+	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_BY_ACTIVE = new FinderPath(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+			SCLicenseModelImpl.FINDER_CACHE_ENABLED, SCLicenseImpl.class,
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByActive",
 			new String[] {
 				Boolean.class.getName(),
 				
-			"java.lang.Integer", "java.lang.Integer",
-				"com.liferay.portal.kernel.util.OrderByComparator"
+			Integer.class.getName(), Integer.class.getName(),
+				OrderByComparator.class.getName()
 			});
+	public static final FinderPath FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_ACTIVE =
+		new FinderPath(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+			SCLicenseModelImpl.FINDER_CACHE_ENABLED, SCLicenseImpl.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByActive",
+			new String[] { Boolean.class.getName() },
+			SCLicenseModelImpl.ACTIVE_COLUMN_BITMASK |
+			SCLicenseModelImpl.NAME_COLUMN_BITMASK);
 	public static final FinderPath FINDER_PATH_COUNT_BY_ACTIVE = new FinderPath(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
 			SCLicenseModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countByActive",
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByActive",
 			new String[] { Boolean.class.getName() });
-	public static final FinderPath FINDER_PATH_FIND_BY_A_R = new FinderPath(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
-			SCLicenseModelImpl.FINDER_CACHE_ENABLED, SCLicenseImpl.class,
-			FINDER_CLASS_NAME_LIST, "findByA_R",
-			new String[] {
-				Boolean.class.getName(), Boolean.class.getName(),
-				
-			"java.lang.Integer", "java.lang.Integer",
-				"com.liferay.portal.kernel.util.OrderByComparator"
-			});
-	public static final FinderPath FINDER_PATH_COUNT_BY_A_R = new FinderPath(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
-			SCLicenseModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countByA_R",
-			new String[] { Boolean.class.getName(), Boolean.class.getName() });
-	public static final FinderPath FINDER_PATH_FIND_ALL = new FinderPath(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
-			SCLicenseModelImpl.FINDER_CACHE_ENABLED, SCLicenseImpl.class,
-			FINDER_CLASS_NAME_LIST, "findAll", new String[0]);
-	public static final FinderPath FINDER_PATH_COUNT_ALL = new FinderPath(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
-			SCLicenseModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countAll", new String[0]);
-
-	/**
-	 * Caches the s c license in the entity cache if it is enabled.
-	 *
-	 * @param scLicense the s c license
-	 */
-	public void cacheResult(SCLicense scLicense) {
-		EntityCacheUtil.putResult(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
-			SCLicenseImpl.class, scLicense.getPrimaryKey(), scLicense);
-
-		scLicense.resetOriginalValues();
-	}
-
-	/**
-	 * Caches the s c licenses in the entity cache if it is enabled.
-	 *
-	 * @param scLicenses the s c licenses
-	 */
-	public void cacheResult(List<SCLicense> scLicenses) {
-		for (SCLicense scLicense : scLicenses) {
-			if (EntityCacheUtil.getResult(
-						SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
-						SCLicenseImpl.class, scLicense.getPrimaryKey(), this) == null) {
-				cacheResult(scLicense);
-			}
-		}
-	}
-
-	/**
-	 * Clears the cache for all s c licenses.
-	 *
-	 * <p>
-	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
-	 * </p>
-	 */
-	@Override
-	public void clearCache() {
-		if (_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE) {
-			CacheRegistryUtil.clear(SCLicenseImpl.class.getName());
-		}
-
-		EntityCacheUtil.clearCache(SCLicenseImpl.class.getName());
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_ENTITY);
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
-	}
-
-	/**
-	 * Clears the cache for the s c license.
-	 *
-	 * <p>
-	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
-	 * </p>
-	 */
-	@Override
-	public void clearCache(SCLicense scLicense) {
-		EntityCacheUtil.removeResult(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
-			SCLicenseImpl.class, scLicense.getPrimaryKey());
-	}
-
-	/**
-	 * Creates a new s c license with the primary key. Does not add the s c license to the database.
-	 *
-	 * @param licenseId the primary key for the new s c license
-	 * @return the new s c license
-	 */
-	public SCLicense create(long licenseId) {
-		SCLicense scLicense = new SCLicenseImpl();
-
-		scLicense.setNew(true);
-		scLicense.setPrimaryKey(licenseId);
-
-		return scLicense;
-	}
-
-	/**
-	 * Removes the s c license with the primary key from the database. Also notifies the appropriate model listeners.
-	 *
-	 * @param primaryKey the primary key of the s c license
-	 * @return the s c license that was removed
-	 * @throws com.liferay.portal.NoSuchModelException if a s c license with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public SCLicense remove(Serializable primaryKey)
-		throws NoSuchModelException, SystemException {
-		return remove(((Long)primaryKey).longValue());
-	}
-
-	/**
-	 * Removes the s c license with the primary key from the database. Also notifies the appropriate model listeners.
-	 *
-	 * @param licenseId the primary key of the s c license
-	 * @return the s c license that was removed
-	 * @throws com.liferay.portlet.softwarecatalog.NoSuchLicenseException if a s c license with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	public SCLicense remove(long licenseId)
-		throws NoSuchLicenseException, SystemException {
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			SCLicense scLicense = (SCLicense)session.get(SCLicenseImpl.class,
-					Long.valueOf(licenseId));
-
-			if (scLicense == null) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + licenseId);
-				}
-
-				throw new NoSuchLicenseException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
-					licenseId);
-			}
-
-			return scLicensePersistence.remove(scLicense);
-		}
-		catch (NoSuchLicenseException nsee) {
-			throw nsee;
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	/**
-	 * Removes the s c license from the database. Also notifies the appropriate model listeners.
-	 *
-	 * @param scLicense the s c license
-	 * @return the s c license that was removed
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public SCLicense remove(SCLicense scLicense) throws SystemException {
-		return super.remove(scLicense);
-	}
-
-	@Override
-	protected SCLicense removeImpl(SCLicense scLicense)
-		throws SystemException {
-		scLicense = toUnwrappedModel(scLicense);
-
-		try {
-			clearSCProductEntries.clear(scLicense.getPrimaryKey());
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(SCLicenseModelImpl.MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME);
-		}
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BatchSessionUtil.delete(session, scLicense);
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
-
-		EntityCacheUtil.removeResult(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
-			SCLicenseImpl.class, scLicense.getPrimaryKey());
-
-		return scLicense;
-	}
-
-	@Override
-	public SCLicense updateImpl(
-		com.liferay.portlet.softwarecatalog.model.SCLicense scLicense,
-		boolean merge) throws SystemException {
-		scLicense = toUnwrappedModel(scLicense);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BatchSessionUtil.update(session, scLicense, merge);
-
-			scLicense.setNew(false);
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
-
-		EntityCacheUtil.putResult(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
-			SCLicenseImpl.class, scLicense.getPrimaryKey(), scLicense);
-
-		return scLicense;
-	}
-
-	protected SCLicense toUnwrappedModel(SCLicense scLicense) {
-		if (scLicense instanceof SCLicenseImpl) {
-			return scLicense;
-		}
-
-		SCLicenseImpl scLicenseImpl = new SCLicenseImpl();
-
-		scLicenseImpl.setNew(scLicense.isNew());
-		scLicenseImpl.setPrimaryKey(scLicense.getPrimaryKey());
-
-		scLicenseImpl.setLicenseId(scLicense.getLicenseId());
-		scLicenseImpl.setName(scLicense.getName());
-		scLicenseImpl.setUrl(scLicense.getUrl());
-		scLicenseImpl.setOpenSource(scLicense.isOpenSource());
-		scLicenseImpl.setActive(scLicense.isActive());
-		scLicenseImpl.setRecommended(scLicense.isRecommended());
-
-		return scLicenseImpl;
-	}
-
-	/**
-	 * Returns the s c license with the primary key or throws a {@link com.liferay.portal.NoSuchModelException} if it could not be found.
-	 *
-	 * @param primaryKey the primary key of the s c license
-	 * @return the s c license
-	 * @throws com.liferay.portal.NoSuchModelException if a s c license with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public SCLicense findByPrimaryKey(Serializable primaryKey)
-		throws NoSuchModelException, SystemException {
-		return findByPrimaryKey(((Long)primaryKey).longValue());
-	}
-
-	/**
-	 * Returns the s c license with the primary key or throws a {@link com.liferay.portlet.softwarecatalog.NoSuchLicenseException} if it could not be found.
-	 *
-	 * @param licenseId the primary key of the s c license
-	 * @return the s c license
-	 * @throws com.liferay.portlet.softwarecatalog.NoSuchLicenseException if a s c license with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	public SCLicense findByPrimaryKey(long licenseId)
-		throws NoSuchLicenseException, SystemException {
-		SCLicense scLicense = fetchByPrimaryKey(licenseId);
-
-		if (scLicense == null) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + licenseId);
-			}
-
-			throw new NoSuchLicenseException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
-				licenseId);
-		}
-
-		return scLicense;
-	}
-
-	/**
-	 * Returns the s c license with the primary key or returns <code>null</code> if it could not be found.
-	 *
-	 * @param primaryKey the primary key of the s c license
-	 * @return the s c license, or <code>null</code> if a s c license with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public SCLicense fetchByPrimaryKey(Serializable primaryKey)
-		throws SystemException {
-		return fetchByPrimaryKey(((Long)primaryKey).longValue());
-	}
-
-	/**
-	 * Returns the s c license with the primary key or returns <code>null</code> if it could not be found.
-	 *
-	 * @param licenseId the primary key of the s c license
-	 * @return the s c license, or <code>null</code> if a s c license with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	public SCLicense fetchByPrimaryKey(long licenseId)
-		throws SystemException {
-		SCLicense scLicense = (SCLicense)EntityCacheUtil.getResult(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
-				SCLicenseImpl.class, licenseId, this);
-
-		if (scLicense == _nullSCLicense) {
-			return null;
-		}
-
-		if (scLicense == null) {
-			Session session = null;
-
-			boolean hasException = false;
-
-			try {
-				session = openSession();
-
-				scLicense = (SCLicense)session.get(SCLicenseImpl.class,
-						Long.valueOf(licenseId));
-			}
-			catch (Exception e) {
-				hasException = true;
-
-				throw processException(e);
-			}
-			finally {
-				if (scLicense != null) {
-					cacheResult(scLicense);
-				}
-				else if (!hasException) {
-					EntityCacheUtil.putResult(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
-						SCLicenseImpl.class, licenseId, _nullSCLicense);
-				}
-
-				closeSession(session);
-			}
-		}
-
-		return scLicense;
-	}
 
 	/**
 	 * Returns all the s c licenses where active = &#63;.
@@ -447,6 +115,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the matching s c licenses
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<SCLicense> findByActive(boolean active)
 		throws SystemException {
 		return findByActive(active, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
@@ -456,7 +125,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * Returns a range of all the s c licenses where active = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCLicenseModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param active the active
@@ -465,6 +134,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the range of matching s c licenses
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<SCLicense> findByActive(boolean active, int start, int end)
 		throws SystemException {
 		return findByActive(active, start, end, null);
@@ -474,7 +144,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * Returns an ordered range of all the s c licenses where active = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCLicenseModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param active the active
@@ -484,17 +154,36 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the ordered range of matching s c licenses
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<SCLicense> findByActive(boolean active, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
-		Object[] finderArgs = new Object[] {
-				active,
-				
-				String.valueOf(start), String.valueOf(end),
-				String.valueOf(orderByComparator)
-			};
+		boolean pagination = true;
+		FinderPath finderPath = null;
+		Object[] finderArgs = null;
 
-		List<SCLicense> list = (List<SCLicense>)FinderCacheUtil.getResult(FINDER_PATH_FIND_BY_ACTIVE,
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+			pagination = false;
+			finderPath = FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_ACTIVE;
+			finderArgs = new Object[] { active };
+		}
+		else {
+			finderPath = FINDER_PATH_WITH_PAGINATION_FIND_BY_ACTIVE;
+			finderArgs = new Object[] { active, start, end, orderByComparator };
+		}
+
+		List<SCLicense> list = (List<SCLicense>)FinderCacheUtil.getResult(finderPath,
 				finderArgs, this);
+
+		if ((list != null) && !list.isEmpty()) {
+			for (SCLicense scLicense : list) {
+				if ((active != scLicense.getActive())) {
+					list = null;
+
+					break;
+				}
+			}
+		}
 
 		if (list == null) {
 			StringBundler query = null;
@@ -515,8 +204,8 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
 					orderByComparator);
 			}
-
-			else {
+			else
+			 if (pagination) {
 				query.append(SCLicenseModelImpl.ORDER_BY_JPQL);
 			}
 
@@ -533,24 +222,29 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 
 				qPos.add(active);
 
-				list = (List<SCLicense>)QueryUtil.list(q, getDialect(), start,
-						end);
+				if (!pagination) {
+					list = (List<SCLicense>)QueryUtil.list(q, getDialect(),
+							start, end, false);
+
+					Collections.sort(list);
+
+					list = new UnmodifiableList<SCLicense>(list);
+				}
+				else {
+					list = (List<SCLicense>)QueryUtil.list(q, getDialect(),
+							start, end);
+				}
+
+				cacheResult(list);
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, list);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (list == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FIND_BY_ACTIVE,
-						finderArgs);
-				}
-				else {
-					cacheResult(list);
-
-					FinderCacheUtil.putResult(FINDER_PATH_FIND_BY_ACTIVE,
-						finderArgs, list);
-				}
-
 				closeSession(session);
 			}
 		}
@@ -561,44 +255,56 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	/**
 	 * Returns the first s c license in the ordered set where active = &#63;.
 	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
-	 *
 	 * @param active the active
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching s c license
 	 * @throws com.liferay.portlet.softwarecatalog.NoSuchLicenseException if a matching s c license could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public SCLicense findByActive_First(boolean active,
 		OrderByComparator orderByComparator)
 		throws NoSuchLicenseException, SystemException {
+		SCLicense scLicense = fetchByActive_First(active, orderByComparator);
+
+		if (scLicense != null) {
+			return scLicense;
+		}
+
+		StringBundler msg = new StringBundler(4);
+
+		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		msg.append("active=");
+		msg.append(active);
+
+		msg.append(StringPool.CLOSE_CURLY_BRACE);
+
+		throw new NoSuchLicenseException(msg.toString());
+	}
+
+	/**
+	 * Returns the first s c license in the ordered set where active = &#63;.
+	 *
+	 * @param active the active
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching s c license, or <code>null</code> if a matching s c license could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public SCLicense fetchByActive_First(boolean active,
+		OrderByComparator orderByComparator) throws SystemException {
 		List<SCLicense> list = findByActive(active, 0, 1, orderByComparator);
 
-		if (list.isEmpty()) {
-			StringBundler msg = new StringBundler(4);
-
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-			msg.append("active=");
-			msg.append(active);
-
-			msg.append(StringPool.CLOSE_CURLY_BRACE);
-
-			throw new NoSuchLicenseException(msg.toString());
-		}
-		else {
+		if (!list.isEmpty()) {
 			return list.get(0);
 		}
+
+		return null;
 	}
 
 	/**
 	 * Returns the last s c license in the ordered set where active = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
 	 *
 	 * @param active the active
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
@@ -606,37 +312,57 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @throws com.liferay.portlet.softwarecatalog.NoSuchLicenseException if a matching s c license could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public SCLicense findByActive_Last(boolean active,
 		OrderByComparator orderByComparator)
 		throws NoSuchLicenseException, SystemException {
+		SCLicense scLicense = fetchByActive_Last(active, orderByComparator);
+
+		if (scLicense != null) {
+			return scLicense;
+		}
+
+		StringBundler msg = new StringBundler(4);
+
+		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		msg.append("active=");
+		msg.append(active);
+
+		msg.append(StringPool.CLOSE_CURLY_BRACE);
+
+		throw new NoSuchLicenseException(msg.toString());
+	}
+
+	/**
+	 * Returns the last s c license in the ordered set where active = &#63;.
+	 *
+	 * @param active the active
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching s c license, or <code>null</code> if a matching s c license could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public SCLicense fetchByActive_Last(boolean active,
+		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByActive(active);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<SCLicense> list = findByActive(active, count - 1, count,
 				orderByComparator);
 
-		if (list.isEmpty()) {
-			StringBundler msg = new StringBundler(4);
-
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-			msg.append("active=");
-			msg.append(active);
-
-			msg.append(StringPool.CLOSE_CURLY_BRACE);
-
-			throw new NoSuchLicenseException(msg.toString());
-		}
-		else {
+		if (!list.isEmpty()) {
 			return list.get(0);
 		}
+
+		return null;
 	}
 
 	/**
 	 * Returns the s c licenses before and after the current s c license in the ordered set where active = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
 	 *
 	 * @param licenseId the primary key of the current s c license
 	 * @param active the active
@@ -645,6 +371,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @throws com.liferay.portlet.softwarecatalog.NoSuchLicenseException if a s c license with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public SCLicense[] findByActive_PrevAndNext(long licenseId, boolean active,
 		OrderByComparator orderByComparator)
 		throws NoSuchLicenseException, SystemException {
@@ -693,17 +420,17 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 		query.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2);
 
 		if (orderByComparator != null) {
-			String[] orderByFields = orderByComparator.getOrderByFields();
+			String[] orderByConditionFields = orderByComparator.getOrderByConditionFields();
 
-			if (orderByFields.length > 0) {
+			if (orderByConditionFields.length > 0) {
 				query.append(WHERE_AND);
 			}
 
-			for (int i = 0; i < orderByFields.length; i++) {
+			for (int i = 0; i < orderByConditionFields.length; i++) {
 				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				query.append(orderByConditionFields[i]);
 
-				if ((i + 1) < orderByFields.length) {
+				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
 						query.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
@@ -722,6 +449,8 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 			}
 
 			query.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
 				query.append(_ORDER_BY_ENTITY_ALIAS);
@@ -745,7 +474,6 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 				}
 			}
 		}
-
 		else {
 			query.append(SCLicenseModelImpl.ORDER_BY_JPQL);
 		}
@@ -762,7 +490,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 		qPos.add(active);
 
 		if (orderByComparator != null) {
-			Object[] values = orderByComparator.getOrderByValues(scLicense);
+			Object[] values = orderByComparator.getOrderByConditionValues(scLicense);
 
 			for (Object value : values) {
 				qPos.add(value);
@@ -786,6 +514,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the matching s c licenses that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<SCLicense> filterFindByActive(boolean active)
 		throws SystemException {
 		return filterFindByActive(active, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
@@ -796,7 +525,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * Returns a range of all the s c licenses that the user has permission to view where active = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCLicenseModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param active the active
@@ -805,6 +534,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the range of matching s c licenses that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<SCLicense> filterFindByActive(boolean active, int start, int end)
 		throws SystemException {
 		return filterFindByActive(active, start, end, null);
@@ -814,7 +544,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * Returns an ordered range of all the s c licenses that the user has permissions to view where active = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCLicenseModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param active the active
@@ -824,6 +554,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the ordered range of matching s c licenses that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<SCLicense> filterFindByActive(boolean active, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled()) {
@@ -847,7 +578,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 			query.append(_FILTER_SQL_SELECT_SCLICENSE_NO_INLINE_DISTINCT_WHERE_1);
 		}
 
-		query.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2);
+		query.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2_SQL);
 
 		if (!getDB().isSupportsInlineDistinct()) {
 			query.append(_FILTER_SQL_SELECT_SCLICENSE_NO_INLINE_DISTINCT_WHERE_2);
@@ -856,14 +587,13 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
-
 		else {
 			if (getDB().isSupportsInlineDistinct()) {
 				query.append(SCLicenseModelImpl.ORDER_BY_JPQL);
@@ -914,6 +644,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @throws com.liferay.portlet.softwarecatalog.NoSuchLicenseException if a s c license with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public SCLicense[] filterFindByActive_PrevAndNext(long licenseId,
 		boolean active, OrderByComparator orderByComparator)
 		throws NoSuchLicenseException, SystemException {
@@ -968,20 +699,20 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 			query.append(_FILTER_SQL_SELECT_SCLICENSE_NO_INLINE_DISTINCT_WHERE_1);
 		}
 
-		query.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2);
+		query.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2_SQL);
 
 		if (!getDB().isSupportsInlineDistinct()) {
 			query.append(_FILTER_SQL_SELECT_SCLICENSE_NO_INLINE_DISTINCT_WHERE_2);
 		}
 
 		if (orderByComparator != null) {
-			String[] orderByFields = orderByComparator.getOrderByFields();
+			String[] orderByConditionFields = orderByComparator.getOrderByConditionFields();
 
-			if (orderByFields.length > 0) {
+			if (orderByConditionFields.length > 0) {
 				query.append(WHERE_AND);
 			}
 
-			for (int i = 0; i < orderByFields.length; i++) {
+			for (int i = 0; i < orderByConditionFields.length; i++) {
 				if (getDB().isSupportsInlineDistinct()) {
 					query.append(_ORDER_BY_ENTITY_ALIAS);
 				}
@@ -989,9 +720,9 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 					query.append(_ORDER_BY_ENTITY_TABLE);
 				}
 
-				query.append(orderByFields[i]);
+				query.append(orderByConditionFields[i]);
 
-				if ((i + 1) < orderByFields.length) {
+				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
 						query.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
@@ -1010,6 +741,8 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 			}
 
 			query.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
 				if (getDB().isSupportsInlineDistinct()) {
@@ -1039,7 +772,6 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 				}
 			}
 		}
-
 		else {
 			if (getDB().isSupportsInlineDistinct()) {
 				query.append(SCLicenseModelImpl.ORDER_BY_JPQL);
@@ -1069,7 +801,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 		qPos.add(active);
 
 		if (orderByComparator != null) {
-			Object[] values = orderByComparator.getOrderByValues(scLicense);
+			Object[] values = orderByComparator.getOrderByConditionValues(scLicense);
 
 			for (Object value : values) {
 				qPos.add(value);
@@ -1087,6 +819,144 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	}
 
 	/**
+	 * Removes all the s c licenses where active = &#63; from the database.
+	 *
+	 * @param active the active
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public void removeByActive(boolean active) throws SystemException {
+		for (SCLicense scLicense : findByActive(active, QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS, null)) {
+			remove(scLicense);
+		}
+	}
+
+	/**
+	 * Returns the number of s c licenses where active = &#63;.
+	 *
+	 * @param active the active
+	 * @return the number of matching s c licenses
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public int countByActive(boolean active) throws SystemException {
+		FinderPath finderPath = FINDER_PATH_COUNT_BY_ACTIVE;
+
+		Object[] finderArgs = new Object[] { active };
+
+		Long count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs,
+				this);
+
+		if (count == null) {
+			StringBundler query = new StringBundler(2);
+
+			query.append(_SQL_COUNT_SCLICENSE_WHERE);
+
+			query.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2);
+
+			String sql = query.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query q = session.createQuery(sql);
+
+				QueryPos qPos = QueryPos.getInstance(q);
+
+				qPos.add(active);
+
+				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, count);
+			}
+			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return count.intValue();
+	}
+
+	/**
+	 * Returns the number of s c licenses that the user has permission to view where active = &#63;.
+	 *
+	 * @param active the active
+	 * @return the number of matching s c licenses that the user has permission to view
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public int filterCountByActive(boolean active) throws SystemException {
+		if (!InlineSQLHelperUtil.isEnabled()) {
+			return countByActive(active);
+		}
+
+		StringBundler query = new StringBundler(2);
+
+		query.append(_FILTER_SQL_COUNT_SCLICENSE_WHERE);
+
+		query.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2_SQL);
+
+		String sql = InlineSQLHelperUtil.replacePermissionCheck(query.toString(),
+				SCLicense.class.getName(), _FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SQLQuery q = session.createSQLQuery(sql);
+
+			q.addScalar(COUNT_COLUMN_NAME,
+				com.liferay.portal.kernel.dao.orm.Type.LONG);
+
+			QueryPos qPos = QueryPos.getInstance(q);
+
+			qPos.add(active);
+
+			Long count = (Long)q.uniqueResult();
+
+			return count.intValue();
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	private static final String _FINDER_COLUMN_ACTIVE_ACTIVE_2 = "scLicense.active = ?";
+	private static final String _FINDER_COLUMN_ACTIVE_ACTIVE_2_SQL = "scLicense.active_ = ?";
+	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_BY_A_R = new FinderPath(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+			SCLicenseModelImpl.FINDER_CACHE_ENABLED, SCLicenseImpl.class,
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByA_R",
+			new String[] {
+				Boolean.class.getName(), Boolean.class.getName(),
+				
+			Integer.class.getName(), Integer.class.getName(),
+				OrderByComparator.class.getName()
+			});
+	public static final FinderPath FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_A_R = new FinderPath(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+			SCLicenseModelImpl.FINDER_CACHE_ENABLED, SCLicenseImpl.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByA_R",
+			new String[] { Boolean.class.getName(), Boolean.class.getName() },
+			SCLicenseModelImpl.ACTIVE_COLUMN_BITMASK |
+			SCLicenseModelImpl.RECOMMENDED_COLUMN_BITMASK |
+			SCLicenseModelImpl.NAME_COLUMN_BITMASK);
+	public static final FinderPath FINDER_PATH_COUNT_BY_A_R = new FinderPath(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+			SCLicenseModelImpl.FINDER_CACHE_ENABLED, Long.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByA_R",
+			new String[] { Boolean.class.getName(), Boolean.class.getName() });
+
+	/**
 	 * Returns all the s c licenses where active = &#63; and recommended = &#63;.
 	 *
 	 * @param active the active
@@ -1094,6 +964,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the matching s c licenses
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<SCLicense> findByA_R(boolean active, boolean recommended)
 		throws SystemException {
 		return findByA_R(active, recommended, QueryUtil.ALL_POS,
@@ -1104,7 +975,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * Returns a range of all the s c licenses where active = &#63; and recommended = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCLicenseModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param active the active
@@ -1114,6 +985,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the range of matching s c licenses
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<SCLicense> findByA_R(boolean active, boolean recommended,
 		int start, int end) throws SystemException {
 		return findByA_R(active, recommended, start, end, null);
@@ -1123,7 +995,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * Returns an ordered range of all the s c licenses where active = &#63; and recommended = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCLicenseModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param active the active
@@ -1134,18 +1006,42 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the ordered range of matching s c licenses
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<SCLicense> findByA_R(boolean active, boolean recommended,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
-		Object[] finderArgs = new Object[] {
-				active, recommended,
-				
-				String.valueOf(start), String.valueOf(end),
-				String.valueOf(orderByComparator)
-			};
+		boolean pagination = true;
+		FinderPath finderPath = null;
+		Object[] finderArgs = null;
 
-		List<SCLicense> list = (List<SCLicense>)FinderCacheUtil.getResult(FINDER_PATH_FIND_BY_A_R,
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+			pagination = false;
+			finderPath = FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_A_R;
+			finderArgs = new Object[] { active, recommended };
+		}
+		else {
+			finderPath = FINDER_PATH_WITH_PAGINATION_FIND_BY_A_R;
+			finderArgs = new Object[] {
+					active, recommended,
+					
+					start, end, orderByComparator
+				};
+		}
+
+		List<SCLicense> list = (List<SCLicense>)FinderCacheUtil.getResult(finderPath,
 				finderArgs, this);
+
+		if ((list != null) && !list.isEmpty()) {
+			for (SCLicense scLicense : list) {
+				if ((active != scLicense.getActive()) ||
+						(recommended != scLicense.getRecommended())) {
+					list = null;
+
+					break;
+				}
+			}
+		}
 
 		if (list == null) {
 			StringBundler query = null;
@@ -1168,8 +1064,8 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
 					orderByComparator);
 			}
-
-			else {
+			else
+			 if (pagination) {
 				query.append(SCLicenseModelImpl.ORDER_BY_JPQL);
 			}
 
@@ -1188,24 +1084,29 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 
 				qPos.add(recommended);
 
-				list = (List<SCLicense>)QueryUtil.list(q, getDialect(), start,
-						end);
+				if (!pagination) {
+					list = (List<SCLicense>)QueryUtil.list(q, getDialect(),
+							start, end, false);
+
+					Collections.sort(list);
+
+					list = new UnmodifiableList<SCLicense>(list);
+				}
+				else {
+					list = (List<SCLicense>)QueryUtil.list(q, getDialect(),
+							start, end);
+				}
+
+				cacheResult(list);
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, list);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (list == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FIND_BY_A_R,
-						finderArgs);
-				}
-				else {
-					cacheResult(list);
-
-					FinderCacheUtil.putResult(FINDER_PATH_FIND_BY_A_R,
-						finderArgs, list);
-				}
-
 				closeSession(session);
 			}
 		}
@@ -1216,10 +1117,6 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	/**
 	 * Returns the first s c license in the ordered set where active = &#63; and recommended = &#63;.
 	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
-	 *
 	 * @param active the active
 	 * @param recommended the recommended
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
@@ -1227,38 +1124,56 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @throws com.liferay.portlet.softwarecatalog.NoSuchLicenseException if a matching s c license could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public SCLicense findByA_R_First(boolean active, boolean recommended,
 		OrderByComparator orderByComparator)
 		throws NoSuchLicenseException, SystemException {
+		SCLicense scLicense = fetchByA_R_First(active, recommended,
+				orderByComparator);
+
+		if (scLicense != null) {
+			return scLicense;
+		}
+
+		StringBundler msg = new StringBundler(6);
+
+		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		msg.append("active=");
+		msg.append(active);
+
+		msg.append(", recommended=");
+		msg.append(recommended);
+
+		msg.append(StringPool.CLOSE_CURLY_BRACE);
+
+		throw new NoSuchLicenseException(msg.toString());
+	}
+
+	/**
+	 * Returns the first s c license in the ordered set where active = &#63; and recommended = &#63;.
+	 *
+	 * @param active the active
+	 * @param recommended the recommended
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching s c license, or <code>null</code> if a matching s c license could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public SCLicense fetchByA_R_First(boolean active, boolean recommended,
+		OrderByComparator orderByComparator) throws SystemException {
 		List<SCLicense> list = findByA_R(active, recommended, 0, 1,
 				orderByComparator);
 
-		if (list.isEmpty()) {
-			StringBundler msg = new StringBundler(6);
-
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-			msg.append("active=");
-			msg.append(active);
-
-			msg.append(", recommended=");
-			msg.append(recommended);
-
-			msg.append(StringPool.CLOSE_CURLY_BRACE);
-
-			throw new NoSuchLicenseException(msg.toString());
-		}
-		else {
+		if (!list.isEmpty()) {
 			return list.get(0);
 		}
+
+		return null;
 	}
 
 	/**
 	 * Returns the last s c license in the ordered set where active = &#63; and recommended = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
 	 *
 	 * @param active the active
 	 * @param recommended the recommended
@@ -1267,40 +1182,62 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @throws com.liferay.portlet.softwarecatalog.NoSuchLicenseException if a matching s c license could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public SCLicense findByA_R_Last(boolean active, boolean recommended,
 		OrderByComparator orderByComparator)
 		throws NoSuchLicenseException, SystemException {
+		SCLicense scLicense = fetchByA_R_Last(active, recommended,
+				orderByComparator);
+
+		if (scLicense != null) {
+			return scLicense;
+		}
+
+		StringBundler msg = new StringBundler(6);
+
+		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		msg.append("active=");
+		msg.append(active);
+
+		msg.append(", recommended=");
+		msg.append(recommended);
+
+		msg.append(StringPool.CLOSE_CURLY_BRACE);
+
+		throw new NoSuchLicenseException(msg.toString());
+	}
+
+	/**
+	 * Returns the last s c license in the ordered set where active = &#63; and recommended = &#63;.
+	 *
+	 * @param active the active
+	 * @param recommended the recommended
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching s c license, or <code>null</code> if a matching s c license could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public SCLicense fetchByA_R_Last(boolean active, boolean recommended,
+		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByA_R(active, recommended);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<SCLicense> list = findByA_R(active, recommended, count - 1, count,
 				orderByComparator);
 
-		if (list.isEmpty()) {
-			StringBundler msg = new StringBundler(6);
-
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-			msg.append("active=");
-			msg.append(active);
-
-			msg.append(", recommended=");
-			msg.append(recommended);
-
-			msg.append(StringPool.CLOSE_CURLY_BRACE);
-
-			throw new NoSuchLicenseException(msg.toString());
-		}
-		else {
+		if (!list.isEmpty()) {
 			return list.get(0);
 		}
+
+		return null;
 	}
 
 	/**
 	 * Returns the s c licenses before and after the current s c license in the ordered set where active = &#63; and recommended = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
 	 *
 	 * @param licenseId the primary key of the current s c license
 	 * @param active the active
@@ -1310,6 +1247,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @throws com.liferay.portlet.softwarecatalog.NoSuchLicenseException if a s c license with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public SCLicense[] findByA_R_PrevAndNext(long licenseId, boolean active,
 		boolean recommended, OrderByComparator orderByComparator)
 		throws NoSuchLicenseException, SystemException {
@@ -1360,17 +1298,17 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 		query.append(_FINDER_COLUMN_A_R_RECOMMENDED_2);
 
 		if (orderByComparator != null) {
-			String[] orderByFields = orderByComparator.getOrderByFields();
+			String[] orderByConditionFields = orderByComparator.getOrderByConditionFields();
 
-			if (orderByFields.length > 0) {
+			if (orderByConditionFields.length > 0) {
 				query.append(WHERE_AND);
 			}
 
-			for (int i = 0; i < orderByFields.length; i++) {
+			for (int i = 0; i < orderByConditionFields.length; i++) {
 				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				query.append(orderByConditionFields[i]);
 
-				if ((i + 1) < orderByFields.length) {
+				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
 						query.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
@@ -1389,6 +1327,8 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 			}
 
 			query.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
 				query.append(_ORDER_BY_ENTITY_ALIAS);
@@ -1412,7 +1352,6 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 				}
 			}
 		}
-
 		else {
 			query.append(SCLicenseModelImpl.ORDER_BY_JPQL);
 		}
@@ -1431,7 +1370,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 		qPos.add(recommended);
 
 		if (orderByComparator != null) {
-			Object[] values = orderByComparator.getOrderByValues(scLicense);
+			Object[] values = orderByComparator.getOrderByConditionValues(scLicense);
 
 			for (Object value : values) {
 				qPos.add(value);
@@ -1456,6 +1395,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the matching s c licenses that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<SCLicense> filterFindByA_R(boolean active, boolean recommended)
 		throws SystemException {
 		return filterFindByA_R(active, recommended, QueryUtil.ALL_POS,
@@ -1466,7 +1406,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * Returns a range of all the s c licenses that the user has permission to view where active = &#63; and recommended = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCLicenseModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param active the active
@@ -1476,6 +1416,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the range of matching s c licenses that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<SCLicense> filterFindByA_R(boolean active, boolean recommended,
 		int start, int end) throws SystemException {
 		return filterFindByA_R(active, recommended, start, end, null);
@@ -1485,7 +1426,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * Returns an ordered range of all the s c licenses that the user has permissions to view where active = &#63; and recommended = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCLicenseModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param active the active
@@ -1496,6 +1437,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the ordered range of matching s c licenses that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<SCLicense> filterFindByA_R(boolean active, boolean recommended,
 		int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
@@ -1520,7 +1462,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 			query.append(_FILTER_SQL_SELECT_SCLICENSE_NO_INLINE_DISTINCT_WHERE_1);
 		}
 
-		query.append(_FINDER_COLUMN_A_R_ACTIVE_2);
+		query.append(_FINDER_COLUMN_A_R_ACTIVE_2_SQL);
 
 		query.append(_FINDER_COLUMN_A_R_RECOMMENDED_2);
 
@@ -1531,14 +1473,13 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 		if (orderByComparator != null) {
 			if (getDB().isSupportsInlineDistinct()) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
+					orderByComparator, true);
 			}
 			else {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_TABLE,
-					orderByComparator);
+					orderByComparator, true);
 			}
 		}
-
 		else {
 			if (getDB().isSupportsInlineDistinct()) {
 				query.append(SCLicenseModelImpl.ORDER_BY_JPQL);
@@ -1592,6 +1533,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @throws com.liferay.portlet.softwarecatalog.NoSuchLicenseException if a s c license with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public SCLicense[] filterFindByA_R_PrevAndNext(long licenseId,
 		boolean active, boolean recommended, OrderByComparator orderByComparator)
 		throws NoSuchLicenseException, SystemException {
@@ -1647,7 +1589,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 			query.append(_FILTER_SQL_SELECT_SCLICENSE_NO_INLINE_DISTINCT_WHERE_1);
 		}
 
-		query.append(_FINDER_COLUMN_A_R_ACTIVE_2);
+		query.append(_FINDER_COLUMN_A_R_ACTIVE_2_SQL);
 
 		query.append(_FINDER_COLUMN_A_R_RECOMMENDED_2);
 
@@ -1656,13 +1598,13 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 		}
 
 		if (orderByComparator != null) {
-			String[] orderByFields = orderByComparator.getOrderByFields();
+			String[] orderByConditionFields = orderByComparator.getOrderByConditionFields();
 
-			if (orderByFields.length > 0) {
+			if (orderByConditionFields.length > 0) {
 				query.append(WHERE_AND);
 			}
 
-			for (int i = 0; i < orderByFields.length; i++) {
+			for (int i = 0; i < orderByConditionFields.length; i++) {
 				if (getDB().isSupportsInlineDistinct()) {
 					query.append(_ORDER_BY_ENTITY_ALIAS);
 				}
@@ -1670,9 +1612,9 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 					query.append(_ORDER_BY_ENTITY_TABLE);
 				}
 
-				query.append(orderByFields[i]);
+				query.append(orderByConditionFields[i]);
 
-				if ((i + 1) < orderByFields.length) {
+				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
 						query.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
@@ -1691,6 +1633,8 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 			}
 
 			query.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
 				if (getDB().isSupportsInlineDistinct()) {
@@ -1720,7 +1664,6 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 				}
 			}
 		}
-
 		else {
 			if (getDB().isSupportsInlineDistinct()) {
 				query.append(SCLicenseModelImpl.ORDER_BY_JPQL);
@@ -1752,7 +1695,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 		qPos.add(recommended);
 
 		if (orderByComparator != null) {
-			Object[] values = orderByComparator.getOrderByValues(scLicense);
+			Object[] values = orderByComparator.getOrderByConditionValues(scLicense);
 
 			for (Object value : values) {
 				qPos.add(value);
@@ -1770,248 +1713,18 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	}
 
 	/**
-	 * Returns all the s c licenses.
-	 *
-	 * @return the s c licenses
-	 * @throws SystemException if a system exception occurred
-	 */
-	public List<SCLicense> findAll() throws SystemException {
-		return findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
-	}
-
-	/**
-	 * Returns a range of all the s c licenses.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
-	 *
-	 * @param start the lower bound of the range of s c licenses
-	 * @param end the upper bound of the range of s c licenses (not inclusive)
-	 * @return the range of s c licenses
-	 * @throws SystemException if a system exception occurred
-	 */
-	public List<SCLicense> findAll(int start, int end)
-		throws SystemException {
-		return findAll(start, end, null);
-	}
-
-	/**
-	 * Returns an ordered range of all the s c licenses.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
-	 *
-	 * @param start the lower bound of the range of s c licenses
-	 * @param end the upper bound of the range of s c licenses (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of s c licenses
-	 * @throws SystemException if a system exception occurred
-	 */
-	public List<SCLicense> findAll(int start, int end,
-		OrderByComparator orderByComparator) throws SystemException {
-		Object[] finderArgs = new Object[] {
-				String.valueOf(start), String.valueOf(end),
-				String.valueOf(orderByComparator)
-			};
-
-		List<SCLicense> list = (List<SCLicense>)FinderCacheUtil.getResult(FINDER_PATH_FIND_ALL,
-				finderArgs, this);
-
-		if (list == null) {
-			StringBundler query = null;
-			String sql = null;
-
-			if (orderByComparator != null) {
-				query = new StringBundler(2 +
-						(orderByComparator.getOrderByFields().length * 3));
-
-				query.append(_SQL_SELECT_SCLICENSE);
-
-				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
-
-				sql = query.toString();
-			}
-			else {
-				sql = _SQL_SELECT_SCLICENSE.concat(SCLicenseModelImpl.ORDER_BY_JPQL);
-			}
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				if (orderByComparator == null) {
-					list = (List<SCLicense>)QueryUtil.list(q, getDialect(),
-							start, end, false);
-
-					Collections.sort(list);
-				}
-				else {
-					list = (List<SCLicense>)QueryUtil.list(q, getDialect(),
-							start, end);
-				}
-			}
-			catch (Exception e) {
-				throw processException(e);
-			}
-			finally {
-				if (list == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FIND_ALL,
-						finderArgs);
-				}
-				else {
-					cacheResult(list);
-
-					FinderCacheUtil.putResult(FINDER_PATH_FIND_ALL, finderArgs,
-						list);
-				}
-
-				closeSession(session);
-			}
-		}
-
-		return list;
-	}
-
-	/**
-	 * Removes all the s c licenses where active = &#63; from the database.
-	 *
-	 * @param active the active
-	 * @throws SystemException if a system exception occurred
-	 */
-	public void removeByActive(boolean active) throws SystemException {
-		for (SCLicense scLicense : findByActive(active)) {
-			scLicensePersistence.remove(scLicense);
-		}
-	}
-
-	/**
 	 * Removes all the s c licenses where active = &#63; and recommended = &#63; from the database.
 	 *
 	 * @param active the active
 	 * @param recommended the recommended
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByA_R(boolean active, boolean recommended)
 		throws SystemException {
-		for (SCLicense scLicense : findByA_R(active, recommended)) {
-			scLicensePersistence.remove(scLicense);
-		}
-	}
-
-	/**
-	 * Removes all the s c licenses from the database.
-	 *
-	 * @throws SystemException if a system exception occurred
-	 */
-	public void removeAll() throws SystemException {
-		for (SCLicense scLicense : findAll()) {
-			scLicensePersistence.remove(scLicense);
-		}
-	}
-
-	/**
-	 * Returns the number of s c licenses where active = &#63;.
-	 *
-	 * @param active the active
-	 * @return the number of matching s c licenses
-	 * @throws SystemException if a system exception occurred
-	 */
-	public int countByActive(boolean active) throws SystemException {
-		Object[] finderArgs = new Object[] { active };
-
-		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_BY_ACTIVE,
-				finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(2);
-
-			query.append(_SQL_COUNT_SCLICENSE_WHERE);
-
-			query.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2);
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(active);
-
-				count = (Long)q.uniqueResult();
-			}
-			catch (Exception e) {
-				throw processException(e);
-			}
-			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_ACTIVE,
-					finderArgs, count);
-
-				closeSession(session);
-			}
-		}
-
-		return count.intValue();
-	}
-
-	/**
-	 * Returns the number of s c licenses that the user has permission to view where active = &#63;.
-	 *
-	 * @param active the active
-	 * @return the number of matching s c licenses that the user has permission to view
-	 * @throws SystemException if a system exception occurred
-	 */
-	public int filterCountByActive(boolean active) throws SystemException {
-		if (!InlineSQLHelperUtil.isEnabled()) {
-			return countByActive(active);
-		}
-
-		StringBundler query = new StringBundler(2);
-
-		query.append(_FILTER_SQL_COUNT_SCLICENSE_WHERE);
-
-		query.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2);
-
-		String sql = InlineSQLHelperUtil.replacePermissionCheck(query.toString(),
-				SCLicense.class.getName(), _FILTER_ENTITY_TABLE_FILTER_PK_COLUMN);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			SQLQuery q = session.createSQLQuery(sql);
-
-			q.addScalar(COUNT_COLUMN_NAME,
-				com.liferay.portal.kernel.dao.orm.Type.LONG);
-
-			QueryPos qPos = QueryPos.getInstance(q);
-
-			qPos.add(active);
-
-			Long count = (Long)q.uniqueResult();
-
-			return count.intValue();
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			closeSession(session);
+		for (SCLicense scLicense : findByA_R(active, recommended,
+				QueryUtil.ALL_POS, QueryUtil.ALL_POS, null)) {
+			remove(scLicense);
 		}
 	}
 
@@ -2023,12 +1736,15 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the number of matching s c licenses
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByA_R(boolean active, boolean recommended)
 		throws SystemException {
+		FinderPath finderPath = FINDER_PATH_COUNT_BY_A_R;
+
 		Object[] finderArgs = new Object[] { active, recommended };
 
-		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_BY_A_R,
-				finderArgs, this);
+		Long count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs,
+				this);
 
 		if (count == null) {
 			StringBundler query = new StringBundler(3);
@@ -2055,18 +1771,15 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 				qPos.add(recommended);
 
 				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_A_R, finderArgs,
-					count);
-
 				closeSession(session);
 			}
 		}
@@ -2082,6 +1795,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the number of matching s c licenses that the user has permission to view
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int filterCountByA_R(boolean active, boolean recommended)
 		throws SystemException {
 		if (!InlineSQLHelperUtil.isEnabled()) {
@@ -2092,7 +1806,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 
 		query.append(_FILTER_SQL_COUNT_SCLICENSE_WHERE);
 
-		query.append(_FINDER_COLUMN_A_R_ACTIVE_2);
+		query.append(_FINDER_COLUMN_A_R_ACTIVE_2_SQL);
 
 		query.append(_FINDER_COLUMN_A_R_RECOMMENDED_2);
 
@@ -2127,17 +1841,547 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 		}
 	}
 
+	private static final String _FINDER_COLUMN_A_R_ACTIVE_2 = "scLicense.active = ? AND ";
+	private static final String _FINDER_COLUMN_A_R_ACTIVE_2_SQL = "scLicense.active_ = ? AND ";
+	private static final String _FINDER_COLUMN_A_R_RECOMMENDED_2 = "scLicense.recommended = ?";
+
+	public SCLicensePersistenceImpl() {
+		setModelClass(SCLicense.class);
+	}
+
+	/**
+	 * Caches the s c license in the entity cache if it is enabled.
+	 *
+	 * @param scLicense the s c license
+	 */
+	@Override
+	public void cacheResult(SCLicense scLicense) {
+		EntityCacheUtil.putResult(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+			SCLicenseImpl.class, scLicense.getPrimaryKey(), scLicense);
+
+		scLicense.resetOriginalValues();
+	}
+
+	/**
+	 * Caches the s c licenses in the entity cache if it is enabled.
+	 *
+	 * @param scLicenses the s c licenses
+	 */
+	@Override
+	public void cacheResult(List<SCLicense> scLicenses) {
+		for (SCLicense scLicense : scLicenses) {
+			if (EntityCacheUtil.getResult(
+						SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+						SCLicenseImpl.class, scLicense.getPrimaryKey()) == null) {
+				cacheResult(scLicense);
+			}
+			else {
+				scLicense.resetOriginalValues();
+			}
+		}
+	}
+
+	/**
+	 * Clears the cache for all s c licenses.
+	 *
+	 * <p>
+	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
+	 * </p>
+	 */
+	@Override
+	public void clearCache() {
+		if (_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE) {
+			CacheRegistryUtil.clear(SCLicenseImpl.class.getName());
+		}
+
+		EntityCacheUtil.clearCache(SCLicenseImpl.class.getName());
+
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_ENTITY);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+	}
+
+	/**
+	 * Clears the cache for the s c license.
+	 *
+	 * <p>
+	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
+	 * </p>
+	 */
+	@Override
+	public void clearCache(SCLicense scLicense) {
+		EntityCacheUtil.removeResult(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+			SCLicenseImpl.class, scLicense.getPrimaryKey());
+
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+	}
+
+	@Override
+	public void clearCache(List<SCLicense> scLicenses) {
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+
+		for (SCLicense scLicense : scLicenses) {
+			EntityCacheUtil.removeResult(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+				SCLicenseImpl.class, scLicense.getPrimaryKey());
+		}
+	}
+
+	/**
+	 * Creates a new s c license with the primary key. Does not add the s c license to the database.
+	 *
+	 * @param licenseId the primary key for the new s c license
+	 * @return the new s c license
+	 */
+	@Override
+	public SCLicense create(long licenseId) {
+		SCLicense scLicense = new SCLicenseImpl();
+
+		scLicense.setNew(true);
+		scLicense.setPrimaryKey(licenseId);
+
+		return scLicense;
+	}
+
+	/**
+	 * Removes the s c license with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * @param licenseId the primary key of the s c license
+	 * @return the s c license that was removed
+	 * @throws com.liferay.portlet.softwarecatalog.NoSuchLicenseException if a s c license with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public SCLicense remove(long licenseId)
+		throws NoSuchLicenseException, SystemException {
+		return remove((Serializable)licenseId);
+	}
+
+	/**
+	 * Removes the s c license with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * @param primaryKey the primary key of the s c license
+	 * @return the s c license that was removed
+	 * @throws com.liferay.portlet.softwarecatalog.NoSuchLicenseException if a s c license with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public SCLicense remove(Serializable primaryKey)
+		throws NoSuchLicenseException, SystemException {
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			SCLicense scLicense = (SCLicense)session.get(SCLicenseImpl.class,
+					primaryKey);
+
+			if (scLicense == null) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + primaryKey);
+				}
+
+				throw new NoSuchLicenseException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
+					primaryKey);
+			}
+
+			return remove(scLicense);
+		}
+		catch (NoSuchLicenseException nsee) {
+			throw nsee;
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	@Override
+	protected SCLicense removeImpl(SCLicense scLicense)
+		throws SystemException {
+		scLicense = toUnwrappedModel(scLicense);
+
+		scLicenseToSCProductEntryTableMapper.deleteLeftPrimaryKeyTableMappings(scLicense.getPrimaryKey());
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			if (!session.contains(scLicense)) {
+				scLicense = (SCLicense)session.get(SCLicenseImpl.class,
+						scLicense.getPrimaryKeyObj());
+			}
+
+			if (scLicense != null) {
+				session.delete(scLicense);
+			}
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+
+		if (scLicense != null) {
+			clearCache(scLicense);
+		}
+
+		return scLicense;
+	}
+
+	@Override
+	public SCLicense updateImpl(
+		com.liferay.portlet.softwarecatalog.model.SCLicense scLicense)
+		throws SystemException {
+		scLicense = toUnwrappedModel(scLicense);
+
+		boolean isNew = scLicense.isNew();
+
+		SCLicenseModelImpl scLicenseModelImpl = (SCLicenseModelImpl)scLicense;
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			if (scLicense.isNew()) {
+				session.save(scLicense);
+
+				scLicense.setNew(false);
+			}
+			else {
+				session.merge(scLicense);
+			}
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+
+		if (isNew || !SCLicenseModelImpl.COLUMN_BITMASK_ENABLED) {
+			FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		}
+
+		else {
+			if ((scLicenseModelImpl.getColumnBitmask() &
+					FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_ACTIVE.getColumnBitmask()) != 0) {
+				Object[] args = new Object[] {
+						scLicenseModelImpl.getOriginalActive()
+					};
+
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_ACTIVE, args);
+				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_ACTIVE,
+					args);
+
+				args = new Object[] { scLicenseModelImpl.getActive() };
+
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_ACTIVE, args);
+				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_ACTIVE,
+					args);
+			}
+
+			if ((scLicenseModelImpl.getColumnBitmask() &
+					FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_A_R.getColumnBitmask()) != 0) {
+				Object[] args = new Object[] {
+						scLicenseModelImpl.getOriginalActive(),
+						scLicenseModelImpl.getOriginalRecommended()
+					};
+
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_A_R, args);
+				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_A_R,
+					args);
+
+				args = new Object[] {
+						scLicenseModelImpl.getActive(),
+						scLicenseModelImpl.getRecommended()
+					};
+
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_A_R, args);
+				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_A_R,
+					args);
+			}
+		}
+
+		EntityCacheUtil.putResult(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+			SCLicenseImpl.class, scLicense.getPrimaryKey(), scLicense);
+
+		return scLicense;
+	}
+
+	protected SCLicense toUnwrappedModel(SCLicense scLicense) {
+		if (scLicense instanceof SCLicenseImpl) {
+			return scLicense;
+		}
+
+		SCLicenseImpl scLicenseImpl = new SCLicenseImpl();
+
+		scLicenseImpl.setNew(scLicense.isNew());
+		scLicenseImpl.setPrimaryKey(scLicense.getPrimaryKey());
+
+		scLicenseImpl.setLicenseId(scLicense.getLicenseId());
+		scLicenseImpl.setName(scLicense.getName());
+		scLicenseImpl.setUrl(scLicense.getUrl());
+		scLicenseImpl.setOpenSource(scLicense.isOpenSource());
+		scLicenseImpl.setActive(scLicense.isActive());
+		scLicenseImpl.setRecommended(scLicense.isRecommended());
+
+		return scLicenseImpl;
+	}
+
+	/**
+	 * Returns the s c license with the primary key or throws a {@link com.liferay.portal.NoSuchModelException} if it could not be found.
+	 *
+	 * @param primaryKey the primary key of the s c license
+	 * @return the s c license
+	 * @throws com.liferay.portlet.softwarecatalog.NoSuchLicenseException if a s c license with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public SCLicense findByPrimaryKey(Serializable primaryKey)
+		throws NoSuchLicenseException, SystemException {
+		SCLicense scLicense = fetchByPrimaryKey(primaryKey);
+
+		if (scLicense == null) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + primaryKey);
+			}
+
+			throw new NoSuchLicenseException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
+				primaryKey);
+		}
+
+		return scLicense;
+	}
+
+	/**
+	 * Returns the s c license with the primary key or throws a {@link com.liferay.portlet.softwarecatalog.NoSuchLicenseException} if it could not be found.
+	 *
+	 * @param licenseId the primary key of the s c license
+	 * @return the s c license
+	 * @throws com.liferay.portlet.softwarecatalog.NoSuchLicenseException if a s c license with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public SCLicense findByPrimaryKey(long licenseId)
+		throws NoSuchLicenseException, SystemException {
+		return findByPrimaryKey((Serializable)licenseId);
+	}
+
+	/**
+	 * Returns the s c license with the primary key or returns <code>null</code> if it could not be found.
+	 *
+	 * @param primaryKey the primary key of the s c license
+	 * @return the s c license, or <code>null</code> if a s c license with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public SCLicense fetchByPrimaryKey(Serializable primaryKey)
+		throws SystemException {
+		SCLicense scLicense = (SCLicense)EntityCacheUtil.getResult(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+				SCLicenseImpl.class, primaryKey);
+
+		if (scLicense == _nullSCLicense) {
+			return null;
+		}
+
+		if (scLicense == null) {
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				scLicense = (SCLicense)session.get(SCLicenseImpl.class,
+						primaryKey);
+
+				if (scLicense != null) {
+					cacheResult(scLicense);
+				}
+				else {
+					EntityCacheUtil.putResult(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+						SCLicenseImpl.class, primaryKey, _nullSCLicense);
+				}
+			}
+			catch (Exception e) {
+				EntityCacheUtil.removeResult(SCLicenseModelImpl.ENTITY_CACHE_ENABLED,
+					SCLicenseImpl.class, primaryKey);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return scLicense;
+	}
+
+	/**
+	 * Returns the s c license with the primary key or returns <code>null</code> if it could not be found.
+	 *
+	 * @param licenseId the primary key of the s c license
+	 * @return the s c license, or <code>null</code> if a s c license with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public SCLicense fetchByPrimaryKey(long licenseId)
+		throws SystemException {
+		return fetchByPrimaryKey((Serializable)licenseId);
+	}
+
+	/**
+	 * Returns all the s c licenses.
+	 *
+	 * @return the s c licenses
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public List<SCLicense> findAll() throws SystemException {
+		return findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the s c licenses.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCLicenseModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
+	 * </p>
+	 *
+	 * @param start the lower bound of the range of s c licenses
+	 * @param end the upper bound of the range of s c licenses (not inclusive)
+	 * @return the range of s c licenses
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public List<SCLicense> findAll(int start, int end)
+		throws SystemException {
+		return findAll(start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the s c licenses.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCLicenseModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
+	 * </p>
+	 *
+	 * @param start the lower bound of the range of s c licenses
+	 * @param end the upper bound of the range of s c licenses (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of s c licenses
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public List<SCLicense> findAll(int start, int end,
+		OrderByComparator orderByComparator) throws SystemException {
+		boolean pagination = true;
+		FinderPath finderPath = null;
+		Object[] finderArgs = null;
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+			pagination = false;
+			finderPath = FINDER_PATH_WITHOUT_PAGINATION_FIND_ALL;
+			finderArgs = FINDER_ARGS_EMPTY;
+		}
+		else {
+			finderPath = FINDER_PATH_WITH_PAGINATION_FIND_ALL;
+			finderArgs = new Object[] { start, end, orderByComparator };
+		}
+
+		List<SCLicense> list = (List<SCLicense>)FinderCacheUtil.getResult(finderPath,
+				finderArgs, this);
+
+		if (list == null) {
+			StringBundler query = null;
+			String sql = null;
+
+			if (orderByComparator != null) {
+				query = new StringBundler(2 +
+						(orderByComparator.getOrderByFields().length * 3));
+
+				query.append(_SQL_SELECT_SCLICENSE);
+
+				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
+					orderByComparator);
+
+				sql = query.toString();
+			}
+			else {
+				sql = _SQL_SELECT_SCLICENSE;
+
+				if (pagination) {
+					sql = sql.concat(SCLicenseModelImpl.ORDER_BY_JPQL);
+				}
+			}
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query q = session.createQuery(sql);
+
+				if (!pagination) {
+					list = (List<SCLicense>)QueryUtil.list(q, getDialect(),
+							start, end, false);
+
+					Collections.sort(list);
+
+					list = new UnmodifiableList<SCLicense>(list);
+				}
+				else {
+					list = (List<SCLicense>)QueryUtil.list(q, getDialect(),
+							start, end);
+				}
+
+				cacheResult(list);
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, list);
+			}
+			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return list;
+	}
+
+	/**
+	 * Removes all the s c licenses from the database.
+	 *
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public void removeAll() throws SystemException {
+		for (SCLicense scLicense : findAll()) {
+			remove(scLicense);
+		}
+	}
+
 	/**
 	 * Returns the number of s c licenses.
 	 *
 	 * @return the number of s c licenses
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countAll() throws SystemException {
-		Object[] finderArgs = new Object[0];
-
 		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_ALL,
-				finderArgs, this);
+				FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -2148,18 +2392,17 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 				Query q = session.createQuery(_SQL_COUNT_SCLICENSE);
 
 				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(FINDER_PATH_COUNT_ALL,
+					FINDER_ARGS_EMPTY, count);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_ALL,
+					FINDER_ARGS_EMPTY);
+
 				throw processException(e);
 			}
 			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_ALL, finderArgs,
-					count);
-
 				closeSession(session);
 			}
 		}
@@ -2174,6 +2417,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the s c product entries associated with the s c license
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<com.liferay.portlet.softwarecatalog.model.SCProductEntry> getSCProductEntries(
 		long pk) throws SystemException {
 		return getSCProductEntries(pk, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
@@ -2183,7 +2427,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * Returns a range of all the s c product entries associated with the s c license.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCLicenseModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param pk the primary key of the s c license
@@ -2192,26 +2436,17 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the range of s c product entries associated with the s c license
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<com.liferay.portlet.softwarecatalog.model.SCProductEntry> getSCProductEntries(
 		long pk, int start, int end) throws SystemException {
 		return getSCProductEntries(pk, start, end, null);
 	}
 
-	public static final FinderPath FINDER_PATH_GET_SCPRODUCTENTRIES = new FinderPath(com.liferay.portlet.softwarecatalog.model.impl.SCProductEntryModelImpl.ENTITY_CACHE_ENABLED,
-			SCLicenseModelImpl.FINDER_CACHE_ENABLED_SCLICENSES_SCPRODUCTENTRIES,
-			com.liferay.portlet.softwarecatalog.model.impl.SCProductEntryImpl.class,
-			SCLicenseModelImpl.MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME,
-			"getSCProductEntries",
-			new String[] {
-				Long.class.getName(), "java.lang.Integer", "java.lang.Integer",
-				"com.liferay.portal.kernel.util.OrderByComparator"
-			});
-
 	/**
 	 * Returns an ordered range of all the s c product entries associated with the s c license.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCLicenseModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param pk the primary key of the s c license
@@ -2221,72 +2456,13 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the ordered range of s c product entries associated with the s c license
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<com.liferay.portlet.softwarecatalog.model.SCProductEntry> getSCProductEntries(
 		long pk, int start, int end, OrderByComparator orderByComparator)
 		throws SystemException {
-		Object[] finderArgs = new Object[] {
-				pk, String.valueOf(start), String.valueOf(end),
-				String.valueOf(orderByComparator)
-			};
-
-		List<com.liferay.portlet.softwarecatalog.model.SCProductEntry> list = (List<com.liferay.portlet.softwarecatalog.model.SCProductEntry>)FinderCacheUtil.getResult(FINDER_PATH_GET_SCPRODUCTENTRIES,
-				finderArgs, this);
-
-		if (list == null) {
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				String sql = null;
-
-				if (orderByComparator != null) {
-					sql = _SQL_GETSCPRODUCTENTRIES.concat(ORDER_BY_CLAUSE)
-												  .concat(orderByComparator.getOrderBy());
-				}
-				else {
-					sql = _SQL_GETSCPRODUCTENTRIES.concat(com.liferay.portlet.softwarecatalog.model.impl.SCProductEntryModelImpl.ORDER_BY_SQL);
-				}
-
-				SQLQuery q = session.createSQLQuery(sql);
-
-				q.addEntity("SCProductEntry",
-					com.liferay.portlet.softwarecatalog.model.impl.SCProductEntryImpl.class);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(pk);
-
-				list = (List<com.liferay.portlet.softwarecatalog.model.SCProductEntry>)QueryUtil.list(q,
-						getDialect(), start, end);
-			}
-			catch (Exception e) {
-				throw processException(e);
-			}
-			finally {
-				if (list == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_GET_SCPRODUCTENTRIES,
-						finderArgs);
-				}
-				else {
-					scProductEntryPersistence.cacheResult(list);
-
-					FinderCacheUtil.putResult(FINDER_PATH_GET_SCPRODUCTENTRIES,
-						finderArgs, list);
-				}
-
-				closeSession(session);
-			}
-		}
-
-		return list;
+		return scLicenseToSCProductEntryTableMapper.getRightBaseModels(pk,
+			start, end, orderByComparator);
 	}
-
-	public static final FinderPath FINDER_PATH_GET_SCPRODUCTENTRIES_SIZE = new FinderPath(com.liferay.portlet.softwarecatalog.model.impl.SCProductEntryModelImpl.ENTITY_CACHE_ENABLED,
-			SCLicenseModelImpl.FINDER_CACHE_ENABLED_SCLICENSES_SCPRODUCTENTRIES,
-			Long.class,
-			SCLicenseModelImpl.MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME,
-			"getSCProductEntriesSize", new String[] { Long.class.getName() });
 
 	/**
 	 * Returns the number of s c product entries associated with the s c license.
@@ -2295,53 +2471,12 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return the number of s c product entries associated with the s c license
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int getSCProductEntriesSize(long pk) throws SystemException {
-		Object[] finderArgs = new Object[] { pk };
+		long[] pks = scLicenseToSCProductEntryTableMapper.getRightPrimaryKeys(pk);
 
-		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_GET_SCPRODUCTENTRIES_SIZE,
-				finderArgs, this);
-
-		if (count == null) {
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				SQLQuery q = session.createSQLQuery(_SQL_GETSCPRODUCTENTRIESSIZE);
-
-				q.addScalar(COUNT_COLUMN_NAME,
-					com.liferay.portal.kernel.dao.orm.Type.LONG);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(pk);
-
-				count = (Long)q.uniqueResult();
-			}
-			catch (Exception e) {
-				throw processException(e);
-			}
-			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_GET_SCPRODUCTENTRIES_SIZE,
-					finderArgs, count);
-
-				closeSession(session);
-			}
-		}
-
-		return count.intValue();
+		return pks.length;
 	}
-
-	public static final FinderPath FINDER_PATH_CONTAINS_SCPRODUCTENTRY = new FinderPath(com.liferay.portlet.softwarecatalog.model.impl.SCProductEntryModelImpl.ENTITY_CACHE_ENABLED,
-			SCLicenseModelImpl.FINDER_CACHE_ENABLED_SCLICENSES_SCPRODUCTENTRIES,
-			Boolean.class,
-			SCLicenseModelImpl.MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME,
-			"containsSCProductEntry",
-			new String[] { Long.class.getName(), Long.class.getName() });
 
 	/**
 	 * Returns <code>true</code> if the s c product entry is associated with the s c license.
@@ -2351,32 +2486,11 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return <code>true</code> if the s c product entry is associated with the s c license; <code>false</code> otherwise
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public boolean containsSCProductEntry(long pk, long scProductEntryPK)
 		throws SystemException {
-		Object[] finderArgs = new Object[] { pk, scProductEntryPK };
-
-		Boolean value = (Boolean)FinderCacheUtil.getResult(FINDER_PATH_CONTAINS_SCPRODUCTENTRY,
-				finderArgs, this);
-
-		if (value == null) {
-			try {
-				value = Boolean.valueOf(containsSCProductEntry.contains(pk,
-							scProductEntryPK));
-			}
-			catch (Exception e) {
-				throw processException(e);
-			}
-			finally {
-				if (value == null) {
-					value = Boolean.FALSE;
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_CONTAINS_SCPRODUCTENTRY,
-					finderArgs, value);
-			}
-		}
-
-		return value.booleanValue();
+		return scLicenseToSCProductEntryTableMapper.containsTableMapping(pk,
+			scProductEntryPK);
 	}
 
 	/**
@@ -2386,6 +2500,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @return <code>true</code> if the s c license has any s c product entries associated with it; <code>false</code> otherwise
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public boolean containsSCProductEntries(long pk) throws SystemException {
 		if (getSCProductEntriesSize(pk) > 0) {
 			return true;
@@ -2402,17 +2517,11 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @param scProductEntryPK the primary key of the s c product entry
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addSCProductEntry(long pk, long scProductEntryPK)
 		throws SystemException {
-		try {
-			addSCProductEntry.add(pk, scProductEntryPK);
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(SCLicenseModelImpl.MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME);
-		}
+		scLicenseToSCProductEntryTableMapper.addTableMapping(pk,
+			scProductEntryPK);
 	}
 
 	/**
@@ -2422,18 +2531,12 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @param scProductEntry the s c product entry
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addSCProductEntry(long pk,
 		com.liferay.portlet.softwarecatalog.model.SCProductEntry scProductEntry)
 		throws SystemException {
-		try {
-			addSCProductEntry.add(pk, scProductEntry.getPrimaryKey());
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(SCLicenseModelImpl.MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME);
-		}
+		scLicenseToSCProductEntryTableMapper.addTableMapping(pk,
+			scProductEntry.getPrimaryKey());
 	}
 
 	/**
@@ -2443,18 +2546,12 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @param scProductEntryPKs the primary keys of the s c product entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addSCProductEntries(long pk, long[] scProductEntryPKs)
 		throws SystemException {
-		try {
-			for (long scProductEntryPK : scProductEntryPKs) {
-				addSCProductEntry.add(pk, scProductEntryPK);
-			}
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(SCLicenseModelImpl.MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME);
+		for (long scProductEntryPK : scProductEntryPKs) {
+			scLicenseToSCProductEntryTableMapper.addTableMapping(pk,
+				scProductEntryPK);
 		}
 	}
 
@@ -2465,19 +2562,13 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @param scProductEntries the s c product entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void addSCProductEntries(long pk,
 		List<com.liferay.portlet.softwarecatalog.model.SCProductEntry> scProductEntries)
 		throws SystemException {
-		try {
-			for (com.liferay.portlet.softwarecatalog.model.SCProductEntry scProductEntry : scProductEntries) {
-				addSCProductEntry.add(pk, scProductEntry.getPrimaryKey());
-			}
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(SCLicenseModelImpl.MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME);
+		for (com.liferay.portlet.softwarecatalog.model.SCProductEntry scProductEntry : scProductEntries) {
+			scLicenseToSCProductEntryTableMapper.addTableMapping(pk,
+				scProductEntry.getPrimaryKey());
 		}
 	}
 
@@ -2487,16 +2578,9 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @param pk the primary key of the s c license to clear the associated s c product entries from
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void clearSCProductEntries(long pk) throws SystemException {
-		try {
-			clearSCProductEntries.clear(pk);
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(SCLicenseModelImpl.MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME);
-		}
+		scLicenseToSCProductEntryTableMapper.deleteLeftPrimaryKeyTableMappings(pk);
 	}
 
 	/**
@@ -2506,17 +2590,11 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @param scProductEntryPK the primary key of the s c product entry
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeSCProductEntry(long pk, long scProductEntryPK)
 		throws SystemException {
-		try {
-			removeSCProductEntry.remove(pk, scProductEntryPK);
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(SCLicenseModelImpl.MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME);
-		}
+		scLicenseToSCProductEntryTableMapper.deleteTableMapping(pk,
+			scProductEntryPK);
 	}
 
 	/**
@@ -2526,18 +2604,12 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @param scProductEntry the s c product entry
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeSCProductEntry(long pk,
 		com.liferay.portlet.softwarecatalog.model.SCProductEntry scProductEntry)
 		throws SystemException {
-		try {
-			removeSCProductEntry.remove(pk, scProductEntry.getPrimaryKey());
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(SCLicenseModelImpl.MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME);
-		}
+		scLicenseToSCProductEntryTableMapper.deleteTableMapping(pk,
+			scProductEntry.getPrimaryKey());
 	}
 
 	/**
@@ -2547,18 +2619,12 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @param scProductEntryPKs the primary keys of the s c product entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeSCProductEntries(long pk, long[] scProductEntryPKs)
 		throws SystemException {
-		try {
-			for (long scProductEntryPK : scProductEntryPKs) {
-				removeSCProductEntry.remove(pk, scProductEntryPK);
-			}
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(SCLicenseModelImpl.MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME);
+		for (long scProductEntryPK : scProductEntryPKs) {
+			scLicenseToSCProductEntryTableMapper.deleteTableMapping(pk,
+				scProductEntryPK);
 		}
 	}
 
@@ -2569,19 +2635,13 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @param scProductEntries the s c product entries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeSCProductEntries(long pk,
 		List<com.liferay.portlet.softwarecatalog.model.SCProductEntry> scProductEntries)
 		throws SystemException {
-		try {
-			for (com.liferay.portlet.softwarecatalog.model.SCProductEntry scProductEntry : scProductEntries) {
-				removeSCProductEntry.remove(pk, scProductEntry.getPrimaryKey());
-			}
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(SCLicenseModelImpl.MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME);
+		for (com.liferay.portlet.softwarecatalog.model.SCProductEntry scProductEntry : scProductEntries) {
+			scLicenseToSCProductEntryTableMapper.deleteTableMapping(pk,
+				scProductEntry.getPrimaryKey());
 		}
 	}
 
@@ -2592,30 +2652,14 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @param scProductEntryPKs the primary keys of the s c product entries to be associated with the s c license
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void setSCProductEntries(long pk, long[] scProductEntryPKs)
 		throws SystemException {
-		try {
-			Set<Long> scProductEntryPKSet = SetUtil.fromArray(scProductEntryPKs);
+		scLicenseToSCProductEntryTableMapper.deleteLeftPrimaryKeyTableMappings(pk);
 
-			List<com.liferay.portlet.softwarecatalog.model.SCProductEntry> scProductEntries =
-				getSCProductEntries(pk);
-
-			for (com.liferay.portlet.softwarecatalog.model.SCProductEntry scProductEntry : scProductEntries) {
-				if (!scProductEntryPKSet.remove(scProductEntry.getPrimaryKey())) {
-					removeSCProductEntry.remove(pk,
-						scProductEntry.getPrimaryKey());
-				}
-			}
-
-			for (Long scProductEntryPK : scProductEntryPKSet) {
-				addSCProductEntry.add(pk, scProductEntryPK);
-			}
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			FinderCacheUtil.clearCache(SCLicenseModelImpl.MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME);
+		for (Long scProductEntryPK : scProductEntryPKs) {
+			scLicenseToSCProductEntryTableMapper.addTableMapping(pk,
+				scProductEntryPK);
 		}
 	}
 
@@ -2626,6 +2670,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	 * @param scProductEntries the s c product entries to be associated with the s c license
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void setSCProductEntries(long pk,
 		List<com.liferay.portlet.softwarecatalog.model.SCProductEntry> scProductEntries)
 		throws SystemException {
@@ -2649,6 +2694,11 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 		}
 	}
 
+	@Override
+	protected Set<String> getBadColumnNames() {
+		return _badColumnNames;
+	}
+
 	/**
 	 * Initializes the s c license persistence.
 	 */
@@ -2663,7 +2713,7 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 
 				for (String listenerClassName : listenerClassNames) {
 					listenersList.add((ModelListener<SCLicense>)InstanceFactory.newInstance(
-							listenerClassName));
+							getClassLoader(), listenerClassName));
 				}
 
 				listeners = listenersList.toArray(new ModelListener[listenersList.size()]);
@@ -2673,225 +2723,24 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 			}
 		}
 
-		containsSCProductEntry = new ContainsSCProductEntry(this);
-
-		addSCProductEntry = new AddSCProductEntry(this);
-		clearSCProductEntries = new ClearSCProductEntries(this);
-		removeSCProductEntry = new RemoveSCProductEntry(this);
+		scLicenseToSCProductEntryTableMapper = TableMapperFactory.getTableMapper("SCLicenses_SCProductEntries",
+				"licenseId", "productEntryId", this, scProductEntryPersistence);
 	}
 
 	public void destroy() {
 		EntityCacheUtil.removeCache(SCLicenseImpl.class.getName());
 		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_ENTITY);
-		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST);
+		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 	}
 
-	@BeanReference(type = SCFrameworkVersionPersistence.class)
-	protected SCFrameworkVersionPersistence scFrameworkVersionPersistence;
-	@BeanReference(type = SCLicensePersistence.class)
-	protected SCLicensePersistence scLicensePersistence;
 	@BeanReference(type = SCProductEntryPersistence.class)
 	protected SCProductEntryPersistence scProductEntryPersistence;
-	@BeanReference(type = SCProductScreenshotPersistence.class)
-	protected SCProductScreenshotPersistence scProductScreenshotPersistence;
-	@BeanReference(type = SCProductVersionPersistence.class)
-	protected SCProductVersionPersistence scProductVersionPersistence;
-	@BeanReference(type = ResourcePersistence.class)
-	protected ResourcePersistence resourcePersistence;
-	@BeanReference(type = UserPersistence.class)
-	protected UserPersistence userPersistence;
-	protected ContainsSCProductEntry containsSCProductEntry;
-	protected AddSCProductEntry addSCProductEntry;
-	protected ClearSCProductEntries clearSCProductEntries;
-	protected RemoveSCProductEntry removeSCProductEntry;
-
-	protected class ContainsSCProductEntry {
-		protected ContainsSCProductEntry(
-			SCLicensePersistenceImpl persistenceImpl) {
-			super();
-
-			_mappingSqlQuery = MappingSqlQueryFactoryUtil.getMappingSqlQuery(getDataSource(),
-					_SQL_CONTAINSSCPRODUCTENTRY,
-					new int[] { java.sql.Types.BIGINT, java.sql.Types.BIGINT },
-					RowMapper.COUNT);
-		}
-
-		protected boolean contains(long licenseId, long productEntryId) {
-			List<Integer> results = _mappingSqlQuery.execute(new Object[] {
-						new Long(licenseId), new Long(productEntryId)
-					});
-
-			if (results.size() > 0) {
-				Integer count = results.get(0);
-
-				if (count.intValue() > 0) {
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		private MappingSqlQuery<Integer> _mappingSqlQuery;
-	}
-
-	protected class AddSCProductEntry {
-		protected AddSCProductEntry(SCLicensePersistenceImpl persistenceImpl) {
-			_sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(getDataSource(),
-					"INSERT INTO SCLicenses_SCProductEntries (licenseId, productEntryId) VALUES (?, ?)",
-					new int[] { java.sql.Types.BIGINT, java.sql.Types.BIGINT });
-			_persistenceImpl = persistenceImpl;
-		}
-
-		protected void add(long licenseId, long productEntryId)
-			throws SystemException {
-			if (!_persistenceImpl.containsSCProductEntry.contains(licenseId,
-						productEntryId)) {
-				ModelListener<com.liferay.portlet.softwarecatalog.model.SCProductEntry>[] scProductEntryListeners =
-					scProductEntryPersistence.getListeners();
-
-				for (ModelListener<SCLicense> listener : listeners) {
-					listener.onBeforeAddAssociation(licenseId,
-						com.liferay.portlet.softwarecatalog.model.SCProductEntry.class.getName(),
-						productEntryId);
-				}
-
-				for (ModelListener<com.liferay.portlet.softwarecatalog.model.SCProductEntry> listener : scProductEntryListeners) {
-					listener.onBeforeAddAssociation(productEntryId,
-						SCLicense.class.getName(), licenseId);
-				}
-
-				_sqlUpdate.update(new Object[] {
-						new Long(licenseId), new Long(productEntryId)
-					});
-
-				for (ModelListener<SCLicense> listener : listeners) {
-					listener.onAfterAddAssociation(licenseId,
-						com.liferay.portlet.softwarecatalog.model.SCProductEntry.class.getName(),
-						productEntryId);
-				}
-
-				for (ModelListener<com.liferay.portlet.softwarecatalog.model.SCProductEntry> listener : scProductEntryListeners) {
-					listener.onAfterAddAssociation(productEntryId,
-						SCLicense.class.getName(), licenseId);
-				}
-			}
-		}
-
-		private SqlUpdate _sqlUpdate;
-		private SCLicensePersistenceImpl _persistenceImpl;
-	}
-
-	protected class ClearSCProductEntries {
-		protected ClearSCProductEntries(
-			SCLicensePersistenceImpl persistenceImpl) {
-			_sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(getDataSource(),
-					"DELETE FROM SCLicenses_SCProductEntries WHERE licenseId = ?",
-					new int[] { java.sql.Types.BIGINT });
-		}
-
-		protected void clear(long licenseId) throws SystemException {
-			ModelListener<com.liferay.portlet.softwarecatalog.model.SCProductEntry>[] scProductEntryListeners =
-				scProductEntryPersistence.getListeners();
-
-			List<com.liferay.portlet.softwarecatalog.model.SCProductEntry> scProductEntries =
-				null;
-
-			if ((listeners.length > 0) || (scProductEntryListeners.length > 0)) {
-				scProductEntries = getSCProductEntries(licenseId);
-
-				for (com.liferay.portlet.softwarecatalog.model.SCProductEntry scProductEntry : scProductEntries) {
-					for (ModelListener<SCLicense> listener : listeners) {
-						listener.onBeforeRemoveAssociation(licenseId,
-							com.liferay.portlet.softwarecatalog.model.SCProductEntry.class.getName(),
-							scProductEntry.getPrimaryKey());
-					}
-
-					for (ModelListener<com.liferay.portlet.softwarecatalog.model.SCProductEntry> listener : scProductEntryListeners) {
-						listener.onBeforeRemoveAssociation(scProductEntry.getPrimaryKey(),
-							SCLicense.class.getName(), licenseId);
-					}
-				}
-			}
-
-			_sqlUpdate.update(new Object[] { new Long(licenseId) });
-
-			if ((listeners.length > 0) || (scProductEntryListeners.length > 0)) {
-				for (com.liferay.portlet.softwarecatalog.model.SCProductEntry scProductEntry : scProductEntries) {
-					for (ModelListener<SCLicense> listener : listeners) {
-						listener.onAfterRemoveAssociation(licenseId,
-							com.liferay.portlet.softwarecatalog.model.SCProductEntry.class.getName(),
-							scProductEntry.getPrimaryKey());
-					}
-
-					for (ModelListener<com.liferay.portlet.softwarecatalog.model.SCProductEntry> listener : scProductEntryListeners) {
-						listener.onAfterRemoveAssociation(scProductEntry.getPrimaryKey(),
-							SCLicense.class.getName(), licenseId);
-					}
-				}
-			}
-		}
-
-		private SqlUpdate _sqlUpdate;
-	}
-
-	protected class RemoveSCProductEntry {
-		protected RemoveSCProductEntry(SCLicensePersistenceImpl persistenceImpl) {
-			_sqlUpdate = SqlUpdateFactoryUtil.getSqlUpdate(getDataSource(),
-					"DELETE FROM SCLicenses_SCProductEntries WHERE licenseId = ? AND productEntryId = ?",
-					new int[] { java.sql.Types.BIGINT, java.sql.Types.BIGINT });
-			_persistenceImpl = persistenceImpl;
-		}
-
-		protected void remove(long licenseId, long productEntryId)
-			throws SystemException {
-			if (_persistenceImpl.containsSCProductEntry.contains(licenseId,
-						productEntryId)) {
-				ModelListener<com.liferay.portlet.softwarecatalog.model.SCProductEntry>[] scProductEntryListeners =
-					scProductEntryPersistence.getListeners();
-
-				for (ModelListener<SCLicense> listener : listeners) {
-					listener.onBeforeRemoveAssociation(licenseId,
-						com.liferay.portlet.softwarecatalog.model.SCProductEntry.class.getName(),
-						productEntryId);
-				}
-
-				for (ModelListener<com.liferay.portlet.softwarecatalog.model.SCProductEntry> listener : scProductEntryListeners) {
-					listener.onBeforeRemoveAssociation(productEntryId,
-						SCLicense.class.getName(), licenseId);
-				}
-
-				_sqlUpdate.update(new Object[] {
-						new Long(licenseId), new Long(productEntryId)
-					});
-
-				for (ModelListener<SCLicense> listener : listeners) {
-					listener.onAfterRemoveAssociation(licenseId,
-						com.liferay.portlet.softwarecatalog.model.SCProductEntry.class.getName(),
-						productEntryId);
-				}
-
-				for (ModelListener<com.liferay.portlet.softwarecatalog.model.SCProductEntry> listener : scProductEntryListeners) {
-					listener.onAfterRemoveAssociation(productEntryId,
-						SCLicense.class.getName(), licenseId);
-				}
-			}
-		}
-
-		private SqlUpdate _sqlUpdate;
-		private SCLicensePersistenceImpl _persistenceImpl;
-	}
-
+	protected TableMapper<SCLicense, com.liferay.portlet.softwarecatalog.model.SCProductEntry> scLicenseToSCProductEntryTableMapper;
 	private static final String _SQL_SELECT_SCLICENSE = "SELECT scLicense FROM SCLicense scLicense";
 	private static final String _SQL_SELECT_SCLICENSE_WHERE = "SELECT scLicense FROM SCLicense scLicense WHERE ";
 	private static final String _SQL_COUNT_SCLICENSE = "SELECT COUNT(scLicense) FROM SCLicense scLicense";
 	private static final String _SQL_COUNT_SCLICENSE_WHERE = "SELECT COUNT(scLicense) FROM SCLicense scLicense WHERE ";
-	private static final String _SQL_GETSCPRODUCTENTRIES = "SELECT {SCProductEntry.*} FROM SCProductEntry INNER JOIN SCLicenses_SCProductEntries ON (SCLicenses_SCProductEntries.productEntryId = SCProductEntry.productEntryId) WHERE (SCLicenses_SCProductEntries.licenseId = ?)";
-	private static final String _SQL_GETSCPRODUCTENTRIESSIZE = "SELECT COUNT(*) AS COUNT_VALUE FROM SCLicenses_SCProductEntries WHERE licenseId = ?";
-	private static final String _SQL_CONTAINSSCPRODUCTENTRY = "SELECT COUNT(*) AS COUNT_VALUE FROM SCLicenses_SCProductEntries WHERE licenseId = ? AND productEntryId = ?";
-	private static final String _FINDER_COLUMN_ACTIVE_ACTIVE_2 = "scLicense.active = ?";
-	private static final String _FINDER_COLUMN_A_R_ACTIVE_2 = "scLicense.active = ? AND ";
-	private static final String _FINDER_COLUMN_A_R_RECOMMENDED_2 = "scLicense.recommended = ?";
 	private static final String _FILTER_ENTITY_TABLE_FILTER_PK_COLUMN = "scLicense.licenseId";
 	private static final String _FILTER_SQL_SELECT_SCLICENSE_WHERE = "SELECT DISTINCT {scLicense.*} FROM SCLicense scLicense WHERE ";
 	private static final String _FILTER_SQL_SELECT_SCLICENSE_NO_INLINE_DISTINCT_WHERE_1 =
@@ -2907,17 +2756,23 @@ public class SCLicensePersistenceImpl extends BasePersistenceImpl<SCLicense>
 	private static final String _NO_SUCH_ENTITY_WITH_KEY = "No SCLicense exists with the key {";
 	private static final boolean _HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE = com.liferay.portal.util.PropsValues.HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE;
 	private static Log _log = LogFactoryUtil.getLog(SCLicensePersistenceImpl.class);
+	private static Set<String> _badColumnNames = SetUtil.fromArray(new String[] {
+				"active"
+			});
 	private static SCLicense _nullSCLicense = new SCLicenseImpl() {
+			@Override
 			public Object clone() {
 				return this;
 			}
 
+			@Override
 			public CacheModel<SCLicense> toCacheModel() {
 				return _nullSCLicenseCacheModel;
 			}
 		};
 
 	private static CacheModel<SCLicense> _nullSCLicenseCacheModel = new CacheModel<SCLicense>() {
+			@Override
 			public SCLicense toEntityModel() {
 				return _nullSCLicense;
 			}

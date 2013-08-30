@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portal.model.impl;
 
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -28,9 +29,10 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the PortalPreferences service. Represents a row in the &quot;PortalPreferences&quot; database table, with each column mapped to a property of this class.
@@ -61,6 +63,8 @@ public class PortalPreferencesModelImpl extends BaseModelImpl<PortalPreferences>
 		};
 	public static final String TABLE_SQL_CREATE = "create table PortalPreferences (portalPreferencesId LONG not null primary key,ownerId LONG,ownerType INTEGER,preferences TEXT null)";
 	public static final String TABLE_SQL_DROP = "drop table PortalPreferences";
+	public static final String ORDER_BY_JPQL = " ORDER BY portalPreferences.portalPreferencesId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY PortalPreferences.portalPreferencesId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -70,50 +74,106 @@ public class PortalPreferencesModelImpl extends BaseModelImpl<PortalPreferences>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.PortalPreferences"),
 			true);
-
-	public Class<?> getModelClass() {
-		return PortalPreferences.class;
-	}
-
-	public String getModelClassName() {
-		return PortalPreferences.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.PortalPreferences"),
+			true);
+	public static long OWNERID_COLUMN_BITMASK = 1L;
+	public static long OWNERTYPE_COLUMN_BITMASK = 2L;
+	public static long PORTALPREFERENCESID_COLUMN_BITMASK = 4L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.PortalPreferences"));
 
 	public PortalPreferencesModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _portalPreferencesId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setPortalPreferencesId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_portalPreferencesId);
+		return _portalPreferencesId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return PortalPreferences.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return PortalPreferences.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("portalPreferencesId", getPortalPreferencesId());
+		attributes.put("ownerId", getOwnerId());
+		attributes.put("ownerType", getOwnerType());
+		attributes.put("preferences", getPreferences());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long portalPreferencesId = (Long)attributes.get("portalPreferencesId");
+
+		if (portalPreferencesId != null) {
+			setPortalPreferencesId(portalPreferencesId);
+		}
+
+		Long ownerId = (Long)attributes.get("ownerId");
+
+		if (ownerId != null) {
+			setOwnerId(ownerId);
+		}
+
+		Integer ownerType = (Integer)attributes.get("ownerType");
+
+		if (ownerType != null) {
+			setOwnerType(ownerType);
+		}
+
+		String preferences = (String)attributes.get("preferences");
+
+		if (preferences != null) {
+			setPreferences(preferences);
+		}
+	}
+
+	@Override
 	public long getPortalPreferencesId() {
 		return _portalPreferencesId;
 	}
 
+	@Override
 	public void setPortalPreferencesId(long portalPreferencesId) {
 		_portalPreferencesId = portalPreferencesId;
 	}
 
+	@Override
 	public long getOwnerId() {
 		return _ownerId;
 	}
 
+	@Override
 	public void setOwnerId(long ownerId) {
+		_columnBitmask |= OWNERID_COLUMN_BITMASK;
+
 		if (!_setOriginalOwnerId) {
 			_setOriginalOwnerId = true;
 
@@ -127,11 +187,15 @@ public class PortalPreferencesModelImpl extends BaseModelImpl<PortalPreferences>
 		return _originalOwnerId;
 	}
 
+	@Override
 	public int getOwnerType() {
 		return _ownerType;
 	}
 
+	@Override
 	public void setOwnerType(int ownerType) {
+		_columnBitmask |= OWNERTYPE_COLUMN_BITMASK;
+
 		if (!_setOriginalOwnerType) {
 			_setOriginalOwnerType = true;
 
@@ -145,6 +209,7 @@ public class PortalPreferencesModelImpl extends BaseModelImpl<PortalPreferences>
 		return _originalOwnerType;
 	}
 
+	@Override
 	public String getPreferences() {
 		if (_preferences == null) {
 			return StringPool.BLANK;
@@ -154,39 +219,36 @@ public class PortalPreferencesModelImpl extends BaseModelImpl<PortalPreferences>
 		}
 	}
 
+	@Override
 	public void setPreferences(String preferences) {
 		_preferences = preferences;
 	}
 
-	@Override
-	public PortalPreferences toEscapedModel() {
-		if (isEscapedModel()) {
-			return (PortalPreferences)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (PortalPreferences)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(0,
-					PortalPreferences.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(0,
+			PortalPreferences.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public PortalPreferences toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (PortalPreferences)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -203,6 +265,7 @@ public class PortalPreferencesModelImpl extends BaseModelImpl<PortalPreferences>
 		return portalPreferencesImpl;
 	}
 
+	@Override
 	public int compareTo(PortalPreferences portalPreferences) {
 		long primaryKey = portalPreferences.getPrimaryKey();
 
@@ -219,18 +282,15 @@ public class PortalPreferencesModelImpl extends BaseModelImpl<PortalPreferences>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof PortalPreferences)) {
 			return false;
 		}
 
-		PortalPreferences portalPreferences = null;
-
-		try {
-			portalPreferences = (PortalPreferences)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		PortalPreferences portalPreferences = (PortalPreferences)obj;
 
 		long primaryKey = portalPreferences.getPrimaryKey();
 
@@ -258,6 +318,8 @@ public class PortalPreferencesModelImpl extends BaseModelImpl<PortalPreferences>
 		portalPreferencesModelImpl._originalOwnerType = portalPreferencesModelImpl._ownerType;
 
 		portalPreferencesModelImpl._setOriginalOwnerType = false;
+
+		portalPreferencesModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -298,6 +360,7 @@ public class PortalPreferencesModelImpl extends BaseModelImpl<PortalPreferences>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(16);
 
@@ -328,7 +391,7 @@ public class PortalPreferencesModelImpl extends BaseModelImpl<PortalPreferences>
 	}
 
 	private static ClassLoader _classLoader = PortalPreferences.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			PortalPreferences.class
 		};
 	private long _portalPreferencesId;
@@ -339,6 +402,6 @@ public class PortalPreferencesModelImpl extends BaseModelImpl<PortalPreferences>
 	private int _originalOwnerType;
 	private boolean _setOriginalOwnerType;
 	private String _preferences;
-	private transient ExpandoBridge _expandoBridge;
-	private PortalPreferences _escapedModelProxy;
+	private long _columnBitmask;
+	private PortalPreferences _escapedModel;
 }

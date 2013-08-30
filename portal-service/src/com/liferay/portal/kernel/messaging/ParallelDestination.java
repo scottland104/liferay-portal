@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,11 +14,12 @@
 
 package com.liferay.portal.kernel.messaging;
 
+import com.liferay.portal.kernel.cache.Lifecycle;
+import com.liferay.portal.kernel.cache.ThreadLocalCacheManager;
 import com.liferay.portal.kernel.concurrent.ThreadPoolExecutor;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.CentralizedThreadLocal;
-import com.liferay.portal.security.auth.CompanyThreadLocal;
 
 import java.util.Set;
 
@@ -36,14 +37,14 @@ public class ParallelDestination extends BaseAsyncDestination {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.1.0
 	 */
 	public ParallelDestination(String name) {
 		super(name);
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.1.0
 	 */
 	public ParallelDestination(
 		String name, int workersCoreSize, int workersMaxSize) {
@@ -55,24 +56,15 @@ public class ParallelDestination extends BaseAsyncDestination {
 	protected void dispatch(
 		Set<MessageListener> messageListeners, final Message message) {
 
-		if (!message.contains("companyId")) {
-			message.put("companyId", CompanyThreadLocal.getCompanyId());
-		}
-
 		ThreadPoolExecutor threadPoolExecutor = getThreadPoolExecutor();
 
 		for (final MessageListener messageListener : messageListeners) {
 			Runnable runnable = new MessageRunnable(message) {
 
+				@Override
 				public void run() {
-					long companyId = CompanyThreadLocal.getCompanyId();
-
 					try {
-						long messageCompanyId = message.getLong("companyId");
-
-						if (messageCompanyId > 0) {
-							CompanyThreadLocal.setCompanyId(messageCompanyId);
-						}
+						populateThreadLocalsFromMessage(message);
 
 						messageListener.receive(message);
 					}
@@ -80,7 +72,7 @@ public class ParallelDestination extends BaseAsyncDestination {
 						_log.error("Unable to process message " + message, mle);
 					}
 					finally {
-						CompanyThreadLocal.setCompanyId(companyId);
+						ThreadLocalCacheManager.clearAll(Lifecycle.REQUEST);
 
 						CentralizedThreadLocal.clearShortLivedThreadLocals();
 					}

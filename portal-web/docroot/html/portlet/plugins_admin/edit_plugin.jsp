@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -58,18 +58,18 @@ if (pluginType.equals(Plugin.TYPE_PORTLET)) {
 
 	<aui:fieldset>
 		<aui:field-wrapper label="module-id">
-			<%= moduleId %>
+			<%= HtmlUtil.escape(moduleId) %>
 		</aui:field-wrapper>
 
 		<aui:field-wrapper label="plugin-id">
 			<%= HtmlUtil.escape(pluginId) %>
 		</aui:field-wrapper>
 
-		<aui:input inlineLabel="left" name="active" type="checkbox" value="<%= active %>" />
+		<aui:input name="active" type="checkbox" value="<%= active %>" />
 
 		<c:choose>
 			<c:when test="<%= pluginType.equals(Plugin.TYPE_PORTLET) %>">
-				<aui:field-wrapper label="permissions" helpMessage="edit-plugin-permissions-help">
+				<aui:field-wrapper helpMessage="edit-plugin-permissions-help" label="permissions">
 
 					<%
 					List curActions = ResourceActionsUtil.getResourceActions(portlet.getPortletId(), null);
@@ -98,7 +98,7 @@ if (pluginType.equals(Plugin.TYPE_PORTLET)) {
 					%>
 
 					<c:if test="<%= rolesCount > maxNumberOfRolesChecked %>">
-						<div class="portlet-msg-alert">
+						<div class="alert alert-block">
 							<%= LanguageUtil.format(pageContext, "the-portal-has-more-roles-than-the-maximum-that-can-be-checked-x", maxNumberOfRolesChecked) %>
 						</div>
 					</c:if>
@@ -131,14 +131,13 @@ if (pluginType.equals(Plugin.TYPE_PORTLET)) {
 									>
 										<liferay-portlet:renderURL portletName="<%= PortletKeys.ROLES_ADMIN %>" var="editURL">
 											<portlet:param name="struts_action" value="/roles_admin/edit_role_permissions" />
-											<portlet:param name="cmd" value="edit" />
+											<portlet:param name="<%= Constants.CMD %>" value="edit" />
 											<portlet:param name="tabs1" value="roles" />
 											<portlet:param name="roleId" value="<%= String.valueOf(role.getRoleId()) %>" />
 											<portlet:param name="portletResource" value="<%= portlet.getPortletId() %>" />
-											<portlet:param name="showModelResources" value="0" />
 										</liferay-portlet:renderURL>
 
-										<liferay-ui:icon image="edit" label="true" message="change" url="<%= editURL %>" />
+										<liferay-ui:icon image="edit" label="<%= true %>" message="change" url="<%= editURL %>" />
 									</liferay-ui:search-container-column-text>
 								</liferay-ui:search-container-row>
 
@@ -174,14 +173,13 @@ if (pluginType.equals(Plugin.TYPE_PORTLET)) {
 									>
 										<liferay-portlet:renderURL portletName="<%= PortletKeys.ROLES_ADMIN %>" var="editURL">
 											<portlet:param name="struts_action" value="/roles_admin/edit_role_permissions" />
-											<portlet:param name="cmd" value="edit" />
+											<portlet:param name="<%= Constants.CMD %>" value="edit" />
 											<portlet:param name="tabs1" value="roles" />
 											<portlet:param name="roleId" value="<%= String.valueOf(role.getRoleId()) %>" />
 											<portlet:param name="portletResource" value="<%= portlet.getPortletId() %>" />
-											<portlet:param name="showModelResources" value="0" />
 										</liferay-portlet:renderURL>
 
-										<liferay-ui:icon image="edit" label="true" message="change" url="<%= editURL %>" />
+										<liferay-ui:icon image="edit" label="<%= true %>" message="change" url="<%= editURL %>" />
 									</liferay-ui:search-container-column-text>
 								</liferay-ui:search-container-row>
 
@@ -225,11 +223,6 @@ private List<Role> _filterRoles(List<Role> roles, String portletId, String actio
 }
 
 private boolean _hasPermission(Role role, String actionId, String resourceName, Integer scope) throws Exception {
-	if (PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM == 6) {
-		return ResourcePermissionLocalServiceUtil.hasScopeResourcePermission(role.getCompanyId(), resourceName, scope, role.getRoleId(), actionId);
-	}
-	else {
-		return PermissionLocalServiceUtil.hasRolePermission(role.getRoleId(), role.getCompanyId(), resourceName, scope, actionId);
-	}
+	return ResourcePermissionLocalServiceUtil.hasScopeResourcePermission(role.getCompanyId(), resourceName, scope, role.getRoleId(), actionId);
 }
 %>

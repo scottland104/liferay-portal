@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,30 +26,34 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Michael C. Han
  */
-public class PooledMemcachePortalCacheManager implements PortalCacheManager {
+public class PooledMemcachePortalCacheManager<V>
+	implements PortalCacheManager<String, V> {
 
 	public void afterPropertiesSet() {
 	}
 
-	public void destroy() throws Exception {
-		for (PortalCache portalCache : _portalCaches.values()) {
-			portalCache.destroy();
-		}
-	}
-
+	@Override
 	public void clearAll() {
 		_portalCaches.clear();
 	}
 
-	public PortalCache getCache(String name) {
+	public void destroy() throws Exception {
+		for (PortalCache<String, V> portalCache : _portalCaches.values()) {
+			portalCache.destroy();
+		}
+	}
+
+	@Override
+	public PortalCache<String, V> getCache(String name) {
 		return getCache(name, false);
 	}
 
-	public PortalCache getCache(String name, boolean blocking) {
-		PortalCache portalCache = _portalCaches.get(name);
+	@Override
+	public PortalCache<String, V> getCache(String name, boolean blocking) {
+		PortalCache<String, V> portalCache = _portalCaches.get(name);
 
 		if (portalCache == null) {
-			portalCache = new PooledMemcachePortalCache(
+			portalCache = new PooledMemcachePortalCache<V>(
 				name, _memcachedClientFactory, _timeout, _timeoutTimeUnit);
 
 			_portalCaches.put(name, portalCache);
@@ -58,9 +62,11 @@ public class PooledMemcachePortalCacheManager implements PortalCacheManager {
 		return portalCache;
 	}
 
+	@Override
 	public void reconfigureCaches(URL configurationURL) {
 	}
 
+	@Override
 	public void removeCache(String name) {
 		_portalCaches.remove(name);
 	}
@@ -80,8 +86,8 @@ public class PooledMemcachePortalCacheManager implements PortalCacheManager {
 	}
 
 	private MemcachedClientFactory _memcachedClientFactory;
-	private Map<String, PortalCache> _portalCaches =
-		new ConcurrentHashMap<String, PortalCache>();
+	private Map<String, PortalCache<String, V>> _portalCaches =
+		new ConcurrentHashMap<String, PortalCache<String, V>>();
 	private int _timeout;
 	private TimeUnit _timeoutTimeUnit;
 

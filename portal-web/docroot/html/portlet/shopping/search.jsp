@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -119,7 +119,7 @@ String keywords = ParamUtil.getString(request, "keywords");
 				sb.append("/shopping/item?img_id=");
 				sb.append(item.getSmallImageId());
 				sb.append("&t=");
-				sb.append(ImageServletTokenUtil.getToken(item.getSmallImageId()));
+				sb.append(WebServerServletTokenUtil.getToken(item.getSmallImageId()));
 			}
 
 			sb.append("\">");
@@ -169,7 +169,7 @@ String keywords = ParamUtil.getString(request, "keywords");
 			row.addText(currencyFormat.format(item.getPrice()), rowURL);
 		}
 		else {
-			row.addText("<div class=\"portlet-msg-success\">" + currencyFormat.format(ShoppingUtil.calculateActualPrice(item)) + "</div>", rowURL);
+			row.addText("<div class=\"alert alert-success\">" + currencyFormat.format(ShoppingUtil.calculateActualPrice(item)) + "</div>", rowURL);
 		}
 
 		// Action
@@ -183,7 +183,7 @@ String keywords = ParamUtil.getString(request, "keywords");
 	%>
 
 	<aui:fieldset>
-		<aui:input label="" name="keywords" size="30" title="search" value="<%= keywords %>" />
+		<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" label="" name="keywords" size="30" title="search" value="<%= keywords %>" />
 	</aui:fieldset>
 
 	<aui:button-row>
@@ -192,9 +192,3 @@ String keywords = ParamUtil.getString(request, "keywords");
 
 	<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
 </aui:form>
-
-<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-	<aui:script>
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />keywords);
-	</aui:script>
-</c:if>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,10 +22,13 @@ import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.cache.PortalCacheManager;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.resiliency.spi.SPIUtil;
 import com.liferay.portal.kernel.util.ReflectionUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
+
+import java.io.Serializable;
 
 import java.lang.reflect.Field;
 
@@ -51,22 +54,27 @@ import net.sf.ehcache.util.FailSafeTimer;
  * @author Shuyang Zhou
  * @author Edward Han
  */
-public class EhcachePortalCacheManager implements PortalCacheManager {
+public class EhcachePortalCacheManager<K extends Serializable, V>
+	implements PortalCacheManager<K, V> {
 
 	public void afterPropertiesSet() {
+		if ((_cacheManager != null) || (_mpiOnly && SPIUtil.isSPI())) {
+			return;
+		}
+
 		String configurationPath = PropsUtil.get(_configPropertyKey);
 
 		if (Validator.isNull(configurationPath)) {
 			configurationPath = _DEFAULT_CLUSTERED_EHCACHE_CONFIG_FILE;
 		}
 
-		boolean usingDefault = configurationPath.equals(
+		_usingDefault = configurationPath.equals(
 			_DEFAULT_CLUSTERED_EHCACHE_CONFIG_FILE);
 
 		Configuration configuration = EhcacheConfigurationUtil.getConfiguration(
-			configurationPath, _clusterAware, usingDefault);
+			configurationPath, _clusterAware, _usingDefault);
 
-		_cacheManager = new CacheManager(configuration);
+		_cacheManager = CacheManagerUtil.createCacheManager(configuration);
 
 		FailSafeTimer failSafeTimer = _cacheManager.getTimer();
 
@@ -92,6 +100,7 @@ public class EhcachePortalCacheManager implements PortalCacheManager {
 		}
 	}
 
+	@Override
 	public void clearAll() {
 		_cacheManager.clearAll();
 	}
@@ -107,12 +116,14 @@ public class EhcachePortalCacheManager implements PortalCacheManager {
 		}
 	}
 
-	public PortalCache getCache(String name) {
+	@Override
+	public PortalCache<K, V> getCache(String name) {
 		return getCache(name, false);
 	}
 
-	public PortalCache getCache(String name, boolean blocking) {
-		PortalCache portalCache = _ehcachePortalCaches.get(name);
+	@Override
+	public PortalCache<K, V> getCache(String name, boolean blocking) {
+		PortalCache<K, V> portalCache = _ehcachePortalCaches.get(name);
 
 		if (portalCache == null) {
 			synchronized (_cacheManager) {
@@ -128,11 +139,11 @@ public class EhcachePortalCacheManager implements PortalCacheManager {
 			(name.startsWith(EntityCacheImpl.CACHE_NAME) ||
 			 name.startsWith(FinderCacheImpl.CACHE_NAME))) {
 
-			portalCache = new TransactionalPortalCache(portalCache);
+			portalCache = new TransactionalPortalCache<K, V>(portalCache);
 		}
 
 		if (PropsValues.EHCACHE_BLOCKING_CACHE_ALLOWED && blocking) {
-			portalCache = new BlockingPortalCache(portalCache);
+			portalCache = new BlockingPortalCache<K, V>(portalCache);
 		}
 
 		return portalCache;
@@ -142,9 +153,10 @@ public class EhcachePortalCacheManager implements PortalCacheManager {
 		return _cacheManager;
 	}
 
+	@Override
 	public void reconfigureCaches(URL configurationURL) {
 		Configuration configuration = EhcacheConfigurationUtil.getConfiguration(
-			configurationURL, _clusterAware);
+			configurationURL, _clusterAware, _usingDefault);
 
 		Map<String, CacheConfiguration> cacheConfigurations =
 			configuration.getCacheConfigurations();
@@ -154,7 +166,7 @@ public class EhcachePortalCacheManager implements PortalCacheManager {
 
 			Cache cache = new Cache(cacheConfiguration);
 
-			PortalCache portalCache = addCache(cache.getName(), cache);
+			PortalCache<K, V> portalCache = addCache(cache.getName(), cache);
 
 			if (portalCache == null) {
 				_log.error(
@@ -163,6 +175,7 @@ public class EhcachePortalCacheManager implements PortalCacheManager {
 		}
 	}
 
+	@Override
 	public void removeCache(String name) {
 		_ehcachePortalCaches.remove(name);
 
@@ -179,6 +192,10 @@ public class EhcachePortalCacheManager implements PortalCacheManager {
 
 	public void setMBeanServer(MBeanServer mBeanServer) {
 		_mBeanServer = mBeanServer;
+	}
+
+	public void setMpiOnly(boolean mpiOnly) {
+		_mpiOnly = mpiOnly;
 	}
 
 	public void setRegisterCacheConfigurations(
@@ -199,8 +216,8 @@ public class EhcachePortalCacheManager implements PortalCacheManager {
 		_registerCacheStatistics = registerCacheStatistics;
 	}
 
-	protected PortalCache addCache(String name, Cache cache) {
-		EhcachePortalCache ehcachePortalCache = null;
+	protected PortalCache<K, V> addCache(String name, Cache cache) {
+		EhcachePortalCache<K, V> ehcachePortalCache = null;
 
 		synchronized (_cacheManager) {
 			if ((cache != null) && _cacheManager.cacheExists(name)) {
@@ -226,13 +243,10 @@ public class EhcachePortalCacheManager implements PortalCacheManager {
 				return null;
 			}
 
-			ehcache.setStatisticsEnabled(
-				PropsValues.EHCACHE_STATISTICS_ENABLED);
-
 			ehcachePortalCache = _ehcachePortalCaches.get(name);
 
 			if (ehcachePortalCache == null) {
-				ehcachePortalCache = new EhcachePortalCache(ehcache);
+				ehcachePortalCache = new EhcachePortalCache<K, V>(ehcache);
 
 				_ehcachePortalCaches.put(name, ehcachePortalCache);
 			}
@@ -251,16 +265,18 @@ public class EhcachePortalCacheManager implements PortalCacheManager {
 	private static Log _log = LogFactoryUtil.getLog(
 		EhcachePortalCacheManager.class);
 
-	private String _configPropertyKey;
 	private CacheManager _cacheManager;
 	private boolean _clusterAware;
-	private Map<String, EhcachePortalCache> _ehcachePortalCaches =
-		new HashMap<String, EhcachePortalCache>();
+	private String _configPropertyKey;
+	private Map<String, EhcachePortalCache<K, V>> _ehcachePortalCaches =
+		new HashMap<String, EhcachePortalCache<K, V>>();
 	private ManagementService _managementService;
 	private MBeanServer _mBeanServer;
+	private boolean _mpiOnly;
+	private boolean _registerCacheConfigurations = true;
 	private boolean _registerCacheManager = true;
 	private boolean _registerCaches = true;
-	private boolean _registerCacheConfigurations = true;
 	private boolean _registerCacheStatistics = true;
+	private boolean _usingDefault;
 
 }

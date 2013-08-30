@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.executor.PortalExecutorFactory;
 import com.liferay.portal.kernel.executor.PortalExecutorManager;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -31,55 +32,81 @@ import java.util.concurrent.TimeoutException;
 /**
  * @author Shuyang Zhou
  */
+@DoPrivileged
 public class PortalExecutorManagerImpl implements PortalExecutorManager {
 
 	public void afterPropertiesSet() {
 		if (_portalExecutorFactory == null) {
 			throw new IllegalArgumentException(
-				"portal executor factory is null");
+				"Portal executor factory is null");
 		}
 	}
 
+	@Override
 	public <T> Future<T> execute(String name, Callable<T> callable) {
-		ThreadPoolExecutor portalExecutor = getPortalExecutor(name);
+		ThreadPoolExecutor threadPoolExecutor = getPortalExecutor(name);
 
-		return portalExecutor.submit(callable);
+		return threadPoolExecutor.submit(callable);
 	}
 
+	@Override
 	public <T> T execute(
 			String name, Callable<T> callable, long timeout, TimeUnit timeUnit)
 		throws ExecutionException, InterruptedException, TimeoutException {
 
-		ThreadPoolExecutor portalExecutor = getPortalExecutor(name);
+		ThreadPoolExecutor threadPoolExecutor = getPortalExecutor(name);
 
-		Future<T> future = portalExecutor.submit(callable);
+		Future<T> future = threadPoolExecutor.submit(callable);
 
 		return future.get(timeout, timeUnit);
 	}
 
+	@Override
 	public ThreadPoolExecutor getPortalExecutor(String name) {
 		return getPortalExecutor(name, true);
 	}
 
+	@Override
 	public ThreadPoolExecutor getPortalExecutor(
 		String name, boolean createIfAbsent) {
 
-		ThreadPoolExecutor portalExecutor = _portalExecutors.get(name);
+		ThreadPoolExecutor threadPoolExecutor = _threadPoolExecutors.get(name);
 
-		if ((portalExecutor == null) && createIfAbsent) {
-			synchronized (_portalExecutors) {
-				portalExecutor = _portalExecutors.get(name);
+		if ((threadPoolExecutor == null) && createIfAbsent) {
+			synchronized (_threadPoolExecutors) {
+				threadPoolExecutor = _threadPoolExecutors.get(name);
 
-				if (portalExecutor == null) {
-					portalExecutor =
+				if (threadPoolExecutor == null) {
+					threadPoolExecutor =
 						_portalExecutorFactory.createPortalExecutor(name);
 
-					_portalExecutors.put(name, portalExecutor);
+					_threadPoolExecutors.put(name, threadPoolExecutor);
 				}
 			}
 		}
 
-		return portalExecutor;
+		return threadPoolExecutor;
+	}
+
+	@Override
+	public ThreadPoolExecutor registerPortalExecutor(
+		String name, ThreadPoolExecutor threadPoolExecutor) {
+
+		ThreadPoolExecutor oldThreadPoolExecutor = _threadPoolExecutors.get(
+			name);
+
+		if (oldThreadPoolExecutor == null) {
+			synchronized (_threadPoolExecutors) {
+				oldThreadPoolExecutor = _threadPoolExecutors.get(name);
+
+				if (oldThreadPoolExecutor == null) {
+					oldThreadPoolExecutor = _threadPoolExecutors.put(
+						name, threadPoolExecutor);
+				}
+			}
+		}
+
+		return oldThreadPoolExecutor;
 	}
 
 	public void setPortalExecutorFactory(
@@ -89,40 +116,49 @@ public class PortalExecutorManagerImpl implements PortalExecutorManager {
 	}
 
 	public void setPortalExecutors(
-		Map<String, ThreadPoolExecutor> portalExecutors) {
+		Map<String, ThreadPoolExecutor> threadPoolExecutors) {
 
-		if (portalExecutors != null) {
-			_portalExecutors =
+		if (threadPoolExecutors != null) {
+			_threadPoolExecutors =
 				new ConcurrentHashMap<String, ThreadPoolExecutor>(
-					portalExecutors);
+					threadPoolExecutors);
 		}
 	}
 
+	@Override
 	public void shutdown() {
 		shutdown(false);
 	}
 
+	@Override
 	public void shutdown(boolean interrupt) {
-		for (ThreadPoolExecutor portalExecutor : _portalExecutors.values()) {
+		for (Map.Entry<String, ThreadPoolExecutor> entry :
+				_threadPoolExecutors.entrySet()) {
+
+			ThreadPoolExecutor threadPoolExecutor = entry.getValue();
+
 			if (interrupt) {
-				portalExecutor.shutdownNow();
+				threadPoolExecutor.shutdownNow();
 			}
 			else {
-				portalExecutor.shutdown();
+				threadPoolExecutor.shutdown();
 			}
 		}
 
-		_portalExecutors.clear();
+		_threadPoolExecutors.clear();
 	}
 
+	@Override
 	public void shutdown(String name) {
 		shutdown(name, false);
 	}
 
+	@Override
 	public void shutdown(String name, boolean interrupt) {
-		ThreadPoolExecutor portalExecutor = _portalExecutors.remove(name);
+		ThreadPoolExecutor threadPoolExecutor = _threadPoolExecutors.remove(
+			name);
 
-		if (portalExecutor == null) {
+		if (threadPoolExecutor == null) {
 			if (_log.isDebugEnabled()) {
 				_log.debug("No portal executor found for name " + name);
 			}
@@ -131,10 +167,10 @@ public class PortalExecutorManagerImpl implements PortalExecutorManager {
 		}
 
 		if (interrupt) {
-			portalExecutor.shutdownNow();
+			threadPoolExecutor.shutdownNow();
 		}
 		else {
-			portalExecutor.shutdown();
+			threadPoolExecutor.shutdown();
 		}
 	}
 
@@ -142,7 +178,7 @@ public class PortalExecutorManagerImpl implements PortalExecutorManager {
 		PortalExecutorManagerImpl.class);
 
 	private PortalExecutorFactory _portalExecutorFactory;
-	private Map<String, ThreadPoolExecutor> _portalExecutors =
+	private Map<String, ThreadPoolExecutor> _threadPoolExecutors =
 		new ConcurrentHashMap<String, ThreadPoolExecutor>();
 
 }

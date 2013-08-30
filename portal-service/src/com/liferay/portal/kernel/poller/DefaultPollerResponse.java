@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,7 +22,6 @@ import com.liferay.portal.kernel.messaging.MessageBusUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -38,6 +37,7 @@ public class DefaultPollerResponse implements PollerResponse {
 		_chunkId = chunkId;
 	}
 
+	@Override
 	public synchronized void close() {
 		if (Validator.isNotNull(_responseMessage)) {
 			MessageBusUtil.sendMessage(
@@ -47,6 +47,7 @@ public class DefaultPollerResponse implements PollerResponse {
 		}
 	}
 
+	@Override
 	public void createResponseMessage(Message message) {
 		String responseDestinationName = message.getResponseDestinationName();
 
@@ -59,18 +60,22 @@ public class DefaultPollerResponse implements PollerResponse {
 		_responseMessage.setPayload(this);
 	}
 
+	@Override
 	public PollerHeader getPollerHeader() {
 		return _pollerHeader;
 	}
 
+	@Override
 	public String getPortletId() {
 		return _portletId;
 	}
 
+	@Override
 	public boolean isEmpty() {
 		return _parameterMap.isEmpty();
 	}
 
+	@Override
 	public synchronized void setParameter(String name, JSONArray value)
 		throws PollerResponseClosedException {
 
@@ -81,6 +86,7 @@ public class DefaultPollerResponse implements PollerResponse {
 		_parameterMap.put(name, value);
 	}
 
+	@Override
 	public synchronized void setParameter(String name, JSONObject value)
 		throws PollerResponseClosedException {
 
@@ -91,6 +97,7 @@ public class DefaultPollerResponse implements PollerResponse {
 		_parameterMap.put(name, value);
 	}
 
+	@Override
 	public void setParameter(String name, String value)
 		throws PollerResponseClosedException {
 
@@ -103,6 +110,7 @@ public class DefaultPollerResponse implements PollerResponse {
 		}
 	}
 
+	@Override
 	public JSONObject toJSONObject() {
 		JSONObject pollerResponseJSONObject =
 			JSONFactoryUtil.createJSONObject();
@@ -115,12 +123,7 @@ public class DefaultPollerResponse implements PollerResponse {
 
 		JSONObject dataJSONObject = JSONFactoryUtil.createJSONObject();
 
-		Iterator<Map.Entry<String, Object>> itr =
-			_parameterMap.entrySet().iterator();
-
-		while (itr.hasNext()) {
-			Map.Entry<String, Object> entry = itr.next();
-
+		for (Map.Entry<String, Object> entry : _parameterMap.entrySet()) {
 			String name = entry.getKey();
 			Object value = entry.getValue();
 

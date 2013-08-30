@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.portlet.ActionRequest;
+import javax.portlet.PortletRequest;
 import javax.portlet.RenderRequest;
 
 import javax.servlet.http.Cookie;
@@ -31,6 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Hugo Huijser
  */
 public interface Http {
 
@@ -66,6 +68,8 @@ public interface Http {
 
 	public String decodeURL(String url, boolean unescapeSpaces);
 
+	public String encodeParameters(String url);
+
 	public String encodePath(String path);
 
 	public String encodeURL(String url);
@@ -89,6 +93,8 @@ public interface Http {
 	public String getParameter(String url, String name, boolean escaped);
 
 	public Map<String, String[]> getParameterMap(String queryString);
+
+	public String getPath(String url);
 
 	public String getProtocol(ActionRequest actionRequest);
 
@@ -135,6 +141,8 @@ public interface Http {
 
 	public String removeProtocol(String url);
 
+	public String sanitizeHeader(String header);
+
 	public String setParameter(String url, String name, boolean value);
 
 	public String setParameter(String url, String name, double value);
@@ -166,8 +174,10 @@ public interface Http {
 	 * represent a file or some JNDI resource. In that case, the default Java
 	 * implementation is used.
 	 *
+	 * @param  url the URL
 	 * @return A string representation of the resource referenced by the URL
 	 *         object
+	 * @throws IOException if an IO exception occurred
 	 */
 	public String URLtoString(URL url) throws IOException;
 
@@ -293,7 +303,7 @@ public interface Http {
 
 			if (_body != null) {
 				throw new IllegalArgumentException (
-					"Part file cannot be added because a body has already " +
+					"File part cannot be added because a body has already " +
 						"been set");
 			}
 
@@ -358,6 +368,14 @@ public interface Http {
 
 		public Map<String, String> getParts() {
 			return _parts;
+		}
+
+		public PortletRequest getPortletRequest() {
+			return _portletRequest;
+		}
+
+		public String getProgressId() {
+			return _progressId;
 		}
 
 		public Response getResponse() {
@@ -484,6 +502,10 @@ public interface Http {
 			_parts = parts;
 		}
 
+		public void setPortletRequest(PortletRequest portletRequest) {
+			_portletRequest = portletRequest;
+		}
+
 		public void setPost(boolean post) {
 			if (post) {
 				_method = Method.POST;
@@ -491,6 +513,10 @@ public interface Http {
 			else {
 				_method = Method.GET;
 			}
+		}
+
+		public void setProgressId(String progressId) {
+			_progressId = progressId;
 		}
 
 		public void setPut(boolean put) {
@@ -515,6 +541,8 @@ public interface Http {
 		private String _location;
 		private Method _method = Method.GET;
 		private Map<String, String> _parts;
+		private PortletRequest _portletRequest;
+		private String _progressId;
 		private Response _response = new Response();
 
 	}
@@ -554,6 +582,10 @@ public interface Http {
 			return _redirect;
 		}
 
+		public int getResponseCode() {
+			return _responseCode;
+		}
+
 		public void setContentLength(int contentLength) {
 			_contentLength = contentLength;
 		}
@@ -570,10 +602,15 @@ public interface Http {
 			_redirect = redirect;
 		}
 
+		public void setResponseCode(int responseCode) {
+			_responseCode = responseCode;
+		}
+
 		private int _contentLength = -1;
 		private String _contentType;
 		private Map<String, String> _headers;
 		private String _redirect;
+		private int _responseCode = -1;
 
 	}
 

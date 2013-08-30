@@ -1,30 +1,57 @@
-<#setting number_format = "0">
+<#assign layoutModel = dataFactory.newLayoutModel(dataFactory.guestGroupModel.groupId, "welcome", "58,", "47,")>
 
-<#assign mbMessageCounter = dataFactory.newInteger()>
-<#assign wikiPageCounter = dataFactory.newInteger()>
+<@insertLayout
+	_layoutModel = layoutModel
+/>
 
-<#list dataFactory.groups as group>
-	<#include "groups_guest_private_layouts.ftl">
-	<#include "groups_guest_public_layouts.ftl">
+<@insertGroup
+	_groupModel = dataFactory.globalGroupModel
+	_publicPageCount = 1
+/>
 
-	${sampleSQLBuilder.insertGroup(group, privateLayouts, publicLayouts)}
-</#list>
+<@insertGroup
+	_groupModel = dataFactory.guestGroupModel
+	_publicPageCount = 1
+/>
 
-<#list 1..maxGroupCount as groupCount>
-	<#assign groupId = groupCount>
+<#list dataFactory.groupModels as groupModel>
+	<#assign groupId = groupModel.groupId>
 
-	<#assign group = dataFactory.addGroup(groupId, dataFactory.groupClassName.classNameId, groupId, "Community " + groupCount, "/community" + groupCount, true)>
-
-	<#include "groups_group_private_layouts.ftl">
-	<#include "groups_group_public_layouts.ftl">
-
-	${sampleSQLBuilder.insertGroup(group, privateLayouts, publicLayouts)}
-
-	<#include "users.ftl">
+	<#include "asset_publisher.ftl">
 
 	<#include "blogs.ftl">
 
+	<#include "ddl.ftl">
+
+	<#include "journal_article.ftl">
+
 	<#include "mb.ftl">
 
+	<#include "users.ftl">
+
 	<#include "wiki.ftl">
+
+	<@insertDLFolder
+		_ddmStructureId = dataFactory.defaultDLDDMStructureId
+		_dlFolderDepth = 1
+		_groupId = groupId
+		_parentDLFolderId = 0
+	/>
+
+	<#assign publicLayoutModels = dataFactory.newPublicLayoutModels(groupId)>
+
+	<#list publicLayoutModels as publicLayoutModel >
+		<@insertLayout
+			_layoutModel = publicLayoutModel
+		/>
+	</#list>
+
+	<#assign publicPageCount = publicLayoutModels?size + dataFactory.maxDDLRecordSetCount + dataFactory.maxJournalArticleCount>
+
+	<@insertGroup
+		_groupModel = groupModel
+		_publicPageCount = publicPageCount
+	/>
+
+	${repositoryCSVWriter.write(groupId + ", " + groupModel.name + "\n")}
 </#list>

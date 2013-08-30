@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,12 +18,14 @@ import com.liferay.portal.kernel.servlet.taglib.aui.ValidatorTag;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
 import com.liferay.portal.kernel.util.Tuple;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.ModelHintsUtil;
+import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.taglib.aui.base.BaseInputTag;
-import com.liferay.util.PwdGenerator;
 
 import java.util.HashMap;
 import java.util.List;
@@ -41,30 +43,21 @@ import javax.servlet.jsp.JspException;
 public class InputTag extends BaseInputTag {
 
 	@Override
-	protected void cleanUp() {
-		super.cleanUp();
-
-		_forLabel = null;
-		_validators = null;
-	}
-
-	@Override
 	public int doEndTag() throws JspException {
 		updateFormValidators();
-
-		setEndAttributes();
 
 		return super.doEndTag();
 	}
 
 	@Override
 	public int doStartTag() throws JspException {
-		addModelValidators();
+		addModelValidatorTags();
+		addRequiredValidatorTag();
 
 		return super.doStartTag();
 	}
 
-	protected void addModelValidators() {
+	protected void addModelValidatorTags() {
 		Class<?> model = getModel();
 
 		if (model == null) {
@@ -93,12 +86,25 @@ public class InputTag extends BaseInputTag {
 			String validatorName = (String)modelValidator.getObject(1);
 			String validatorErrorMessage = (String)modelValidator.getObject(2);
 			String validatorValue = (String)modelValidator.getObject(3);
+			boolean customValidator = (Boolean)modelValidator.getObject(4);
 
 			ValidatorTag validatorTag = new ValidatorTagImpl(
-				validatorName, validatorErrorMessage, validatorValue);
+				validatorName, validatorErrorMessage, validatorValue,
+				customValidator);
 
 			addValidatorTag(validatorName, validatorTag);
 		}
+	}
+
+	protected void addRequiredValidatorTag() {
+		if (!getRequired()) {
+			return;
+		}
+
+		ValidatorTag validatorTag = new ValidatorTagImpl(
+			"required", null, null, false);
+
+		addValidatorTag("required", validatorTag);
 	}
 
 	protected void addValidatorTag(
@@ -109,6 +115,14 @@ public class InputTag extends BaseInputTag {
 		}
 
 		_validators.put(validatorName, validatorTag);
+	}
+
+	@Override
+	protected void cleanUp() {
+		super.cleanUp();
+
+		_forLabel = null;
+		_validators = null;
 	}
 
 	@Override
@@ -124,6 +138,38 @@ public class InputTag extends BaseInputTag {
 
 		if (bean == null) {
 			bean = pageContext.getAttribute("aui:model-context:bean");
+		}
+
+		Class<?> model = getModel();
+
+		if (model == null) {
+			model = (Class<?>)pageContext.getAttribute(
+				"aui:model-context:model");
+		}
+
+		String defaultLanguageId = getDefaultLanguageId();
+
+		if (Validator.isNull(defaultLanguageId)) {
+			defaultLanguageId = (String)pageContext.getAttribute(
+				"aui:model-context:defaultLanguageId");
+		}
+
+		if (Validator.isNull(defaultLanguageId)) {
+			if ((model != null) &&
+				ModelHintsUtil.hasField(model.getName(), "groupId")) {
+
+				ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
+					WebKeys.THEME_DISPLAY);
+
+				defaultLanguageId = LocaleUtil.toLanguageId(
+					themeDisplay.getSiteDefaultLocale());
+			}
+		}
+
+		if (Validator.isNull(defaultLanguageId)) {
+			Locale defaultLocale = LocaleUtil.getDefault();
+
+			defaultLanguageId = LocaleUtil.toLanguageId(defaultLocale);
 		}
 
 		String name = getName();
@@ -155,13 +201,20 @@ public class InputTag extends BaseInputTag {
 		String type = getType();
 
 		if (Validator.isNull(id)) {
-			if (!Validator.equals(type, "assetTags") &&
-				!Validator.equals(type, "radio")) {
+			String fieldParam = getFieldParam();
+
+			if ((model != null) && Validator.isNull(type) &&
+				Validator.isNotNull(fieldParam)) {
+
+				id = fieldParam;
+			}
+			else if (!Validator.equals(type, "assetTags") &&
+					 !Validator.equals(type, "radio")) {
 
 				id = name;
 			}
 			else {
-				id = PwdGenerator.getPassword(PwdGenerator.KEY3, 4);
+				id = StringUtil.randomId();
 			}
 		}
 
@@ -171,14 +224,8 @@ public class InputTag extends BaseInputTag {
 			label = TextFormatter.format(name, TextFormatter.K);
 		}
 
-		Class<?> model = getModel();
-
-		if (model == null) {
-			model = (Class<?>)pageContext.getAttribute(
-				"aui:model-context:model");
-		}
-
 		_forLabel = id;
+		_inputName = getName();
 
 		String baseType = null;
 
@@ -188,15 +235,7 @@ public class InputTag extends BaseInputTag {
 			String fieldParam = getFieldParam();
 
 			if (Validator.isNotNull(fieldParam)) {
-				_forLabel = fieldParam;
-			}
-
-			if (ModelHintsUtil.isLocalized(model.getName(), field)) {
-				Locale defaultLocale = LocaleUtil.getDefault();
-				String defaultLanguageId = LocaleUtil.toLanguageId(
-					defaultLocale);
-
-				_forLabel += StringPool.UNDERLINE + defaultLanguageId;
+				_inputName = fieldParam;
 			}
 		}
 		else if (Validator.isNotNull(type)) {
@@ -211,29 +250,32 @@ public class InputTag extends BaseInputTag {
 			baseType = "text";
 		}
 
+		boolean wrappedField = false;
+
+		FieldWrapperTag fieldWrapper = (FieldWrapperTag)findAncestorWithClass(
+			this, FieldWrapperTag.class);
+
+		if (fieldWrapper != null) {
+			wrappedField = true;
+		}
+
 		setNamespacedAttribute(request, "baseType", baseType);
 		setNamespacedAttribute(request, "bean", bean);
+		setNamespacedAttribute(request, "defaultLanguageId", defaultLanguageId);
 		setNamespacedAttribute(request, "field", field);
 		setNamespacedAttribute(request, "forLabel", _forLabel);
 		setNamespacedAttribute(request, "formName", formName);
 		setNamespacedAttribute(request, "id", id);
 		setNamespacedAttribute(request, "label", label);
 		setNamespacedAttribute(request, "model", model);
+		setNamespacedAttribute(request, "wrappedField", wrappedField);
 
 		request.setAttribute(getAttributeNamespace() + "value", getValue());
-	}
-
-	protected void setEndAttributes() {
-		HttpServletRequest request =
-			(HttpServletRequest)pageContext.getRequest();
-
-		boolean required = false;
 
 		if ((_validators != null) && (_validators.get("required") != null)) {
-			required = true;
+			setNamespacedAttribute(
+				request, "required", Boolean.TRUE.toString());
 		}
-
-		setNamespacedAttribute(request, "required", String.valueOf(required));
 	}
 
 	protected void updateFormValidators() {
@@ -248,14 +290,24 @@ public class InputTag extends BaseInputTag {
 			(Map<String, List<ValidatorTag>>)request.getAttribute(
 				"aui:form:validatorTagsMap");
 
-		List<ValidatorTag> validatorTags = ListUtil.fromMapValues(_validators);
+		if (validatorTagsMap != null) {
+			List<ValidatorTag> validatorTags = ListUtil.fromMapValues(
+				_validators);
 
-		validatorTagsMap.put(_forLabel, validatorTags);
+			String inputName = _inputName;
+
+			if (Validator.equals(getType(), "checkbox")) {
+				inputName = inputName.concat("Checkbox");
+			}
+
+			validatorTagsMap.put(inputName, validatorTags);
+		}
 	}
 
 	private static final boolean _CLEAN_UP_SET_ATTRIBUTES = true;
 
 	private String _forLabel;
+	private String _inputName;
 	private Map<String, ValidatorTag> _validators;
 
 }

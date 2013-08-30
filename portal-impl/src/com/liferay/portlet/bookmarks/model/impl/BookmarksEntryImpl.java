@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,8 +14,9 @@
 
 package com.liferay.portlet.bookmarks.model.impl;
 
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portlet.bookmarks.NoSuchFolderException;
 import com.liferay.portlet.bookmarks.model.BookmarksFolder;
 import com.liferay.portlet.bookmarks.service.BookmarksFolderLocalServiceUtil;
 
@@ -27,27 +28,45 @@ public class BookmarksEntryImpl extends BookmarksEntryBaseImpl {
 	public BookmarksEntryImpl() {
 	}
 
-	public BookmarksFolder getFolder() {
-		BookmarksFolder folder = null;
-
-		if (getFolderId() > 0) {
-			try {
-				folder = BookmarksFolderLocalServiceUtil.getFolder(
-					getFolderId());
-			}
-			catch (Exception e) {
-				folder = new BookmarksFolderImpl();
-
-				_log.error(e);
-			}
-		}
-		else {
-			folder = new BookmarksFolderImpl();
+	@Override
+	public BookmarksFolder getFolder() throws PortalException, SystemException {
+		if (getFolderId() <= 0) {
+			return new BookmarksFolderImpl();
 		}
 
-		return folder;
+		return BookmarksFolderLocalServiceUtil.getFolder(getFolderId());
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(BookmarksEntryImpl.class);
+	@Override
+	public BookmarksFolder getTrashContainer()
+		throws PortalException, SystemException {
+
+		BookmarksFolder folder = null;
+
+		try {
+			folder = getFolder();
+		}
+		catch (NoSuchFolderException nsfe) {
+			return null;
+		}
+
+		if (folder.isInTrash()) {
+			return folder;
+		}
+
+		return folder.getTrashContainer();
+	}
+
+	@Override
+	public boolean isInTrashContainer()
+		throws PortalException, SystemException {
+
+		if (getTrashContainer() != null) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
 
 }

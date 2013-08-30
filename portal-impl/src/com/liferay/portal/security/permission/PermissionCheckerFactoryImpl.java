@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,7 @@
 
 package com.liferay.portal.security.permission;
 
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
 import com.liferay.portal.model.User;
 import com.liferay.portal.util.PropsValues;
 
@@ -22,6 +23,7 @@ import com.liferay.portal.util.PropsValues;
  * @author Brian Wing Shun Chan
  * @author Shuyang Zhou
  */
+@DoPrivileged
 public class PermissionCheckerFactoryImpl implements PermissionCheckerFactory {
 
 	public PermissionCheckerFactoryImpl() throws Exception {
@@ -32,12 +34,11 @@ public class PermissionCheckerFactoryImpl implements PermissionCheckerFactory {
 		_permissionChecker = clazz.newInstance();
 	}
 
-	public PermissionChecker create(User user, boolean checkGuest)
-		throws Exception {
-
+	@Override
+	public PermissionChecker create(User user) throws Exception {
 		PermissionChecker permissionChecker = _permissionChecker.clone();
 
-		permissionChecker.init(user, checkGuest);
+		permissionChecker.init(user);
 
 		return permissionChecker;
 	}

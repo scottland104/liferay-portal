@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,10 +15,12 @@
 package com.liferay.portal.servlet.filters.header;
 
 import com.liferay.portal.kernel.servlet.HttpHeaders;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
-import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.TimeZoneUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
@@ -30,8 +32,8 @@ import java.text.Format;
 import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -52,7 +54,7 @@ public class HeaderFilter extends BasePortalFilter {
 
 		_filterConfig = filterConfig;
 		_dateFormat = FastDateFormatFactoryUtil.getSimpleDateFormat(
-			_DATE_FORMAT, Locale.US, TimeZoneUtil.getTimeZone(_TIME_ZONE));
+			_DATE_FORMAT, LocaleUtil.US, TimeZoneUtil.GMT);
 	}
 
 	protected long getLastModified(HttpServletRequest request) {
@@ -63,7 +65,7 @@ public class HeaderFilter extends BasePortalFilter {
 
 		String[] value = parameterMap.get("t");
 
-		if ((value != null) && (value.length > 0)) {
+		if (ArrayUtil.isNotEmpty(value)) {
 			lasModified = GetterUtil.getLong(value[0]);
 		}
 
@@ -81,7 +83,7 @@ public class HeaderFilter extends BasePortalFilter {
 		while (enu.hasMoreElements()) {
 			String name = enu.nextElement();
 
-			if (name.equals(_URL_REGEX_PATTERN)) {
+			if (_requestHeaderIgnoreInitParams.contains(name)) {
 				continue;
 			}
 
@@ -97,21 +99,31 @@ public class HeaderFilter extends BasePortalFilter {
 				value = _dateFormat.format(cal.getTime());
 			}
 
-			// LEP-5895
+			// LEP-5895 and LPS-15802
 
 			boolean addHeader = true;
 
-			if (PropsValues.WEB_SERVER_PROXY_LEGACY_MODE) {
+			if (name.equalsIgnoreCase(HttpHeaders.CACHE_CONTROL) ||
+				name.equalsIgnoreCase(HttpHeaders.EXPIRES)) {
+
+				boolean newSession = false;
+
+				HttpSession session = request.getSession(false);
+
+				if ((session == null) || session.isNew()) {
+					newSession = true;
+				}
+
 				String contextPath = request.getContextPath();
 
-				if (name.equalsIgnoreCase(HttpHeaders.CACHE_CONTROL) &&
-					contextPath.equals(PortalUtil.getPathContext())) {
+				if (name.equalsIgnoreCase(HttpHeaders.EXPIRES) && newSession) {
+					addHeader = false;
+				}
+				else if (PropsValues.WEB_SERVER_PROXY_LEGACY_MODE &&
+						 newSession &&
+						 contextPath.equals(PortalUtil.getPathContext())) {
 
-					HttpSession session = request.getSession(false);
-
-					if ((session == null) || session.isNew()) {
-						addHeader = false;
-					}
+					addHeader = false;
 				}
 			}
 
@@ -143,9 +155,8 @@ public class HeaderFilter extends BasePortalFilter {
 
 	private static final String _EXPIRES = "Expires";
 
-	private static final String _TIME_ZONE = StringPool.UTC;
-
-	private static final String _URL_REGEX_PATTERN = "url-regex-pattern";
+	private static Set<String> _requestHeaderIgnoreInitParams =
+		SetUtil.fromArray(PropsValues.REQUEST_HEADER_IGNORE_INIT_PARAMS);
 
 	private Format _dateFormat;
 	private FilterConfig _filterConfig;

@@ -1,4 +1,4 @@
-AUI().add(
+AUI.add(
 	'liferay-service-datasource',
 	function(A) {
 		var ServiceDataSource = A.Component.create(
@@ -11,7 +11,7 @@ AUI().add(
 
 						var source = instance.get('source');
 
-						source(event.request, A.rbind(instance._serviceCallbackFn, instance, event));
+						source(event.request, A.rbind('_serviceCallbackFn', instance, event));
 					},
 
 					_serviceCallbackFn: function(obj, xHR, event) {

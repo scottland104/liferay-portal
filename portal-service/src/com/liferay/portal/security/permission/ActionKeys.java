@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -40,6 +40,8 @@ public class ActionKeys {
 	public static final String ADD_DEFINITION = "ADD_DEFINITION";
 
 	public static final String ADD_DISCUSSION = "ADD_DISCUSSION";
+
+	public static final String ADD_DISPLAY_STYLE = "ADD_DISPLAY_STYLE";
 
 	public static final String ADD_DOCUMENT = "ADD_DOCUMENT";
 
@@ -88,6 +90,9 @@ public class ActionKeys {
 
 	public static final String ADD_PASSWORD_POLICY = "ADD_PASSWORD_POLICY";
 
+	public static final String ADD_PORTLET_DISPLAY_TEMPLATE =
+		"ADD_PORTLET_DISPLAY_TEMPLATE";
+
 	public static final String ADD_PRODUCT_ENTRY = "ADD_PRODUCT_ENTRY";
 
 	public static final String ADD_PRODUCT_VERSION = "ADD_PRODUCT_VERSION";
@@ -101,6 +106,11 @@ public class ActionKeys {
 	public static final String ADD_REPOSITORY = "ADD_REPOSITORY";
 
 	public static final String ADD_ROLE = "ADD_ROLE";
+
+	public static final String ADD_RULE_GROUP = "ADD_RULE_GROUP";
+
+	public static final String ADD_RULE_GROUP_INSTANCE =
+		"ADD_RULE_GROUP_INSTANCE";
 
 	public static final String ADD_SHORTCUT = "ADD_SHORTCUT";
 
@@ -134,6 +144,8 @@ public class ActionKeys {
 
 	public static final String CONFIGURATION = "CONFIGURATION";
 
+	public static final String CONFIGURE_PORTLETS = "CONFIGURE_PORTLETS";
+
 	public static final String CUSTOMIZE = "CUSTOMIZE";
 
 	public static final String DEFINE_PERMISSIONS = "DEFINE_PERMISSIONS";
@@ -151,6 +163,11 @@ public class ActionKeys {
 	public static final String EXPIRE = "EXPIRE";
 
 	public static final String EXPORT_ALL_EVENTS = "EXPORT_ALL_EVENTS";
+
+	public static final String EXPORT_IMPORT_LAYOUTS = "EXPORT_IMPORT_LAYOUTS";
+
+	public static final String EXPORT_IMPORT_PORTLET_INFO =
+		"EXPORT_IMPORT_PORTLET_INFO";
 
 	public static final String EXPORT_USER = "EXPORT_USER";
 
@@ -179,6 +196,8 @@ public class ActionKeys {
 
 	public static final String MANAGE_STAGING = "MANAGE_STAGING";
 
+	public static final String MANAGE_SUBGROUPS = "MANAGE_SUBGROUPS";
+
 	public static final String MANAGE_SUBORGANIZATIONS =
 		"MANAGE_SUBORGANIZATIONS";
 
@@ -190,11 +209,15 @@ public class ActionKeys {
 
 	public static final String MOVE_THREAD = "MOVE_THREAD";
 
+	public static final String OVERRIDE_CHECKOUT = "OVERRIDE_CHECKOUT";
+
 	public static final String PERMISSIONS = "PERMISSIONS";
 
 	public static final String PERMISSIONS_USER = "PERMISSIONS_USER";
 
 	public static final String PREFERENCES = "PREFERENCES";
+
+	public static final String PREVIEW_IN_DEVICE = "PREVIEW_IN_DEVICE";
 
 	public static final String PRINT = "PRINT";
 
@@ -206,7 +229,12 @@ public class ActionKeys {
 
 	public static final String SIGNAL = "SIGNAL";
 
+	public static final String SUBMIT = "SUBMIT";
+
 	public static final String SUBSCRIBE = "SUBSCRIBE";
+
+	public static final String UNLINK_LAYOUT_SET_PROTOTYPE =
+		"UNLINK_LAYOUT_SET_PROTOTYPE";
 
 	public static final String UPDATE = "UPDATE";
 
@@ -220,6 +248,15 @@ public class ActionKeys {
 	public static final String VIEW = "VIEW";
 
 	public static final String VIEW_CONTROL_PANEL = "VIEW_CONTROL_PANEL";
+
+	public static final String VIEW_MEMBERS = "VIEW_MEMBERS";
+
+	public static final String VIEW_SITE_ADMINISTRATION =
+		"VIEW_SITE_ADMINISTRATION";
+
+	public static final String VIEW_STAGING = "VIEW_STAGING";
+
+	public static final String VIEW_TREE = "VIEW_TREE";
 
 	public static final String VIEW_USER = "VIEW_USER";
 

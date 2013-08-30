@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -35,7 +35,13 @@ public class PortletKeys {
 
 	public static final String ASSET_BROWSER = "172";
 
+	public static final String ASSET_CATEGORIES_NAVIGATION = "122";
+
 	public static final String ASSET_PUBLISHER = "101";
+
+	public static final String ASSET_TAGS_NAVIGATION = "141";
+
+	public static final String BACKGROUND_TASK = "189";
 
 	public static final String BLOGS = "33";
 
@@ -45,11 +51,13 @@ public class PortletKeys {
 
 	public static final String BOOKMARKS = "28";
 
+	public static final String BREADCRUMB = "73";
+
 	public static final String CALENDAR = "8";
 
 	public static final String CHAT = "1_WAR_chatportlet";
 
-	public static final String COMMUNITIES = "29";
+	public static final String CONTROL_PANEL_HOME = "190";
 
 	public static final String CONTROL_PANEL_MENU = "160";
 
@@ -77,11 +85,15 @@ public class PortletKeys {
 
 	public static final String FLAGS = "142";
 
+	public static final String FRIENDS_DIRECTORY = "186";
+
 	public static final String GROUP_PAGES = "156";
 
-	public static final String IFRAME = "48";
+	public static final String GROUP_STATISTICS = "181";
 
-	public static final String IMAGE_GALLERY = "31";
+	public static final String HIGHEST_RATED_ASSETS = "194";
+
+	public static final String IFRAME = "48";
 
 	public static final String INVITATION = "100";
 
@@ -89,14 +101,13 @@ public class PortletKeys {
 
 	public static final String JOURNAL_CONTENT = "56";
 
-	public static final String JOURNAL_CONTENT_SEARCH = "77";
+	public static final String JOURNAL_CONTENT_LIST = "62";
 
-	public static final String KNOWLEDGE_BASE_ADMIN =
-		"1_WAR_knowledgebaseportlet";
+	public static final String JOURNAL_CONTENT_SEARCH = "77";
 
 	public static final String LANGUAGE = "82";
 
-	public static final String LAYOUT_CONFIGURATION = "87";
+	public static final String LAYOUT_PROTOTYPE = "146";
 
 	public static final String LAYOUT_SET_PROTOTYPE = "149";
 
@@ -108,19 +119,30 @@ public class PortletKeys {
 
 	public static final String MAIL = "1_WAR_mailportlet";
 
-	public static final String MESSAGE_BOARDS_ADMIN = "162";
+	public static final String MARKETPLACE_APP_MANAGER =
+		"3_WAR_marketplaceportlet";
+
+	public static final String MARKETPLACE_STORE = "1_WAR_marketplaceportlet";
+
+	public static final String MEDIA_GALLERY_DISPLAY = "31";
 
 	public static final String MESSAGE_BOARDS = "19";
 
-	public static final String METADATA_SET_ADMIN = "171";
+	public static final String MESSAGE_BOARDS_ADMIN = "162";
+
+	public static final String MOBILE_DEVICE_SITE_ADMIN = "178";
 
 	public static final String MONITORING = "131";
+
+	public static final String MOST_VIEWED_ASSETS = "193";
 
 	public static final String MY_ACCOUNT = "2";
 
 	public static final String MY_PAGES = "140";
 
-	public static final String MY_SITES = "49";
+	public static final String MY_SITES = "29";
+
+	public static final String MY_SITES_DIRECTORY = "188";
 
 	public static final String MY_WORKFLOW_INSTANCES = "158";
 
@@ -128,15 +150,11 @@ public class PortletKeys {
 
 	public static final String NESTED_PORTLETS = "118";
 
-	public static final String ORGANIZATION_ADMIN = "80";
-
 	public static final String PAGE_COMMENTS = "107";
 
 	public static final String PAGE_RATINGS = "108";
 
 	public static final String PASSWORD_POLICIES_ADMIN = "129";
-
-	public static final String PLUGIN_INSTALLER = "111";
 
 	public static final String PLUGINS_ADMIN = "132";
 
@@ -152,6 +170,10 @@ public class PortletKeys {
 
 	public static final String PORTLET_CSS = "113";
 
+	public static final String PORTLET_DISPLAY_TEMPLATES = "183";
+
+	public static final String PORTLET_SHARING = "133";
+
 	public static final long PREFS_OWNER_ID_DEFAULT = 0;
 
 	public static final int PREFS_OWNER_TYPE_ARCHIVED = 5;
@@ -162,7 +184,7 @@ public class PortletKeys {
 
 	public static final int PREFS_OWNER_TYPE_LAYOUT = 3;
 
-	public static final int PREFS_OWNER_TYPE_ORGANIZATION  = 6;
+	public static final int PREFS_OWNER_TYPE_ORGANIZATION = 6;
 
 	public static final int PREFS_OWNER_TYPE_USER = 4;
 
@@ -186,11 +208,25 @@ public class PortletKeys {
 
 	public static final String SHOPPING = "34";
 
+	public static final String SITE_BROWSER = "185";
+
+	public static final String SITE_MAP = "85";
+
+	public static final String SITE_MEMBERS_DIRECTORY = "187";
+
 	public static final String SITE_MEMBERSHIPS_ADMIN = "174";
+
+	public static final String SITE_REDIRECTOR = "49";
+
+	public static final String SITE_SETTINGS = "165";
+
+	public static final String SITE_TEMPLATE_SETTINGS = "192";
 
 	public static final String SITES_ADMIN = "134";
 
-	public static final String SITE_SETTINGS = "165";
+	public static final String SITES_DIRECTORY = "184";
+
+	public static final String SOCIAL_ACTIVITY = "179";
 
 	public static final String SOFTWARE_CATALOG = "98";
 
@@ -200,19 +236,30 @@ public class PortletKeys {
 
 	public static final String TAGS_ADMIN = "99";
 
-	public static final String TAGS_CATEGORIES_NAVIGATION = "122";
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #ASSET_CATEGORIES_NAVIGATION}
+	 */
+	public static final String TAGS_CATEGORIES_NAVIGATION =
+		ASSET_CATEGORIES_NAVIGATION;
 
 	public static final String TAGS_CLOUD = "148";
 
 	public static final String TAGS_COMPILER = "103";
 
-	public static final String TAGS_ENTRIES_NAVIGATION = "141";
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #ASSET_TAGS_NAVIGATION}
+	 */
+	public static final String TAGS_ENTRIES_NAVIGATION = ASSET_TAGS_NAVIGATION;
 
 	public static final String TRANSLATOR = "26";
 
+	public static final String TRASH = "182";
+
 	public static final String UNIT_CONVERTER = "27";
 
-	public static final String UPDATE_MANAGER = "104";
+	public static final String USER_GROUPS_ADMIN = "127";
+
+	public static final String USER_STATISTICS = "180";
 
 	public static final String USERS_ADMIN = "125";
 

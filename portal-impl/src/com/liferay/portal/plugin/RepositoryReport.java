@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,7 +18,8 @@ import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
 
-import java.util.Iterator;
+import java.io.Serializable;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -26,32 +27,34 @@ import java.util.TreeMap;
 /**
  * @author Jorge Ferrer
  */
-public class RepositoryReport {
+public class RepositoryReport implements Serializable {
 
 	public static final String SUCCESS = "success";
 
-	public void addSuccess(String repositoryURL) {
-		_reportMap.put(repositoryURL, SUCCESS);
-	}
-
 	public void addError(String repositoryURL, PluginPackageException ppe) {
-		StringBundler sb = new StringBundler(3);
+		StringBundler sb = new StringBundler(2);
 
 		if (Validator.isNotNull(ppe.getMessage())) {
 			sb.append(ppe.getMessage());
 		}
 
-		if ((ppe.getCause() != null) &&
-			Validator.isNull(ppe.getCause().getMessage())) {
+		if (ppe.getCause() != null) {
+			Throwable cause = ppe.getCause();
 
-			sb.append(ppe.getCause().getMessage());
+			if (Validator.isNotNull(cause.getMessage())) {
+				sb.append(cause.getMessage());
+			}
 		}
 
-		if (sb.length() == 0) {
+		if (sb.index() == 0) {
 			sb.append(ppe.toString());
 		}
 
 		_reportMap.put(repositoryURL, sb.toString());
+	}
+
+	public void addSuccess(String repositoryURL) {
+		_reportMap.put(repositoryURL, SUCCESS);
 	}
 
 	public Set<String> getRepositoryURLs() {
@@ -64,17 +67,15 @@ public class RepositoryReport {
 
 	@Override
 	public String toString() {
-		Iterator<String> itr = getRepositoryURLs().iterator();
+		Set<String> repositoryURLs = getRepositoryURLs();
 
-		if (getRepositoryURLs().isEmpty()) {
+		if (repositoryURLs.isEmpty()) {
 			return StringPool.BLANK;
 		}
 
-		StringBundler sb = new StringBundler(getRepositoryURLs().size() * 3);
+		StringBundler sb = new StringBundler(repositoryURLs.size() * 3);
 
-		while (itr.hasNext()) {
-			String repositoryURL = itr.next();
-
+		for (String repositoryURL : repositoryURLs) {
 			sb.append(repositoryURL);
 			sb.append(": ");
 			sb.append(_reportMap.get(repositoryURL));

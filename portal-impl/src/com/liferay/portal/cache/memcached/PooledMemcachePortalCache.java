@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,8 +20,6 @@ import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
-import java.io.Serializable;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -34,7 +32,7 @@ import net.spy.memcached.MemcachedClientIF;
 /**
  * @author Michael C. Han
  */
-public class PooledMemcachePortalCache implements PortalCache {
+public class PooledMemcachePortalCache<V> implements PortalCache<String, V> {
 
 	public PooledMemcachePortalCache(
 		String name, MemcachedClientFactory memcachedClientFactory, int timeout,
@@ -46,6 +44,7 @@ public class PooledMemcachePortalCache implements PortalCache {
 		_timeoutTimeUnit = timeoutTimeUnit;
 	}
 
+	@Override
 	public void destroy() {
 		try {
 			_memcachedClientFactory.close();
@@ -54,7 +53,8 @@ public class PooledMemcachePortalCache implements PortalCache {
 		}
 	}
 
-	public Collection<Object> get(Collection<Serializable> keys) {
+	@Override
+	public Collection<V> get(Collection<String> keys) {
 		MemcachedClientIF memcachedClient = null;
 
 		try {
@@ -66,8 +66,8 @@ public class PooledMemcachePortalCache implements PortalCache {
 
 		List<String> processedKeys = new ArrayList<String>(keys.size());
 
-		for (Serializable key : keys) {
-			String processedKey = _name.concat(String.valueOf(key));
+		for (String key : keys) {
+			String processedKey = _name.concat(key);
 
 			processedKeys.add(processedKey);
 		}
@@ -75,7 +75,7 @@ public class PooledMemcachePortalCache implements PortalCache {
 		Map<String, Object> values = null;
 
 		try {
-			Future<Map<String,Object>> future = null;
+			Future<Map<String, Object>> future = null;
 
 			try {
 				future = memcachedClient.asyncGetBulk(processedKeys);
@@ -103,10 +103,11 @@ public class PooledMemcachePortalCache implements PortalCache {
 			cleanupClient(memcachedClient);
 		}
 
-		return values.values();
+		return (Collection<V>)values.values();
 	}
 
-	public Object get(Serializable key) {
+	@Override
+	public V get(String key) {
 		MemcachedClientIF memcachedClient = null;
 
 		try {
@@ -116,7 +117,7 @@ public class PooledMemcachePortalCache implements PortalCache {
 			return null;
 		}
 
-		String processedKey = _name.concat(String.valueOf(key));
+		String processedKey = _name.concat(key);
 
 		try {
 			Future<Object> future = null;
@@ -139,22 +140,25 @@ public class PooledMemcachePortalCache implements PortalCache {
 				future.cancel(true);
 			}
 
-			return value;
+			return (V)value;
 		}
 		finally {
 			cleanupClient(memcachedClient);
 		}
 	}
 
+	@Override
 	public String getName() {
 		return _name;
 	}
 
-	public void put(Serializable key, Object value) {
+	@Override
+	public void put(String key, V value) {
 		put(key, value, _timeToLive);
 	}
 
-	public void put(Serializable key, Object value, int timeToLive) {
+	@Override
+	public void put(String key, V value, int timeToLive) {
 		MemcachedClientIF memcachedClient = null;
 
 		try {
@@ -164,7 +168,7 @@ public class PooledMemcachePortalCache implements PortalCache {
 			return;
 		}
 
-		String processedKey = _name.concat(String.valueOf(key));
+		String processedKey = _name.concat(key);
 
 		try {
 			memcachedClient.set(processedKey, timeToLive, value);
@@ -179,46 +183,21 @@ public class PooledMemcachePortalCache implements PortalCache {
 		}
 	}
 
-	public void put(Serializable key, Serializable value) {
-		put(key, value, _timeToLive);
-	}
-
-	public void put(Serializable key, Serializable value, int timeToLive) {
-		MemcachedClientIF memcachedClient = null;
-
-		try {
-			memcachedClient = _memcachedClientFactory.getMemcachedClient();
-		}
-		catch (Exception e) {
-			return;
-		}
-
-		String processedKey = _name.concat(String.valueOf(key));
-
-		try {
-			memcachedClient.set(processedKey, timeToLive, value);
-		}
-		catch (IllegalArgumentException iae) {
-			if (_log.isWarnEnabled()) {
-				_log.warn("Error storing value with key " + key, iae);
-			}
-		}
-		finally {
-			cleanupClient(memcachedClient);
-		}
-	}
-
-	public void registerCacheListener(CacheListener cacheListener) {
+	@Override
+	public void registerCacheListener(CacheListener<String, V> cacheListener) {
 		registerCacheListener(cacheListener, CacheListenerScope.ALL);
 	}
 
+	@Override
 	public void registerCacheListener(
-		CacheListener cacheListener, CacheListenerScope cacheListenerScope) {
+		CacheListener<String, V> cacheListener,
+		CacheListenerScope cacheListenerScope) {
 
 		throw new UnsupportedOperationException();
 	}
 
-	public void remove(Serializable key) {
+	@Override
+	public void remove(String key) {
 		MemcachedClientIF memcachedClient = null;
 
 		try {
@@ -228,7 +207,7 @@ public class PooledMemcachePortalCache implements PortalCache {
 			return;
 		}
 
-		String processedKey = _name.concat(String.valueOf(key));
+		String processedKey = _name.concat(key);
 
 		try {
 			memcachedClient.delete(processedKey);
@@ -243,6 +222,7 @@ public class PooledMemcachePortalCache implements PortalCache {
 		}
 	}
 
+	@Override
 	public void removeAll() {
 		MemcachedClientIF memcachedClient = null;
 
@@ -265,9 +245,12 @@ public class PooledMemcachePortalCache implements PortalCache {
 		_timeToLive = timeToLive;
 	}
 
-	public void unregisterCacheListener(CacheListener cacheListener) {
+	@Override
+	public void unregisterCacheListener(
+		CacheListener<String, V> cacheListener) {
 	}
 
+	@Override
 	public void unregisterCacheListeners() {
 	}
 
@@ -280,7 +263,7 @@ public class PooledMemcachePortalCache implements PortalCache {
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(
-		MemcachePortalCache.class);
+		PooledMemcachePortalCache.class);
 
 	private MemcachedClientFactory _memcachedClientFactory;
 	private String _name;

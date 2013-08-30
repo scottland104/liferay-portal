@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,10 @@
 
 package com.liferay.portlet.wiki.model.impl;
 
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portlet.wiki.model.WikiPageDisplay;
+
+import java.util.List;
 
 /**
  * @author Jorge Ferrer
@@ -24,7 +27,7 @@ public class WikiPageDisplayImpl implements WikiPageDisplay {
 	public WikiPageDisplayImpl(
 		long userId, long nodeId, String title, double version, String content,
 		String formattedContent, String format, boolean head,
-		String[] attachments) {
+		List<FileEntry> attachmentsFileEntries) {
 
 		_userId = userId;
 		_nodeId = nodeId;
@@ -34,93 +37,114 @@ public class WikiPageDisplayImpl implements WikiPageDisplay {
 		_formattedContent = formattedContent;
 		_format = format;
 		_head = head;
-		_attachments = attachments;
+		_attachmentsFileEntries = attachmentsFileEntries;
 	}
 
-	public long getUserId() {
-		return _userId;
+	@Override
+	public List<FileEntry> getAttachmentsFileEntries() {
+		return _attachmentsFileEntries;
 	}
 
-	public void setUserId(long userId) {
-		_userId = userId;
-	}
-
-	public long getNodeId() {
-		return _nodeId;
-	}
-
-	public void setNodeId(long nodeId) {
-		_nodeId = nodeId;
-	}
-
-	public String getTitle() {
-		return _title;
-	}
-
-	public void setTitle(String title) {
-		_title = title;
-	}
-
-	public double getVersion() {
-		return _version;
-	}
-
-	public void setVersion(double version) {
-		_version = version;
-	}
-
+	@Override
 	public String getContent() {
 		return _content;
 	}
 
-	public void setContent(String content) {
-		_content = content;
-	}
-
-	public String getFormattedContent() {
-		return _formattedContent;
-	}
-
-	public void setFormattedContent(String formattedContent) {
-		_formattedContent = formattedContent;
-	}
-
+	@Override
 	public String getFormat() {
 		return _format;
 	}
 
-	public void setFormat(String format) {
-		_format = format;
+	@Override
+	public String getFormattedContent() {
+		return _formattedContent;
 	}
 
+	@Override
 	public boolean getHead() {
 		return _head;
 	}
 
+	@Override
+	public long getNodeId() {
+		return _nodeId;
+	}
+
+	@Override
+	public String getTitle() {
+		return _title;
+	}
+
+	@Override
+	public long getUserId() {
+		return _userId;
+	}
+
+	@Override
+	public double getVersion() {
+		return _version;
+	}
+
+	@Override
 	public boolean isHead() {
 		return _head;
 	}
 
+	@Override
+	public void setAttachmentsFileEntries(
+		List<FileEntry> attachmentsFileEntries) {
+
+		_attachmentsFileEntries = attachmentsFileEntries;
+	}
+
+	@Override
+	public void setContent(String content) {
+		_content = content;
+	}
+
+	@Override
+	public void setFormat(String format) {
+		_format = format;
+	}
+
+	@Override
+	public void setFormattedContent(String formattedContent) {
+		_formattedContent = formattedContent;
+	}
+
+	@Override
 	public void setHead(boolean head) {
 		_head = head;
 	}
 
-	public String[] getAttachments() {
-		return _attachments;
+	@Override
+	public void setNodeId(long nodeId) {
+		_nodeId = nodeId;
 	}
 
-	public void setAttachments(String[] attachments) {
-		_attachments = attachments;
+	@Override
+	public void setTitle(String title) {
+		_title = title;
 	}
 
-	private long _userId;
+	@Override
+	public void setUserId(long userId) {
+		_userId = userId;
+	}
+
+	@Override
+	public void setVersion(double version) {
+		_version = version;
+	}
+
+	private List<FileEntry> _attachmentsFileEntries;
+	private String _content;
+	private String _format;
+	private String _formattedContent;
+	private boolean _head;
 	private long _nodeId;
 	private String _title;
+	private long _userId;
 	private double _version;
-	private String _content;
-	private String _formattedContent;
-	private String _format;
-	private boolean _head;
-	private String[] _attachments;
 
 }

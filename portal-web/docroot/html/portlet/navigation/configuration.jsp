@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,8 +20,8 @@
 String redirect = ParamUtil.getString(request, "redirect");
 %>
 
-<aui:layout>
-	<aui:column columnWidth="50">
+<aui:row>
+	<aui:col width="<%= 50 %>">
 		<liferay-portlet:actionURL portletConfiguration="true" var="configurationURL" />
 
 		<aui:form action="<%= configurationURL %>" method="post" name="fm">
@@ -54,7 +54,7 @@ String redirect = ParamUtil.getString(request, "redirect");
 					%>
 
 					<c:choose>
-						<c:when test="<%= (bulletStyleOptions == null) || (bulletStyleOptions.length == 0) %>">
+						<c:when test="<%= ArrayUtil.isEmpty(bulletStyleOptions) %>">
 							<aui:option label="default" value="" />
 						</c:when>
 						<c:otherwise>
@@ -63,7 +63,7 @@ String redirect = ParamUtil.getString(request, "redirect");
 							for (String bulletStyleOption : bulletStyleOptions) {
 							%>
 
-								<aui:option label="<%= LanguageUtil.get(pageContext, bulletStyleOption) %>" selected="<%= bulletStyle.equals(bulletStyleOption) %>" />
+								<aui:option label="<%= bulletStyleOption %>" selected="<%= bulletStyle.equals(bulletStyleOption) %>" />
 
 							<%
 							}
@@ -118,15 +118,15 @@ String redirect = ParamUtil.getString(request, "redirect");
 				<aui:button type="submit" />
 			</aui:button-row>
 		</aui:form>
-	</aui:column>
-	<aui:column columnWidth="50">
+	</aui:col>
+	<aui:col width="<%= 50 %>">
 		<liferay-portlet:preview
 			portletName="<%= portletResource %>"
 			queryString="struts_action=/navigation/view"
 			showBorders="<%= true %>"
 		/>
-	</aui:column>
-</aui:layout>
+	</aui:col>
+</aui:row>
 
 <aui:script use="aui-base">
 	var customDisplayOptions = A.one('#<portlet:namespace />customDisplayOptions');
@@ -140,7 +140,7 @@ String redirect = ParamUtil.getString(request, "redirect");
 
 	var selects = A.all('#<portlet:namespace />fm select');
 
-	var curPortletBoundaryId = '#p_p_id_<%= portletResource %>_';
+	var curPortletBoundaryId = '#p_p_id_<%= HtmlUtil.escapeJS(portletResource) %>_';
 
 	var toggleCustomFields = function() {
 		if (customDisplayOptions) {
@@ -153,17 +153,18 @@ String redirect = ParamUtil.getString(request, "redirect");
 			if (displayStyle == '[custom]') {
 				action = 'show';
 
-				data['_<%= portletResource %>_headerType'] = selectHeaderType.val();
-				data['_<%= portletResource %>_includedLayouts'] = selectIncludedLayouts.val();
-				data['_<%= portletResource %>_nestedChildren'] = selectNestedChildren.val();
-				data['_<%= portletResource %>_rootLayoutLevel'] = selectRootLayoutLevel.val();
-				data['_<%= portletResource %>_rootLayoutType'] = selectRootLayoutType.val();
+				data['_<%= HtmlUtil.escapeJS(portletResource) %>_headerType'] = selectHeaderType.val();
+				data['_<%= HtmlUtil.escapeJS(portletResource) %>_includedLayouts'] = selectIncludedLayouts.val();
+				data['_<%= HtmlUtil.escapeJS(portletResource) %>_nestedChildren'] = selectNestedChildren.val();
+				data['_<%= HtmlUtil.escapeJS(portletResource) %>_rootLayoutLevel'] = selectRootLayoutLevel.val();
+				data['_<%= HtmlUtil.escapeJS(portletResource) %>_rootLayoutType'] = selectRootLayoutType.val();
 			}
 
 			customDisplayOptions[action]();
 
-			data['_<%= portletResource %>_bulletStyle'] = selectBulletStyle.val();
-			data['_<%= portletResource %>_displayStyle'] = selectDisplayStyle.val();
+			data['_<%= HtmlUtil.escapeJS(portletResource) %>_bulletStyle'] = selectBulletStyle.val();
+			data['_<%= HtmlUtil.escapeJS(portletResource) %>_displayStyle'] = selectDisplayStyle.val();
+			data['_<%= HtmlUtil.escapeJS(portletResource) %>_preview'] = true;
 
 			Liferay.Portlet.refresh(curPortletBoundaryId, data);
 		}

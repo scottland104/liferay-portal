@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,10 +25,13 @@ import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.WorkflowDefinitionLinkLocalServiceUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
+import com.liferay.portlet.documentlibrary.model.DLFileEntryTypeConstants;
 import com.liferay.portlet.documentlibrary.model.DLFileVersion;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
+import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
 import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLFileVersionLocalServiceUtil;
+import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
 
 import java.io.Serializable;
 
@@ -38,19 +41,21 @@ import java.util.Map;
 /**
  * @author Bruno Farache
  * @author Jorge Ferrer
+ * @author Alexander Chow
  */
 public class DLFileEntryWorkflowHandler extends BaseWorkflowHandler {
 
-	public static final String CLASS_NAME = DLFileEntry.class.getName();
-
+	@Override
 	public String getClassName() {
-		return CLASS_NAME;
+		return DLFileEntry.class.getName();
 	}
 
+	@Override
 	public String getType(Locale locale) {
-		return ResourceActionsUtil.getModelResource(locale, CLASS_NAME);
+		return ResourceActionsUtil.getModelResource(locale, getClassName());
 	}
 
+	@Override
 	public WorkflowDefinitionLink getWorkflowDefinitionLink(
 			long companyId, long groupId, long classPK)
 		throws PortalException, SystemException {
@@ -58,9 +63,32 @@ public class DLFileEntryWorkflowHandler extends BaseWorkflowHandler {
 		DLFileVersion dlFileVersion =
 			DLFileVersionLocalServiceUtil.getFileVersion(classPK);
 
-		return WorkflowDefinitionLinkLocalServiceUtil.getWorkflowDefinitionLink(
-			companyId, groupId, DLFolder.class.getName(),
-			dlFileVersion.getFolderId(), dlFileVersion.getFileEntryTypeId());
+		long folderId = dlFileVersion.getFolderId();
+
+		while (folderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+			DLFolder dlFolder = DLFolderLocalServiceUtil.getFolder(folderId);
+
+			if (dlFolder.isOverrideFileEntryTypes()) {
+				break;
+			}
+
+			folderId = dlFolder.getParentFolderId();
+		}
+
+		WorkflowDefinitionLink workflowDefinitionLink =
+			WorkflowDefinitionLinkLocalServiceUtil.fetchWorkflowDefinitionLink(
+				companyId, groupId, DLFolder.class.getName(), folderId,
+				dlFileVersion.getFileEntryTypeId(), true);
+
+		if (workflowDefinitionLink == null) {
+			workflowDefinitionLink =
+				WorkflowDefinitionLinkLocalServiceUtil.
+					fetchWorkflowDefinitionLink(
+						companyId, groupId, DLFolder.class.getName(), folderId,
+						DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_ALL, true);
+		}
+
+		return workflowDefinitionLink;
 	}
 
 	@Override
@@ -68,6 +96,7 @@ public class DLFileEntryWorkflowHandler extends BaseWorkflowHandler {
 		return _VISIBLE;
 	}
 
+	@Override
 	public DLFileEntry updateStatus(
 			int status, Map<String, Serializable> workflowContext)
 		throws PortalException, SystemException {
@@ -82,7 +111,7 @@ public class DLFileEntryWorkflowHandler extends BaseWorkflowHandler {
 			"serviceContext");
 
 		return DLFileEntryLocalServiceUtil.updateStatus(
-			userId, classPK, status, serviceContext);
+			userId, classPK, status, workflowContext, serviceContext);
 	}
 
 	@Override

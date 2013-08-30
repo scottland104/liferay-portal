@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,9 +26,11 @@ String onChangeMethod = (String)request.getAttribute("liferay-ui:input-editor:on
 if (Validator.isNotNull(onChangeMethod)) {
 	onChangeMethod = namespace + onChangeMethod;
 }
+
+boolean resizable = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:input-editor:resizable"));
 %>
 
-<aui:script>
+<aui:script use='<%= resizable ? "resize" : "aui-base" %>'>
 	window['<%= name %>'] = {
 		destroy: function() {
 			var editorEl = document.getElementById('<%= name %>');
@@ -37,7 +39,7 @@ if (Validator.isNotNull(onChangeMethod)) {
 				editorEl.parentNode.removeChild(editorEl);
 			}
 
-			delete window['<%= name %>'];
+			window['<%= name %>'] = null;
 		},
 
 		focus: function() {
@@ -51,6 +53,16 @@ if (Validator.isNotNull(onChangeMethod)) {
 		initEditor: function() {
 			<c:if test="<%= Validator.isNotNull(initMethod) %>">
 				<%= name %>.setHTML(<%= namespace + initMethod %>());
+
+				<c:if test="<%= resizable %>">
+					new A.Resize(
+						{
+							handles: 'br',
+							node: '#<%= name %>_container',
+							wrap: true
+						}
+					);
+				</c:if>
 			</c:if>
 		},
 
@@ -62,23 +74,23 @@ if (Validator.isNotNull(onChangeMethod)) {
 	window['<%= name %>'].initEditor();
 </aui:script>
 
-<div class="<%= cssClass %>">
+<div class="<%= cssClass %>" id="<%= name %>_container">
 	<table bgcolor="#FFFFFF" cellpadding="0" cellspacing="0" height="100%" width="100%">
 	<tr>
 		<td bgcolor="#FFFFFF" height="100%">
-			<textarea style="font-family: monospace; height: 100%; width: 100%;" id="<%= name %>" name="<%= name %>"
+			<textarea id="<%= name %>" name="<%= name %>"
 
 			<%
 			if (Validator.isNotNull(onChangeMethod)) {
 			%>
 
-				onChange="<%= HtmlUtil.escape(onChangeMethod) %>(this.value)"
+				onChange="<%= HtmlUtil.escapeJS(onChangeMethod) %>(this.value)"
 
 			<%
 			}
 			%>
 
-			></textarea>
+			style="font-family: monospace; height: 100%; min-height: 8em; min-width: 10em; resize: vertical; width: 100%;"></textarea>
 		</td>
 	</tr>
 	</table>

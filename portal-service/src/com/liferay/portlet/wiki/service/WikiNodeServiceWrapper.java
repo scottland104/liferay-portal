@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,20 +14,42 @@
 
 package com.liferay.portlet.wiki.service;
 
+import com.liferay.portal.service.ServiceWrapper;
+
 /**
- * <p>
- * This class is a wrapper for {@link WikiNodeService}.
- * </p>
+ * Provides a wrapper for {@link WikiNodeService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       WikiNodeService
+ * @author Brian Wing Shun Chan
+ * @see WikiNodeService
  * @generated
  */
-public class WikiNodeServiceWrapper implements WikiNodeService {
+public class WikiNodeServiceWrapper implements WikiNodeService,
+	ServiceWrapper<WikiNodeService> {
 	public WikiNodeServiceWrapper(WikiNodeService wikiNodeService) {
 		_wikiNodeService = wikiNodeService;
 	}
 
+	/**
+	* Returns the Spring bean ID for this bean.
+	*
+	* @return the Spring bean ID for this bean
+	*/
+	@Override
+	public java.lang.String getBeanIdentifier() {
+		return _wikiNodeService.getBeanIdentifier();
+	}
+
+	/**
+	* Sets the Spring bean ID for this bean.
+	*
+	* @param beanIdentifier the Spring bean ID for this bean
+	*/
+	@Override
+	public void setBeanIdentifier(java.lang.String beanIdentifier) {
+		_wikiNodeService.setBeanIdentifier(beanIdentifier);
+	}
+
+	@Override
 	public com.liferay.portlet.wiki.model.WikiNode addNode(
 		java.lang.String name, java.lang.String description,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -36,18 +58,21 @@ public class WikiNodeServiceWrapper implements WikiNodeService {
 		return _wikiNodeService.addNode(name, description, serviceContext);
 	}
 
+	@Override
 	public void deleteNode(long nodeId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		_wikiNodeService.deleteNode(nodeId);
 	}
 
+	@Override
 	public com.liferay.portlet.wiki.model.WikiNode getNode(long nodeId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return _wikiNodeService.getNode(nodeId);
 	}
 
+	@Override
 	public com.liferay.portlet.wiki.model.WikiNode getNode(long groupId,
 		java.lang.String name)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -55,26 +80,44 @@ public class WikiNodeServiceWrapper implements WikiNodeService {
 		return _wikiNodeService.getNode(groupId, name);
 	}
 
+	@Override
 	public void importPages(long nodeId, java.lang.String importer,
-		java.io.File[] files,
+		java.io.InputStream[] inputStreams,
 		java.util.Map<java.lang.String, java.lang.String[]> options)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		_wikiNodeService.importPages(nodeId, importer, files, options);
+		_wikiNodeService.importPages(nodeId, importer, inputStreams, options);
 	}
 
+	@Override
+	public com.liferay.portlet.wiki.model.WikiNode moveNodeToTrash(long nodeId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return _wikiNodeService.moveNodeToTrash(nodeId);
+	}
+
+	@Override
+	public void restoreNodeFromTrash(long nodeId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		_wikiNodeService.restoreNodeFromTrash(nodeId);
+	}
+
+	@Override
 	public void subscribeNode(long nodeId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		_wikiNodeService.subscribeNode(nodeId);
 	}
 
+	@Override
 	public void unsubscribeNode(long nodeId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		_wikiNodeService.unsubscribeNode(nodeId);
 	}
 
+	@Override
 	public com.liferay.portlet.wiki.model.WikiNode updateNode(long nodeId,
 		java.lang.String name, java.lang.String description,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -84,11 +127,27 @@ public class WikiNodeServiceWrapper implements WikiNodeService {
 			serviceContext);
 	}
 
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
+	 */
 	public WikiNodeService getWrappedWikiNodeService() {
 		return _wikiNodeService;
 	}
 
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
+	 */
 	public void setWrappedWikiNodeService(WikiNodeService wikiNodeService) {
+		_wikiNodeService = wikiNodeService;
+	}
+
+	@Override
+	public WikiNodeService getWrappedService() {
+		return _wikiNodeService;
+	}
+
+	@Override
+	public void setWrappedService(WikiNodeService wikiNodeService) {
 		_wikiNodeService = wikiNodeService;
 	}
 

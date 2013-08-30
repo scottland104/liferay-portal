@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,9 +20,9 @@
 String redirect = ParamUtil.getString(request, "redirect");
 String backURL = ParamUtil.getString(request, "backURL", redirect);
 
-long groupId = ParamUtil.getLong(request, "groupId");
+Group group = ActionUtil.getGroup(renderRequest);
 
-Group group = GroupServiceUtil.getGroup(groupId);
+long groupId = group.getGroupId();
 
 Organization organization = null;
 
@@ -38,19 +38,16 @@ portletURL.setParameter("groupId", String.valueOf(groupId));
 pageContext.setAttribute("portletURL", portletURL);
 %>
 
-<liferay-ui:header
-	backURL="<%= backURL %>"
-	localizeTitle="<%= false %>"
-	title='<%= group.getDescriptiveName() + StringPool.COLON + StringPool.SPACE + LanguageUtil.get(pageContext, "manage-memberships") %>'
-/>
+<c:if test="<%= !layout.isTypeControlPanel() %>">
+	<liferay-ui:header
+		backURL="<%= backURL %>"
+		escapeXml="<%= false %>"
+		localizeTitle="<%= false %>"
+		title='<%= HtmlUtil.escape(group.getDescriptiveName(locale)) + StringPool.COLON + StringPool.SPACE + LanguageUtil.get(pageContext, "manage-memberships") %>'
+	/>
+</c:if>
 
-<liferay-util:include page="/html/portlet/sites_admin/edit_site_assignments_toolbar.jsp">
-	<liferay-util:param name="toolbarItem" value="view-teams" />
-</liferay-util:include>
-
-<br />
-
-<aui:form action="<%= portletURL.toString() %>" method="get" name="fm">
+<aui:form action="<%= portletURL.toString() %>" cssClass="form-search" method="get" name="fm">
 	<liferay-portlet:renderURLParams varImpl="portletURL" />
 
 	<%
@@ -59,15 +56,8 @@ pageContext.setAttribute("portletURL", portletURL);
 	List headerNames = searchContainer.getHeaderNames();
 
 	headerNames.add(StringPool.BLANK);
-	%>
 
-	<liferay-ui:search-form
-		page="/html/portlet/sites_admin/team_search.jsp"
-		searchContainer="<%= searchContainer %>"
-	/>
-
-	<%
-	TeamSearchTerms searchTerms = (TeamSearchTerms)searchContainer.getSearchTerms();
+	TeamDisplayTerms searchTerms = (TeamDisplayTerms)searchContainer.getSearchTerms();
 
 	int total = TeamLocalServiceUtil.searchCount(groupId, searchTerms.getName(), searchTerms.getDescription(), new LinkedHashMap<String, Object>());
 
@@ -79,6 +69,8 @@ pageContext.setAttribute("portletURL", portletURL);
 
 	portletURL.setParameter(searchContainer.getCurParam(), String.valueOf(searchContainer.getCur()));
 	%>
+
+	<liferay-ui:input-search name="<%= searchTerms.NAME %>" />
 
 	<div class="separator"><!-- --></div>
 
@@ -124,10 +116,10 @@ pageContext.setAttribute("portletURL", portletURL);
 		<portlet:renderURL var="addTeamURL">
 			<portlet:param name="struts_action" value="/sites_admin/edit_team" />
 			<portlet:param name="redirect" value="<%= currentURL %>" />
-			<portlet:param name="groupId" value="<%= String.valueOf(group.getGroupId()) %>" />
+			<portlet:param name="groupId" value="<%= String.valueOf(groupId) %>" />
 		</portlet:renderURL>
 
-		<aui:button href='<%= addTeamURL %>' value="add-team" />
+		<aui:button href="<%= addTeamURL %>" value="add-team" />
 
 		<br /><br />
 	</c:if>
@@ -140,7 +132,7 @@ if (group.isOrganization()) {
 	UsersAdminUtil.addPortletBreadcrumbEntries(organization, request, renderResponse);
 }
 else {
-	PortalUtil.addPortletBreadcrumbEntry(request, group.getDescriptiveName(), null);
+	PortalUtil.addPortletBreadcrumbEntry(request, group.getDescriptiveName(locale), null);
 }
 
 PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "manage-teams"), currentURL);

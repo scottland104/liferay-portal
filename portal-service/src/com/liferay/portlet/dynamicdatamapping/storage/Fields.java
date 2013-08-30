@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,41 +14,116 @@
 
 package com.liferay.portlet.dynamicdatamapping.storage;
 
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Validator;
+
+import java.io.Serializable;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * @author Brian Wing Shun Chan
  */
-public class Fields {
+public class Fields implements Iterable<Field>, Serializable {
 
 	public boolean contains(String name) {
 		return _fieldsMap.containsKey(name);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof Fields)) {
+			return false;
+		}
+
+		Fields fields = (Fields)obj;
+
+		if (Validator.equals(_fieldsMap, fields._fieldsMap)) {
+			return true;
+		}
+
+		return false;
 	}
 
 	public Field get(String name) {
 		return _fieldsMap.get(name);
 	}
 
+	public Set<Locale> getAvailableLocales() {
+		Set<Locale> availableLocales = new HashSet<Locale>();
+
+		for (Field field : _fieldsMap.values()) {
+			if (field.isPrivate()) {
+				continue;
+			}
+
+			for (Locale availableLocale : field.getAvailableLocales()) {
+				availableLocales.add(availableLocale);
+			}
+		}
+
+		return availableLocales;
+	}
+
+	public Locale getDefaultLocale() {
+		Locale defaultLocale = LocaleUtil.getSiteDefault();
+
+		Iterator<Field> itr = iterator();
+
+		if (itr.hasNext()) {
+			Field field = itr.next();
+
+			defaultLocale = field.getDefaultLocale();
+		}
+
+		return defaultLocale;
+	}
+
 	public Set<String> getNames() {
 		return _fieldsMap.keySet();
 	}
 
+	@Override
 	public Iterator<Field> iterator() {
-		return iterator(null);
+		return iterator(false);
 	}
 
-	public Iterator<Field> iterator(Comparator<Field> comparator) {
+	public Iterator<Field> iterator(boolean includePrivateFields) {
+		return iterator(null, includePrivateFields);
+	}
+
+	public Iterator<Field> iterator(
+		Comparator<Field> comparator, boolean includePrivateFields) {
+
 		Collection<Field> fieldsCollection = _fieldsMap.values();
 
-		List<Field> fieldsList = new ArrayList<Field>(fieldsCollection);
+		List<Field> fieldsList = new ArrayList<Field>();
+
+		Iterator<Field> itr = fieldsCollection.iterator();
+
+		while (itr.hasNext()) {
+			Field field = itr.next();
+
+			if (!includePrivateFields && field.isPrivate()) {
+				continue;
+			}
+
+			fieldsList.add(field);
+		}
 
 		if (comparator != null) {
 			Collections.sort(fieldsList, comparator);

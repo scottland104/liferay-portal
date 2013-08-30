@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,11 @@ import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.PasswordPolicyRel;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing PasswordPolicyRel in entity cache.
  *
@@ -25,7 +30,8 @@ import com.liferay.portal.model.PasswordPolicyRel;
  * @see PasswordPolicyRel
  * @generated
  */
-public class PasswordPolicyRelCacheModel implements CacheModel<PasswordPolicyRel> {
+public class PasswordPolicyRelCacheModel implements CacheModel<PasswordPolicyRel>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(9);
@@ -43,6 +49,7 @@ public class PasswordPolicyRelCacheModel implements CacheModel<PasswordPolicyRel
 		return sb.toString();
 	}
 
+	@Override
 	public PasswordPolicyRel toEntityModel() {
 		PasswordPolicyRelImpl passwordPolicyRelImpl = new PasswordPolicyRelImpl();
 
@@ -54,6 +61,23 @@ public class PasswordPolicyRelCacheModel implements CacheModel<PasswordPolicyRel
 		passwordPolicyRelImpl.resetOriginalValues();
 
 		return passwordPolicyRelImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		passwordPolicyRelId = objectInput.readLong();
+		passwordPolicyId = objectInput.readLong();
+		classNameId = objectInput.readLong();
+		classPK = objectInput.readLong();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(passwordPolicyRelId);
+		objectOutput.writeLong(passwordPolicyId);
+		objectOutput.writeLong(classNameId);
+		objectOutput.writeLong(classPK);
 	}
 
 	public long passwordPolicyRelId;

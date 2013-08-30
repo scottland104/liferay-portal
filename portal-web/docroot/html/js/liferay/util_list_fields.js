@@ -1,4 +1,4 @@
-AUI().add(
+AUI.add(
 	'liferay-util-list-fields',
 	function(A) {
 		var Util = Liferay.Util;
@@ -45,7 +45,7 @@ AUI().add(
 					function(item, index, collection) {
 						var val = item.val();
 
-						if (val && item.get('name') != except && item.get('checked')) {
+						if (val && item.get('name') != except && item.get('checked') && !item.get('disabled')) {
 							buffer.push(val);
 						}
 					}
@@ -78,7 +78,7 @@ AUI().add(
 				}
 
 				if (buffer[0] != '.none') {
-					selectList = buffer.join(delimeter);
+					selectList = buffer.join(delimeter || ',');
 				}
 			}
 
@@ -101,7 +101,7 @@ AUI().add(
 					function(item, index, collection) {
 						var val = item.val();
 
-						if (val && item.get('name') != except && !item.get('checked')) {
+						if (val && item.get('name') != except && !item.get('checked') && !item.get('disabled')) {
 							buffer.push(val);
 						}
 					}

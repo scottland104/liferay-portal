@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -36,44 +36,54 @@ import java.util.Map;
  */
 public abstract class BaseFriendlyURLMapper implements FriendlyURLMapper {
 
+	@Override
 	public String getMapping() {
 		return _mapping;
 	}
 
+	@Override
 	public String getPortletId() {
 		return _portletId;
 	}
 
+	@Override
 	public Router getRouter() {
 		return router;
 	}
 
+	@Override
 	public boolean isCheckMappingWithPrefix() {
 		return _CHECK_MAPPING_WITH_PREFIX;
 	}
 
+	@Override
 	public boolean isPortletInstanceable() {
 		return _portletInstanceable;
 	}
 
+	@Override
 	public void setMapping(String mapping) {
 		_mapping = mapping;
 	}
 
+	@Override
 	public void setPortletId(String portletId) {
 		_portletId = portletId;
 	}
 
+	@Override
 	public void setPortletInstanceable(boolean portletInstanceable) {
 		_portletInstanceable = portletInstanceable;
 	}
 
+	@Override
 	public void setRouter(Router router) {
 		this.router = router;
 	}
 
 	/**
-	 * @deprecated use {@link #addParameter(Map, String, Object)} instead
+	 * @deprecated As of 6.2.0, replaced by {@link #addParameter(Map, String,
+	 *             Object)}
 	 */
 	protected void addParam(
 		Map<String, String[]> parameterMap, String name, Object value) {
@@ -82,8 +92,8 @@ public abstract class BaseFriendlyURLMapper implements FriendlyURLMapper {
 	}
 
 	/**
-	 * @deprecated use {@link #addParameter(String, Map, String, String)}
-	 *             instead
+	 * @deprecated As of 6.2.0, replaced by {@link #addParameter(String, Map,
+	 *             String, String)}
 	 */
 	protected void addParam(
 		Map<String, String[]> parameterMap, String name, String value) {
@@ -126,7 +136,26 @@ public abstract class BaseFriendlyURLMapper implements FriendlyURLMapper {
 	protected void addParameter(
 		Map<String, String[]> parameterMap, String name, String value) {
 
-		addParameter(getNamespace(), parameterMap, name, value);
+		addParameter(getNamespace(), parameterMap, name, new String[] {value});
+	}
+
+	/**
+	 * Adds a default namespaced string parameter to the parameter map.
+	 *
+	 * <p>
+	 * <b>Do not use this method with an instanceable portlet, it will not
+	 * properly namespace parameter names.</b>
+	 * </p>
+	 *
+	 * @param parameterMap the parameter map
+	 * @param name the name of the parameter
+	 * @param values the values of the parameter
+	 * @see   #getNamespace()
+	 */
+	protected void addParameter(
+		Map<String, String[]> parameterMap, String name, String[] values) {
+
+		addParameter(getNamespace(), parameterMap, name, values);
 	}
 
 	/**
@@ -144,7 +173,9 @@ public abstract class BaseFriendlyURLMapper implements FriendlyURLMapper {
 		String namespace, Map<String, String[]> parameterMap, String name,
 		Object value) {
 
-		addParameter(namespace, parameterMap, name, String.valueOf(value));
+		addParameter(
+			namespace, parameterMap, name,
+			new String[] {String.valueOf(value)});
 	}
 
 	/**
@@ -163,20 +194,41 @@ public abstract class BaseFriendlyURLMapper implements FriendlyURLMapper {
 		String namespace, Map<String, String[]> parameterMap, String name,
 		String value) {
 
+		addParameter(namespace, parameterMap, name, new String[] {value});
+	}
+
+	/**
+	 * Adds a namespaced string parameter to the parameter map.
+	 *
+	 * @param namespace the namespace for portlet parameters. For instanceable
+	 *        portlets this must include the instance ID.
+	 * @param parameterMap the parameter map
+	 * @param name space the namespace for portlet parameters. For instanceable
+	 *        portlets this must include the instance ID.
+	 * @param values the values of the parameter
+	 * @see   PortalUtil#getPortletNamespace(String)
+	 * @see   DefaultFriendlyURLMapper#getPortletId(Map)
+	 */
+	protected void addParameter(
+		String namespace, Map<String, String[]> parameterMap, String name,
+		String[] values) {
+
 		try {
 			if (!PortalUtil.isReservedParameter(name)) {
 				Map<String, String> prpIdentifers =
 					FriendlyURLMapperThreadLocal.getPRPIdentifiers();
 
-				if (prpIdentifers.containsKey(name)) {
-					name = prpIdentifers.get(name);
+				String identiferValue = prpIdentifers.get(name);
+
+				if (identiferValue != null) {
+					name = identiferValue;
 				}
 				else {
-					name = namespace + name;
+					name = namespace.concat(name);
 				}
 			}
 
-			parameterMap.put(name, new String[] {value});
+			parameterMap.put(name, values);
 		}
 		catch (Exception e) {
 			_log.error(e, e);

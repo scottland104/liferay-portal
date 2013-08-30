@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,11 +15,9 @@
 package com.liferay.portal.xml;
 
 import com.liferay.portal.kernel.xml.Document;
+import com.liferay.portal.kernel.xml.DocumentType;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.Visitor;
-import com.liferay.util.xml.XMLFormatter;
-
-import java.io.IOException;
 
 /**
  * @author Brian Wing Shun Chan
@@ -37,13 +35,17 @@ public class DocumentImpl extends BranchImpl implements Document {
 		return visitor.visitDocument(this);
 	}
 
+	@Override
 	public Document addComment(String comment) {
 		_document.addComment(comment);
 
 		return this;
 	}
 
-	public Document addDocType(String name, String publicId, String systemId) {
+	@Override
+	public Document addDocumentType(
+		String name, String publicId, String systemId) {
+
 		_document.addDocType(name, publicId, systemId);
 
 		return this;
@@ -51,36 +53,25 @@ public class DocumentImpl extends BranchImpl implements Document {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof DocumentImpl)) {
+			return false;
+		}
+
 		org.dom4j.Document document = ((DocumentImpl)obj).getWrappedDocument();
 
 		return _document.equals(document);
 	}
 
 	@Override
-	public String formattedString() throws IOException {
-		return XMLFormatter.toString(_document);
+	public DocumentType getDocumentType() {
+		return new DocumentTypeImpl(_document.getDocType());
 	}
 
 	@Override
-	public String formattedString(String indent) throws IOException {
-		return XMLFormatter.toString(_document, indent);
-	}
-
-	@Override
-	public String formattedString(String indent, boolean expandEmptyElements)
-		throws IOException {
-
-		return XMLFormatter.toString(_document, indent, expandEmptyElements);
-	}
-
-	public String formattedString(
-			String indent, boolean expandEmptyElements, boolean trimText)
-		throws IOException {
-
-		return XMLFormatter.toString(
-			_document, indent, expandEmptyElements, trimText);
-	}
-
 	public Element getRootElement() {
 		return new ElementImpl(_document.getRootElement());
 	}
@@ -89,6 +80,7 @@ public class DocumentImpl extends BranchImpl implements Document {
 		return _document;
 	}
 
+	@Override
 	public String getXMLEncoding() {
 		return _document.getXMLEncoding();
 	}
@@ -98,12 +90,14 @@ public class DocumentImpl extends BranchImpl implements Document {
 		return _document.hashCode();
 	}
 
+	@Override
 	public void setRootElement(Element rootElement) {
 		ElementImpl rootElementImpl = (ElementImpl)rootElement;
 
 		_document.setRootElement(rootElementImpl.getWrappedElement());
 	}
 
+	@Override
 	public void setXMLEncoding(String encoding) {
 		_document.setXMLEncoding(encoding);
 	}

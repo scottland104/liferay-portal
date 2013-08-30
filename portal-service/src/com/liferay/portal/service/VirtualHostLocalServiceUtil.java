@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,15 +15,15 @@
 package com.liferay.portal.service;
 
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
-import com.liferay.portal.kernel.util.MethodCache;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the virtual host local service. This utility wraps {@link com.liferay.portal.service.impl.VirtualHostLocalServiceImpl} and is the primary access point for service operations in application layer code running on the local server.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
+ * Provides the local service utility for VirtualHost. This utility wraps
+ * {@link com.liferay.portal.service.impl.VirtualHostLocalServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on the local server. Methods of this service will not have security checks
+ * based on the propagated JAAS credentials because this service can only be
+ * accessed from within the same VM.
  *
  * @author Brian Wing Shun Chan
  * @see VirtualHostLocalService
@@ -66,25 +66,32 @@ public class VirtualHostLocalServiceUtil {
 	* Deletes the virtual host with the primary key from the database. Also notifies the appropriate model listeners.
 	*
 	* @param virtualHostId the primary key of the virtual host
+	* @return the virtual host that was removed
 	* @throws PortalException if a virtual host with the primary key could not be found
 	* @throws SystemException if a system exception occurred
 	*/
-	public static void deleteVirtualHost(long virtualHostId)
+	public static com.liferay.portal.model.VirtualHost deleteVirtualHost(
+		long virtualHostId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		getService().deleteVirtualHost(virtualHostId);
+		return getService().deleteVirtualHost(virtualHostId);
 	}
 
 	/**
 	* Deletes the virtual host from the database. Also notifies the appropriate model listeners.
 	*
 	* @param virtualHost the virtual host
+	* @return the virtual host that was removed
 	* @throws SystemException if a system exception occurred
 	*/
-	public static void deleteVirtualHost(
+	public static com.liferay.portal.model.VirtualHost deleteVirtualHost(
 		com.liferay.portal.model.VirtualHost virtualHost)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		getService().deleteVirtualHost(virtualHost);
+		return getService().deleteVirtualHost(virtualHost);
+	}
+
+	public static com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery() {
+		return getService().dynamicQuery();
 	}
 
 	/**
@@ -105,7 +112,7 @@ public class VirtualHostLocalServiceUtil {
 	* Performs a dynamic query on the database and returns a range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.VirtualHostModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -125,7 +132,7 @@ public class VirtualHostLocalServiceUtil {
 	* Performs a dynamic query on the database and returns an ordered range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.VirtualHostModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -159,6 +166,27 @@ public class VirtualHostLocalServiceUtil {
 	}
 
 	/**
+	* Returns the number of rows that match the dynamic query.
+	*
+	* @param dynamicQuery the dynamic query
+	* @param projection the projection to apply to the query
+	* @return the number of rows that match the dynamic query
+	* @throws SystemException if a system exception occurred
+	*/
+	public static long dynamicQueryCount(
+		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		com.liferay.portal.kernel.dao.orm.Projection projection)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().dynamicQueryCount(dynamicQuery, projection);
+	}
+
+	public static com.liferay.portal.model.VirtualHost fetchVirtualHost(
+		long virtualHostId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().fetchVirtualHost(virtualHostId);
+	}
+
+	/**
 	* Returns the virtual host with the primary key.
 	*
 	* @param virtualHostId the primary key of the virtual host
@@ -184,7 +212,7 @@ public class VirtualHostLocalServiceUtil {
 	* Returns a range of all the virtual hosts.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.VirtualHostModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param start the lower bound of the range of virtual hosts
@@ -220,20 +248,6 @@ public class VirtualHostLocalServiceUtil {
 		com.liferay.portal.model.VirtualHost virtualHost)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getService().updateVirtualHost(virtualHost);
-	}
-
-	/**
-	* Updates the virtual host in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
-	*
-	* @param virtualHost the virtual host
-	* @param merge whether to merge the virtual host with the current session. See {@link com.liferay.portal.service.persistence.BatchSession#update(com.liferay.portal.kernel.dao.orm.Session, com.liferay.portal.model.BaseModel, boolean)} for an explanation.
-	* @return the virtual host that was updated
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.VirtualHost updateVirtualHost(
-		com.liferay.portal.model.VirtualHost virtualHost, boolean merge)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getService().updateVirtualHost(virtualHost, merge);
 	}
 
 	/**
@@ -292,20 +306,15 @@ public class VirtualHostLocalServiceUtil {
 
 			ReferenceRegistry.registerReference(VirtualHostLocalServiceUtil.class,
 				"_service");
-			MethodCache.remove(VirtualHostLocalService.class);
 		}
 
 		return _service;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setService(VirtualHostLocalService service) {
-		MethodCache.remove(VirtualHostLocalService.class);
-
-		_service = service;
-
-		ReferenceRegistry.registerReference(VirtualHostLocalServiceUtil.class,
-			"_service");
-		MethodCache.remove(VirtualHostLocalService.class);
 	}
 
 	private static VirtualHostLocalService _service;

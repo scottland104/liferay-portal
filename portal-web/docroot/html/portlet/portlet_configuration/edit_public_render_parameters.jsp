@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -39,22 +39,23 @@ editPublicRenderParameterURL.setParameter("portletResource", portletResource);
 
 <portlet:actionURL var="editPRPURL">
 	<portlet:param name="struts_action" value="/portlet_configuration/edit_public_render_parameters" />
-	<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.SAVE %>" />
 </portlet:actionURL>
 
-<div class="portlet-msg-info">
+<div class="alert alert-info">
 	<liferay-ui:message arguments='<%= "http://www.liferay.com/community/wiki/-/wiki/Main/Portlet+Communication+Configuration" %>' key="set-up-the-communication-among-the-portlets-that-use-public-render-parameters" />
 </div>
 
 <aui:form action="<%= editPRPURL %>" method="post" name="fm">
+	<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= Constants.SAVE %>" />
 	<aui:input name="redirect" type="hidden" value="<%= editPublicRenderParameterURL.toString() %>" />
 	<aui:input name="returnToFullPageURL" type="hidden" value="<%= returnToFullPageURL %>" />
 	<aui:input name="portletResource" type="hidden" value="<%= portletResource %>" />
 
-	<liferay-ui:search-container>
+	<liferay-ui:search-container
+		total="<%= publicRenderParameterConfigurations.size() %>"
+	>
 		<liferay-ui:search-container-results
 			results="<%= ListUtil.subList(publicRenderParameterConfigurations, searchContainer.getStart(), searchContainer.getEnd()) %>"
-			total="<%= publicRenderParameterConfigurations.size() %>"
 		/>
 
 		<liferay-ui:search-container-row

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,92 +16,118 @@
 
 <%@ include file="/html/portlet/init.jsp" %>
 
-<%@ page import="com.liferay.portal.DuplicateLockException" %>
-<%@ page import="com.liferay.portal.InvalidRepositoryException" %>
-<%@ page import="com.liferay.portal.NoSuchRepositoryException" %>
-<%@ page import="com.liferay.portal.NoSuchWorkflowDefinitionLinkException" %>
-<%@ page import="com.liferay.portal.kernel.repository.model.FileEntry" %>
-<%@ page import="com.liferay.portal.kernel.repository.model.FileVersion" %>
-<%@ page import="com.liferay.portal.kernel.repository.model.Folder" %>
-<%@ page import="com.liferay.portal.kernel.search.Document" %>
-<%@ page import="com.liferay.portal.kernel.search.Hits" %>
-<%@ page import="com.liferay.portal.kernel.search.Indexer" %>
-<%@ page import="com.liferay.portal.kernel.search.IndexerRegistryUtil" %>
-<%@ page import="com.liferay.portal.kernel.search.SearchContext" %>
-<%@ page import="com.liferay.portal.kernel.search.SearchContextFactory" %>
-<%@ page import="com.liferay.portal.kernel.workflow.WorkflowDefinition" %>
-<%@ page import="com.liferay.portal.kernel.workflow.WorkflowDefinitionManagerUtil" %>
-<%@ page import="com.liferay.portal.kernel.workflow.WorkflowEngineManagerUtil" %>
-<%@ page import="com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil" %>
-<%@ page import="com.liferay.portal.repository.util.RepositoryFactoryUtil" %>
-<%@ page import="com.liferay.portlet.asset.model.AssetEntry" %>
-<%@ page import="com.liferay.portlet.asset.model.AssetRenderer" %>
-<%@ page import="com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil" %>
-<%@ page import="com.liferay.portlet.asset.service.AssetEntryServiceUtil" %>
-<%@ page import="com.liferay.portlet.asset.service.persistence.AssetEntryQuery" %>
-<%@ page import="com.liferay.portlet.documentlibrary.DuplicateFileException" %>
-<%@ page import="com.liferay.portlet.documentlibrary.DuplicateFolderNameException" %>
-<%@ page import="com.liferay.portlet.documentlibrary.DuplicateRepositoryNameException" %>
-<%@ page import="com.liferay.portlet.documentlibrary.FileExtensionException" %>
-<%@ page import="com.liferay.portlet.documentlibrary.FileNameException" %>
-<%@ page import="com.liferay.portlet.documentlibrary.FileShortcutPermissionException" %>
-<%@ page import="com.liferay.portlet.documentlibrary.FileSizeException" %>
-<%@ page import="com.liferay.portlet.documentlibrary.FolderNameException" %>
-<%@ page import="com.liferay.portlet.documentlibrary.NoSuchDirectoryException" %>
-<%@ page import="com.liferay.portlet.documentlibrary.NoSuchFileEntryException" %>
-<%@ page import="com.liferay.portlet.documentlibrary.NoSuchFileException" %>
-<%@ page import="com.liferay.portlet.documentlibrary.NoSuchFolderException" %>
-<%@ page import="com.liferay.portlet.documentlibrary.RepositoryNameException" %>
-<%@ page import="com.liferay.portlet.documentlibrary.SourceFileNameException" %>
-<%@ page import="com.liferay.portlet.documentlibrary.model.DLFileEntry" %>
-<%@ page import="com.liferay.portlet.documentlibrary.model.DLFileEntryConstants" %>
-<%@ page import="com.liferay.portlet.documentlibrary.model.DLFileEntryMetadata" %>
-<%@ page import="com.liferay.portlet.documentlibrary.model.DLFileEntryType" %>
-<%@ page import="com.liferay.portlet.documentlibrary.model.DLFileShortcut" %>
-<%@ page import="com.liferay.portlet.documentlibrary.model.DLFileVersion" %>
-<%@ page import="com.liferay.portlet.documentlibrary.model.DLFolder" %>
-<%@ page import="com.liferay.portlet.documentlibrary.model.DLFolderConstants" %>
-<%@ page import="com.liferay.portlet.documentlibrary.search.EntriesChecker" %>
-<%@ page import="com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil" %>
-<%@ page import="com.liferay.portlet.documentlibrary.service.DLAppServiceUtil" %>
-<%@ page import="com.liferay.portlet.documentlibrary.service.DLFileEntryMetadataLocalServiceUtil" %>
-<%@ page import="com.liferay.portlet.documentlibrary.service.DLFileEntryTypeLocalServiceUtil" %>
-<%@ page import="com.liferay.portlet.documentlibrary.service.DLFileEntryTypeServiceUtil" %>
-<%@ page import="com.liferay.portlet.documentlibrary.service.permission.DLFileEntryTypePermission" %>
-<%@ page import="com.liferay.portlet.documentlibrary.service.permission.DLFileEntryPermission" %>
-<%@ page import="com.liferay.portlet.documentlibrary.service.permission.DLFileShortcutPermission" %>
-<%@ page import="com.liferay.portlet.documentlibrary.service.permission.DLFolderPermission" %>
-<%@ page import="com.liferay.portlet.documentlibrary.util.AudioProcessor" %>
-<%@ page import="com.liferay.portlet.documentlibrary.util.DLUtil" %>
-<%@ page import="com.liferay.portlet.documentlibrary.util.DocumentConversionUtil" %>
-<%@ page import="com.liferay.portlet.documentlibrary.util.PDFProcessor" %>
-<%@ page import="com.liferay.portlet.documentlibrary.util.VideoProcessor" %>
-<%@ page import="com.liferay.portlet.dynamicdatamapping.model.DDMStructure" %>
-<%@ page import="com.liferay.portlet.dynamicdatamapping.search.StructureSearch" %>
-<%@ page import="com.liferay.portlet.dynamicdatamapping.search.StructureSearchTerms" %>
-<%@ page import="com.liferay.portlet.dynamicdatamapping.service.DDMStructureLocalServiceUtil" %>
-<%@ page import="com.liferay.portlet.dynamicdatamapping.storage.Fields" %>
-<%@ page import="com.liferay.portlet.dynamicdatamapping.storage.StorageEngineUtil" %>
-<%@ page import="com.liferay.portlet.dynamicdatamapping.util.DDMXSDUtil" %>
-<%@ page import="com.liferay.portlet.usersadmin.search.GroupSearch" %>
-<%@ page import="com.liferay.portlet.usersadmin.search.GroupSearchTerms" %>
+<%@ page import="com.liferay.portal.DuplicateLockException" %><%@
+page import="com.liferay.portal.InvalidRepositoryException" %><%@
+page import="com.liferay.portal.NoSuchRepositoryException" %><%@
+page import="com.liferay.portal.NoSuchWorkflowDefinitionLinkException" %><%@
+page import="com.liferay.portal.kernel.repository.RepositoryException" %><%@
+page import="com.liferay.portal.kernel.repository.model.FileEntry" %><%@
+page import="com.liferay.portal.kernel.repository.model.FileVersion" %><%@
+page import="com.liferay.portal.kernel.repository.model.Folder" %><%@
+page import="com.liferay.portal.kernel.search.Document" %><%@
+page import="com.liferay.portal.kernel.search.Hits" %><%@
+page import="com.liferay.portal.kernel.search.Indexer" %><%@
+page import="com.liferay.portal.kernel.search.IndexerRegistryUtil" %><%@
+page import="com.liferay.portal.kernel.search.QueryConfig" %><%@
+page import="com.liferay.portal.kernel.search.SearchContext" %><%@
+page import="com.liferay.portal.kernel.search.SearchContextFactory" %><%@
+page import="com.liferay.portal.kernel.search.SearchResult" %><%@
+page import="com.liferay.portal.kernel.search.SearchResultUtil" %><%@
+page import="com.liferay.portal.kernel.search.Sort" %><%@
+page import="com.liferay.portal.kernel.search.Summary" %><%@
+page import="com.liferay.portal.kernel.workflow.WorkflowDefinition" %><%@
+page import="com.liferay.portal.kernel.workflow.WorkflowDefinitionManagerUtil" %><%@
+page import="com.liferay.portal.kernel.workflow.WorkflowEngineManagerUtil" %><%@
+page import="com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil" %><%@
+page import="com.liferay.portal.repository.util.RepositoryFactoryUtil" %><%@
+page import="com.liferay.portlet.asset.model.AssetEntry" %><%@
+page import="com.liferay.portlet.asset.model.AssetRenderer" %><%@
+page import="com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil" %><%@
+page import="com.liferay.portlet.asset.service.AssetEntryServiceUtil" %><%@
+page import="com.liferay.portlet.asset.service.persistence.AssetEntryQuery" %><%@
+page import="com.liferay.portlet.documentlibrary.DuplicateFileEntryTypeException" %><%@
+page import="com.liferay.portlet.documentlibrary.DuplicateFileException" %><%@
+page import="com.liferay.portlet.documentlibrary.DuplicateFolderNameException" %><%@
+page import="com.liferay.portlet.documentlibrary.DuplicateRepositoryNameException" %><%@
+page import="com.liferay.portlet.documentlibrary.FileExtensionException" %><%@
+page import="com.liferay.portlet.documentlibrary.FileMimeTypeException" %><%@
+page import="com.liferay.portlet.documentlibrary.FileNameException" %><%@
+page import="com.liferay.portlet.documentlibrary.FileShortcutPermissionException" %><%@
+page import="com.liferay.portlet.documentlibrary.FileSizeException" %><%@
+page import="com.liferay.portlet.documentlibrary.FolderNameException" %><%@
+page import="com.liferay.portlet.documentlibrary.InvalidFileVersionException" %><%@
+page import="com.liferay.portlet.documentlibrary.NoSuchDirectoryException" %><%@
+page import="com.liferay.portlet.documentlibrary.NoSuchFileEntryException" %><%@
+page import="com.liferay.portlet.documentlibrary.NoSuchFileException" %><%@
+page import="com.liferay.portlet.documentlibrary.NoSuchFolderException" %><%@
+page import="com.liferay.portlet.documentlibrary.NoSuchMetadataSetException" %><%@
+page import="com.liferay.portlet.documentlibrary.RepositoryNameException" %><%@
+page import="com.liferay.portlet.documentlibrary.SourceFileNameException" %><%@
+page import="com.liferay.portlet.documentlibrary.model.DLFileEntry" %><%@
+page import="com.liferay.portlet.documentlibrary.model.DLFileEntryConstants" %><%@
+page import="com.liferay.portlet.documentlibrary.model.DLFileEntryMetadata" %><%@
+page import="com.liferay.portlet.documentlibrary.model.DLFileEntryType" %><%@
+page import="com.liferay.portlet.documentlibrary.model.DLFileEntryTypeConstants" %><%@
+page import="com.liferay.portlet.documentlibrary.model.DLFileShortcut" %><%@
+page import="com.liferay.portlet.documentlibrary.model.DLFileVersion" %><%@
+page import="com.liferay.portlet.documentlibrary.model.DLFolder" %><%@
+page import="com.liferay.portlet.documentlibrary.model.DLFolderConstants" %><%@
+page import="com.liferay.portlet.documentlibrary.model.DLSearchConstants" %><%@
+page import="com.liferay.portlet.documentlibrary.search.EntriesChecker" %><%@
+page import="com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil" %><%@
+page import="com.liferay.portlet.documentlibrary.service.DLAppServiceUtil" %><%@
+page import="com.liferay.portlet.documentlibrary.service.DLFileEntryMetadataLocalServiceUtil" %><%@
+page import="com.liferay.portlet.documentlibrary.service.DLFileEntryTypeLocalServiceUtil" %><%@
+page import="com.liferay.portlet.documentlibrary.service.DLFileEntryTypeServiceUtil" %><%@
+page import="com.liferay.portlet.documentlibrary.service.permission.DLFileEntryPermission" %><%@
+page import="com.liferay.portlet.documentlibrary.service.permission.DLFileEntryTypePermission" %><%@
+page import="com.liferay.portlet.documentlibrary.service.permission.DLFileShortcutPermission" %><%@
+page import="com.liferay.portlet.documentlibrary.service.permission.DLFolderPermission" %><%@
+page import="com.liferay.portlet.documentlibrary.service.permission.DLPermission" %><%@
+page import="com.liferay.portlet.documentlibrary.util.AudioProcessorUtil" %><%@
+page import="com.liferay.portlet.documentlibrary.util.DLProcessorRegistryUtil" %><%@
+page import="com.liferay.portlet.documentlibrary.util.DLUtil" %><%@
+page import="com.liferay.portlet.documentlibrary.util.DocumentConversionUtil" %><%@
+page import="com.liferay.portlet.documentlibrary.util.ImageProcessorUtil" %><%@
+page import="com.liferay.portlet.documentlibrary.util.PDFProcessorUtil" %><%@
+page import="com.liferay.portlet.documentlibrary.util.RawMetadataProcessor" %><%@
+page import="com.liferay.portlet.documentlibrary.util.VideoProcessorUtil" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.NoSuchStructureException" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.RequiredStructureException" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.StorageFieldRequiredException" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.StructureDuplicateElementException" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.StructureNameException" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.model.DDMStructure" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.search.StructureSearch" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.search.StructureSearchTerms" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.service.DDMStructureLocalServiceUtil" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.storage.Fields" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.storage.StorageEngineUtil" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.util.DDMXSDUtil" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.util.comparator.StructureStructureKeyComparator" %><%@
+page import="com.liferay.portlet.journal.search.FileEntryDisplayTerms" %><%@
+page import="com.liferay.portlet.journal.search.FileEntrySearch" %><%@
+page import="com.liferay.portlet.trash.model.TrashEntry" %><%@
+page import="com.liferay.portlet.trash.util.TrashUtil" %><%@
+page import="com.liferay.portlet.usersadmin.search.GroupSearch" %><%@
+page import="com.liferay.portlet.usersadmin.search.GroupSearchTerms" %>
 
 <%
 PortalPreferences portalPreferences = PortletPreferencesFactoryUtil.getPortalPreferences(liferayPortletRequest);
 
-PortletPreferences preferences = liferayPortletRequest.getPreferences();
-
 String portletResource = ParamUtil.getString(request, "portletResource");
 
-long rootFolderId = PrefsParamUtil.getLong(preferences, request, "rootFolderId", DLFolderConstants.DEFAULT_PARENT_FOLDER_ID);
+int entriesPerPage = PrefsParamUtil.getInteger(portletPreferences, request, "entriesPerPage", SearchContainer.DEFAULT_DELTA);
 
-Folder rootFolder = null;
+String[] displayViews = StringUtil.split(PrefsParamUtil.getString(portletPreferences, request, "displayViews", StringUtil.merge(PropsValues.DL_DISPLAY_VIEWS)));
+
+long rootFolderId = PrefsParamUtil.getLong(portletPreferences, request, "rootFolderId", DLFolderConstants.DEFAULT_PARENT_FOLDER_ID);
 
 String rootFolderName = StringPool.BLANK;
 
 if (rootFolderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
 	try {
-		rootFolder = DLAppLocalServiceUtil.getFolder(rootFolderId);
+		Folder rootFolder = DLAppLocalServiceUtil.getFolder(rootFolderId);
 
 		rootFolderName = rootFolder.getName();
 	}
@@ -109,86 +135,62 @@ if (rootFolderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
 	}
 }
 
-boolean showFoldersSearch = PrefsParamUtil.getBoolean(preferences, request, "showFoldersSearch", true);
-boolean showSubfolders = PrefsParamUtil.getBoolean(preferences, request, "showSubfolders", true);
-int foldersPerPage = PrefsParamUtil.getInteger(preferences, request, "foldersPerPage", SearchContainer.DEFAULT_DELTA);
-
-String defaultFolderColumns = "name,num-of-folders,num-of-documents";
+boolean showFoldersSearch = PrefsParamUtil.getBoolean(portletPreferences, request, "showFoldersSearch", true);
 
 String portletId = portletDisplay.getId();
 
 if (portletId.equals(PortletKeys.PORTLET_CONFIGURATION)) {
 	portletId = portletResource;
+	portletName = portletResource;
 }
 
-boolean showActions = PrefsParamUtil.getBoolean(preferences, request, "showActions");
+boolean showActions = PrefsParamUtil.getBoolean(portletPreferences, request, "showActions");
+boolean showAssetMetadata = ParamUtil.getBoolean(request, "showAssetMetadata");
 boolean showAddFolderButton = false;
-boolean showFolderMenu = PrefsParamUtil.getBoolean(preferences, request, "showFolderMenu");
-boolean showTabs = PrefsParamUtil.getBoolean(preferences, request, "showTabs");
+boolean showFolderMenu = PrefsParamUtil.getBoolean(portletPreferences, request, "showFolderMenu");
+boolean showHeader = ParamUtil.getBoolean(request, "showHeader", true);
+boolean showMinimalActionButtons = ParamUtil.getBoolean(request, "showMinimalActionButtons");
+boolean showTabs = PrefsParamUtil.getBoolean(portletPreferences, request, "showTabs");
 
-if (portletId.equals(PortletKeys.DOCUMENT_LIBRARY)) {
+if (portletName.equals(PortletKeys.DOCUMENT_LIBRARY)) {
 	showActions = true;
+	showAssetMetadata = true;
 	showAddFolderButton = true;
 	showFolderMenu = true;
 	showTabs = true;
+	showMinimalActionButtons = true;
+}
+else if (portletName.equals(PortletKeys.MEDIA_GALLERY_DISPLAY) || portletName.equals(PortletKeys.DOCUMENT_LIBRARY_DISPLAY) || portletName.equals(PortletKeys.TRASH)) {
+	showAssetMetadata = true;
+}
+
+boolean enableRelatedAssets = GetterUtil.getBoolean(portletPreferences.getValue("enableRelatedAssets", null), true);
+
+String defaultEntryColumns = "name,size,status";
+
+if (PropsValues.DL_FILE_ENTRY_BUFFERED_INCREMENT_ENABLED) {
+	defaultEntryColumns += ",downloads";
 }
 
 if (showActions) {
-	defaultFolderColumns += ",action";
+	defaultEntryColumns += ",action";
 }
 
-String allFolderColumns = defaultFolderColumns;
+String allEntryColumns = defaultEntryColumns + ",modified-date,create-date";
 
-String[] folderColumns = StringUtil.split(PrefsParamUtil.getString(preferences, request, "folderColumns", defaultFolderColumns));
+String[] entryColumns = StringUtil.split(PrefsParamUtil.getString(portletPreferences, request, "entryColumns", defaultEntryColumns));
 
 if (!showActions) {
-	folderColumns = ArrayUtil.remove(folderColumns, "action");
+	entryColumns = ArrayUtil.remove(entryColumns, "action");
 }
-else if (!portletId.equals(PortletKeys.DOCUMENT_LIBRARY) && !ArrayUtil.contains(folderColumns, "action")) {
-	folderColumns = ArrayUtil.append(folderColumns, "action");
-}
-
-boolean enableRelatedAssets = GetterUtil.getBoolean(preferences.getValue("enableRelatedAssets", null), true);
-int fileEntriesPerPage = PrefsParamUtil.getInteger(preferences, request, "fileEntriesPerPage", SearchContainer.DEFAULT_DELTA);
-
-String defaultFileEntryColumns = "name,size";
-
-if (PropsValues.DL_FILE_ENTRY_READ_COUNT_ENABLED) {
-	defaultFileEntryColumns += ",downloads";
+else if (!portletId.equals(PortletKeys.DOCUMENT_LIBRARY) && !ArrayUtil.contains(entryColumns, "action")) {
+	entryColumns = ArrayUtil.append(entryColumns, "action");
 }
 
-defaultFileEntryColumns += ",locked";
-
-if (showActions) {
-	defaultFileEntryColumns += ",action";
-}
-
-String allFileEntryColumns = defaultFileEntryColumns;
-
-String[] fileEntryColumns = StringUtil.split(PrefsParamUtil.getString(preferences, request, "fileEntryColumns", defaultFileEntryColumns));
-
-if (!showActions) {
-	fileEntryColumns = ArrayUtil.remove(fileEntryColumns, "action");
-}
-else if (!portletId.equals(PortletKeys.DOCUMENT_LIBRARY) && !ArrayUtil.contains(fileEntryColumns, "action")) {
-	fileEntryColumns = ArrayUtil.append(fileEntryColumns, "action");
-}
-
-boolean enableCommentRatings = GetterUtil.getBoolean(preferences.getValue("enableCommentRatings", null), true);
+boolean enableRatings = GetterUtil.getBoolean(portletPreferences.getValue("enableRatings", null), true);
+boolean enableCommentRatings = GetterUtil.getBoolean(portletPreferences.getValue("enableCommentRatings", null), true);
 
 Format dateFormatDateTime = FastDateFormatFactoryUtil.getDateTime(locale, timeZone);
 %>
 
-<%!
-private static final String _getFileEntryImage(FileEntry fileEntry, ThemeDisplay themeDisplay) {
-	StringBundler sb = new StringBundler(5);
-
-	sb.append("<img style=\"border-width: 0; text-align: left;\" src=\"");
-	sb.append(themeDisplay.getPathThemeImages());
-	sb.append("/file_system/small/");
-	sb.append(fileEntry.getIcon());
-	sb.append(".png\">");
-
-	return sb.toString();
-}
-%>
+<%@ include file="/html/portlet/document_library/init-ext.jsp" %>

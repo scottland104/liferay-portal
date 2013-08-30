@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,6 +21,8 @@ import com.liferay.portal.model.Portlet;
 import com.liferay.portal.security.permission.PermissionChecker;
 
 import java.util.Collection;
+
+import javax.portlet.PortletMode;
 
 /**
  * @author Brian Wing Shun Chan
@@ -115,11 +117,6 @@ public interface PortletPermission {
 
 	public boolean contains(
 			PermissionChecker permissionChecker, long groupId, long plid,
-			Collection<Portlet> portlets, String actionId)
-		throws PortalException, SystemException;
-
-	public boolean contains(
-			PermissionChecker permissionChecker, long groupId, long plid,
 			Portlet portlet, String actionId, boolean strict)
 		throws PortalException, SystemException;
 
@@ -154,6 +151,31 @@ public interface PortletPermission {
 		throws PortalException, SystemException;
 
 	public String getPrimaryKey(long plid, String portletId);
+
+	public boolean hasAccessPermission(
+			PermissionChecker permissionChecker, long scopeGroupId,
+			Layout layout, Portlet portlet, PortletMode portletMode)
+		throws PortalException, SystemException;
+
+	public boolean hasConfigurationPermission(
+			PermissionChecker permissionChecker, long groupId, Layout layout,
+			String actionId)
+		throws PortalException, SystemException;
+
+	public boolean hasControlPanelAccessPermission(
+			PermissionChecker permissionChecker, long scopeGroupId,
+			Collection<Portlet> portlets)
+		throws PortalException, SystemException;
+
+	public boolean hasControlPanelAccessPermission(
+			PermissionChecker permissionChecker, long scopeGroupId,
+			Portlet portlet)
+		throws PortalException, SystemException;
+
+	public boolean hasControlPanelAccessPermission(
+			PermissionChecker permissionChecker, long scopeGroupId,
+			String portletId)
+		throws PortalException, SystemException;
 
 	public boolean hasLayoutManagerPermission(
 		String portletId, String actionId);

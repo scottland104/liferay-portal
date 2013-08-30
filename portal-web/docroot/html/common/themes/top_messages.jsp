@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,7 +17,7 @@
 <%@ include file="/html/common/init.jsp" %>
 
 <c:if test="<%= ShutdownUtil.isInProcess() %>">
-	<div class="popup-alert-notice">
+	<div class="alert alert-block" id="lfrShutdownMessage">
 		<span class="notice-label"><liferay-ui:message key="maintenance-alert" /></span> <span class="notice-date"><%= FastDateFormatFactoryUtil.getTime(locale).format(Time.getDate(CalendarFactoryUtil.getCalendar(timeZone))) %> <%= timeZone.getDisplayName(false, TimeZone.SHORT, locale) %></span>
 		<span class="notice-message"><%= LanguageUtil.format(pageContext, "the-portal-will-shutdown-for-maintenance-in-x-minutes", String.valueOf(ShutdownUtil.getInProcess() / Time.MINUTE), false) %></span>
 
@@ -26,3 +26,51 @@
 		</c:if>
 	</div>
 </c:if>
+
+<%
+String jspPath = (String)PortalMessages.get(request, PortalMessages.KEY_JSP_PATH);
+String message = (String)PortalMessages.get(request, PortalMessages.KEY_MESSAGE);
+
+if (Validator.isNotNull(jspPath) || Validator.isNotNull(message)) {
+	String cssClass = GetterUtil.getString(PortalMessages.get(request, PortalMessages.KEY_CSS_CLASS), "alert-info");
+	String portletId = (String)PortalMessages.get(request, PortalMessages.KEY_PORTLET_ID);
+	int timeout = GetterUtil.getInteger(PortalMessages.get(request, PortalMessages.KEY_TIMEOUT), 10000);
+	boolean useAnimation = GetterUtil.getBoolean(PortalMessages.get(request, PortalMessages.KEY_ANIMATION), true);
+%>
+
+	<div class="hide <%= cssClass %>" id="portalMessageContainer">
+		<c:choose>
+			<c:when test="<%= Validator.isNotNull(jspPath) %>">
+				<liferay-util:include page="<%= jspPath %>" portletId="<%= portletId %>" />
+			</c:when>
+			<c:otherwise>
+				<liferay-ui:message key="<%= message %>" /><button type="button" class="close">&times;</button>
+			</c:otherwise>
+		</c:choose>
+	</div>
+
+	<aui:script use="liferay-notice">
+		var portalMessageContainer = A.one('#portalMessageContainer');
+
+		var banner = new Liferay.Notice(
+			{
+				animationConfig:
+					{
+						duration: 2,
+						top: '0px'
+					},
+				closeText: false,
+				content: portalMessageContainer.html(),
+				noticeClass: 'hide taglib-portal-message <%= cssClass %>',
+				timeout: <%= timeout %>,
+				toggleText: false,
+				useAnimation: <%= useAnimation %>
+			}
+		);
+
+		banner.show();
+	</aui:script>
+
+<%
+}
+%>

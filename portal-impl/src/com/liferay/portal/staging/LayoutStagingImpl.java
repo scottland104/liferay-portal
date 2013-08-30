@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,22 +14,28 @@
 
 package com.liferay.portal.staging;
 
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
 import com.liferay.portal.kernel.staging.LayoutStaging;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Layout;
 import com.liferay.portal.model.LayoutRevision;
+import com.liferay.portal.model.LayoutSet;
+import com.liferay.portal.model.LayoutSetBranch;
+import com.liferay.portal.model.LayoutSetStagingHandler;
 import com.liferay.portal.model.LayoutStagingHandler;
 
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Proxy;
 
 /**
  * @author Raymond Augé
  */
+@DoPrivileged
 public class LayoutStagingImpl implements LayoutStaging {
 
+	@Override
 	public LayoutRevision getLayoutRevision(Layout layout) {
 		LayoutStagingHandler layoutStagingHandler = getLayoutStagingHandler(
 			layout);
@@ -41,12 +47,43 @@ public class LayoutStagingImpl implements LayoutStaging {
 		return layoutStagingHandler.getLayoutRevision();
 	}
 
-	public LayoutStagingHandler getLayoutStagingHandler(Layout layout) {
-		if (!Proxy.isProxyClass(layout.getClass())) {
+	@Override
+	public LayoutSetBranch getLayoutSetBranch(LayoutSet layoutSet) {
+		LayoutSetStagingHandler layoutSetStagingHandler =
+			getLayoutSetStagingHandler(layoutSet);
+
+		if (layoutSetStagingHandler == null) {
 			return null;
 		}
 
-		InvocationHandler invocationHandler = Proxy.getInvocationHandler(
+		return layoutSetStagingHandler.getLayoutSetBranch();
+	}
+
+	@Override
+	public LayoutSetStagingHandler getLayoutSetStagingHandler(
+		LayoutSet layoutSet) {
+
+		if (!ProxyUtil.isProxyClass(layoutSet.getClass())) {
+			return null;
+		}
+
+		InvocationHandler invocationHandler = ProxyUtil.getInvocationHandler(
+			layoutSet);
+
+		if (!(invocationHandler instanceof LayoutSetStagingHandler)) {
+			return null;
+		}
+
+		return (LayoutSetStagingHandler)invocationHandler;
+	}
+
+	@Override
+	public LayoutStagingHandler getLayoutStagingHandler(Layout layout) {
+		if (!ProxyUtil.isProxyClass(layout.getClass())) {
+			return null;
+		}
+
+		InvocationHandler invocationHandler = ProxyUtil.getInvocationHandler(
 			layout);
 
 		if (!(invocationHandler instanceof LayoutStagingHandler)) {
@@ -56,6 +93,7 @@ public class LayoutStagingImpl implements LayoutStaging {
 		return (LayoutStagingHandler)invocationHandler;
 	}
 
+	@Override
 	public boolean isBranchingLayout(Layout layout) {
 		try {
 			return isBranchingLayoutSet(
@@ -66,6 +104,7 @@ public class LayoutStagingImpl implements LayoutStaging {
 		}
 	}
 
+	@Override
 	public boolean isBranchingLayoutSet(Group group, boolean privateLayout) {
 		boolean isStagingGroup = false;
 
@@ -90,7 +129,7 @@ public class LayoutStagingImpl implements LayoutStaging {
 		}
 
 		if (group.isStaged() && branchingEnabled) {
-			if (!group.isStagedRemotely() &&  !isStagingGroup) {
+			if (!group.isStagedRemotely() && !isStagingGroup) {
 				return false;
 			}
 

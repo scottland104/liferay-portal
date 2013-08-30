@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,8 +18,8 @@ import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.model.BaseModel;
 import com.liferay.portal.model.CacheModel;
-import com.liferay.portal.model.GroupedModel;
 import com.liferay.portal.model.ResourcedModel;
+import com.liferay.portal.model.StagedGroupedModel;
 import com.liferay.portal.model.WorkflowedModel;
 import com.liferay.portal.service.ServiceContext;
 
@@ -42,8 +42,8 @@ import java.util.Date;
  * @see com.liferay.portlet.wiki.model.impl.WikiPageModelImpl
  * @generated
  */
-public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
-	ResourcedModel, WorkflowedModel {
+public interface WikiPageModel extends BaseModel<WikiPage>, ResourcedModel,
+	StagedGroupedModel, WorkflowedModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -70,6 +70,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 * @return the uuid of this wiki page
 	 */
 	@AutoEscape
+	@Override
 	public String getUuid();
 
 	/**
@@ -77,6 +78,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @param uuid the uuid of this wiki page
 	 */
+	@Override
 	public void setUuid(String uuid);
 
 	/**
@@ -98,6 +100,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @return the resource prim key of this wiki page
 	 */
+	@Override
 	public long getResourcePrimKey();
 
 	/**
@@ -105,8 +108,10 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @param resourcePrimKey the resource prim key of this wiki page
 	 */
+	@Override
 	public void setResourcePrimKey(long resourcePrimKey);
 
+	@Override
 	public boolean isResourceMain();
 
 	/**
@@ -114,6 +119,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @return the group ID of this wiki page
 	 */
+	@Override
 	public long getGroupId();
 
 	/**
@@ -121,6 +127,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @param groupId the group ID of this wiki page
 	 */
+	@Override
 	public void setGroupId(long groupId);
 
 	/**
@@ -128,6 +135,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @return the company ID of this wiki page
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -135,6 +143,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @param companyId the company ID of this wiki page
 	 */
+	@Override
 	public void setCompanyId(long companyId);
 
 	/**
@@ -142,6 +151,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @return the user ID of this wiki page
 	 */
+	@Override
 	public long getUserId();
 
 	/**
@@ -149,6 +159,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @param userId the user ID of this wiki page
 	 */
+	@Override
 	public void setUserId(long userId);
 
 	/**
@@ -157,6 +168,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 * @return the user uuid of this wiki page
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getUserUuid() throws SystemException;
 
 	/**
@@ -164,6 +176,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @param userUuid the user uuid of this wiki page
 	 */
+	@Override
 	public void setUserUuid(String userUuid);
 
 	/**
@@ -172,6 +185,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 * @return the user name of this wiki page
 	 */
 	@AutoEscape
+	@Override
 	public String getUserName();
 
 	/**
@@ -179,6 +193,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @param userName the user name of this wiki page
 	 */
+	@Override
 	public void setUserName(String userName);
 
 	/**
@@ -186,6 +201,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @return the create date of this wiki page
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -193,6 +209,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @param createDate the create date of this wiki page
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -200,6 +217,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @return the modified date of this wiki page
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -207,6 +225,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @param modifiedDate the modified date of this wiki page
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
@@ -374,6 +393,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @return the status of this wiki page
 	 */
+	@Override
 	public int getStatus();
 
 	/**
@@ -381,6 +401,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @param status the status of this wiki page
 	 */
+	@Override
 	public void setStatus(int status);
 
 	/**
@@ -388,6 +409,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @return the status by user ID of this wiki page
 	 */
+	@Override
 	public long getStatusByUserId();
 
 	/**
@@ -395,6 +417,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @param statusByUserId the status by user ID of this wiki page
 	 */
+	@Override
 	public void setStatusByUserId(long statusByUserId);
 
 	/**
@@ -403,6 +426,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 * @return the status by user uuid of this wiki page
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getStatusByUserUuid() throws SystemException;
 
 	/**
@@ -410,6 +434,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @param statusByUserUuid the status by user uuid of this wiki page
 	 */
+	@Override
 	public void setStatusByUserUuid(String statusByUserUuid);
 
 	/**
@@ -418,6 +443,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 * @return the status by user name of this wiki page
 	 */
 	@AutoEscape
+	@Override
 	public String getStatusByUserName();
 
 	/**
@@ -425,6 +451,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @param statusByUserName the status by user name of this wiki page
 	 */
+	@Override
 	public void setStatusByUserName(String statusByUserName);
 
 	/**
@@ -432,6 +459,7 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @return the status date of this wiki page
 	 */
+	@Override
 	public Date getStatusDate();
 
 	/**
@@ -439,11 +467,13 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @param statusDate the status date of this wiki page
 	 */
+	@Override
 	public void setStatusDate(Date statusDate);
 
 	/**
-	 * @deprecated Renamed to {@link #isApproved()}
+	 * @deprecated As of 6.1.0, replaced by {@link #isApproved()}
 	 */
+	@Override
 	public boolean getApproved();
 
 	/**
@@ -451,13 +481,23 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @return <code>true</code> if this wiki page is approved; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isApproved();
+
+	/**
+	 * Returns <code>true</code> if this wiki page is denied.
+	 *
+	 * @return <code>true</code> if this wiki page is denied; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isDenied();
 
 	/**
 	 * Returns <code>true</code> if this wiki page is a draft.
 	 *
 	 * @return <code>true</code> if this wiki page is a draft; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isDraft();
 
 	/**
@@ -465,46 +505,103 @@ public interface WikiPageModel extends BaseModel<WikiPage>, GroupedModel,
 	 *
 	 * @return <code>true</code> if this wiki page is expired; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isExpired();
+
+	/**
+	 * Returns <code>true</code> if this wiki page is inactive.
+	 *
+	 * @return <code>true</code> if this wiki page is inactive; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isInactive();
+
+	/**
+	 * Returns <code>true</code> if this wiki page is incomplete.
+	 *
+	 * @return <code>true</code> if this wiki page is incomplete; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isIncomplete();
+
+	/**
+	 * Returns <code>true</code> if this wiki page is in the Recycle Bin.
+	 *
+	 * @return <code>true</code> if this wiki page is in the Recycle Bin; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isInTrash();
 
 	/**
 	 * Returns <code>true</code> if this wiki page is pending.
 	 *
 	 * @return <code>true</code> if this wiki page is pending; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isPending();
 
+	/**
+	 * Returns <code>true</code> if this wiki page is scheduled.
+	 *
+	 * @return <code>true</code> if this wiki page is scheduled; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isScheduled();
+
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(WikiPage wikiPage);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<WikiPage> toCacheModel();
 
+	@Override
 	public WikiPage toEscapedModel();
 
+	@Override
+	public WikiPage toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

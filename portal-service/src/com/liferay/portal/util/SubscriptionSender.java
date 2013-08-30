@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,17 +14,20 @@
 
 package com.liferay.portal.util;
 
+import com.liferay.mail.model.FileAttachment;
 import com.liferay.mail.service.MailServiceUtil;
-import com.liferay.portal.NoSuchUserException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.mail.MailMessage;
 import com.liferay.portal.kernel.mail.SMTPAccount;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.messaging.MessageBusUtil;
+import com.liferay.portal.kernel.util.ClassLoaderPool;
+import com.liferay.portal.kernel.util.EscapableObject;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HtmlEscapableObject;
+import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.StringPool;
@@ -32,16 +35,21 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.Company;
 import com.liferay.portal.model.Group;
-import com.liferay.portal.model.LayoutConstants;
 import com.liferay.portal.model.Subscription;
 import com.liferay.portal.model.User;
+import com.liferay.portal.security.permission.PermissionChecker;
+import com.liferay.portal.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.service.CompanyLocalServiceUtil;
 import com.liferay.portal.service.GroupLocalServiceUtil;
-import com.liferay.portal.service.LayoutServiceUtil;
+import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.SubscriptionLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
+import com.liferay.portal.service.permission.SubscriptionPermissionUtil;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 import java.util.ArrayList;
@@ -56,19 +64,27 @@ import javax.mail.internet.InternetAddress;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Mate Thurzo
+ * @author Raymond Augé
  */
 public class SubscriptionSender implements Serializable {
 
-	public void addAttachment(File attachment) {
-		if (attachment == null) {
+	public void addFileAttachment(File file) {
+		addFileAttachment(file, null);
+	}
+
+	public void addFileAttachment(File file, String fileName) {
+		if (file == null) {
 			return;
 		}
 
-		if (attachments == null) {
-			attachments = new ArrayList<File>();
+		if (fileAttachments == null) {
+			fileAttachments = new ArrayList<FileAttachment>();
 		}
 
-		attachments.add(attachment);
+		FileAttachment attachment = new FileAttachment(file, fileName);
+
+		fileAttachments.add(attachment);
 	}
 
 	public void addPersistedSubscribers(String className, long classPK) {
@@ -99,6 +115,18 @@ public class SubscriptionSender implements Serializable {
 				currentThread.setContextClassLoader(_classLoader);
 			}
 
+			String inferredClassName = null;
+			long inferredClassPK = 0;
+
+			if (!_persistestedSubscribersOVPs.isEmpty()) {
+				ObjectValuePair<String, Long> objectValuePair =
+					_persistestedSubscribersOVPs.get(
+						_persistestedSubscribersOVPs.size() - 1);
+
+				inferredClassName = objectValuePair.getKey();
+				inferredClassPK = objectValuePair.getValue();
+			}
+
 			for (ObjectValuePair<String, Long> ovp :
 					_persistestedSubscribersOVPs) {
 
@@ -110,7 +138,16 @@ public class SubscriptionSender implements Serializable {
 						companyId, className, classPK);
 
 				for (Subscription subscription : subscriptions) {
-					notifySubscriber(subscription);
+					try {
+						notifySubscriber(
+							subscription, inferredClassName, inferredClassPK);
+					}
+					catch (PortalException pe) {
+						_log.error(
+							"Unable to process subscription: " + subscription);
+
+						continue;
+					}
 				}
 
 				if (bulk) {
@@ -130,7 +167,10 @@ public class SubscriptionSender implements Serializable {
 					_runtimeSubscribersOVPs) {
 
 				String toAddress = ovp.getKey();
-				String toName = ovp.getValue();
+
+				if (Validator.isNull(toAddress)) {
+					continue;
+				}
 
 				if (_sentEmailAddresses.contains(toAddress)) {
 					if (_log.isDebugEnabled()) {
@@ -138,17 +178,18 @@ public class SubscriptionSender implements Serializable {
 							"Do not send a duplicate email to " + toAddress);
 					}
 
-					return;
+					continue;
 				}
-				else {
-					if (_log.isDebugEnabled()) {
-						_log.debug(
-							"Add " + toAddress + " to the list of users who " +
-								"have received an email");
-					}
 
-					_sentEmailAddresses.add(toAddress);
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						"Add " + toAddress + " to the list of users who " +
+							"have received an email");
 				}
+
+				_sentEmailAddresses.add(toAddress);
+
+				String toName = ovp.getValue();
 
 				InternetAddress to = new InternetAddress(toAddress, toName);
 
@@ -178,7 +219,11 @@ public class SubscriptionSender implements Serializable {
 		return _context.get(key);
 	}
 
-	public void initialize() throws PortalException, SystemException {
+	public String getMailId() {
+		return this.mailId;
+	}
+
+	public void initialize() throws Exception {
 		if (_initialized) {
 			return;
 		}
@@ -190,7 +235,7 @@ public class SubscriptionSender implements Serializable {
 		setContextAttribute("[$COMPANY_ID$]", company.getCompanyId());
 		setContextAttribute("[$COMPANY_MX$]", company.getMx());
 		setContextAttribute("[$COMPANY_NAME$]", company.getName());
-		setContextAttribute("[$PORTAL_URL$]", company.getVirtualHostname());
+		setContextAttribute("[$PORTAL_URL$]", company.getPortalURL(groupId));
 
 		if (groupId > 0) {
 			Group group = GroupLocalServiceUtil.getGroup(groupId);
@@ -211,10 +256,6 @@ public class SubscriptionSender implements Serializable {
 			company.getMx(), _mailIdPopPortletPrefix, _mailIdIds);
 	}
 
-	public String getMailId() {
-		return this.mailId;
-	}
-
 	public void setBody(String body) {
 		this.body = body;
 	}
@@ -227,8 +268,18 @@ public class SubscriptionSender implements Serializable {
 		this.companyId = companyId;
 	}
 
-	public void setContextAttribute(String key, Object value) {
+	public void setContextAttribute(String key, EscapableObject<String> value) {
 		_context.put(key, value);
+	}
+
+	public void setContextAttribute(String key, Object value) {
+		setContextAttribute(key, value, true);
+	}
+
+	public void setContextAttribute(String key, Object value, boolean escape) {
+		setContextAttribute(
+			key,
+			new HtmlEscapableObject<String>(String.valueOf(value), escape));
 	}
 
 	public void setContextAttributes(Object... values) {
@@ -273,7 +324,7 @@ public class SubscriptionSender implements Serializable {
 		_mailIdIds = ids;
 	}
 
-	public  void setPortletId(String portletId) {
+	public void setPortletId(String portletId) {
 		this.portletId = portletId;
 	}
 
@@ -282,8 +333,7 @@ public class SubscriptionSender implements Serializable {
 	}
 
 	/**
-	 * @see {@link
-	 *      com.liferay.portal.kernel.search.BaseIndexer#getParentGroupId(long)}
+	 * @see com.liferay.portal.kernel.search.BaseIndexer#getSiteGroupId(long)
 	 */
 	public void setScopeGroupId(long scopeGroupId) {
 		try {
@@ -292,11 +342,18 @@ public class SubscriptionSender implements Serializable {
 			if (group.isLayout()) {
 				groupId = group.getParentGroupId();
 			}
+			else {
+				groupId = scopeGroupId;
+			}
 		}
 		catch (Exception e) {
 		}
 
 		this.scopeGroupId = scopeGroupId;
+	}
+
+	public void setServiceContext(ServiceContext serviceContext) {
+		this.serviceContext = serviceContext;
 	}
 
 	public void setSMTPAccount(SMTPAccount smtpAccount) {
@@ -318,21 +375,28 @@ public class SubscriptionSender implements Serializable {
 			subscription.getSubscriptionId());
 	}
 
-	protected boolean hasPermission(Subscription subscription, User user)
+	protected boolean hasPermission(
+			Subscription subscription, String inferredClassName,
+			long inferredClassPK, User user)
 		throws Exception {
 
-		return _PERMISSION;
+		PermissionChecker permissionChecker =
+			PermissionCheckerFactoryUtil.create(user);
+
+		return SubscriptionPermissionUtil.contains(
+			permissionChecker, subscription.getClassName(),
+			subscription.getClassPK(), inferredClassName, inferredClassPK);
 	}
 
-	protected void notifySubscriber(Subscription subscription)
+	protected void notifySubscriber(
+			Subscription subscription, String inferredClassName,
+			long inferredClassPK)
 		throws Exception {
 
-		User user = null;
+		User user = UserLocalServiceUtil.fetchUserById(
+			subscription.getUserId());
 
-		try {
-			user = UserLocalServiceUtil.getUserById(subscription.getUserId());
-		}
-		catch (NoSuchUserException nsue) {
+		if (user == null) {
 			if (_log.isInfoEnabled()) {
 				_log.info(
 					"Subscription " + subscription.getSubscriptionId() +
@@ -348,8 +412,7 @@ public class SubscriptionSender implements Serializable {
 
 		if (_sentEmailAddresses.contains(emailAddress)) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(
-					"Do not send a duplicate email to " + emailAddress);
+				_log.debug("Do not send a duplicate email to " + emailAddress);
 			}
 
 			return;
@@ -372,27 +435,10 @@ public class SubscriptionSender implements Serializable {
 			return;
 		}
 
-		Group group = GroupLocalServiceUtil.getGroup(groupId);
-
-		if (!GroupLocalServiceUtil.hasUserGroup(user.getUserId(), groupId) &&
-			!group.isCompany() &&
-			(LayoutServiceUtil.getDefaultPlid(
-				groupId, scopeGroupId, false, portletId) ==
-					LayoutConstants.DEFAULT_PLID)) {
-
-			if (_log.isInfoEnabled()) {
-				_log.info(
-					"Subscription " + subscription.getSubscriptionId() +
-						" is stale and will be deleted");
-			}
-
-			deleteSubscription(subscription);
-
-			return;
-		}
-
 		try {
-			if (!hasPermission(subscription, user)) {
+			if (!hasPermission(
+					subscription, inferredClassName, inferredClassPK, user)) {
+
 				if (_log.isDebugEnabled()) {
 					_log.debug("Skip unauthorized user " + user.getUserId());
 				}
@@ -438,38 +484,36 @@ public class SubscriptionSender implements Serializable {
 		String processedSubject = StringUtil.replace(
 			mailMessage.getSubject(),
 			new String[] {
-				"[$FROM_ADDRESS$]",
-				"[$FROM_NAME$]",
-				"[$TO_ADDRESS$]",
+				"[$FROM_ADDRESS$]", "[$FROM_NAME$]", "[$TO_ADDRESS$]",
 				"[$TO_NAME$]"
 			},
 			new String[] {
 				from.getAddress(),
 				GetterUtil.getString(from.getPersonal(), from.getAddress()),
-				to.getAddress(),
-				GetterUtil.getString(to.getPersonal(), to.getAddress())
+				HtmlUtil.escape(to.getAddress()),
+				HtmlUtil.escape(
+					GetterUtil.getString(to.getPersonal(), to.getAddress()))
 			});
 
-		processedSubject = replaceContent(processedSubject, locale);
+		processedSubject = replaceContent(processedSubject, locale, false);
 
 		mailMessage.setSubject(processedSubject);
 
 		String processedBody = StringUtil.replace(
 			mailMessage.getBody(),
 			new String[] {
-				"[$FROM_ADDRESS$]",
-				"[$FROM_NAME$]",
-				"[$TO_ADDRESS$]",
+				"[$FROM_ADDRESS$]", "[$FROM_NAME$]", "[$TO_ADDRESS$]",
 				"[$TO_NAME$]"
 			},
 			new String[] {
 				from.getAddress(),
 				GetterUtil.getString(from.getPersonal(), from.getAddress()),
-				to.getAddress(),
-				GetterUtil.getString(to.getPersonal(), to.getAddress())
+				HtmlUtil.escape(to.getAddress()),
+				HtmlUtil.escape(
+					GetterUtil.getString(to.getPersonal(), to.getAddress()))
 			});
 
-		processedBody = replaceContent(processedBody, locale);
+		processedBody = replaceContent(processedBody, locale, htmlFormat);
 
 		mailMessage.setBody(processedBody);
 	}
@@ -477,11 +521,29 @@ public class SubscriptionSender implements Serializable {
 	protected String replaceContent(String content, Locale locale)
 		throws Exception {
 
-		for (Map.Entry<String, Object> entry : _context.entrySet()) {
-			String key = entry.getKey();
-			Object value = entry.getValue();
+		return replaceContent(content, locale, true);
+	}
 
-			content = StringUtil.replace(content, key, String.valueOf(value));
+	protected String replaceContent(
+			String content, Locale locale, boolean escape)
+		throws Exception {
+
+		for (Map.Entry<String, EscapableObject<String>> entry :
+				_context.entrySet()) {
+
+			String key = entry.getKey();
+			EscapableObject<String> value = entry.getValue();
+
+			String valueString = null;
+
+			if (escape) {
+				valueString = value.getEscapedValue();
+			}
+			else {
+				valueString = value.getOriginalValue();
+			}
+
+			content = StringUtil.replace(content, key, valueString);
 		}
 
 		if (Validator.isNotNull(portletId)) {
@@ -490,6 +552,18 @@ public class SubscriptionSender implements Serializable {
 			content = StringUtil.replace(
 				content, "[$PORTLET_NAME$]", portletName);
 		}
+
+		Company company = CompanyLocalServiceUtil.getCompany(companyId);
+
+		content = StringUtil.replace(
+			content,
+			new String[] {
+				"href=\"/", "src=\"/"
+			},
+			new String[] {
+				"href=\"" + company.getPortalURL(groupId) + "/",
+				"src=\"" + company.getPortalURL(groupId) + "/"
+			});
 
 		return content;
 	}
@@ -540,9 +614,10 @@ public class SubscriptionSender implements Serializable {
 		MailMessage mailMessage = new MailMessage(
 			from, to, processedSubject, processedBody, htmlFormat);
 
-		if (attachments != null) {
-			for (File attachment : attachments) {
-				mailMessage.addAttachment(attachment);
+		if (fileAttachments != null) {
+			for (FileAttachment fileAttachment : fileAttachments) {
+				mailMessage.addFileAttachment(
+					fileAttachment.getFile(), fileAttachment.getFileName());
 			}
 		}
 
@@ -577,10 +652,11 @@ public class SubscriptionSender implements Serializable {
 		MailServiceUtil.sendEmail(mailMessage);
 	}
 
-	protected List<File> attachments;
 	protected String body;
 	protected boolean bulk;
 	protected long companyId;
+	protected List<FileAttachment> fileAttachments =
+		new ArrayList<FileAttachment>();
 	protected String fromAddress;
 	protected String fromName;
 	protected long groupId;
@@ -592,17 +668,43 @@ public class SubscriptionSender implements Serializable {
 	protected String portletId;
 	protected String replyToAddress;
 	protected long scopeGroupId;
+	protected ServiceContext serviceContext;
 	protected SMTPAccount smtpAccount;
 	protected String subject;
 	protected long userId;
 
-	private static final boolean _PERMISSION = true;
+	private void readObject(ObjectInputStream objectInputStream)
+		throws ClassNotFoundException, IOException {
+
+		objectInputStream.defaultReadObject();
+
+		String servletContextName = objectInputStream.readUTF();
+
+		if (!servletContextName.isEmpty()) {
+			_classLoader = ClassLoaderPool.getClassLoader(servletContextName);
+		}
+	}
+
+	private void writeObject(ObjectOutputStream objectOutputStream)
+		throws IOException {
+
+		objectOutputStream.defaultWriteObject();
+
+		String servletContextName = StringPool.BLANK;
+
+		if (_classLoader != null) {
+			servletContextName = ClassLoaderPool.getContextName(_classLoader);
+		}
+
+		objectOutputStream.writeUTF(servletContextName);
+	}
 
 	private static Log _log = LogFactoryUtil.getLog(SubscriptionSender.class);
 
 	private List<InternetAddress> _bulkAddresses;
-	private ClassLoader _classLoader;
-	private Map<String, Object> _context = new HashMap<String, Object>();
+	private transient ClassLoader _classLoader;
+	private Map<String, EscapableObject<String>> _context =
+		new HashMap<String, EscapableObject<String>>();
 	private String _contextUserPrefix;
 	private boolean _initialized;
 	private Object[] _mailIdIds;

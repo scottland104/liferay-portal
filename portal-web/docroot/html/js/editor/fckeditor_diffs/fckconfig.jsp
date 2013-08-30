@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,10 +17,11 @@
 <%@ page import="com.liferay.portal.kernel.util.ContentTypes" %>
 <%@ page import="com.liferay.portal.kernel.util.HtmlUtil" %>
 <%@ page import="com.liferay.portal.kernel.util.HttpUtil" %>
+<%@ page import="com.liferay.portal.kernel.util.LocaleUtil" %>
 <%@ page import="com.liferay.portal.kernel.util.ParamUtil" %>
 <%@ page import="com.liferay.portal.kernel.util.PropsKeys" %>
-<%@ page import="com.liferay.portal.kernel.util.LocaleUtil" %>
 <%@ page import="com.liferay.portal.util.PropsUtil" %>
+
 <%@ page import="java.util.Locale" %>
 
 <%
@@ -45,9 +46,9 @@ response.setContentType(ContentTypes.TEXT_JAVASCRIPT);
 
 FCKConfig.AutoDetectLanguage = false;
 
-FCKConfig.DefaultLanguage = '<%= HtmlUtil.escape(languageId) %>' ;
+FCKConfig.DefaultLanguage = '<%= HtmlUtil.escapeJS(languageId) %>' ;
 
-FCKConfig.IncludeLatinEntities	= false ;
+FCKConfig.IncludeLatinEntities = false ;
 
 FCKConfig.ToolbarSets["liferay"] = [
 	['Style', 'FontSize', '-', 'TextColor', 'BGColor'],
@@ -102,13 +103,13 @@ FCKConfig.ToolbarSets["email"] = [
 FCKConfig.BackgroundBlockerColor = '#000' ;
 FCKConfig.BackgroundBlockerOpacity = 0.70 ;
 
-FCKConfig.BodyClass = 'html-editor <%= cssClasses %>' ;
+FCKConfig.BodyClass = 'html-editor <%= HtmlUtil.escapeJS(cssClasses) %>' ;
 FCKConfig.CustomStyles = {};
 FCKConfig.StylesXmlPath = FCKConfig.EditorPath + 'fckstyles.xml' ;
-FCKConfig.EditorAreaCSS = '<%= HtmlUtil.escape(cssPath) %>/main.css' ;
+FCKConfig.EditorAreaCSS = '<%= HtmlUtil.escapeJS(cssPath) %>/main.css' ;
 
-FCKConfig.LinkBrowserURL = FCKConfig.BasePath + "filemanager/browser/liferay/browser.html?Connector=<%= connectorURL %>";
-FCKConfig.ImageBrowserURL = FCKConfig.BasePath + "filemanager/browser/liferay/browser.html?Type=Image&Connector=<%= connectorURL %>";
+FCKConfig.LinkBrowserURL = FCKConfig.BasePath + "filemanager/browser/liferay/browser.html?Connector=<%= HtmlUtil.escapeJS(connectorURL) %>";
+FCKConfig.ImageBrowserURL = FCKConfig.BasePath + "filemanager/browser/liferay/browser.html?Type=Document&Connector=<%= HtmlUtil.escapeJS(connectorURL) %>";
 FCKConfig.FlashBrowser = false ;
 FCKConfig.LinkUpload = false ;
 FCKConfig.ImageUpload = false ;

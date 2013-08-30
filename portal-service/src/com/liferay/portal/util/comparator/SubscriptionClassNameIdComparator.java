@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,11 +22,11 @@ import com.liferay.portal.model.Subscription;
  */
 public class SubscriptionClassNameIdComparator extends OrderByComparator {
 
-	public static String ORDER_BY_ASC = "classNameId ASC";
+	public static final String ORDER_BY_ASC = "Subscription.classNameId ASC";
 
-	public static String ORDER_BY_DESC = "classNameId DESC";
+	public static final String ORDER_BY_DESC = "Subscription.classNameId DESC";
 
-	public static String[] ORDER_BY_FIELDS = {"classNameId"};
+	public static final String[] ORDER_BY_FIELDS = {"classNameId"};
 
 	public SubscriptionClassNameIdComparator() {
 		this(false);

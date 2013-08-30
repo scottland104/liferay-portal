@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,11 +19,11 @@
 <%
 String emailAddress = ParamUtil.getString(request, "emailAddress");
 
-boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousAccount");
+boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousUser");
 %>
 
-<c:if test="<%= anonymousAccount %>">
-	<div class="aui-helper-hidden lfr-message-response" id="<portlet:namespace />login-status-messages"></div>
+<c:if test="<%= anonymousAccount && company.isStrangers() %>">
+	<div class="hide lfr-message-response" id="<portlet:namespace />login-status-messages"></div>
 
 	<div class="anonymous-account">
 		<portlet:actionURL var="updateIncompleteUserURL">
@@ -33,7 +33,7 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousAccount");
 		</portlet:actionURL>
 
 		<aui:form action="<%= updateIncompleteUserURL %>" method="post" name="fm">
-			<div class="portlet-msg-success">
+			<div class="alert alert-success">
 				<liferay-ui:message key="your-comment-has-already-been-posted.-would-you-like-to-create-an-account-with-the-provided-information" />
 			</div>
 
@@ -64,7 +64,7 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousAccount");
 					},
 					on: {
 						failure: function(event, id, obj) {
-							message = Liferay.Language.get('your-request-failed-to-complete');
+							message = '<%= UnicodeLanguageUtil.get(pageContext, "your-request-failed-to-complete") %>';
 
 							<portlet:namespace />showStatusMessage('error', message);
 
@@ -81,10 +81,10 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousAccount");
 								var userStatus = response.userStatus;
 
 								if (userStatus == 'user_added') {
-									message = '<%= LanguageUtil.format(pageContext, "thank-you-for-creating-an-account-your-password-has-been-sent-to-x", new Object[] {emailAddress}) %>';
+									message = '<%= UnicodeLanguageUtil.format(pageContext, "thank-you-for-creating-an-account-your-password-has-been-sent-to-x", new Object[] {emailAddress}) %>';
 								}
 								else if (userStatus == 'user_pending') {
-									message = '<%= LanguageUtil.format(pageContext, "thank-you-for-creating-an-account.-you-will-be-notified-via-email-at-x-when-your-account-has-been-approved", new Object[] {emailAddress}) %>';
+									message = '<%= UnicodeLanguageUtil.format(pageContext, "thank-you-for-creating-an-account.-you-will-be-notified-via-email-at-x-when-your-account-has-been-approved", new Object[] {emailAddress}) %>';
 								}
 
 								<portlet:namespace />showStatusMessage('success', message);
@@ -92,7 +92,7 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousAccount");
 								A.one('.anonymous-account').hide();
 							}
 							else {
-								message = Liferay.Language.get('your-request-failed-to-complete');
+								message = '<%= UnicodeLanguageUtil.get(pageContext, "your-request-failed-to-complete") %>';
 
 								<portlet:namespace />showStatusMessage('error', message);
 
@@ -115,7 +115,7 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousAccount");
 			Liferay.fire(
 				'closeWindow',
 				{
-					id: namespace
+					id: namespace + "signInDialog"
 				}
 			);
 		},
@@ -130,10 +130,9 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousAccount");
 
 			var messageContainer = A.one('#<portlet:namespace />login-status-messages');
 
-			messageContainer.removeClass('portlet-msg-error');
-			messageContainer.removeClass('portlet-msg-success');
+			messageContainer.removeClass('alert-error').removeClass('alert-success');
 
-			messageContainer.addClass('portlet-msg-' + type);
+			messageContainer.addClass('alert alert-' + type);
 
 			messageContainer.html(message);
 
@@ -141,6 +140,10 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousAccount");
 		},
 		['aui-base']
 	);
+
+	<c:if test="<%= !company.isStrangers() %>">
+		<portlet:namespace />closeDialog();
+	</c:if>
 </aui:script>
 
 <aui:script use="aui-base">
@@ -157,7 +160,7 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousAccount");
 				window.opener.parent.Liferay.fire(
 					'closeWindow',
 					{
-						id: namespace
+						id: namespace + "signInDialog"
 					}
 				);
 
@@ -165,6 +168,8 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousAccount");
 			}
 		}
 		else {
+			window.opener.parent.location.href = "<%= HtmlUtil.escapeJS(PortalUtil.getPortalURL(renderRequest) + themeDisplay.getURLSignIn()) %>";
+
 			window.close();
 		}
 	}
@@ -180,7 +185,7 @@ boolean anonymousAccount = ParamUtil.getBoolean(request, "anonymousAccount");
 			Liferay.fire(
 				'closeWindow',
 				{
-					id: namespace
+					id: namespace + "signInDialog"
 				}
 			);
 		}

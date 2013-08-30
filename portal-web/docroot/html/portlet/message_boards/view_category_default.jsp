@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -27,12 +27,16 @@ Set<Long> categorySubscriptionClassPKs = (Set<Long>)request.getAttribute("view.j
 Set<Long> threadSubscriptionClassPKs = (Set<Long>)request.getAttribute("view.jsp-threadSubscriptionClassPKs");
 
 PortletURL portletURL = (PortletURL)request.getAttribute("view.jsp-portletURL");
+
+if ((category != null) && layout.isTypeControlPanel()) {
+	MBUtil.addPortletBreadcrumbEntries(category, request, renderResponse);
+}
 %>
 
 <liferay-ui:panel-container cssClass="message-boards-panels" extended="<%= false %>" id="messageBoardsPanelContainer" persistState="<%= true %>">
 
 	<%
-	int categoriesCount = MBCategoryServiceUtil.getCategoriesCount(scopeGroupId, categoryId);
+	int categoriesCount = MBCategoryServiceUtil.getCategoriesCount(scopeGroupId, categoryId, WorkflowConstants.STATUS_APPROVED);
 	%>
 
 	<c:if test="<%= categoriesCount > 0 %>">
@@ -42,10 +46,10 @@ PortletURL portletURL = (PortletURL)request.getAttribute("view.jsp-portletURL");
 				deltaConfigurable="<%= false %>"
 				headerNames="category,categories,threads,posts"
 				iteratorURL="<%= portletURL %>"
+				total="<%= categoriesCount %>"
 			>
 				<liferay-ui:search-container-results
-					results="<%= MBCategoryServiceUtil.getCategories(scopeGroupId, categoryId, searchContainer.getStart(), searchContainer.getEnd()) %>"
-					total="<%= categoriesCount %>"
+					results="<%= MBCategoryServiceUtil.getCategories(scopeGroupId, categoryId, WorkflowConstants.STATUS_APPROVED, searchContainer.getStart(), searchContainer.getEnd()) %>"
 				/>
 
 				<liferay-ui:search-container-row
@@ -75,10 +79,10 @@ PortletURL portletURL = (PortletURL)request.getAttribute("view.jsp-portletURL");
 			emptyResultsMessage="there-are-no-threads-in-this-category"
 			headerNames="thread,flag,started-by,posts,views,last-post"
 			iteratorURL="<%= portletURL %>"
+			total="<%= MBThreadServiceUtil.getThreadsCount(scopeGroupId, categoryId, WorkflowConstants.STATUS_APPROVED) %>"
 		>
 			<liferay-ui:search-container-results
 				results="<%= MBThreadServiceUtil.getThreads(scopeGroupId, categoryId, WorkflowConstants.STATUS_APPROVED, searchContainer.getStart(), searchContainer.getEnd()) %>"
-				total="<%= MBThreadServiceUtil.getThreadsCount(scopeGroupId, categoryId, WorkflowConstants.STATUS_APPROVED) %>"
 			/>
 
 			<liferay-ui:search-container-row
@@ -103,9 +107,7 @@ PortletURL portletURL = (PortletURL)request.getAttribute("view.jsp-portletURL");
 
 				message = message.toEscapedModel();
 
-				boolean readThread = MBMessageFlagLocalServiceUtil.hasReadFlag(themeDisplay.getUserId(), thread);
-
-				row.setBold(!readThread);
+				row.setBold(!MBThreadFlagLocalServiceUtil.hasThreadFlag(themeDisplay.getUserId(), thread));
 				row.setObject(new Object[] {message, threadSubscriptionClassPKs});
 				row.setRestricted(!MBMessagePermission.contains(permissionChecker, message, ActionKeys.VIEW));
 				%>

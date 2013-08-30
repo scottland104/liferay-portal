@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,19 +16,18 @@ package com.liferay.portlet.amazonrankings.util;
 
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.StringBundler;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.net.URLEncoder;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
-import jodd.util.StringPool;
 
 /**
  * @author Barrie Selack
@@ -54,28 +53,23 @@ public class AmazonSignedRequestsUtil {
 		throws Exception {
 
 		if (parameters.isEmpty()) {
-			return StringPool.EMPTY;
+			return StringPool.BLANK;
 		}
-
-		StringBundler sb = new StringBundler();
 
 		parameters = new TreeMap<String, String>(parameters);
 
 		Set<Map.Entry<String, String>> parametersSet = parameters.entrySet();
 
-		Iterator<Map.Entry<String, String>> itr = parametersSet.iterator();
+		StringBundler sb = new StringBundler(parametersSet.size() * 4);
 
-		while (itr.hasNext()) {
-			Map.Entry<String, String> parameter = itr.next();
-
+		for (Map.Entry<String, String> parameter : parametersSet) {
 			sb.append(_rfc3986Encode(parameter.getKey()));
-			sb.append(StringPool.EQUALS);
+			sb.append(StringPool.EQUAL);
 			sb.append(_rfc3986Encode(parameter.getValue()));
-
-			if (itr.hasNext()) {
-				sb.append(StringPool.AMPERSAND);
-			}
+			sb.append(StringPool.AMPERSAND);
 		}
+
+		sb.setIndex(sb.index() - 1);
 
 		return sb.toString();
 	}
@@ -83,6 +77,10 @@ public class AmazonSignedRequestsUtil {
 	private static String _generateSignature(String data) throws Exception {
 		String amazonSecretAccessKey =
 			AmazonRankingsUtil.getAmazonSecretAccessKey();
+
+		if (Validator.isNull(amazonSecretAccessKey)) {
+			return StringPool.BLANK;
+		}
 
 		SecretKeySpec secretKeySpec = new SecretKeySpec(
 			amazonSecretAccessKey.getBytes(), _HMAC_SHA256_ALGORITHM);
@@ -96,16 +94,19 @@ public class AmazonSignedRequestsUtil {
 		String signature = Base64.encode(bytes);
 
 		return StringUtil.replace(
-			signature, new String[] {StringPool.EQUALS, StringPool.PLUS},
+			signature, new String[] {StringPool.EQUAL, StringPool.PLUS},
 			new String[] {"%3D", "%2B"});
 	}
 
 	private static String _rfc3986Encode(String string) throws Exception {
-		string = URLEncoder.encode(string, StringPool.UTF_8);
+		if (Validator.isNull(string)) {
+			return StringPool.BLANK;
+		}
+
+		string = URLEncoder.encode(string, StringPool.UTF8);
 
 		string = StringUtil.replace(
-			string,
-			new String[] {StringPool.ASTERISK, StringPool.PLUS, "%7E"},
+			string, new String[] {StringPool.STAR, StringPool.PLUS, "%7E"},
 			new String[] {"%2A", "%2B", "~"});
 
 		return string;

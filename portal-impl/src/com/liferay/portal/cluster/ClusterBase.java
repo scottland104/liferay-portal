@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,13 +20,12 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.IPDetector;
+import com.liferay.portal.kernel.util.InetAddressUtil;
 import com.liferay.portal.kernel.util.OSDetector;
 import com.liferay.portal.kernel.util.SocketUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.util.PropsValues;
-
-import java.io.IOException;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -34,9 +33,7 @@ import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 
-import org.jgroups.ChannelException;
 import org.jgroups.JChannel;
 import org.jgroups.Receiver;
 import org.jgroups.View;
@@ -71,11 +68,12 @@ public abstract class ClusterBase {
 			try {
 				initBindAddress();
 			}
-			catch (IOException ioe) {
+			catch (Exception e) {
 				if (_log.isWarnEnabled()) {
-					_log.warn("Failed to initialize outgoing IP address", ioe);
+					_log.warn("Failed to initialize outgoing IP address", e);
 				}
 			}
+
 			_initialized = true;
 		}
 
@@ -99,7 +97,7 @@ public abstract class ClusterBase {
 
 	protected JChannel createJChannel(
 			String properties, Receiver receiver, String clusterName)
-		throws ChannelException {
+		throws Exception {
 
 		JChannel jChannel = new JChannel(properties);
 
@@ -117,9 +115,11 @@ public abstract class ClusterBase {
 	}
 
 	protected List<Address> getAddresses(JChannel channel) {
-		View view = channel.getView();
+		BaseReceiver baseReceiver = (BaseReceiver)channel.getReceiver();
 
-		Vector<org.jgroups.Address> jGroupsAddresses = view.getMembers();
+		View view = baseReceiver.getView();
+
+		List<org.jgroups.Address> jGroupsAddresses = view.getMembers();
 
 		if (jGroupsAddresses == null) {
 			return Collections.emptyList();
@@ -135,10 +135,12 @@ public abstract class ClusterBase {
 		return addresses;
 	}
 
-	protected void initBindAddress() throws IOException {
+	protected void initBindAddress() throws Exception {
 		String autodetectAddress = PropsValues.CLUSTER_LINK_AUTODETECT_ADDRESS;
 
 		if (Validator.isNull(autodetectAddress)) {
+			bindInetAddress = InetAddressUtil.getLocalInetAddress();
+
 			return;
 		}
 
@@ -177,7 +179,7 @@ public abstract class ClusterBase {
 		}
 	}
 
-	protected abstract void initChannels() throws ChannelException;
+	protected abstract void initChannels() throws Exception;
 
 	protected void initSystemProperties() {
 		for (String systemProperty :
@@ -202,10 +204,10 @@ public abstract class ClusterBase {
 		}
 	}
 
+	protected static InetAddress bindInetAddress;
+
 	private static Log _log = LogFactoryUtil.getLog(ClusterBase.class);
 
 	private static boolean _initialized;
-
-	protected InetAddress bindInetAddress;
 
 }

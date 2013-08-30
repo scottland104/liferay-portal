@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,10 +20,12 @@ import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.util.PropsValues;
+import com.liferay.portlet.bookmarks.NoSuchFolderException;
 import com.liferay.portlet.bookmarks.model.BookmarksEntry;
 import com.liferay.portlet.bookmarks.model.BookmarksFolder;
 import com.liferay.portlet.bookmarks.model.BookmarksFolderConstants;
 import com.liferay.portlet.bookmarks.service.BookmarksEntryLocalServiceUtil;
+import com.liferay.portlet.bookmarks.service.BookmarksFolderLocalServiceUtil;
 
 /**
  * @author Brian Wing Shun Chan
@@ -41,8 +43,7 @@ public class BookmarksEntryPermission {
 	}
 
 	public static void check(
-			PermissionChecker permissionChecker, long entryId,
-			String actionId)
+			PermissionChecker permissionChecker, long entryId, String actionId)
 		throws PortalException, SystemException {
 
 		if (!contains(permissionChecker, entryId, actionId)) {
@@ -55,18 +56,28 @@ public class BookmarksEntryPermission {
 			String actionId)
 		throws PortalException, SystemException {
 
-		if (PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
-			if (entry.getFolderId() !=
-					BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+		if (actionId.equals(ActionKeys.VIEW) &&
+			PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
 
-				BookmarksFolder folder = entry.getFolder();
+			long folderId = entry.getFolderId();
 
-				if (!BookmarksFolderPermission.contains(
-						permissionChecker, folder, ActionKeys.ACCESS) &&
-					!BookmarksFolderPermission.contains(
-						permissionChecker, folder, ActionKeys.VIEW)) {
+			if (folderId != BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+				try {
+					BookmarksFolder folder =
+						BookmarksFolderLocalServiceUtil.getFolder(folderId);
 
-					return false;
+					if (!BookmarksFolderPermission.contains(
+							permissionChecker, folder, ActionKeys.ACCESS) &&
+						!BookmarksFolderPermission.contains(
+							permissionChecker, folder, ActionKeys.VIEW)) {
+
+						return false;
+					}
+				}
+				catch (NoSuchFolderException nsfe) {
+					if (!entry.isInTrash()) {
+						throw nsfe;
+					}
 				}
 			}
 		}
@@ -84,8 +95,7 @@ public class BookmarksEntryPermission {
 	}
 
 	public static boolean contains(
-			PermissionChecker permissionChecker, long entryId,
-			String actionId)
+			PermissionChecker permissionChecker, long entryId, String actionId)
 		throws PortalException, SystemException {
 
 		BookmarksEntry entry = BookmarksEntryLocalServiceUtil.getEntry(entryId);

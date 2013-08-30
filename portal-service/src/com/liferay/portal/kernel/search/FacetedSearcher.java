@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -41,6 +41,7 @@ public class FacetedSearcher extends BaseIndexer {
 		return new FacetedSearcher();
 	}
 
+	@Override
 	public String[] getClassNames() {
 		return null;
 	}
@@ -48,6 +49,11 @@ public class FacetedSearcher extends BaseIndexer {
 	@Override
 	public IndexerPostProcessor[] getIndexerPostProcessors() {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public String getPortletId() {
+		return null;
 	}
 
 	@Override
@@ -76,22 +82,24 @@ public class FacetedSearcher extends BaseIndexer {
 			PermissionChecker permissionChecker =
 				PermissionThreadLocal.getPermissionChecker();
 
-			int start = searchContext.getStart();
 			int end = searchContext.getEnd();
+			int start = searchContext.getStart();
 
 			if (isFilterSearch(searchContext) && (permissionChecker != null)) {
-				searchContext.setStart(0);
 				searchContext.setEnd(end + INDEX_FILTER_SEARCH_LIMIT);
+				searchContext.setStart(0);
 			}
 
 			Hits hits = SearchEngineUtil.search(searchContext, fullQuery);
 
-			searchContext.setStart(start);
 			searchContext.setEnd(end);
+			searchContext.setStart(start);
 
 			if (isFilterSearch(searchContext) && (permissionChecker != null)) {
 				hits = filterSearch(hits, permissionChecker, searchContext);
 			}
+
+			processHits(searchContext, hits);
 
 			return hits;
 		}
@@ -133,10 +141,10 @@ public class FacetedSearcher extends BaseIndexer {
 					attributeName);
 
 				if (searchContext.isAndSearch()) {
-					searchQuery.addRequiredTerm(fieldName, keywords, true);
+					searchQuery.addRequiredTerm(fieldName, keywords);
 				}
 				else {
-					searchQuery.addTerm(fieldName, keywords, true);
+					searchQuery.addTerm(fieldName, keywords);
 				}
 			}
 		}
@@ -153,15 +161,23 @@ public class FacetedSearcher extends BaseIndexer {
 		String keywords = searchContext.getKeywords();
 
 		if (Validator.isNotNull(keywords)) {
-			searchQuery.addExactTerm(Field.ASSET_CATEGORY_NAMES, keywords);
+			addSearchLocalizedTerm(
+				searchQuery, searchContext, Field.ASSET_CATEGORY_TITLES, false);
+
 			searchQuery.addExactTerm(Field.ASSET_TAG_NAMES, keywords);
-			searchQuery.addTerms(Field.KEYWORDS, keywords, true);
+			searchQuery.addTerms(Field.KEYWORDS, keywords);
 		}
 
 		for (String entryClassName : searchContext.getEntryClassNames()) {
 			Indexer indexer = IndexerRegistryUtil.getIndexer(entryClassName);
 
 			if (indexer == null) {
+				continue;
+			}
+
+			String searchEngineId = searchContext.getSearchEngineId();
+
+			if (!searchEngineId.equals(indexer.getSearchEngineId())) {
 				continue;
 			}
 
@@ -196,7 +212,7 @@ public class FacetedSearcher extends BaseIndexer {
 
 		fullQuery.add(contextQuery, BooleanClauseOccur.MUST);
 
-		if (!searchQuery.clauses().isEmpty()) {
+		if (searchQuery.hasClauses()) {
 			fullQuery.add(searchQuery, BooleanClauseOccur.MUST);
 		}
 
@@ -214,6 +230,12 @@ public class FacetedSearcher extends BaseIndexer {
 			Indexer indexer = IndexerRegistryUtil.getIndexer(entryClassName);
 
 			if (indexer == null) {
+				continue;
+			}
+
+			String searchEngineId = searchContext.getSearchEngineId();
+
+			if (!searchEngineId.equals(indexer.getSearchEngineId())) {
 				continue;
 			}
 

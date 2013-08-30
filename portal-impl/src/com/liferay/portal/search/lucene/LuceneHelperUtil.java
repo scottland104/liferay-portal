@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portal.search.lucene;
 
 import com.liferay.portal.kernel.cluster.Address;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.util.StringPool;
 
 import java.io.IOException;
@@ -23,6 +24,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import java.util.Date;
+import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -30,6 +32,8 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.highlight.Formatter;
+import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.util.Version;
 
 /**
@@ -268,10 +272,22 @@ public class LuceneHelperUtil {
 	}
 
 	public static void addTerm(
+		BooleanQuery booleanQuery, String field, String value, boolean like,
+		BooleanClauseOccur booleanClauseOccur) {
+
+		getLuceneHelper().addTerm(
+			booleanQuery, field, value, like, booleanClauseOccur);
+	}
+
+	public static void addTerm(
 		BooleanQuery booleanQuery, String field, String[] values,
 		boolean like) {
 
 		getLuceneHelper().addTerm(booleanQuery, field, values, like);
+	}
+
+	public static void cleanUp(IndexSearcher indexSearcher) {
+		getLuceneHelper().cleanUp(indexSearcher);
 	}
 
 	public static int countScoredFieldNames(Query query, String[] fieldNames) {
@@ -298,6 +314,10 @@ public class LuceneHelperUtil {
 		return getLuceneHelper().getAnalyzer();
 	}
 
+	public static IndexAccessor getIndexAccessor(long companyId) {
+		return getLuceneHelper().getIndexAccessor(companyId);
+	}
+
 	public static long getLastGeneration(long companyId) {
 		return getLuceneHelper().getLastGeneration(companyId);
 	}
@@ -314,7 +334,7 @@ public class LuceneHelperUtil {
 		return _luceneHelper;
 	}
 
-	public static String[] getQueryTerms(Query query) {
+	public static Set<String> getQueryTerms(Query query) {
 		return getLuceneHelper().getQueryTerms(query);
 	}
 
@@ -327,19 +347,27 @@ public class LuceneHelperUtil {
 	public static String getSnippet(Query query, String field, String s)
 		throws IOException {
 
-		return getSnippet(
-			query, field, s, 3, 80, "...", StringPool.BLANK, StringPool.BLANK);
+		Formatter formatter = new SimpleHTMLFormatter(
+			StringPool.BLANK, StringPool.BLANK);
+
+		return getSnippet(query, field, s, formatter);
+	}
+
+	public static String getSnippet(
+			Query query, String field, String s, Formatter formatter)
+		throws IOException {
+
+		return getSnippet(query, field, s, 3, 80, "...", formatter);
 	}
 
 	public static String getSnippet(
 			Query query, String field, String s, int maxNumFragments,
-			int fragmentLength, String fragmentSuffix, String preTag,
-			String postTag)
+			int fragmentLength, String fragmentSuffix, Formatter formatter)
 		throws IOException {
 
 		return getLuceneHelper().getSnippet(
 			query, field, s, maxNumFragments, fragmentLength, fragmentSuffix,
-			preTag, postTag);
+			formatter);
 	}
 
 	public static Version getVersion() {
@@ -356,16 +384,18 @@ public class LuceneHelperUtil {
 		getLuceneHelper().loadIndex(companyId, inputStream);
 	}
 
-	public static Address selectBootupClusterAddress(
-			long companyId, long localLastGeneration)
+	public static void loadIndexesFromCluster(long companyId)
 		throws SystemException {
 
-		return getLuceneHelper().selectBootupClusterAddress(
-			companyId, localLastGeneration);
+		getLuceneHelper().loadIndexesFromCluster(companyId);
 	}
 
 	public static void shutdown() {
 		getLuceneHelper().shutdown();
+	}
+
+	public static void shutdown(long companyId) {
+		getLuceneHelper().shutdown(companyId);
 	}
 
 	public static void startup(long companyId) {

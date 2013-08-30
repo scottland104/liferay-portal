@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portlet.documentlibrary.model.impl;
 
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -29,9 +30,10 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the DLFileEntryMetadata service. Represents a row in the &quot;DLFileEntryMetadata&quot; database table, with each column mapped to a property of this class.
@@ -65,6 +67,8 @@ public class DLFileEntryMetadataModelImpl extends BaseModelImpl<DLFileEntryMetad
 		};
 	public static final String TABLE_SQL_CREATE = "create table DLFileEntryMetadata (uuid_ VARCHAR(75) null,fileEntryMetadataId LONG not null primary key,DDMStorageId LONG,DDMStructureId LONG,fileEntryTypeId LONG,fileEntryId LONG,fileVersionId LONG)";
 	public static final String TABLE_SQL_DROP = "drop table DLFileEntryMetadata";
+	public static final String ORDER_BY_JPQL = " ORDER BY dlFileEntryMetadata.fileEntryMetadataId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY DLFileEntryMetadata.fileEntryMetadataId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -74,37 +78,112 @@ public class DLFileEntryMetadataModelImpl extends BaseModelImpl<DLFileEntryMetad
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portlet.documentlibrary.model.DLFileEntryMetadata"),
 			true);
-
-	public Class<?> getModelClass() {
-		return DLFileEntryMetadata.class;
-	}
-
-	public String getModelClassName() {
-		return DLFileEntryMetadata.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portlet.documentlibrary.model.DLFileEntryMetadata"),
+			true);
+	public static long DDMSTRUCTUREID_COLUMN_BITMASK = 1L;
+	public static long FILEENTRYID_COLUMN_BITMASK = 2L;
+	public static long FILEENTRYTYPEID_COLUMN_BITMASK = 4L;
+	public static long FILEVERSIONID_COLUMN_BITMASK = 8L;
+	public static long UUID_COLUMN_BITMASK = 16L;
+	public static long FILEENTRYMETADATAID_COLUMN_BITMASK = 32L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portlet.documentlibrary.model.DLFileEntryMetadata"));
 
 	public DLFileEntryMetadataModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _fileEntryMetadataId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setFileEntryMetadataId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_fileEntryMetadataId);
+		return _fileEntryMetadataId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return DLFileEntryMetadata.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return DLFileEntryMetadata.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("uuid", getUuid());
+		attributes.put("fileEntryMetadataId", getFileEntryMetadataId());
+		attributes.put("DDMStorageId", getDDMStorageId());
+		attributes.put("DDMStructureId", getDDMStructureId());
+		attributes.put("fileEntryTypeId", getFileEntryTypeId());
+		attributes.put("fileEntryId", getFileEntryId());
+		attributes.put("fileVersionId", getFileVersionId());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		String uuid = (String)attributes.get("uuid");
+
+		if (uuid != null) {
+			setUuid(uuid);
+		}
+
+		Long fileEntryMetadataId = (Long)attributes.get("fileEntryMetadataId");
+
+		if (fileEntryMetadataId != null) {
+			setFileEntryMetadataId(fileEntryMetadataId);
+		}
+
+		Long DDMStorageId = (Long)attributes.get("DDMStorageId");
+
+		if (DDMStorageId != null) {
+			setDDMStorageId(DDMStorageId);
+		}
+
+		Long DDMStructureId = (Long)attributes.get("DDMStructureId");
+
+		if (DDMStructureId != null) {
+			setDDMStructureId(DDMStructureId);
+		}
+
+		Long fileEntryTypeId = (Long)attributes.get("fileEntryTypeId");
+
+		if (fileEntryTypeId != null) {
+			setFileEntryTypeId(fileEntryTypeId);
+		}
+
+		Long fileEntryId = (Long)attributes.get("fileEntryId");
+
+		if (fileEntryId != null) {
+			setFileEntryId(fileEntryId);
+		}
+
+		Long fileVersionId = (Long)attributes.get("fileVersionId");
+
+		if (fileVersionId != null) {
+			setFileVersionId(fileVersionId);
+		}
+	}
+
+	@Override
 	public String getUuid() {
 		if (_uuid == null) {
 			return StringPool.BLANK;
@@ -114,31 +193,48 @@ public class DLFileEntryMetadataModelImpl extends BaseModelImpl<DLFileEntryMetad
 		}
 	}
 
+	@Override
 	public void setUuid(String uuid) {
+		if (_originalUuid == null) {
+			_originalUuid = _uuid;
+		}
+
 		_uuid = uuid;
 	}
 
+	public String getOriginalUuid() {
+		return GetterUtil.getString(_originalUuid);
+	}
+
+	@Override
 	public long getFileEntryMetadataId() {
 		return _fileEntryMetadataId;
 	}
 
+	@Override
 	public void setFileEntryMetadataId(long fileEntryMetadataId) {
 		_fileEntryMetadataId = fileEntryMetadataId;
 	}
 
+	@Override
 	public long getDDMStorageId() {
 		return _DDMStorageId;
 	}
 
+	@Override
 	public void setDDMStorageId(long DDMStorageId) {
 		_DDMStorageId = DDMStorageId;
 	}
 
+	@Override
 	public long getDDMStructureId() {
 		return _DDMStructureId;
 	}
 
+	@Override
 	public void setDDMStructureId(long DDMStructureId) {
+		_columnBitmask |= DDMSTRUCTUREID_COLUMN_BITMASK;
+
 		if (!_setOriginalDDMStructureId) {
 			_setOriginalDDMStructureId = true;
 
@@ -152,19 +248,37 @@ public class DLFileEntryMetadataModelImpl extends BaseModelImpl<DLFileEntryMetad
 		return _originalDDMStructureId;
 	}
 
+	@Override
 	public long getFileEntryTypeId() {
 		return _fileEntryTypeId;
 	}
 
+	@Override
 	public void setFileEntryTypeId(long fileEntryTypeId) {
+		_columnBitmask |= FILEENTRYTYPEID_COLUMN_BITMASK;
+
+		if (!_setOriginalFileEntryTypeId) {
+			_setOriginalFileEntryTypeId = true;
+
+			_originalFileEntryTypeId = _fileEntryTypeId;
+		}
+
 		_fileEntryTypeId = fileEntryTypeId;
 	}
 
+	public long getOriginalFileEntryTypeId() {
+		return _originalFileEntryTypeId;
+	}
+
+	@Override
 	public long getFileEntryId() {
 		return _fileEntryId;
 	}
 
+	@Override
 	public void setFileEntryId(long fileEntryId) {
+		_columnBitmask |= FILEENTRYID_COLUMN_BITMASK;
+
 		if (!_setOriginalFileEntryId) {
 			_setOriginalFileEntryId = true;
 
@@ -178,11 +292,15 @@ public class DLFileEntryMetadataModelImpl extends BaseModelImpl<DLFileEntryMetad
 		return _originalFileEntryId;
 	}
 
+	@Override
 	public long getFileVersionId() {
 		return _fileVersionId;
 	}
 
+	@Override
 	public void setFileVersionId(long fileVersionId) {
+		_columnBitmask |= FILEVERSIONID_COLUMN_BITMASK;
+
 		if (!_setOriginalFileVersionId) {
 			_setOriginalFileVersionId = true;
 
@@ -196,35 +314,31 @@ public class DLFileEntryMetadataModelImpl extends BaseModelImpl<DLFileEntryMetad
 		return _originalFileVersionId;
 	}
 
-	@Override
-	public DLFileEntryMetadata toEscapedModel() {
-		if (isEscapedModel()) {
-			return (DLFileEntryMetadata)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (DLFileEntryMetadata)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(0,
-					DLFileEntryMetadata.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(0,
+			DLFileEntryMetadata.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public DLFileEntryMetadata toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (DLFileEntryMetadata)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -244,6 +358,7 @@ public class DLFileEntryMetadataModelImpl extends BaseModelImpl<DLFileEntryMetad
 		return dlFileEntryMetadataImpl;
 	}
 
+	@Override
 	public int compareTo(DLFileEntryMetadata dlFileEntryMetadata) {
 		long primaryKey = dlFileEntryMetadata.getPrimaryKey();
 
@@ -260,18 +375,15 @@ public class DLFileEntryMetadataModelImpl extends BaseModelImpl<DLFileEntryMetad
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof DLFileEntryMetadata)) {
 			return false;
 		}
 
-		DLFileEntryMetadata dlFileEntryMetadata = null;
-
-		try {
-			dlFileEntryMetadata = (DLFileEntryMetadata)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		DLFileEntryMetadata dlFileEntryMetadata = (DLFileEntryMetadata)obj;
 
 		long primaryKey = dlFileEntryMetadata.getPrimaryKey();
 
@@ -292,9 +404,15 @@ public class DLFileEntryMetadataModelImpl extends BaseModelImpl<DLFileEntryMetad
 	public void resetOriginalValues() {
 		DLFileEntryMetadataModelImpl dlFileEntryMetadataModelImpl = this;
 
+		dlFileEntryMetadataModelImpl._originalUuid = dlFileEntryMetadataModelImpl._uuid;
+
 		dlFileEntryMetadataModelImpl._originalDDMStructureId = dlFileEntryMetadataModelImpl._DDMStructureId;
 
 		dlFileEntryMetadataModelImpl._setOriginalDDMStructureId = false;
+
+		dlFileEntryMetadataModelImpl._originalFileEntryTypeId = dlFileEntryMetadataModelImpl._fileEntryTypeId;
+
+		dlFileEntryMetadataModelImpl._setOriginalFileEntryTypeId = false;
 
 		dlFileEntryMetadataModelImpl._originalFileEntryId = dlFileEntryMetadataModelImpl._fileEntryId;
 
@@ -303,6 +421,8 @@ public class DLFileEntryMetadataModelImpl extends BaseModelImpl<DLFileEntryMetad
 		dlFileEntryMetadataModelImpl._originalFileVersionId = dlFileEntryMetadataModelImpl._fileVersionId;
 
 		dlFileEntryMetadataModelImpl._setOriginalFileVersionId = false;
+
+		dlFileEntryMetadataModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -355,6 +475,7 @@ public class DLFileEntryMetadataModelImpl extends BaseModelImpl<DLFileEntryMetad
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(25);
 
@@ -398,22 +519,25 @@ public class DLFileEntryMetadataModelImpl extends BaseModelImpl<DLFileEntryMetad
 	}
 
 	private static ClassLoader _classLoader = DLFileEntryMetadata.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			DLFileEntryMetadata.class
 		};
 	private String _uuid;
+	private String _originalUuid;
 	private long _fileEntryMetadataId;
 	private long _DDMStorageId;
 	private long _DDMStructureId;
 	private long _originalDDMStructureId;
 	private boolean _setOriginalDDMStructureId;
 	private long _fileEntryTypeId;
+	private long _originalFileEntryTypeId;
+	private boolean _setOriginalFileEntryTypeId;
 	private long _fileEntryId;
 	private long _originalFileEntryId;
 	private boolean _setOriginalFileEntryId;
 	private long _fileVersionId;
 	private long _originalFileVersionId;
 	private boolean _setOriginalFileVersionId;
-	private transient ExpandoBridge _expandoBridge;
-	private DLFileEntryMetadata _escapedModelProxy;
+	private long _columnBitmask;
+	private DLFileEntryMetadata _escapedModel;
 }

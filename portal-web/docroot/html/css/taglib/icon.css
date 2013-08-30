@@ -1,0 +1,11 @@
+.taglib-icon {
+	text-decoration:none;
+
+	.taglib-text {
+		text-decoration: underline;
+
+		&:hover {
+			text-decoration: none;
+		}
+	}
+}

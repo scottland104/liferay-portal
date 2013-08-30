@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,15 +17,17 @@ package com.liferay.portal.service.impl;
 import com.liferay.portal.WebsiteURLException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.ListTypeConstants;
+import com.liferay.portal.model.SystemEventConstants;
 import com.liferay.portal.model.User;
 import com.liferay.portal.model.Website;
+import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.base.WebsiteLocalServiceBaseImpl;
 import com.liferay.portal.util.PortalUtil;
 
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -33,9 +35,25 @@ import java.util.List;
  */
 public class WebsiteLocalServiceImpl extends WebsiteLocalServiceBaseImpl {
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #addWebsite(long, String,
+	 *             long, String, int, boolean, ServiceContext)}
+	 */
+	@Override
 	public Website addWebsite(
 			long userId, String className, long classPK, String url, int typeId,
 			boolean primary)
+		throws PortalException, SystemException {
+
+		return addWebsite(
+			userId, className, classPK, url, typeId, primary,
+			new ServiceContext());
+	}
+
+	@Override
+	public Website addWebsite(
+			long userId, String className, long classPK, String url, int typeId,
+			boolean primary, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		User user = userPersistence.findByPrimaryKey(userId);
@@ -43,43 +61,50 @@ public class WebsiteLocalServiceImpl extends WebsiteLocalServiceBaseImpl {
 		Date now = new Date();
 
 		validate(
-			0, user.getCompanyId(), classNameId, classPK, url, typeId,
-			primary);
+			0, user.getCompanyId(), classNameId, classPK, url, typeId, primary);
 
 		long websiteId = counterLocalService.increment();
 
 		Website website = websitePersistence.create(websiteId);
 
+		website.setUuid(serviceContext.getUuid());
 		website.setCompanyId(user.getCompanyId());
 		website.setUserId(user.getUserId());
 		website.setUserName(user.getFullName());
 		website.setCreateDate(now);
-		website.setModifiedDate(now);
+		website.setCreateDate(serviceContext.getCreateDate(now));
+		website.setModifiedDate(serviceContext.getModifiedDate(now));
 		website.setClassNameId(classNameId);
 		website.setClassPK(classPK);
 		website.setUrl(url);
 		website.setTypeId(typeId);
 		website.setPrimary(primary);
 
-		websitePersistence.update(website, false);
+		websitePersistence.update(website);
 
 		return website;
 	}
 
 	@Override
-	public void deleteWebsite(long websiteId)
+	public Website deleteWebsite(long websiteId)
 		throws PortalException, SystemException {
 
 		Website website = websitePersistence.findByPrimaryKey(websiteId);
 
-		deleteWebsite(website);
+		return websiteLocalService.deleteWebsite(website);
 	}
 
 	@Override
-	public void deleteWebsite(Website website) throws SystemException {
+	@SystemEvent(
+		action = SystemEventConstants.ACTION_SKIP,
+		type = SystemEventConstants.TYPE_DELETE)
+	public Website deleteWebsite(Website website) throws SystemException {
 		websitePersistence.remove(website);
+
+		return website;
 	}
 
+	@Override
 	public void deleteWebsites(long companyId, String className, long classPK)
 		throws SystemException {
 
@@ -89,21 +114,16 @@ public class WebsiteLocalServiceImpl extends WebsiteLocalServiceBaseImpl {
 			companyId, classNameId, classPK);
 
 		for (Website website : websites) {
-			deleteWebsite(website);
+			websiteLocalService.deleteWebsite(website);
 		}
 	}
 
 	@Override
-	public Website getWebsite(long websiteId)
-		throws PortalException, SystemException {
-
-		return websitePersistence.findByPrimaryKey(websiteId);
-	}
-
 	public List<Website> getWebsites() throws SystemException {
 		return websitePersistence.findAll();
 	}
 
+	@Override
 	public List<Website> getWebsites(
 			long companyId, String className, long classPK)
 		throws SystemException {
@@ -113,6 +133,7 @@ public class WebsiteLocalServiceImpl extends WebsiteLocalServiceBaseImpl {
 		return websitePersistence.findByC_C_C(companyId, classNameId, classPK);
 	}
 
+	@Override
 	public Website updateWebsite(
 			long websiteId, String url, int typeId, boolean primary)
 		throws PortalException, SystemException {
@@ -126,9 +147,31 @@ public class WebsiteLocalServiceImpl extends WebsiteLocalServiceBaseImpl {
 		website.setTypeId(typeId);
 		website.setPrimary(primary);
 
-		websitePersistence.update(website, false);
+		websitePersistence.update(website);
 
 		return website;
+	}
+
+	protected void validate(
+			long websiteId, long companyId, long classNameId, long classPK,
+			boolean primary)
+		throws SystemException {
+
+		// Check to make sure there isn't another website with the same company
+		// id, class name, and class pk that also has primary set to true
+
+		if (primary) {
+			List<Website> websites = websitePersistence.findByC_C_C_P(
+				companyId, classNameId, classPK, primary);
+
+			for (Website website : websites) {
+				if ((websiteId <= 0) || (website.getWebsiteId() != websiteId)) {
+					website.setPrimary(false);
+
+					websitePersistence.update(website);
+				}
+			}
+		}
 	}
 
 	protected void validate(
@@ -152,32 +195,6 @@ public class WebsiteLocalServiceImpl extends WebsiteLocalServiceBaseImpl {
 			typeId, classNameId, ListTypeConstants.WEBSITE);
 
 		validate(websiteId, companyId, classNameId, classPK, primary);
-	}
-
-	protected void validate(
-			long websiteId, long companyId, long classNameId, long classPK,
-			boolean primary)
-		throws SystemException {
-
-		// Check to make sure there isn't another website with the same company
-		// id, class name, and class pk that also has primary set to true
-
-		if (primary) {
-			Iterator<Website> itr = websitePersistence.findByC_C_C_P(
-				companyId, classNameId, classPK, primary).iterator();
-
-			while (itr.hasNext()) {
-				Website website = itr.next();
-
-				if ((websiteId <= 0) ||
-					(website.getWebsiteId() != websiteId)) {
-
-					website.setPrimary(false);
-
-					websitePersistence.update(website, false);
-				}
-			}
-		}
 	}
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,11 +14,16 @@
 
 package com.liferay.portlet.usersadmin;
 
+import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Organization;
 import com.liferay.portal.model.Portlet;
+import com.liferay.portal.model.Role;
+import com.liferay.portal.model.RoleConstants;
+import com.liferay.portal.model.UserGroupRole;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.service.OrganizationLocalServiceUtil;
+import com.liferay.portal.service.UserGroupRoleLocalServiceUtil;
 import com.liferay.portal.service.permission.OrganizationPermissionUtil;
 import com.liferay.portlet.BaseControlPanelEntry;
 
@@ -26,12 +31,30 @@ import java.util.List;
 
 /**
  * @author Jorge Ferrer
+ * @author Zsolt Berentey
  */
 public class UsersControlPanelEntry extends BaseControlPanelEntry {
 
-	public boolean isVisible(
-			PermissionChecker permissionChecker, Portlet portlet)
+	@Override
+	protected boolean hasPermissionImplicitlyGranted(
+			PermissionChecker permissionChecker, Group group, Portlet portlet)
 		throws Exception {
+
+		List<UserGroupRole> userGroupRoles =
+			UserGroupRoleLocalServiceUtil.getUserGroupRoles(
+				permissionChecker.getUserId());
+
+		for (UserGroupRole userGroupRole : userGroupRoles) {
+			Role role = userGroupRole.getRole();
+
+			String roleName = role.getName();
+
+			if (roleName.equals(RoleConstants.ORGANIZATION_ADMINISTRATOR) ||
+				roleName.equals(RoleConstants.ORGANIZATION_OWNER)) {
+
+				return true;
+			}
+		}
 
 		List<Organization> organizations =
 			OrganizationLocalServiceUtil.getUserOrganizations(
@@ -52,12 +75,12 @@ public class UsersControlPanelEntry extends BaseControlPanelEntry {
 				return true;
 			}
 
-			if (OrganizationPermissionUtil.contains(
+			/*if (OrganizationPermissionUtil.contains(
 					permissionChecker, organization.getOrganizationId(),
 					ActionKeys.VIEW)) {
 
 				return true;
-			}
+			}*/
 		}
 
 		return false;

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,8 +22,8 @@ String tabs3 = ParamUtil.getString(request, "tabs3", "email-from");
 
 String redirect = ParamUtil.getString(request, "redirect");
 
-String emailFromName = ParamUtil.getString(request, "emailFromName", shoppingPrefs.getEmailFromName());
-String emailFromAddress = ParamUtil.getString(request, "emailFromAddress", shoppingPrefs.getEmailFromAddress());
+String emailFromName = ParamUtil.getString(request, "emailFromName", shoppingPrefs.getEmailFromName(company.getCompanyId()));
+String emailFromAddress = ParamUtil.getString(request, "emailFromAddress", shoppingPrefs.getEmailFromAddress(company.getCompanyId()));
 
 String emailOrderConfirmationSubject = ParamUtil.getString(request, "emailOrderConfirmationSubject", shoppingPrefs.getEmailOrderConfirmationSubject());
 String emailOrderConfirmationBody = ParamUtil.getString(request, "emailOrderConfirmationBody", shoppingPrefs.getEmailOrderConfirmationBody());
@@ -44,7 +44,7 @@ else if (tabs3.equals("shipping-email")) {
 }
 %>
 
-<liferay-portlet:renderURL var="portletURL" portletConfiguration="true">
+<liferay-portlet:renderURL portletConfiguration="true" var="portletURL">
 	<portlet:param name="tabs2" value="<%= tabs2 %>" />
 	<portlet:param name="redirect" value="<%= redirect %>" />
 </liferay-portlet:renderURL>
@@ -66,13 +66,13 @@ else if (tabs3.equals("shipping-email")) {
 
 	<c:choose>
 		<c:when test='<%= tabs2.equals("payment-settings") %>'>
-			<div class="portlet-msg-info">
+			<div class="alert alert-info">
 				<liferay-ui:message key="enter-a-paypal-email-address-to-send-all-payments-to-paypal" />
 
 				<liferay-ui:message arguments='<%= "<strong>" + themeDisplay.getPortalURL() + themeDisplay.getPathMain() + "/shopping/notify</strong>" %>' key="go-to-paypal-and-set-up-ipn-to-post-to-x" translateArguments="<%= false %>" />
 			</div>
 
-			<div class="portlet-msg-info">
+			<div class="alert alert-info">
 				<liferay-ui:message key="enter-a-blank-paypal-email-address-to-disable-paypal" />
 			</div>
 
@@ -82,7 +82,6 @@ else if (tabs3.equals("shipping-email")) {
 				<aui:field-wrapper label="credit-cards">
 
 					<%
-
 					String[] ccTypes1 = ShoppingPreferences.CC_TYPES;
 					String[] ccTypes2 = shoppingPrefs.getCcTypes();
 
@@ -90,9 +89,7 @@ else if (tabs3.equals("shipping-email")) {
 
 					List leftList = new ArrayList();
 
-					for (int i = 0; i < ccTypes2.length; i++) {
-						String ccType = (String)ccTypes2[i];
-
+					for (String ccType : ccTypes2) {
 						leftList.add(new KeyValuePair(ccType, LanguageUtil.get(pageContext, "cc_" + ccType)));
 					}
 
@@ -100,9 +97,7 @@ else if (tabs3.equals("shipping-email")) {
 
 					List rightList = new ArrayList();
 
-					for (int i = 0; i < ccTypes1.length; i++) {
-						String ccType = (String)ccTypes1[i];
-
+					for (String ccType : ccTypes1) {
 						if (!ArrayUtil.contains(ccTypes2, ccType)) {
 							rightList.add(new KeyValuePair(ccType, LanguageUtil.get(pageContext, "cc_" + ccType)));
 						}
@@ -110,13 +105,13 @@ else if (tabs3.equals("shipping-email")) {
 					%>
 
 					<liferay-ui:input-move-boxes
-						leftTitle="current"
-						rightTitle="available"
 						leftBoxName="current_cc_types"
-						rightBoxName="available_cc_types"
-						leftReorder="true"
 						leftList="<%= leftList %>"
+						leftReorder="true"
+						leftTitle="current"
+						rightBoxName="available_cc_types"
 						rightList="<%= rightList %>"
+						rightTitle="available"
 					/>
 				</aui:field-wrapper>
 
@@ -148,13 +143,13 @@ else if (tabs3.equals("shipping-email")) {
 
 				</aui:select>
 
-				<aui:input maxlength="7" name="taxRate" type="text" size="7" value="<%= taxFormat.format(shoppingPrefs.getTaxRate()) %>" />
+				<aui:input maxlength="7" name="taxRate" size="7" type="text" value="<%= taxFormat.format(shoppingPrefs.getTaxRate()) %>" />
 
-				<aui:input label="minimum-order" maxlength="7" name="minOrder" type="text" size="7" value="<%= doubleFormat.format(shoppingPrefs.getMinOrder()) %>" />
+				<aui:input label="minimum-order" maxlength="7" name="minOrder" size="7" type="text" value="<%= doubleFormat.format(shoppingPrefs.getMinOrder()) %>" />
 			</aui:fieldset>
 		</c:when>
 		<c:when test='<%= tabs2.equals("shipping-calculation") %>'>
-			<div class="portlet-msg-info">
+			<div class="alert alert-info">
 				<liferay-ui:message key="calculate-a-flat-shipping-amount-based-on-the-total-amount-of-the-purchase" /> <span style="font-size: xx-small;">-- <%= LanguageUtil.get(pageContext, "or").toUpperCase() %> --</span> <liferay-ui:message key="calculate-the-shipping-based-on-a-percentage-of-the-total-amount-of-the-purchase" />
 			</div>
 
@@ -186,7 +181,6 @@ else if (tabs3.equals("shipping-email")) {
 
 					<aui:input label="" maxlength="6" name='<%= "shipping" + i %>' size="6" type="text" value="<%= GetterUtil.getString(shoppingPrefs.getShipping()[i]) %>" />
 
-
 					<%
 					}
 					%>
@@ -195,7 +189,7 @@ else if (tabs3.equals("shipping-email")) {
 			</aui:fieldset>
 		</c:when>
 		<c:when test='<%= tabs2.equals("insurance-calculation") %>'>
-			<div class="portlet-msg-info">
+			<div class="alert alert-info">
 				<liferay-ui:message key="calculate-a-flat-insurance-amount-based-on-the-total-amount-of-the-purchase" /> <span style="font-size: xx-small;">-- <%= LanguageUtil.get(pageContext, "or").toUpperCase() %> --</span> <liferay-ui:message key="calculate-the-insurance-based-on-a-percentage-of-the-total-amount-of-the-purchase" />
 			</div>
 
@@ -253,10 +247,10 @@ else if (tabs3.equals("shipping-email")) {
 					<aui:fieldset>
 						<c:choose>
 							<c:when test='<%= tabs3.equals("confirmation-email") %>'>
-								<aui:input inlineLabel="left" label="enabled" name="emailOrderConfirmationEnabled" type="checkbox" value="<%= shoppingPrefs.getEmailOrderConfirmationEnabled() %>" />
+								<aui:input label="enabled" name="emailOrderConfirmationEnabled" type="checkbox" value="<%= shoppingPrefs.getEmailOrderConfirmationEnabled() %>" />
 							</c:when>
 							<c:when test='<%= tabs3.equals("shipping-email") %>'>
-								<aui:input inlineLabel="left" label="enabled" name="emailOrderShippingEnabled" type="checkbox" value="<%= shoppingPrefs.getEmailOrderShippingEnabled() %>" />
+								<aui:input label="enabled" name="emailOrderShippingEnabled" type="checkbox" value="<%= shoppingPrefs.getEmailOrderShippingEnabled() %>" />
 							</c:when>
 						</c:choose>
 						<c:choose>
@@ -282,13 +276,13 @@ else if (tabs3.equals("shipping-email")) {
 									[$FROM_ADDRESS$]
 								</dt>
 								<dd>
-									<%= emailFromAddress %>
+									<%= HtmlUtil.escape(emailFromAddress) %>
 								</dd>
 								<dt>
 									[$FROM_NAME$]
 								</dt>
 								<dd>
-									<%= emailFromName %>
+									<%= HtmlUtil.escape(emailFromName) %>
 								</dd>
 								<dt>
 									[$ORDER_BILLING_ADDRESS$]

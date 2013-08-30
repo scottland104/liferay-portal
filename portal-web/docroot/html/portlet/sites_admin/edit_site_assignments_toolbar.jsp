@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,7 +17,7 @@
 <%@ include file="/html/portlet/sites_admin/init.jsp" %>
 
 <%
-String toolbarItem = ParamUtil.getString(request, "toolbarItem", "view-memberships");
+String toolbarItem = ParamUtil.getString(request, "toolbarItem", "view-members");
 
 Group group = (Group)request.getAttribute(WebKeys.GROUP);
 
@@ -28,124 +28,64 @@ if (group == null) {
 }
 %>
 
-<div class="lfr-portlet-toolbar">
-	<liferay-ui:icon-menu align="left" direction="down" extended="<%= false %>" icon='<%= themeDisplay.getPathThemeImages() + "/common/view.png" %>' message="view">
-		<liferay-portlet:renderURL varImpl="assignMembersURL">
-			<liferay-portlet:param name="struts_action" value="/sites_admin/edit_site_assignments" />
-			<liferay-portlet:param name="redirect" value="<%= currentURL %>" />
-			<liferay-portlet:param name="groupId" value="<%= String.valueOf(group.getGroupId()) %>" />
-		</liferay-portlet:renderURL>
+<liferay-portlet:renderURL varImpl="assignMembersURL">
+	<liferay-portlet:param name="struts_action" value="/sites_admin/edit_site_assignments" />
+	<liferay-portlet:param name="redirect" value="<%= currentURL %>" />
+</liferay-portlet:renderURL>
 
-		<liferay-ui:icon
-			image="assign"
-			message="memberships"
-			method="get"
-			url="<%= assignMembersURL.toString() %>"
-		/>
+<aui:nav-bar>
+	<aui:nav>
+		<c:if test="<%= GroupPermissionUtil.contains(permissionChecker, group.getGroupId(), ActionKeys.ASSIGN_MEMBERS) %>">
+			<aui:nav-item dropdown="<%= true %>" iconClass="icon-plus" label="add-members" selected='<%= toolbarItem.equals("add-members") %>'>
 
-		<c:if test="<%= GroupPermissionUtil.contains(permissionChecker, group.getGroupId(), ActionKeys.MANAGE_TEAMS) %>">
-			<portlet:renderURL var="manageTeamsURL">
-				<portlet:param name="struts_action" value="/sites_admin/view_teams" />
-				<portlet:param name="redirect" value="<%= currentURL %>" />
-				<portlet:param name="groupId" value="<%= String.valueOf(group.getGroupId()) %>" />
-			</portlet:renderURL>
+				<%
+				assignMembersURL.setParameter("tabs1", "users");
+				assignMembersURL.setParameter("tabs2", "available");
+				%>
 
-			<liferay-ui:icon
-				image="team_icon"
-				message="teams"
-				method="get"
-				url="<%= manageTeamsURL.toString() %>"
-			/>
+				<aui:nav-item href="<%= assignMembersURL.toString() %>" iconClass="icon-user" label="user" />
+
+				<%
+				assignMembersURL.setParameter("tabs1", "organizations");
+				assignMembersURL.setParameter("tabs2", "available");
+				%>
+
+				<aui:nav-item href="<%= assignMembersURL.toString() %>" iconClass="icon-globe" label="organization" />
+
+				<%
+				assignMembersURL.setParameter("tabs1", "user-groups");
+				assignMembersURL.setParameter("tabs2", "available");
+				%>
+
+				<aui:nav-item href="<%= assignMembersURL.toString() %>" iconClass="icon-globe" label="user-group" />
+			</aui:nav-item>
+		</c:if>
+
+		<c:if test="<%= permissionChecker.isGroupOwner(group.getGroupId()) || GroupPermissionUtil.contains(permissionChecker, group.getGroupId(), ActionKeys.ASSIGN_USER_ROLES) %>">
+			<aui:nav-item dropdown="<%= true %>" iconClass="icon-plus" label="add-site-roles-to" selected='<%= toolbarItem.equals("assign-user-roles") %>'>
+				<portlet:renderURL var="assignUserRolesURL">
+					<portlet:param name="struts_action" value="/sites_admin/edit_user_roles" />
+					<portlet:param name="redirect" value="<%= currentURL %>" />
+				</portlet:renderURL>
+
+				<aui:nav-item href="<%= assignUserRolesURL %>" iconClass="icon-user" label="users" />
+
+				<portlet:renderURL var="assignUserGroupRolesURL">
+					<portlet:param name="struts_action" value="/sites_admin/edit_user_group_roles" />
+					<portlet:param name="redirect" value="<%= currentURL %>" />
+				</portlet:renderURL>
+
+				<aui:nav-item href="<%= assignUserGroupRolesURL %>" iconClass="icon-globe" label="user-groups" />
+			</aui:nav-item>
 		</c:if>
 
 		<c:if test="<%= group.getType() == GroupConstants.TYPE_SITE_RESTRICTED %>">
 			<portlet:renderURL var="viewMembershipRequestsURL">
 				<portlet:param name="struts_action" value="/sites_admin/view_membership_requests" />
 				<portlet:param name="redirect" value="<%= currentURL %>" />
-				<portlet:param name="groupId" value="<%= String.valueOf(group.getGroupId()) %>" />
 			</portlet:renderURL>
 
-			<liferay-ui:icon
-				image="manage_task"
-				message="membership-requests"
-				method="get"
-				url="<%= viewMembershipRequestsURL.toString() %>"
-			/>
+			<aui:nav-item href="<%= viewMembershipRequestsURL %>" label="view-membership-requests" selected='<%= toolbarItem.equals("view-membership-requests") %>' />
 		</c:if>
-	</liferay-ui:icon-menu>
-
-	<c:if test="<%= PortalPermissionUtil.contains(permissionChecker, ActionKeys.ADD_ROLE) %>">
-		<liferay-ui:icon-menu align="left" direction="down" extended="<%= false %>" icon='<%= themeDisplay.getPathThemeImages() + "/common/add.png" %>' message="add-members">
-
-			<liferay-portlet:renderURL varImpl="assignMembersURL">
-				<liferay-portlet:param name="struts_action" value="/sites_admin/edit_site_assignments" />
-				<liferay-portlet:param name="redirect" value="<%= currentURL %>" />
-				<liferay-portlet:param name="groupId" value="<%= String.valueOf(group.getGroupId()) %>" />
-			</liferay-portlet:renderURL>
-
-			<%
-			assignMembersURL.setParameter("tabs1", "users");
-			assignMembersURL.setParameter("tabs2", "available");
-			%>
-
-			<liferay-ui:icon
-				image="user_icon"
-				message="user"
-				method="get"
-				url="<%= assignMembersURL.toString() %>"
-			/>
-
-			<%
-			assignMembersURL.setParameter("tabs1", "organizations");
-			assignMembersURL.setParameter("tabs2", "available");
-			%>
-
-			<liferay-ui:icon
-				image="organization_icon"
-				message="organization"
-				method="get"
-				url="<%= assignMembersURL.toString() %>"
-			/>
-
-			<%
-			assignMembersURL.setParameter("tabs1", "user-groups");
-			assignMembersURL.setParameter("tabs2", "available");
-			%>
-
-			<liferay-ui:icon
-				image="group"
-				message="user-group"
-				method="get"
-				url="<%= assignMembersURL.toString() %>"
-			/>
-		</liferay-ui:icon-menu>
-	</c:if>
-
-	<c:if test="<%= permissionChecker.isGroupOwner(group.getGroupId()) || GroupPermissionUtil.contains(permissionChecker, group.getGroupId(), ActionKeys.ASSIGN_USER_ROLES) %>">
-		<liferay-ui:icon-menu align="left" direction="down" extended="<%= false %>" icon='<%= themeDisplay.getPathThemeImages() + "/common/assign_user_roles.png" %>' message="add-site-roles-to">
-			<portlet:renderURL var="assignUserRolesURL">
-				<portlet:param name="struts_action" value="/sites_admin/edit_user_roles" />
-				<portlet:param name="redirect" value="<%= currentURL %>" />
-				<portlet:param name="groupId" value="<%= String.valueOf(group.getGroupId()) %>" />
-			</portlet:renderURL>
-
-			<liferay-ui:icon
-				image="user_icon"
-				message="users"
-				url="<%= assignUserRolesURL %>"
-			/>
-
-			<portlet:renderURL var="assignUserGroupRolesURL">
-				<portlet:param name="struts_action" value="/sites_admin/edit_user_group_roles" />
-				<portlet:param name="redirect" value="<%= currentURL %>" />
-				<portlet:param name="groupId" value="<%= String.valueOf(group.getGroupId()) %>" />
-			</portlet:renderURL>
-
-			<liferay-ui:icon
-				image="group"
-				message="user-groups"
-				url="<%= assignUserGroupRolesURL %>"
-			/>
-		</liferay-ui:icon-menu>
-	</c:if>
-</div>
+	</aui:nav>
+</aui:nav-bar>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -33,12 +33,13 @@ import java.util.List;
 public class AssetTagPropertyKeyFinderImpl
 	extends BasePersistenceImpl<Dummy> implements AssetTagPropertyKeyFinder {
 
-	public static String COUNT_BY_GROUP_ID =
+	public static final String COUNT_BY_GROUP_ID =
 		AssetTagPropertyKeyFinder.class.getName() + ".countByGroupId";
 
-	public static String FIND_BY_GROUP_ID =
+	public static final String FIND_BY_GROUP_ID =
 		AssetTagPropertyKeyFinder.class.getName() + ".findByGroupId";
 
+	@Override
 	public int countByGroupId(long groupId) throws SystemException {
 		Session session = null;
 
@@ -55,7 +56,7 @@ public class AssetTagPropertyKeyFinderImpl
 
 			qPos.add(groupId);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -75,10 +76,12 @@ public class AssetTagPropertyKeyFinderImpl
 		}
 	}
 
+	@Override
 	public String[] findByGroupId(long groupId) throws SystemException {
 		return findByGroupId(groupId, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 	}
 
+	@Override
 	public String[] findByGroupId(long groupId, int start, int end)
 		throws SystemException {
 

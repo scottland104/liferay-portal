@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,10 +14,15 @@
 
 package com.liferay.portlet;
 
+import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
+import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
@@ -41,19 +46,91 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Miguel Pastor
  */
 public class PortletURLUtil {
 
+	public static PortletURL clone(
+			LiferayPortletURL liferayPortletURL, String lifecycle,
+			LiferayPortletResponse liferayPortletResponse)
+		throws PortletException {
+
+		LiferayPortletURL newLiferayPortletURL =
+			liferayPortletResponse.createLiferayPortletURL(lifecycle);
+
+		newLiferayPortletURL.setPortletId(liferayPortletURL.getPortletId());
+
+		WindowState windowState = liferayPortletURL.getWindowState();
+
+		if (windowState != null) {
+			newLiferayPortletURL.setWindowState(windowState);
+		}
+
+		PortletMode portletMode = liferayPortletURL.getPortletMode();
+
+		if (portletMode != null) {
+			newLiferayPortletURL.setPortletMode(portletMode);
+		}
+
+		newLiferayPortletURL.setParameters(liferayPortletURL.getParameterMap());
+
+		return newLiferayPortletURL;
+	}
+
+	public static PortletURL clone(
+			PortletURL portletURL,
+			LiferayPortletResponse liferayPortletResponse)
+		throws PortletException {
+
+		LiferayPortletURL liferayPortletURL = (LiferayPortletURL)portletURL;
+
+		return clone(
+			liferayPortletURL, liferayPortletURL.getLifecycle(),
+			liferayPortletResponse);
+	}
+
+	public static PortletURL clone(
+			PortletURL portletURL, MimeResponse mimeResponse)
+		throws PortletException {
+
+		LiferayPortletURL liferayPortletURL = (LiferayPortletURL)portletURL;
+
+		return clone(
+			liferayPortletURL, liferayPortletURL.getLifecycle(),
+			(LiferayPortletResponse)mimeResponse);
+	}
+
+	public static PortletURL clone(
+			PortletURL portletURL, String lifecycle,
+			LiferayPortletResponse liferayPortletResponse)
+		throws PortletException {
+
+		LiferayPortletURL liferayPortletURL = (LiferayPortletURL)portletURL;
+
+		return clone(liferayPortletURL, lifecycle, liferayPortletResponse);
+	}
+
+	public static PortletURL clone(
+			PortletURL portletURL, String lifecycle, MimeResponse mimeResponse)
+		throws PortletException {
+
+		LiferayPortletURL liferayPortletURL = (LiferayPortletURL)portletURL;
+
+		return clone(
+			liferayPortletURL, lifecycle, (LiferayPortletResponse)mimeResponse);
+	}
+
 	public static PortletURL getCurrent(
-		PortletRequest portletRequest, MimeResponse mimeResponse) {
+		LiferayPortletRequest liferayPortletRequest,
+		LiferayPortletResponse liferayPortletResponse) {
 
-		PortletURL portletURL = mimeResponse.createRenderURL();
+		PortletURL portletURL = liferayPortletResponse.createRenderURL();
 
-		Enumeration<String> enu = portletRequest.getParameterNames();
+		Enumeration<String> enu = liferayPortletRequest.getParameterNames();
 
 		while (enu.hasMoreElements()) {
 			String param = enu.nextElement();
-			String[] values = portletRequest.getParameterValues(param);
+			String[] values = liferayPortletRequest.getParameterValues(param);
 
 			boolean addParam = true;
 
@@ -75,82 +152,34 @@ public class PortletURLUtil {
 		return portletURL;
 	}
 
-	public static PortletURL clone(
-			PortletURL portletURL, MimeResponse mimeResponse)
-		throws PortletException {
+	public static PortletURL getCurrent(
+		PortletRequest portletRequest, MimeResponse mimeResponse) {
 
-		LiferayPortletURL liferayPortletURL = (LiferayPortletURL)portletURL;
-
-		return clone(
-			liferayPortletURL, liferayPortletURL.getLifecycle(), mimeResponse);
-	}
-
-	public static PortletURL clone(
-			PortletURL portletURL, String lifecycle, MimeResponse mimeResponse)
-		throws PortletException {
-
-		LiferayPortletURL liferayPortletURL = (LiferayPortletURL)portletURL;
-
-		return clone(liferayPortletURL, lifecycle, mimeResponse);
-	}
-
-	public static PortletURL clone(
-			LiferayPortletURL liferayPortletURL, String lifecycle,
-			MimeResponse mimeResponse)
-		throws PortletException {
-
-		LiferayPortletURL newURLImpl = null;
-
-		if (lifecycle.equals(PortletRequest.ACTION_PHASE)) {
-			newURLImpl = (LiferayPortletURL)mimeResponse.createActionURL();
-		}
-		else if (lifecycle.equals(PortletRequest.RENDER_PHASE)) {
-			newURLImpl = (LiferayPortletURL)mimeResponse.createRenderURL();
-		}
-
-		newURLImpl.setPortletId(liferayPortletURL.getPortletId());
-
-		WindowState windowState = liferayPortletURL.getWindowState();
-
-		if (windowState != null) {
-			newURLImpl.setWindowState(windowState);
-		}
-
-		PortletMode portletMode = liferayPortletURL.getPortletMode();
-
-		if (portletMode != null) {
-			newURLImpl.setPortletMode(portletMode);
-		}
-
-		newURLImpl.setParameters(liferayPortletURL.getParameterMap());
-
-		return newURLImpl;
+		return getCurrent(
+			(LiferayPortletRequest)portletRequest,
+			(LiferayPortletResponse)mimeResponse);
 	}
 
 	public static String getRefreshURL(
 		HttpServletRequest request, ThemeDisplay themeDisplay) {
 
-		StringBundler sb = new StringBundler();
+		StringBundler sb = new StringBundler(32);
 
 		sb.append(themeDisplay.getPathMain());
-		sb.append("/portal/render_portlet?");
+		sb.append("/portal/render_portlet?p_l_id=");
 
 		long plid = themeDisplay.getPlid();
 
-		sb.append("p_l_id=");
 		sb.append(plid);
 
-		Portlet portlet = (Portlet)request.getAttribute(
-			WebKeys.RENDER_PORTLET);
+		Portlet portlet = (Portlet)request.getAttribute(WebKeys.RENDER_PORTLET);
 
 		String portletId = portlet.getPortletId();
 
 		sb.append("&p_p_id=");
 		sb.append(portletId);
 
-		sb.append("&p_p_lifecycle=0");
-
-		sb.append("&p_t_lifecycle=");
+		sb.append("&p_p_lifecycle=0&p_t_lifecycle=");
 		sb.append(themeDisplay.getLifecycle());
 
 		WindowState windowState = WindowState.NORMAL;
@@ -173,12 +202,11 @@ public class PortletURLUtil {
 		sb.append("&p_p_state=");
 		sb.append(windowState);
 
-		sb.append("&p_p_mode=view");
+		sb.append("&p_p_mode=view&p_p_col_id=");
 
 		String columnId = (String)request.getAttribute(
 			WebKeys.RENDER_PORTLET_COLUMN_ID);
 
-		sb.append("&p_p_col_id=");
 		sb.append(columnId);
 
 		Integer columnPos = (Integer)request.getAttribute(
@@ -203,6 +231,13 @@ public class PortletURLUtil {
 
 		sb.append("&p_p_isolated=1");
 
+		long sourceGroupId = ParamUtil.getLong(request, "p_v_l_s_g_id");
+
+		if (sourceGroupId > 0) {
+			sb.append("&p_v_l_s_g_id=");
+			sb.append(sourceGroupId);
+		}
+
 		String doAsUserId = themeDisplay.getDoAsUserId();
 
 		if (Validator.isNotNull(doAsUserId)) {
@@ -217,39 +252,60 @@ public class PortletURLUtil {
 
 		String ppid = ParamUtil.getString(request, "p_p_id");
 
-		if (ppid.equals(portletId)) {
-			Map<String, String[]> parameters = request.getParameterMap();
-
-			for (Map.Entry<String, String[]> entry : parameters.entrySet()) {
-				String name = entry.getKey();
-
-				if (!PortalUtil.isReservedParameter(name) &&
-					!name.equals("currentURL")) {
-
-					String[] values = entry.getValue();
-
-					for (int i = 0; i < values.length; i++) {
-						sb.append(StringPool.AMPERSAND);
-						sb.append(name);
-						sb.append(StringPool.EQUAL);
-						sb.append(HttpUtil.encodeURL(values[i]));
-					}
-				}
-			}
+		if (!ppid.equals(portletId)) {
+			return sb.toString();
 		}
 
-		String outerPortletId = PortalUtil.getOuterPortletId(request);
+		String namespace = PortalUtil.getPortletNamespace(portletId);
 
-		if (outerPortletId != null) {
-			sb.append(StringPool.AMPERSAND);
-			sb.append("p_o_p_id");
-			sb.append(StringPool.EQUAL);
-			sb.append(HttpUtil.encodeURL(outerPortletId));
+		Map<String, String[]> parameters = request.getParameterMap();
+
+		for (Map.Entry<String, String[]> entry : parameters.entrySet()) {
+			String name = entry.getKey();
+
+			if (!PortalUtil.isReservedParameter(name) &&
+				!name.equals("currentURL") &&
+				!isRefreshURLReservedParameter(name, namespace)) {
+
+				String[] values = entry.getValue();
+
+				for (int i = 0; i < values.length; i++) {
+					sb.append(StringPool.AMPERSAND);
+					sb.append(name);
+					sb.append(StringPool.EQUAL);
+					sb.append(HttpUtil.encodeURL(values[i]));
+				}
+			}
 		}
 
 		return sb.toString();
 	}
 
+	protected static boolean isRefreshURLReservedParameter(
+		String parameter, String namespace) {
+
+		if (ArrayUtil.isEmpty(_PORTLET_URL_REFRESH_URL_RESERVED_PARAMETERS)) {
+			return false;
+		}
+
+		for (int i = 0; i < _PORTLET_URL_REFRESH_URL_RESERVED_PARAMETERS.length;
+				i++) {
+
+			String reservedParameter = namespace.concat(
+				_PORTLET_URL_REFRESH_URL_RESERVED_PARAMETERS[i]);
+
+			if (parameter.equals(reservedParameter)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private static final int _CURRENT_URL_PARAMETER_THRESHOLD = 32768;
+
+	private static final String[] _PORTLET_URL_REFRESH_URL_RESERVED_PARAMETERS =
+		PropsUtil.getArray(
+			PropsKeys.PORTLET_URL_REFRESH_URL_RESERVED_PARAMETERS);
 
 }

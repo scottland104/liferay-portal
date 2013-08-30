@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,6 +15,7 @@
 package com.liferay.portal.kernel.messaging.proxy;
 
 import com.liferay.portal.kernel.util.MethodHandler;
+import com.liferay.portal.kernel.util.StringBundler;
 
 import java.io.Serializable;
 
@@ -46,7 +47,7 @@ public class ProxyRequest implements Serializable {
 		}
 
 		if ((messagingProxy != null) &&
-			(messagingProxy.mode().equals(ProxyMode.SYNC))) {
+			messagingProxy.mode().equals(ProxyMode.SYNC)) {
 
 			_synchronous = true;
 		}
@@ -78,6 +79,21 @@ public class ProxyRequest implements Serializable {
 
 	public boolean isSynchronous() {
 		return _synchronous;
+	}
+
+	@Override
+	public String toString() {
+		StringBundler sb = new StringBundler(7);
+
+		sb.append("{hasReturnValue=");
+		sb.append(_hasReturnValue);
+		sb.append(", methodHandler=");
+		sb.append(_methodHandler);
+		sb.append(", synchronous");
+		sb.append(_synchronous);
+		sb.append("}");
+
+		return sb.toString();
 	}
 
 	private boolean _hasReturnValue;

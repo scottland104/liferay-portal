@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,12 +21,15 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortletClassLoaderUtil;
 import com.liferay.portal.kernel.util.AggregateClassLoader;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.security.lang.DoPrivilegedFactory;
 import com.liferay.portal.spring.util.FilterClassLoader;
+import com.liferay.portal.util.ClassLoaderUtil;
 
 import java.io.FileNotFoundException;
 
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
@@ -39,50 +42,17 @@ import org.springframework.web.context.support.XmlWebApplicationContext;
  * </p>
  *
  * @author Brian Wing Shun Chan
- * @see    PortletContextLoader
  * @see    PortletContextLoaderListener
  */
 public class PortletApplicationContext extends XmlWebApplicationContext {
 
-	@Override
-	protected void initBeanDefinitionReader(XmlBeanDefinitionReader reader) {
-		ClassLoader beanClassLoader =
-			AggregateClassLoader.getAggregateClassLoader(
-				new ClassLoader[] {
-					PortletClassLoaderUtil.getClassLoader(),
-					PortalClassLoaderUtil.getClassLoader()
-				});
-
-		beanClassLoader = new FilterClassLoader(beanClassLoader);
-
-		reader.setBeanClassLoader(beanClassLoader);
+	public static ClassLoader getBeanClassLoader() {
+		return _pacl.getBeanClassLoader();
 	}
 
 	@Override
-	protected void loadBeanDefinitions(XmlBeanDefinitionReader reader) {
-		String[] configLocations = getPortletConfigLocations();
-
-		if (configLocations == null) {
-			return;
-		}
-
-		for (String configLocation : configLocations) {
-			try {
-				reader.loadBeanDefinitions(configLocation);
-			}
-			catch (Exception e) {
-				Throwable cause = e.getCause();
-
-				if (cause instanceof FileNotFoundException) {
-					if (_log.isWarnEnabled()) {
-						_log.warn(cause.getMessage());
-					}
-				}
-				else {
-					_log.error(e, e);
-				}
-			}
-		}
+	protected String[] getDefaultConfigLocations() {
+		return new String[0];
 	}
 
 	protected String[] getPortletConfigLocations() {
@@ -111,7 +81,85 @@ public class PortletApplicationContext extends XmlWebApplicationContext {
 				PropsKeys.SPRING_CONFIGS));
 	}
 
+	@Override
+	protected void initBeanDefinitionReader(
+		XmlBeanDefinitionReader xmlBeanDefinitionReader) {
+
+		xmlBeanDefinitionReader.setBeanClassLoader(getBeanClassLoader());
+	}
+
+	protected void injectExplicitBean(
+		Class<?> clazz, BeanDefinitionRegistry beanDefinitionRegistry) {
+
+		beanDefinitionRegistry.registerBeanDefinition(
+			clazz.getName(), new RootBeanDefinition(clazz));
+	}
+
+	protected void injectExplicitBeans(
+		BeanDefinitionRegistry beanDefinitionRegistry) {
+
+		injectExplicitBean(DoPrivilegedFactory.class, beanDefinitionRegistry);
+	}
+
+	@Override
+	protected void loadBeanDefinitions(
+		XmlBeanDefinitionReader xmlBeanDefinitionReader) {
+
+		String[] configLocations = getPortletConfigLocations();
+
+		if (configLocations == null) {
+			return;
+		}
+
+		BeanDefinitionRegistry beanDefinitionRegistry =
+			xmlBeanDefinitionReader.getBeanFactory();
+
+		injectExplicitBeans(beanDefinitionRegistry);
+
+		for (String configLocation : configLocations) {
+			try {
+				xmlBeanDefinitionReader.loadBeanDefinitions(configLocation);
+			}
+			catch (Exception e) {
+				Throwable cause = e.getCause();
+
+				if (cause instanceof FileNotFoundException) {
+					if (_log.isWarnEnabled()) {
+						_log.warn(cause.getMessage());
+					}
+				}
+				else {
+					_log.error(e, e);
+				}
+			}
+		}
+	}
+
 	private static Log _log = LogFactoryUtil.getLog(
 		PortletApplicationContext.class);
+
+	private static PACL _pacl = new NoPACL();
+
+	private static class NoPACL implements PACL {
+
+		@Override
+		public ClassLoader getBeanClassLoader() {
+			ClassLoader beanClassLoader =
+				AggregateClassLoader.getAggregateClassLoader(
+					new ClassLoader[] {
+						PortletClassLoaderUtil.getClassLoader(),
+						ClassLoaderUtil.getPortalClassLoader()
+					});
+
+			return new FilterClassLoader(beanClassLoader);
+		}
+
+	}
+
+	public static interface PACL {
+
+		public ClassLoader getBeanClassLoader();
+
+	}
 
 }

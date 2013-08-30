@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,14 +14,15 @@
 
 package com.liferay.portlet.softwarecatalog.util;
 
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.search.BaseIndexer;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.BooleanQuery;
 import com.liferay.portal.kernel.search.BooleanQueryFactoryUtil;
 import com.liferay.portal.kernel.search.Document;
-import com.liferay.portal.kernel.search.DocumentImpl;
 import com.liferay.portal.kernel.search.Field;
-import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchEngineUtil;
 import com.liferay.portal.kernel.search.Summary;
@@ -29,17 +30,16 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PortletKeys;
 import com.liferay.portlet.softwarecatalog.model.SCProductEntry;
 import com.liferay.portlet.softwarecatalog.model.SCProductVersion;
 import com.liferay.portlet.softwarecatalog.service.SCProductEntryLocalServiceUtil;
+import com.liferay.portlet.softwarecatalog.service.persistence.SCProductEntryActionableDynamicQuery;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Locale;
 
 import javax.portlet.PortletURL;
@@ -61,20 +61,22 @@ public class SCIndexer extends BaseIndexer {
 		setStagingAware(false);
 	}
 
+	@Override
 	public String[] getClassNames() {
 		return CLASS_NAMES;
+	}
+
+	@Override
+	public String getPortletId() {
+		return PORTLET_ID;
 	}
 
 	@Override
 	protected void doDelete(Object obj) throws Exception {
 		SCProductEntry productEntry = (SCProductEntry)obj;
 
-		Document document = new DocumentImpl();
-
-		document.addUID(PORTLET_ID, productEntry.getProductEntryId());
-
-		SearchEngineUtil.deleteDocument(
-			productEntry.getCompanyId(), document.get(Field.UID));
+		deleteDocument(
+			productEntry.getCompanyId(), productEntry.getProductEntryId());
 	}
 
 	@Override
@@ -143,21 +145,18 @@ public class SCIndexer extends BaseIndexer {
 		Document document, Locale locale, String snippet,
 		PortletURL portletURL) {
 
-		String title = document.get(Field.TITLE);
-
-		String content = snippet;
-
-		if (Validator.isNull(snippet)) {
-			content = StringUtil.shorten(document.get(Field.CONTENT), 200);
-		}
-
 		String productEntryId = document.get(Field.ENTRY_CLASS_PK);
 
 		portletURL.setParameter(
 			"struts_action", "/software_catalog/view_product_entry");
 		portletURL.setParameter("productEntryId", productEntryId);
 
-		return new Summary(title, content, portletURL);
+		Summary summary = createSummary(document, Field.TITLE, Field.CONTENT);
+
+		summary.setMaxContentLength(200);
+		summary.setPortletURL(portletURL);
+
+		return summary;
 	}
 
 	@Override
@@ -166,7 +165,8 @@ public class SCIndexer extends BaseIndexer {
 
 		Document document = getDocument(productEntry);
 
-		SearchEngineUtil.updateDocument(productEntry.getCompanyId(), document);
+		SearchEngineUtil.updateDocument(
+			getSearchEngineId(), productEntry.getCompanyId(), document);
 	}
 
 	@Override
@@ -206,41 +206,31 @@ public class SCIndexer extends BaseIndexer {
 		}
 	}
 
-	protected void reindexProductEntries(long companyId) throws Exception {
-		int count =
-			SCProductEntryLocalServiceUtil.getCompanyProductEntriesCount(
-				companyId);
+	protected void reindexProductEntries(long companyId)
+		throws PortalException, SystemException {
 
-		int pages = count / Indexer.DEFAULT_INTERVAL;
+		final Collection<Document> documents = new ArrayList<Document>();
 
-		for (int i = 0; i <= pages; i++) {
-			int start = (i * Indexer.DEFAULT_INTERVAL);
-			int end = start + Indexer.DEFAULT_INTERVAL;
+		ActionableDynamicQuery actionableDynamicQuery =
+			new SCProductEntryActionableDynamicQuery() {
 
-			reindexProductEntries(companyId, start, end);
-		}
-	}
+			@Override
+			protected void performAction(Object object) throws PortalException {
+				SCProductEntry productEntry = (SCProductEntry)object;
 
-	protected void reindexProductEntries(long companyId, int start, int end)
-		throws Exception {
+				Document document = getDocument(productEntry);
 
-		List<SCProductEntry> productEntries =
-			SCProductEntryLocalServiceUtil.getCompanyProductEntries(
-				companyId, start, end);
+				documents.add(document);
+			}
 
-		if (productEntries.isEmpty()) {
-			return;
-		}
+		};
 
-		Collection<Document> documents = new ArrayList<Document>();
+		actionableDynamicQuery.setCompanyId(companyId);
 
-		for (SCProductEntry productEntry : productEntries) {
-			Document document = getDocument(productEntry);
+		actionableDynamicQuery.performActions();
 
-			documents.add(document);
-		}
-
-		SearchEngineUtil.updateDocuments(companyId, documents);
+		SearchEngineUtil.updateDocuments(
+			getSearchEngineId(), companyId, documents);
 	}
 
 }

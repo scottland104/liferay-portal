@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -28,11 +28,6 @@ import javax.portlet.PortletPreferences;
  */
 public class InvitationUtil {
 
-	public static int getEmailMessageMaxRecipients() {
-		return GetterUtil.getInteger(PropsUtil.get(
-			PropsKeys.INVITATION_EMAIL_MAX_RECIPIENTS));
-	}
-
 	public static String getEmailMessageBody(PortletPreferences preferences) {
 		String emailMessageBody = preferences.getValue(
 			"emailMessageBody", StringPool.BLANK);
@@ -41,9 +36,14 @@ public class InvitationUtil {
 			return emailMessageBody;
 		}
 		else {
-			return ContentUtil.get(PropsUtil.get(
-				PropsKeys.INVITATION_EMAIL_MESSAGE_BODY));
+			return ContentUtil.get(
+				PropsUtil.get(PropsKeys.INVITATION_EMAIL_MESSAGE_BODY));
 		}
+	}
+
+	public static int getEmailMessageMaxRecipients() {
+		return GetterUtil.getInteger(
+			PropsUtil.get(PropsKeys.INVITATION_EMAIL_MAX_RECIPIENTS));
 	}
 
 	public static String getEmailMessageSubject(
@@ -56,8 +56,8 @@ public class InvitationUtil {
 			return emailMessageSubject;
 		}
 		else {
-			return ContentUtil.get(PropsUtil.get(
-				PropsKeys.INVITATION_EMAIL_MESSAGE_SUBJECT));
+			return ContentUtil.get(
+				PropsUtil.get(PropsKeys.INVITATION_EMAIL_MESSAGE_SUBJECT));
 		}
 	}
 

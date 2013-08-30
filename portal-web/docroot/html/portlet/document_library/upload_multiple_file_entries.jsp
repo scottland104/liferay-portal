@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -41,11 +41,11 @@ long folderId = BeanParamUtil.getLong(fileEntry, request, "folderId");
 
 <liferay-ui:header
 	backURL="<%= backURL %>"
-	title="add-multiple-documents"
+	title='<%= portletName.equals(PortletKeys.MEDIA_GALLERY_DISPLAY) ? "add-multiple-media" : "add-multiple-documents" %>'
 />
 
-<aui:layout>
-	<aui:column columnWidth="50">
+<aui:row>
+	<aui:col width="<%= 50 %>">
 		<aui:form name="fm1">
 			<div class="lfr-dynamic-uploader">
 				<div class="lfr-upload-container" id="<portlet:namespace />fileUpload"></div>
@@ -61,16 +61,15 @@ long folderId = BeanParamUtil.getLong(fileEntry, request, "folderId");
 		<aui:script use="liferay-upload">
 			new Liferay.Upload(
 				{
-					allowedFileTypes: '<%= StringUtil.merge(PrefsPropsUtil.getStringArray(PropsKeys.DL_FILE_EXTENSIONS, StringPool.COMMA)) %>',
-					container: '#<portlet:namespace />fileUpload',
+					boundingBox: '#<portlet:namespace />fileUpload',
 					deleteFile: '<liferay-portlet:actionURL doAsUserId="<%= user.getUserId() %>"><portlet:param name="struts_action" value="/document_library/edit_file_entry" /><portlet:param name="<%= Constants.CMD %>" value="<%= Constants.DELETE_TEMP %>" /><portlet:param name="folderId" value="<%= String.valueOf(folderId) %>" /></liferay-portlet:actionURL>&ticketKey=<%= ticket.getKey() %><liferay-ui:input-permissions-params modelName="<%= DLFileEntryConstants.getClassName() %>" />',
 					fileDescription: '<%= StringUtil.merge(PrefsPropsUtil.getStringArray(PropsKeys.DL_FILE_EXTENSIONS, StringPool.COMMA)) %>',
-					maxFileSize: <%= PrefsPropsUtil.getLong(PropsKeys.DL_FILE_MAX_SIZE) %> / 1024,
+					maxFileSize: '<%= PrefsPropsUtil.getLong(PropsKeys.DL_FILE_MAX_SIZE) %> B',
 					metadataContainer: '#<portlet:namespace />commonFileMetadataContainer',
 					metadataExplanationContainer: '#<portlet:namespace />metadataExplanationContainer',
 					namespace: '<portlet:namespace />',
-					service: {
-						method: Liferay.Service.DL.DLApp.getTempFileEntryNames,
+					tempFileURL: {
+						method: Liferay.Service.bind('/dlapp/get-temp-file-entry-names'),
 						params: {
 							groupId: <%= scopeGroupId %>,
 							folderId: <%= folderId %>,
@@ -81,22 +80,11 @@ long folderId = BeanParamUtil.getLong(fileEntry, request, "folderId");
 				}
 			);
 		</aui:script>
-	</aui:column>
-	<aui:column columnWidth="50">
-		<portlet:actionURL var="editMultipleFileEntriesURL">
-			<portlet:param name="struts_action" value="document_library/edit_file_entry" />
-			<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.ADD_MULTIPLE %>" />
-		</portlet:actionURL>
-
-		<aui:form action="<%= editMultipleFileEntriesURL %>" method="post" name="fm2" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "updateMultipleFiles();" %>'>
-			<div class="no-files-selected-info portlet-msg-info aui-helper-hidden" id="<portlet:namespace />metadataExplanationContainer">
-				<liferay-ui:message key="select-documents-from-the-left-to-add-them-to-the-document-library" />
-			</div>
-
-			<div class="common-file-metadata-container aui-helper-hidden selected" id="<portlet:namespace />commonFileMetadataContainer">
-				<liferay-util:include page="/html/portlet/document_library/upload_multiple_file_entries_resources.jsp" />
-			</div>
-		</aui:form>
+	</aui:col>
+	<aui:col width="<%= 50 %>">
+		<div class="common-file-metadata-container hide selected" id="<portlet:namespace />commonFileMetadataContainer">
+			<liferay-util:include page="/html/portlet/document_library/upload_multiple_file_entries_resources.jsp" />
+		</div>
 
 		<%
 		DLUtil.addPortletBreadcrumbEntries(folderId, request, renderResponse);
@@ -150,7 +138,7 @@ long folderId = BeanParamUtil.getLong(fileEntry, request, "folderId");
 									for (var i = 0; i < jsonArray.length; i++) {
 										var item = jsonArray[i];
 
-										var checkBox = A.one('input[data-fileName=' + item.fileName + ']');
+										var checkBox = A.one('input[data-fileName="' + item.fileName + '"]');
 
 										var li = checkBox.ancestor();
 
@@ -164,7 +152,7 @@ long folderId = BeanParamUtil.getLong(fileEntry, request, "folderId");
 										if (item.added) {
 											cssClass = 'file-saved';
 
-											childHTML = '<span class="success-message"><%= LanguageUtil.get(pageContext, "successfully-saved") %></span>';
+											childHTML = '<span class="success-message"><%= UnicodeLanguageUtil.get(pageContext, "successfully-saved") %></span>';
 										}
 										else {
 											cssClass = 'upload-error';
@@ -182,7 +170,12 @@ long folderId = BeanParamUtil.getLong(fileEntry, request, "folderId");
 										<portlet:param name="folderId" value="<%= String.valueOf(folderId) %>" />
 									</liferay-portlet:resourceURL>
 
-									commonFileMetadataContainer.load('<%= uploadMultipleFileEntries %>');
+									if (commonFileMetadataContainer.io) {
+										commonFileMetadataContainer.io.start();
+									}
+									else {
+										commonFileMetadataContainer.load('<%= uploadMultipleFileEntries %>');
+									}
 
 									Liferay.fire('filesSaved');
 								},
@@ -191,7 +184,7 @@ long folderId = BeanParamUtil.getLong(fileEntry, request, "folderId");
 
 									selectedItems.removeClass('selectable').removeClass('selected').addClass('upload-error');
 
-									selectedItems.append('<span class="error-message"><%= LanguageUtil.get(pageContext, "an-unexpected-error-occurred-while-deleting-the-file") %></span>');
+									selectedItems.append('<span class="error-message"><%= UnicodeLanguageUtil.get(pageContext, "an-unexpected-error-occurred-while-deleting-the-file") %></span>');
 
 									selectedItems.all('input').remove(true);
 
@@ -204,5 +197,5 @@ long folderId = BeanParamUtil.getLong(fileEntry, request, "folderId");
 				['aui-base']
 			);
 		</aui:script>
-	</aui:column>
-</aui:layout>
+	</aui:col>
+</aui:row>

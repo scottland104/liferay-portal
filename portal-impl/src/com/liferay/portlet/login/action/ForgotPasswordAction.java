@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portlet.login.action;
 import com.liferay.portal.NoSuchUserException;
 import com.liferay.portal.RequiredReminderQueryException;
 import com.liferay.portal.SendPasswordException;
+import com.liferay.portal.UserActiveException;
 import com.liferay.portal.UserEmailAddressException;
 import com.liferay.portal.UserReminderQueryException;
 import com.liferay.portal.kernel.captcha.CaptchaException;
@@ -28,6 +29,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.Company;
 import com.liferay.portal.model.User;
+import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.theme.ThemeDisplay;
@@ -56,9 +58,19 @@ public class ForgotPasswordAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		Company company = themeDisplay.getCompany();
+
+		if (!company.isSendPassword() && !company.isSendPasswordResetLink()) {
+			throw new PrincipalException();
+		}
 
 		try {
 			if (PropsValues.USERS_REMINDER_QUERIES_ENABLED) {
@@ -75,10 +87,11 @@ public class ForgotPasswordAction extends PortletAction {
 				e instanceof NoSuchUserException ||
 				e instanceof RequiredReminderQueryException ||
 				e instanceof SendPasswordException ||
+				e instanceof UserActiveException ||
 				e instanceof UserEmailAddressException ||
 				e instanceof UserReminderQueryException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 			}
 			else {
 				PortalUtil.sendError(e, actionRequest, actionResponse);
@@ -88,16 +101,23 @@ public class ForgotPasswordAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)renderRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
+		Company company = themeDisplay.getCompany();
+
+		if (!company.isSendPassword() && !company.isSendPasswordResetLink()) {
+			return actionMapping.findForward("portlet.login.login");
+		}
+
 		renderResponse.setTitle(themeDisplay.translate("forgot-password"));
 
-		return mapping.findForward("portlet.login.forgot_password");
+		return actionMapping.findForward("portlet.login.forgot_password");
 	}
 
 	protected void checkCaptcha(ActionRequest actionRequest)
@@ -134,9 +154,8 @@ public class ForgotPasswordAction extends PortletAction {
 		actionRequest.setAttribute(WebKeys.FORGOT_PASSWORD_REMINDER_USER, user);
 
 		if (step == 2) {
-			Integer reminderAttempts =
-				(Integer)portletSession.getAttribute(
-					WebKeys.FORGOT_PASSWORD_REMINDER_ATTEMPTS);
+			Integer reminderAttempts = (Integer)portletSession.getAttribute(
+				WebKeys.FORGOT_PASSWORD_REMINDER_ATTEMPTS);
 
 			if (reminderAttempts == null) {
 				reminderAttempts = 0;
@@ -154,9 +173,7 @@ public class ForgotPasswordAction extends PortletAction {
 		}
 	}
 
-	protected User getUser(ActionRequest actionRequest)
-		throws Exception {
-
+	protected User getUser(ActionRequest actionRequest) throws Exception {
 		PortletSession portletSession = actionRequest.getPortletSession();
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
@@ -170,28 +187,32 @@ public class ForgotPasswordAction extends PortletAction {
 		if (Validator.isNotNull(sessionEmailAddress)) {
 			user = UserLocalServiceUtil.getUserByEmailAddress(
 				themeDisplay.getCompanyId(), sessionEmailAddress);
-
-			return user;
-		}
-
-		long userId = ParamUtil.getLong(actionRequest, "userId");
-		String screenName = ParamUtil.getString(actionRequest, "screenName");
-		String emailAddress = ParamUtil.getString(
-			actionRequest, "emailAddress");
-
-		if (Validator.isNotNull(emailAddress)) {
-			user = UserLocalServiceUtil.getUserByEmailAddress(
-				themeDisplay.getCompanyId(), emailAddress);
-		}
-		else if (Validator.isNotNull(screenName)) {
-			user = UserLocalServiceUtil.getUserByScreenName(
-				themeDisplay.getCompanyId(), screenName);
-		}
-		else if (userId > 0) {
-			user = UserLocalServiceUtil.getUserById(userId);
 		}
 		else {
-			throw new NoSuchUserException();
+			long userId = ParamUtil.getLong(actionRequest, "userId");
+			String screenName = ParamUtil.getString(
+				actionRequest, "screenName");
+			String emailAddress = ParamUtil.getString(
+				actionRequest, "emailAddress");
+
+			if (Validator.isNotNull(emailAddress)) {
+				user = UserLocalServiceUtil.getUserByEmailAddress(
+					themeDisplay.getCompanyId(), emailAddress);
+			}
+			else if (Validator.isNotNull(screenName)) {
+				user = UserLocalServiceUtil.getUserByScreenName(
+					themeDisplay.getCompanyId(), screenName);
+			}
+			else if (userId > 0) {
+				user = UserLocalServiceUtil.getUserById(userId);
+			}
+			else {
+				throw new NoSuchUserException();
+			}
+		}
+
+		if (!user.isActive()) {
+			throw new UserActiveException();
 		}
 
 		return user;
@@ -229,12 +250,13 @@ public class ForgotPasswordAction extends PortletAction {
 			}
 		}
 
-		PortletPreferences preferences = actionRequest.getPreferences();
+		PortletPreferences portletPreferences = actionRequest.getPreferences();
 
 		String languageId = LanguageUtil.getLanguageId(actionRequest);
 
-		String emailFromName = preferences.getValue("emailFromName", null);
-		String emailFromAddress = preferences.getValue(
+		String emailFromName = portletPreferences.getValue(
+			"emailFromName", null);
+		String emailFromAddress = portletPreferences.getValue(
 			"emailFromAddress", null);
 		String emailToAddress = user.getEmailAddress();
 
@@ -244,9 +266,9 @@ public class ForgotPasswordAction extends PortletAction {
 			emailParam = "emailPasswordReset";
 		}
 
-		String subject = preferences.getValue(
+		String subject = portletPreferences.getValue(
 			emailParam + "Subject_" + languageId, null);
-		String body = preferences.getValue(
+		String body = portletPreferences.getValue(
 			emailParam + "Body_" + languageId, null);
 
 		LoginUtil.sendPassword(

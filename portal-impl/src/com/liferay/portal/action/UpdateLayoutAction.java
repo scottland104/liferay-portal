@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,36 +16,35 @@ package com.liferay.portal.action;
 
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.portlet.PortletJSONUtil;
+import com.liferay.portal.kernel.servlet.BufferCacheServletResponse;
+import com.liferay.portal.kernel.servlet.DynamicServletRequest;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
-import com.liferay.portal.kernel.servlet.StringServletResponse;
 import com.liferay.portal.kernel.staging.StagingUtil;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ContentTypes;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.InstancePool;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropertiesParamUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.Layout;
 import com.liferay.portal.model.LayoutRevision;
 import com.liferay.portal.model.LayoutTypePortlet;
 import com.liferay.portal.model.Portlet;
-import com.liferay.portal.model.PortletApp;
-import com.liferay.portal.model.PortletConstants;
-import com.liferay.portal.model.ResourceConstants;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.service.LayoutRevisionLocalServiceUtil;
 import com.liferay.portal.service.LayoutServiceUtil;
 import com.liferay.portal.service.PortletLocalServiceUtil;
-import com.liferay.portal.service.ResourceLocalServiceUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextFactory;
 import com.liferay.portal.service.permission.LayoutPermissionUtil;
-import com.liferay.portal.service.permission.PortletPermissionUtil;
 import com.liferay.portal.servlet.NamespaceServletRequest;
 import com.liferay.portal.struts.JSONAction;
 import com.liferay.portal.theme.ThemeDisplay;
@@ -54,10 +53,9 @@ import com.liferay.portal.util.LayoutCloneFactory;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.PortletPreferencesFactoryUtil;
-import com.liferay.util.servlet.DynamicServletRequest;
-
-import java.util.LinkedHashSet;
-import java.util.Set;
+import com.liferay.portlet.asset.AssetRendererFactoryRegistryUtil;
+import com.liferay.portlet.asset.model.AssetRenderer;
+import com.liferay.portlet.asset.model.AssetRendererFactory;
 
 import javax.portlet.PortletPreferences;
 
@@ -75,8 +73,8 @@ public class UpdateLayoutAction extends JSONAction {
 
 	@Override
 	public String getJSON(
-			ActionMapping mapping, ActionForm form, HttpServletRequest request,
-			HttpServletResponse response)
+			ActionMapping actionMapping, ActionForm actionForm,
+			HttpServletRequest request, HttpServletResponse response)
 		throws Exception {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
@@ -96,7 +94,6 @@ public class UpdateLayoutAction extends JSONAction {
 		String portletId = ParamUtil.getString(request, "p_p_id");
 
 		boolean updateLayout = true;
-		boolean deletePortlet = false;
 
 		if (cmd.equals(Constants.ADD)) {
 			String columnId = ParamUtil.getString(request, "p_p_col_id", null);
@@ -104,6 +101,9 @@ public class UpdateLayoutAction extends JSONAction {
 
 			portletId = layoutTypePortlet.addPortletId(
 				userId, portletId, columnId, columnPos);
+
+			storeAddContentPortletPreferences(
+				request, layout, portletId, themeDisplay);
 
 			if (layoutTypePortlet.isCustomizable() &&
 				layoutTypePortlet.isCustomizedView() &&
@@ -120,25 +120,19 @@ public class UpdateLayoutAction extends JSONAction {
 					layoutTypePortlet.isCustomizedView()) {
 
 					updateLayout = false;
-					deletePortlet = false;
-				}
-				else {
-					deletePortlet = true;
 				}
 			}
 		}
 		else if (cmd.equals("drag")) {
 			if (LayoutPermissionUtil.contains(
-					permissionChecker, layout.getGroupId(),
-					layout.isPrivateLayout(), layout.getLayoutId(),
-					ActionKeys.UPDATE)) {
+					permissionChecker, layout, ActionKeys.UPDATE)) {
 
 				String height = ParamUtil.getString(request, "height");
 				String width = ParamUtil.getString(request, "width");
 				String top = ParamUtil.getString(request, "top");
 				String left = ParamUtil.getString(request, "left");
 
-				PortletPreferences preferences =
+				PortletPreferences portletPreferences =
 					PortletPreferencesFactoryUtil.getLayoutPortletSetup(
 						layout, portletId);
 
@@ -157,9 +151,10 @@ public class UpdateLayoutAction extends JSONAction {
 				sb.append(left);
 				sb.append("\n");
 
-				preferences.setValue("portlet-freeform-styles", sb.toString());
+				portletPreferences.setValue(
+					"portlet-freeform-styles", sb.toString());
 
-				preferences.store();
+				portletPreferences.store();
 			}
 		}
 		else if (cmd.equals("minimize")) {
@@ -261,20 +256,6 @@ public class UpdateLayoutAction extends JSONAction {
 			layout = LayoutServiceUtil.updateLayout(
 				layout.getGroupId(), layout.isPrivateLayout(),
 				layout.getLayoutId(), layout.getTypeSettings());
-
-			// See LEP-1411. Delay the delete of extraneous portlet resources
-			// only after the user has proven that he has the valid permissions.
-
-			if (deletePortlet) {
-				String rootPortletId = PortletConstants.getRootPortletId(
-					portletId);
-
-				ResourceLocalServiceUtil.deleteResource(
-					layout.getCompanyId(), rootPortletId,
-					ResourceConstants.SCOPE_INDIVIDUAL,
-					PortletPermissionUtil.getPrimaryKey(
-						layout.getPlid(), portletId));
-			}
 		}
 		else {
 			LayoutClone layoutClone = LayoutCloneFactory.getInstance();
@@ -286,15 +267,16 @@ public class UpdateLayoutAction extends JSONAction {
 		}
 
 		if (cmd.equals(Constants.ADD) && (portletId != null)) {
-			addPortlet(mapping, form, request, response, portletId);
+			addPortlet(actionMapping, actionForm, request, response, portletId);
 		}
 
 		return StringPool.BLANK;
 	}
 
 	protected void addPortlet(
-			ActionMapping mapping, ActionForm form, HttpServletRequest request,
-			HttpServletResponse response, String portletId)
+			ActionMapping actionMapping, ActionForm actionForm,
+			HttpServletRequest request, HttpServletResponse response,
+			String portletId)
 		throws Exception {
 
 		// Run the render portlet action to add a portlet without refreshing.
@@ -313,8 +295,8 @@ public class UpdateLayoutAction extends JSONAction {
 		DynamicServletRequest dynamicRequest = null;
 
 		if (portlet.isPrivateRequestAttributes()) {
-			String portletNamespace =
-				PortalUtil.getPortletNamespace(portlet.getPortletId());
+			String portletNamespace = PortalUtil.getPortletNamespace(
+				portlet.getPortletId());
 
 			dynamicRequest = new NamespaceServletRequest(
 				request, portletNamespace, portletNamespace);
@@ -330,216 +312,65 @@ public class UpdateLayoutAction extends JSONAction {
 		if (dataType.equals("json")) {
 			JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
 
-			StringServletResponse stringResponse = new StringServletResponse(
-				response);
+			BufferCacheServletResponse bufferCacheServletResponse =
+				new BufferCacheServletResponse(response);
 
 			renderPortletAction.execute(
-				mapping, form, dynamicRequest, stringResponse);
+				actionMapping, actionForm, dynamicRequest,
+				bufferCacheServletResponse);
 
-			populatePortletJSONObject(
-				request, stringResponse, portlet, jsonObject);
+			String portletHTML = bufferCacheServletResponse.getString();
 
-			response.setContentType(ContentTypes.TEXT_JAVASCRIPT);
+			portletHTML = portletHTML.trim();
+
+			PortletJSONUtil.populatePortletJSONObject(
+				request, portletHTML, portlet, jsonObject);
+
+			response.setContentType(ContentTypes.APPLICATION_JSON);
 
 			ServletResponseUtil.write(response, jsonObject.toString());
 		}
 		else {
 			renderPortletAction.execute(
-				mapping, form, dynamicRequest, response);
+				actionMapping, actionForm, dynamicRequest, response);
 		}
 	}
 
-	protected String getRootPortletId(Portlet portlet) {
-
-		// Workaround for portlet.getRootPortletId() because that does not
-		// return the proper root portlet ID for OpenSocial and WSRP portlets
-
-		Portlet rootPortlet = portlet.getRootPortlet();
-
-		return rootPortlet.getPortletId();
-	}
-
-	protected void populatePortletJSONObject(
-			HttpServletRequest request, StringServletResponse stringResponse,
-			Portlet portlet, JSONObject jsonObject)
+	protected void storeAddContentPortletPreferences(
+			HttpServletRequest request, Layout layout, String portletId,
+			ThemeDisplay themeDisplay)
 		throws Exception {
 
-		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
-			WebKeys.THEME_DISPLAY);
+		String[] portletData = StringUtil.split(
+			ParamUtil.getString(request, "portletData"));
 
-		LayoutTypePortlet layoutTypePortlet =
-			themeDisplay.getLayoutTypePortlet();
-
-		jsonObject.put("refresh", !portlet.isAjaxable());
-		jsonObject.put("portletHTML", stringResponse.getString().trim());
-
-		Set<String> footerCssSet = new LinkedHashSet<String>();
-		Set<String> footerJavaScriptSet = new LinkedHashSet<String>();
-		Set<String> headerCssSet = new LinkedHashSet<String>();
-		Set<String> headerJavaScriptSet = new LinkedHashSet<String>();
-
-		boolean portletOnLayout = false;
-
-		String rootPortletId = getRootPortletId(portlet);
-		String portletId = portlet.getPortletId();
-
-		for (Portlet layoutPortlet : layoutTypePortlet.getAllPortlets()) {
-
-			// Check to see if an instance of this portlet is already in the
-			// layout, but ignore the portlet that was just added
-
-			String layoutPortletRootPortletId = getRootPortletId(layoutPortlet);
-
-			if (rootPortletId.equals(layoutPortletRootPortletId) &&
-				!portletId.equals(layoutPortlet.getPortletId())) {
-
-				portletOnLayout = true;
-
-				break;
-			}
+		if (portletData.length == 0) {
+			return;
 		}
 
-		PortletApp portletApp = portlet.getPortletApp();
+		long classPK = GetterUtil.getLong(portletData[0]);
 
-		if (!portletOnLayout && portlet.isAjaxable()) {
-			Portlet rootPortlet = portlet.getRootPortlet();
+		String className = GetterUtil.getString(portletData[1]);
 
-			for (String footerPortalCss : portlet.getFooterPortalCss()) {
-				if (!HttpUtil.hasProtocol(footerPortalCss)) {
-					footerPortalCss =
-						portletApp.getContextPath() + footerPortalCss;
-
-					footerPortalCss = PortalUtil.getStaticResourceURL(
-						request, footerPortalCss, rootPortlet.getTimestamp());
-				}
-
-				footerCssSet.add(footerPortalCss);
-			}
-
-			for (String footerPortalJavaScript :
-					portlet.getFooterPortalJavaScript()) {
-
-				if (!HttpUtil.hasProtocol(footerPortalJavaScript)) {
-					footerPortalJavaScript =
-						portletApp.getContextPath() + footerPortalJavaScript;
-
-					footerPortalJavaScript = PortalUtil.getStaticResourceURL(
-						request, footerPortalJavaScript,
-						rootPortlet.getTimestamp());
-				}
-
-				footerJavaScriptSet.add(footerPortalJavaScript);
-			}
-
-			for (String footerPortletCss : portlet.getFooterPortletCss()) {
-				if (!HttpUtil.hasProtocol(footerPortletCss)) {
-					footerPortletCss =
-						portletApp.getContextPath() + footerPortletCss;
-
-					footerPortletCss = PortalUtil.getStaticResourceURL(
-						request, footerPortletCss, rootPortlet.getTimestamp());
-				}
-
-				footerCssSet.add(footerPortletCss);
-			}
-
-			for (String footerPortletJavaScript :
-					portlet.getFooterPortletJavaScript()) {
-
-				if (!HttpUtil.hasProtocol(footerPortletJavaScript)) {
-					footerPortletJavaScript =
-						portletApp.getContextPath() + footerPortletJavaScript;
-
-					footerPortletJavaScript = PortalUtil.getStaticResourceURL(
-						request, footerPortletJavaScript,
-						rootPortlet.getTimestamp());
-				}
-
-				footerJavaScriptSet.add(footerPortletJavaScript);
-			}
-
-			for (String headerPortalCss : portlet.getHeaderPortalCss()) {
-				if (!HttpUtil.hasProtocol(headerPortalCss)) {
-					headerPortalCss =
-						portletApp.getContextPath() + headerPortalCss;
-
-					headerPortalCss = PortalUtil.getStaticResourceURL(
-						request, headerPortalCss, rootPortlet.getTimestamp());
-				}
-
-				headerCssSet.add(headerPortalCss);
-			}
-
-			for (String headerPortalJavaScript :
-					portlet.getHeaderPortalJavaScript()) {
-
-				if (!HttpUtil.hasProtocol(headerPortalJavaScript)) {
-					headerPortalJavaScript =
-						portletApp.getContextPath() + headerPortalJavaScript;
-
-					headerPortalJavaScript = PortalUtil.getStaticResourceURL(
-						request, headerPortalJavaScript,
-						rootPortlet.getTimestamp());
-				}
-
-				headerJavaScriptSet.add(headerPortalJavaScript);
-			}
-
-			for (String headerPortletCss : portlet.getHeaderPortletCss()) {
-				if (!HttpUtil.hasProtocol(headerPortletCss)) {
-					headerPortletCss =
-						portletApp.getContextPath() + headerPortletCss;
-
-					headerPortletCss = PortalUtil.getStaticResourceURL(
-						request, headerPortletCss, rootPortlet.getTimestamp());
-				}
-
-				headerCssSet.add(headerPortletCss);
-			}
-
-			for (String headerPortletJavaScript :
-					portlet.getHeaderPortletJavaScript()) {
-
-				if (!HttpUtil.hasProtocol(headerPortletJavaScript)) {
-					headerPortletJavaScript =
-						portletApp.getContextPath() + headerPortletJavaScript;
-
-					headerPortletJavaScript = PortalUtil.getStaticResourceURL(
-						request, headerPortletJavaScript,
-						rootPortlet.getTimestamp());
-				}
-
-				headerJavaScriptSet.add(headerPortletJavaScript);
-			}
+		if ((classPK <= 0) || Validator.isNull(className)) {
+			return;
 		}
 
-		String footerCssPaths = JSONFactoryUtil.serialize(
-			footerCssSet.toArray(new String[footerCssSet.size()]));
+		AssetRendererFactory assetRendererFactory =
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(
+				className);
 
-		jsonObject.put(
-			"footerCssPaths", JSONFactoryUtil.createJSONArray(footerCssPaths));
+		AssetRenderer assetRenderer = assetRendererFactory.getAssetRenderer(
+			classPK);
 
-		String footerJavaScriptPaths = JSONFactoryUtil.serialize(
-			footerJavaScriptSet.toArray(
-				new String[footerJavaScriptSet.size()]));
+		PortletPreferences portletSetup =
+			PortletPreferencesFactoryUtil.getLayoutPortletSetup(
+				layout, portletId);
 
-		jsonObject.put(
-			"footerJavaScriptPaths",
-			JSONFactoryUtil.createJSONArray(footerJavaScriptPaths));
+		assetRenderer.setAddToPagePreferences(
+			portletSetup, portletId, themeDisplay);
 
-		String headerCssPaths = JSONFactoryUtil.serialize(
-			headerCssSet.toArray(new String[headerCssSet.size()]));
-
-		jsonObject.put(
-			"headerCssPaths", JSONFactoryUtil.createJSONArray(headerCssPaths));
-
-		String headerJavaScriptPaths = JSONFactoryUtil.serialize(
-			headerJavaScriptSet.toArray(
-				new String[headerJavaScriptSet.size()]));
-
-		jsonObject.put(
-			"headerJavaScriptPaths",
-			JSONFactoryUtil.createJSONArray(headerJavaScriptPaths));
+		portletSetup.store();
 	}
 
 }

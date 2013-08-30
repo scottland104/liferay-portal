@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -41,9 +41,9 @@ import com.liferay.portlet.messageboards.service.MBMessageLocalServiceUtil;
 import com.liferay.portlet.messageboards.service.MBMessageServiceUtil;
 import com.liferay.portlet.messageboards.service.MBThreadServiceUtil;
 
-import java.io.File;
+import java.io.InputStream;
 
-import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -64,8 +64,9 @@ public class SplitThreadAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		try {
@@ -75,7 +76,7 @@ public class SplitThreadAction extends PortletAction {
 			if (e instanceof PrincipalException ||
 				e instanceof RequiredMessageException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				setForward(actionRequest, "portlet.message_boards.error");
 			}
@@ -84,7 +85,7 @@ public class SplitThreadAction extends PortletAction {
 					 e instanceof NoSuchThreadException ||
 					 e instanceof SplitThreadException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 			}
 			else {
 				throw e;
@@ -94,8 +95,9 @@ public class SplitThreadAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -105,16 +107,17 @@ public class SplitThreadAction extends PortletAction {
 			if (e instanceof NoSuchMessageException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(renderRequest, e.getClass().getName());
+				SessionErrors.add(renderRequest, e.getClass());
 
-				return mapping.findForward("portlet.message_boards.error");
+				return actionMapping.findForward(
+					"portlet.message_boards.error");
 			}
 			else {
 				throw e;
 			}
 		}
 
-		return mapping.findForward(
+		return actionMapping.findForward(
 			getForward(renderRequest, "portlet.message_boards.split_thread"));
 	}
 
@@ -122,7 +125,7 @@ public class SplitThreadAction extends PortletAction {
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
-		PortletPreferences preferences = actionRequest.getPreferences();
+		PortletPreferences portletPreferences = actionRequest.getPreferences();
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
@@ -137,7 +140,6 @@ public class SplitThreadAction extends PortletAction {
 
 		MBMessage message = MBMessageLocalServiceUtil.getMessage(messageId);
 
-		long oldThreadId = message.getThreadId();
 		long oldParentMessageId = message.getParentMessageId();
 
 		MBThread newThread = MBThreadServiceUtil.splitThread(
@@ -151,7 +153,7 @@ public class SplitThreadAction extends PortletAction {
 			String body = ParamUtil.getString(actionRequest, "body");
 
 			String format = GetterUtil.getString(
-				preferences.getValue("messageFormat", null),
+				portletPreferences.getValue("messageFormat", null),
 				MBMessageConstants.DEFAULT_FORMAT);
 
 			String layoutFullURL = PortalUtil.getLayoutFullURL(themeDisplay);
@@ -161,22 +163,15 @@ public class SplitThreadAction extends PortletAction {
 					message.getMessageId();
 
 			body = StringUtil.replace(
-				body,
-				new String[] {
-					"${newThreadURL}",
-				},
-				new String[] {
-					newThreadURL
-				});
+				body, MBThreadConstants.NEW_THREAD_URL, newThreadURL);
 
 			serviceContext.setAddGroupPermissions(true);
 			serviceContext.setAddGuestPermissions(true);
 
 			MBMessageServiceUtil.addMessage(
-				message.getGroupId(), message.getCategoryId(), oldThreadId,
 				oldParentMessageId, subject, body, format,
-				new ArrayList<ObjectValuePair<String, File>>(), false,
-				MBThreadConstants.PRIORITY_NOT_GIVEN,
+				Collections.<ObjectValuePair<String, InputStream>>emptyList(),
+				false, MBThreadConstants.PRIORITY_NOT_GIVEN,
 				message.getAllowPingbacks(), serviceContext);
 		}
 

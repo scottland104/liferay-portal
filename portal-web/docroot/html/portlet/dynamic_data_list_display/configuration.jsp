@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,6 +26,10 @@ DDLRecordSet selRecordSet = null;
 try {
 	if (Validator.isNotNull(recordSetId)) {
 		selRecordSet = DDLRecordSetLocalServiceUtil.getRecordSet(recordSetId);
+
+		if (selRecordSet.getGroupId() != scopeGroupId) {
+			selRecordSet = null;
+		}
 	}
 }
 catch (NoSuchRecordSetException nsrse) {
@@ -34,45 +38,47 @@ catch (NoSuchRecordSetException nsrse) {
 request.setAttribute("record_set_action.jsp-selRecordSet", selRecordSet);
 %>
 
-<liferay-portlet:actionURL portletConfiguration="true" var="configurationURL" />
-<liferay-portlet:renderURL portletConfiguration="true" varImpl="portletURL" />
+<liferay-portlet:actionURL portletConfiguration="true" var="configurationActionURL" />
+<liferay-portlet:renderURL portletConfiguration="true" varImpl="configurationRenderURL" />
 
-<aui:form action="<%= configurationURL %>" method="post" name="fm1">
+<aui:form action="<%= configurationActionURL %>" method="post" name="fm1">
 	<aui:input name="<%= Constants.CMD %>" type="hidden" />
-	<aui:input name="redirect" type="hidden" value='<%= portletURL.toString() + StringPool.AMPERSAND + renderResponse.getNamespace() + "cur=" + cur %>' />
+	<aui:input name="redirect" type="hidden" value='<%= configurationRenderURL + StringPool.AMPERSAND + renderResponse.getNamespace() + "cur=" + cur %>' />
 
 	<liferay-ui:error exception="<%= NoSuchRecordSetException.class %>" message="the-list-could-not-be-found" />
 
-	<div class="portlet-msg-info">
-		<span class="displaying-help-message-holder <%= selRecordSet == null ? StringPool.BLANK : "aui-helper-hidden" %>">
+	<div class="alert alert-info">
+		<span class="displaying-help-message-holder <%= selRecordSet == null ? StringPool.BLANK : "hide" %>">
 			<liferay-ui:message key="please-select-a-list-entry-from-the-list-below" />
 		</span>
 
-		<span class="displaying-record-set-id-holder <%= selRecordSet == null ? "aui-helper-hidden" : StringPool.BLANK %>">
+		<span class="displaying-record-set-id-holder <%= selRecordSet == null ? "hide" : StringPool.BLANK %>">
 			<liferay-ui:message key="displaying-list" />: <span class="displaying-record-set-id"><%= selRecordSet != null ? HtmlUtil.escape(selRecordSet.getName(locale)) : StringPool.BLANK %></span>
 		</span>
 	</div>
 
 	<c:if test="<%= selRecordSet != null %>">
 
+		<%
+		long structureClassNameId = PortalUtil.getClassNameId(DDMStructure.class);
+		%>
+
 		<aui:fieldset label="templates">
-			<aui:select helpMessage="select-the-list-template-used-to-diplay-the-list-records" label="list-template" name="listTemplateId" onChange='<%= "document." + renderResponse.getNamespace() + "fm." + renderResponse.getNamespace() + "listDDMTemplateId.value = this.value;" %>'>
+			<aui:select helpMessage="select-the-display-template-used-to-diplay-the-list-records" label="display-template" name="displayTemplateId" onChange='<%= "document." + renderResponse.getNamespace() + "fm." + renderResponse.getNamespace() + "displayDDMTemplateId.value = this.value;" %>'>
 				<aui:option label="default" value="<%= 0 %>" />
 
 				<%
-				long ddmStructureId = selRecordSet.getDDMStructureId();
-
-				List<DDMTemplate> templates = DDMTemplateLocalServiceUtil.getTemplates(ddmStructureId, DDMTemplateConstants.TEMPLATE_TYPE_LIST);
+				List<DDMTemplate> templates = DDMTemplateLocalServiceUtil.getTemplates(scopeGroupId, structureClassNameId, selRecordSet.getDDMStructureId(), DDMTemplateConstants.TEMPLATE_TYPE_DISPLAY);
 
 				for (DDMTemplate template : templates) {
 					boolean selected = false;
 
-					if (listDDMTemplateId == template.getTemplateId()) {
+					if (displayDDMTemplateId == template.getTemplateId()) {
 						selected = true;
 					}
 				%>
 
-					<aui:option label="<%= template.getName() %>" selected="<%= selected %>" value="<%= template.getTemplateId() %>" />
+					<aui:option label="<%= HtmlUtil.escape(template.getName(locale)) %>" selected="<%= selected %>" value="<%= template.getTemplateId() %>" />
 
 				<%
 				}
@@ -80,23 +86,21 @@ request.setAttribute("record_set_action.jsp-selRecordSet", selRecordSet);
 
 			</aui:select>
 
-			<aui:select helpMessage="select-the-detail-template-used-to-add-records-to-the-list" label="detail-template" name="detailTemplateId" onChange='<%= "document." + renderResponse.getNamespace() + "fm." + renderResponse.getNamespace() + "detailDDMTemplateId.value = this.value;" %>'>
+			<aui:select helpMessage="select-the-form-template-used-to-add-records-to-the-list" label="form-template" name="formTemplateId" onChange='<%= "document." + renderResponse.getNamespace() + "fm." + renderResponse.getNamespace() + "formDDMTemplateId.value = this.value;" %>'>
 				<aui:option label="default" value="<%= 0 %>" />
 
 				<%
-				long ddmStructureId = selRecordSet.getDDMStructureId();
-
-				List<DDMTemplate> templates = DDMTemplateLocalServiceUtil.getTemplates(ddmStructureId, DDMTemplateConstants.TEMPLATE_TYPE_DETAIL);
+				List<DDMTemplate> templates = DDMTemplateLocalServiceUtil.getTemplates(scopeGroupId, structureClassNameId, selRecordSet.getDDMStructureId(), DDMTemplateConstants.TEMPLATE_TYPE_FORM, DDMTemplateConstants.TEMPLATE_MODE_CREATE);
 
 				for (DDMTemplate template : templates) {
 					boolean selected = false;
 
-					if (detailDDMTemplateId == template.getTemplateId()) {
+					if (formDDMTemplateId == template.getTemplateId()) {
 						selected = true;
 					}
 				%>
 
-					<aui:option label="<%= template.getName() %>" selected="<%= selected %>" value="<%= template.getTemplateId() %>" />
+					<aui:option label="<%= HtmlUtil.escape(template.getName(locale)) %>" selected="<%= selected %>" value="<%= template.getTemplateId() %>" />
 
 				<%
 				}
@@ -104,21 +108,31 @@ request.setAttribute("record_set_action.jsp-selRecordSet", selRecordSet);
 
 			</aui:select>
 
-			<aui:input helpMessage="check-to-allow-users-to-add-records-to-the-list" name="editable" type="checkbox" value="<%= editable %>" onChange='<%= "document." + renderResponse.getNamespace() + "fm." + renderResponse.getNamespace() + "editable.value = this.checked;" %>' />
+			<%
+			String editableHelpMessage = null;
 
-			<aui:input helpMessage="check-to-view-the-list-records-in-a-spreadsheet" label="spreadsheet-view" name="spreadsheet" type="checkbox" value="<%= spreadsheet %>" onChange='<%= "document." + renderResponse.getNamespace() + "fm." + renderResponse.getNamespace() + "spreadsheet.value = this.checked;" %>' />
+			Group scopeGroup = themeDisplay.getScopeGroup();
+
+			if (scopeGroup.isInStagingPortlet(portletDisplay.getId())) {
+				editableHelpMessage = "check-to-allow-users-to-add-records-to-the-list-once-this-application-is-published-to-live";
+			}
+			else {
+				editableHelpMessage = "check-to-allow-users-to-add-records-to-the-list";
+			}
+			%>
+
+			<aui:input helpMessage="<%= editableHelpMessage %>" name="editable" onChange='<%= "document." + renderResponse.getNamespace() + "fm." + renderResponse.getNamespace() + "editable.value = this.checked;" %>' type="checkbox" value="<%= editable %>" />
+
+			<aui:input helpMessage="check-to-view-the-list-records-in-a-spreadsheet" label="spreadsheet-view" name="spreadsheet" onChange='<%= "document." + renderResponse.getNamespace() + "fm." + renderResponse.getNamespace() + "spreadsheet.value = this.checked;" %>' type="checkbox" value="<%= spreadsheet %>" />
 		</aui:fieldset>
 	</c:if>
 
 	<aui:fieldset label="lists">
-		<br />
-
 		<liferay-ui:search-container
-			searchContainer="<%= new RecordSetSearch(renderRequest, portletURL) %>"
+			searchContainer="<%= new RecordSetSearch(renderRequest, configurationRenderURL) %>"
 		>
 
 			<%
-			RecordSetDisplayTerms displayTerms = (RecordSetDisplayTerms)searchContainer.getDisplayTerms();
 			RecordSetSearchTerms searchTerms = (RecordSetSearchTerms)searchContainer.getSearchTerms();
 			%>
 
@@ -168,18 +182,18 @@ request.setAttribute("record_set_action.jsp-selRecordSet", selRecordSet);
 
 <br />
 
-<aui:form action="<%= configurationURL %>" method="post" name="fm">
+<aui:form action="<%= configurationActionURL %>" method="post" name="fm">
 	<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= Constants.UPDATE %>" />
-	<aui:input name="redirect" type="hidden" value='<%= portletURL.toString() + StringPool.AMPERSAND + renderResponse.getNamespace() + "cur" + cur %>' />
+	<aui:input name="redirect" type="hidden" value='<%= configurationRenderURL + StringPool.AMPERSAND + renderResponse.getNamespace() + "cur" + cur %>' />
 	<aui:input name="preferences--recordSetId--" type="hidden" value="<%= recordSetId %>" />
-	<aui:input name="preferences--detailDDMTemplateId--" type="hidden" value="<%= detailDDMTemplateId %>" />
-	<aui:input name="preferences--listDDMTemplateId--" type="hidden" value="<%= listDDMTemplateId %>" />
+	<aui:input name="preferences--displayDDMTemplateId--" type="hidden" value="<%= displayDDMTemplateId %>" />
+	<aui:input name="preferences--formDDMTemplateId--" type="hidden" value="<%= formDDMTemplateId %>" />
 	<aui:input name="preferences--editable--" type="hidden" value="<%= editable %>" />
 	<aui:input name="preferences--spreadsheet--" type="hidden" value="<%= spreadsheet %>" />
 
-	<aui:fieldset cssClass="aui-helper-hidden">
+	<aui:fieldset cssClass="hide">
 		<aui:field-wrapper label="portlet-id">
-			<%= portletResource %>
+			<%= HtmlUtil.escape(portletResource) %>
 		</aui:field-wrapper>
 	</aui:fieldset>
 
@@ -196,17 +210,23 @@ request.setAttribute("record_set_action.jsp-selRecordSet", selRecordSet);
 			var A = AUI();
 
 			document.<portlet:namespace />fm.<portlet:namespace />recordSetId.value = recordSetId;
-			document.<portlet:namespace />fm.<portlet:namespace />detailDDMTemplateId.value = "";
-			document.<portlet:namespace />fm.<portlet:namespace />listDDMTemplateId.value = "";
-			document.<portlet:namespace />fm.<portlet:namespace />editable.value = "";
+			document.<portlet:namespace />fm.<portlet:namespace />displayDDMTemplateId.value = "";
+			document.<portlet:namespace />fm.<portlet:namespace />formDDMTemplateId.value = "";
 
 			A.one('.displaying-record-set-id-holder').show();
 			A.one('.displaying-help-message-holder').hide();
 
 			var displayRecordSetId = A.one('.displaying-record-set-id');
 
-			displayRecordSetId.set('innerHTML', recordSetName + ' (<%= LanguageUtil.get(pageContext, "modified") %>)');
+			displayRecordSetId.html(recordSetName + ' (<liferay-ui:message key="modified" />)');
+
 			displayRecordSetId.addClass('modified');
+
+			var dialog = Liferay.Util.getWindow();
+
+			if (dialog) {
+				dialog.set('title', recordSetName + ' - <liferay-ui:message key="configuration" />');
+			}
 		},
 		['aui-base']
 	);

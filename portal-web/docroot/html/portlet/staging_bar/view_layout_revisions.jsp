@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,9 +19,18 @@
 <%
 long layoutSetBranchId = ParamUtil.getLong(request, "layoutSetBranchId");
 
+LayoutRevision recentLayoutRevision = null;
+
 long currentLayoutRevisionId = StagingUtil.getRecentLayoutRevisionId(request, layoutSetBranchId, plid);
 
-LayoutRevision recentLayoutRevision = LayoutRevisionLocalServiceUtil.getLayoutRevision(currentLayoutRevisionId);
+if (currentLayoutRevisionId > 0) {
+	recentLayoutRevision = LayoutRevisionLocalServiceUtil.getLayoutRevision(currentLayoutRevisionId);
+}
+else {
+	recentLayoutRevision = LayoutStagingUtil.getLayoutRevision(layout);
+
+	currentLayoutRevisionId = recentLayoutRevision.getLayoutRevisionId();
+}
 
 List<LayoutRevision> rootLayoutRevisions = LayoutRevisionLocalServiceUtil.getChildLayoutRevisions(layoutSetBranchId, LayoutRevisionConstants.DEFAULT_PARENT_LAYOUT_REVISION_ID, plid, QueryUtil.ALL_POS, QueryUtil.ALL_POS, new LayoutRevisionIdComparator(true));
 %>
@@ -35,7 +44,7 @@ List<LayoutRevision> rootLayoutRevisions = LayoutRevisionLocalServiceUtil.getChi
 				LayoutBranch layoutBranch = rootLayoutRevision.getLayoutBranch();
 			%>
 
-				<aui:option label="<%= layoutBranch.getName() %>" selected="<%= recentLayoutRevision.getLayoutBranchId() == rootLayoutRevision.getLayoutBranchId() %>" value="<%= rootLayoutRevision.getLayoutRevisionId() %>" />
+				<aui:option label="<%= HtmlUtil.escape(layoutBranch.getName()) %>" selected="<%= recentLayoutRevision.getLayoutBranchId() == rootLayoutRevision.getLayoutBranchId() %>" value="<%= rootLayoutRevision.getLayoutRevisionId() %>" />
 
 			<%
 			}
@@ -51,19 +60,19 @@ List<LayoutRevision> rootLayoutRevisions = LayoutRevisionLocalServiceUtil.getChi
 		for (LayoutRevision rootLayoutRevision : rootLayoutRevisions) {
 		%>
 
-			<div class="layout-variation-container <%= (recentLayoutRevision.getLayoutBranchId() == rootLayoutRevision.getLayoutBranchId()) ? StringPool.BLANK : "aui-helper-hidden" %>" id="<portlet:namespace/><%= rootLayoutRevision.getLayoutRevisionId() %>">
+			<div class="layout-variation-container <%= (recentLayoutRevision.getLayoutBranchId() == rootLayoutRevision.getLayoutBranchId()) ? StringPool.BLANK : "hide" %>" id="<portlet:namespace/><%= rootLayoutRevision.getLayoutRevisionId() %>">
 				<c:if test="<%= rootLayoutRevisions.size() > 1 %>">
 
 					<%
 					LayoutBranch layoutBranch = rootLayoutRevision.getLayoutBranch();
 					%>
 
-					<h3 class="layout-variation-name"><liferay-ui:message key="<%= layoutBranch.getName() %>" /></h3>
+					<h3 class="layout-variation-name"><liferay-ui:message key="<%= HtmlUtil.escape(layoutBranch.getName()) %>" /></h3>
 				</c:if>
 
 				<liferay-ui:search-container>
 					<liferay-ui:search-container-results
-						results="<%= LayoutRevisionLocalServiceUtil.getLayoutRevisions(rootLayoutRevision.getLayoutSetBranchId(), rootLayoutRevision.getLayoutBranchId(), rootLayoutRevision.getPlid(), searchContainer.getStart(), searchContainer.getEnd(), new LayoutRevisionIdComparator(false)) %>"
+						results="<%= LayoutRevisionLocalServiceUtil.getLayoutRevisions(rootLayoutRevision.getLayoutSetBranchId(), rootLayoutRevision.getLayoutBranchId(), rootLayoutRevision.getPlid(), QueryUtil.ALL_POS, QueryUtil.ALL_POS, new LayoutRevisionIdComparator(false)) %>"
 						total="<%= LayoutRevisionLocalServiceUtil.getLayoutRevisionsCount(rootLayoutRevision.getLayoutSetBranchId(), rootLayoutRevision.getLayoutBranchId(), rootLayoutRevision.getPlid()) %>"
 					/>
 
@@ -94,7 +103,7 @@ List<LayoutRevision> rootLayoutRevisions = LayoutRevisionLocalServiceUtil.getChi
 							buffer.append("\" /></div>");
 						}
 
-						buffer.append("<span class=\"aproximate-date\">");
+						buffer.append("<span class=\"approximate-date\">");
 						buffer.append(LanguageUtil.format(pageContext, "x-ago", LanguageUtil.getTimeDescription(pageContext, timeAgo, true)));
 						buffer.append("</span><span class=\"real-date\">");
 						buffer.append(dateFormatDateTime.format(curLayoutRevision.getCreateDate()));
@@ -108,44 +117,19 @@ List<LayoutRevision> rootLayoutRevisions = LayoutRevisionLocalServiceUtil.getChi
 							name="status"
 						>
 
-							<%
-							String statusMessage = null;
-							String additionalText = StringPool.BLANK;
+							<c:choose>
+								<c:when test="<%= curLayoutRevision.isHead() %>">
+									<aui:workflow-status statusMessage="ready-for-publication" />
+								</c:when>
+								<c:otherwise>
 
-							if (curLayoutRevision.isHead()) {
-								statusMessage = "ready-for-publication";
-							}
-							else {
-								int status = curLayoutRevision.getStatus();
+									<%
+									int status = curLayoutRevision.getStatus();
+									%>
 
-								statusMessage = WorkflowConstants.toLabel(status);
-
-								if (status == WorkflowConstants.STATUS_PENDING) {
-
-									StringBundler sb = new StringBundler(4);
-
-									try {
-										String workflowStatus = WorkflowInstanceLinkLocalServiceUtil.getState(curLayoutRevision.getCompanyId(), curLayoutRevision.getGroupId(), LayoutRevision.class.getName(), curLayoutRevision.getLayoutRevisionId());
-
-										sb.append(StringPool.SPACE);
-										sb.append(StringPool.OPEN_PARENTHESIS);
-										sb.append(LanguageUtil.get(pageContext, workflowStatus));
-										sb.append(StringPool.CLOSE_PARENTHESIS);
-
-										additionalText = sb.toString();
-									}
-									catch (NoSuchWorkflowInstanceLinkException nswile) {
-									}
-								}
-							}
-
-							buffer.append("<span class=\"taglib-workflow-status\"><span class=\"workflow-status\"><span class=\"workflow-status-");
-							buffer.append(statusMessage);
-							buffer.append("\">");
-							buffer.append(LanguageUtil.get(pageContext, statusMessage));
-							buffer.append(additionalText);
-							buffer.append("</span></span></span>");
-							%>
+									<aui:workflow-status bean="<%= curLayoutRevision %>" status="<%= status %>" />
+								</c:otherwise>
+							</c:choose>
 
 						</liferay-ui:search-container-column-text>
 
@@ -199,7 +183,7 @@ List<LayoutRevision> rootLayoutRevisions = LayoutRevisionLocalServiceUtil.getChi
 						/>
 					</liferay-ui:search-container-row>
 
-					<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
+					<liferay-ui:search-iterator paginate="<%= false %>" searchContainer="<%= searchContainer %>" />
 				</liferay-ui:search-container>
 			</div>
 

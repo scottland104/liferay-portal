@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,109 +21,154 @@ import java.io.InputStream;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Edward Han
  */
 public class StoreProxyBean extends BaseProxyBean implements Store {
 
+	@Override
 	public void addDirectory(
 		long companyId, long repositoryId, String dirName) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void addFile(
 		long companyId, long repositoryId, String fileName, byte[] bytes) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void addFile(
 		long companyId, long repositoryId, String fileName, File file) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void addFile(
 		long companyId, long repositoryId, String fileName, InputStream is) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void checkRoot(long companyId) {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void copyFileVersion(
 		long companyId, long repositoryId, String fileName,
-		String fromVersionNumber, String toVersionNumber,
-		String sourceFileName) {
+		String fromVersionLabel, String toVersionLabel) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void deleteDirectory(
 		long companyId, long repositoryId, String dirName) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void deleteFile(long companyId, long repositoryId, String fileName) {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void deleteFile(
 		long companyId, long repositoryId, String fileName,
-		String versionNumber) {
+		String versionLabel) {
 
 		throw new UnsupportedOperationException();
 	}
 
-	public byte[] getFile(long companyId, long repositoryId, String fileName) {
+	@Override
+	public File getFile(long companyId, long repositoryId, String fileName) {
 		throw new UnsupportedOperationException();
 	}
 
-	public byte[] getFile(
+	@Override
+	public File getFile(
 		long companyId, long repositoryId, String fileName,
-		String versionNumber) {
+		String versionLabel) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public byte[] getFileAsBytes(
+		long companyId, long repositoryId, String fileName) {
+
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public byte[] getFileAsBytes(
+		long companyId, long repositoryId, String fileName,
+		String versionLabel) {
+
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public InputStream getFileAsStream(
 		long companyId, long repositoryId, String fileName) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public InputStream getFileAsStream(
 		long companyId, long repositoryId, String fileName,
-		String versionNumber) {
+		String versionLabel) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public String[] getFileNames(long companyId, long repositoryId) {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public String[] getFileNames(
 		long companyId, long repositoryId, String dirName) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public long getFileSize(
 		long companyId, long repositoryId, String fileName) {
 
 		throw new UnsupportedOperationException();
 	}
 
-	public boolean hasFile(
-		long companyId, long repositoryId, String fileName,
-		String versionNumber) {
+	@Override
+	public boolean hasDirectory(
+		long companyId, long repositoryId, String dirName) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public boolean hasFile(long companyId, long repositoryId, String fileName) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean hasFile(
+		long companyId, long repositoryId, String fileName,
+		String versionLabel) {
+
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public void move(String srcDir, String destDir) {
 		throw new UnsupportedOperationException();
 	}
@@ -132,13 +177,15 @@ public class StoreProxyBean extends BaseProxyBean implements Store {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void updateFile(
-		long companyId, long repositoryId,
-		long newRepositoryId, String fileName) {
+		long companyId, long repositoryId, long newRepositoryId,
+		String fileName) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void updateFile(
 		long companyId, long repositoryId, String fileName,
 		String newFileName) {
@@ -146,31 +193,34 @@ public class StoreProxyBean extends BaseProxyBean implements Store {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void updateFile(
-		long companyId, long repositoryId, String fileName,
-		String versionNumber, String sourceFileName, byte[] bytes) {
+		long companyId, long repositoryId, String fileName, String versionLabel,
+		byte[] bytes) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void updateFile(
-		long companyId, long repositoryId, String fileName,
-		String versionNumber, String sourceFileName, File file) {
+		long companyId, long repositoryId, String fileName, String versionLabel,
+		File file) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void updateFile(
-		long companyId, long repositoryId, String fileName,
-		String versionNumber, String sourceFileName, InputStream is) {
+		long companyId, long repositoryId, String fileName, String versionLabel,
+		InputStream is) {
 
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void updateFileVersion(
 		long companyId, long repositoryId, String fileName,
-		String fromVersionNumber, String toVersionNumber,
-		String sourceFileName) {
+		String fromVersionLabel, String toVersionLabel) {
 
 		throw new UnsupportedOperationException();
 	}

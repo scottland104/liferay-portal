@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,8 @@ import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.PrincipalException;
+import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.service.ServiceContextFactory;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.ActionResponseImpl;
@@ -64,8 +66,9 @@ public class CheckoutAction extends CartAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		if (redirectToLogin(actionRequest, actionResponse)) {
@@ -112,7 +115,7 @@ public class CheckoutAction extends CartAction {
 					e instanceof ShippingStreetException ||
 					e instanceof ShippingZipException) {
 
-					SessionErrors.add(actionRequest, e.getClass().getName());
+					SessionErrors.add(actionRequest, e.getClass());
 
 					setForward(
 						actionRequest, "portlet.shopping.checkout_first");
@@ -163,7 +166,11 @@ public class CheckoutAction extends CartAction {
 			actionResponse.sendRedirect(redirectURL);
 		}
 		else {
-			ShoppingOrderLocalServiceUtil.sendEmail(order, "confirmation");
+			ServiceContext serviceContext = ServiceContextFactory.getInstance(
+				actionRequest);
+
+			ShoppingOrderLocalServiceUtil.sendEmail(
+				order, "confirmation", serviceContext);
 
 			actionResponse.sendRedirect(returnURL);
 		}
@@ -191,8 +198,8 @@ public class CheckoutAction extends CartAction {
 
 		ShoppingCart cart = ShoppingUtil.getCart(actionRequest);
 
-		ShoppingOrder order =
-			ShoppingOrderLocalServiceUtil.saveLatestOrder(cart);
+		ShoppingOrder order = ShoppingOrderLocalServiceUtil.saveLatestOrder(
+			cart);
 
 		actionRequest.setAttribute(WebKeys.SHOPPING_ORDER, order);
 	}
@@ -218,6 +225,7 @@ public class CheckoutAction extends CartAction {
 		String billingStateSel = ParamUtil.getString(
 			actionRequest, "billingStateSel");
 		String billingState = billingStateSel;
+
 		if (Validator.isNull(billingStateSel)) {
 			billingState = ParamUtil.getString(actionRequest, "billingState");
 		}
@@ -246,6 +254,7 @@ public class CheckoutAction extends CartAction {
 		String shippingStateSel = ParamUtil.getString(
 			actionRequest, "shippingStateSel");
 		String shippingState = shippingStateSel;
+
 		if (Validator.isNull(shippingStateSel)) {
 			shippingState = ParamUtil.getString(actionRequest, "shippingState");
 		}

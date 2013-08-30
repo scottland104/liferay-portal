@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -42,40 +42,73 @@ import java.util.Map;
 public class UserGroupFinderImpl
 	extends BasePersistenceImpl<UserGroup> implements UserGroupFinder {
 
-	public static String COUNT_BY_C_N_D =
+	public static final String COUNT_BY_C_N_D =
 		UserGroupFinder.class.getName() + ".countByC_N_D";
 
-	public static String FIND_BY_C_N =
+	public static final String FIND_BY_C_N =
 		UserGroupFinder.class.getName() + ".findByC_N";
 
-	public static String FIND_BY_C_N_D =
+	public static final String FIND_BY_C_N_D =
 		UserGroupFinder.class.getName() + ".findByC_N_D";
 
-	public static String JOIN_BY_GROUPS_PERMISSIONS =
-		UserGroupFinder.class.getName() + ".joinByGroupsPermissions";
-
-	public static String JOIN_BY_USER_GROUP_GROUP_ROLE =
+	public static final String JOIN_BY_USER_GROUP_GROUP_ROLE =
 		UserGroupFinder.class.getName() + ".joinByUserGroupGroupRole";
 
-	public static String JOIN_BY_USER_GROUPS_GROUPS =
+	public static final String JOIN_BY_USER_GROUPS_GROUPS =
 		UserGroupFinder.class.getName() + ".joinByUserGroupsGroups";
 
-	public static String JOIN_BY_USER_GROUPS_ROLES =
+	public static final String JOIN_BY_USER_GROUPS_ROLES =
 		UserGroupFinder.class.getName() + ".joinByUserGroupsRoles";
 
-	public static String JOIN_BY_USER_GROUPS_TEAMS =
+	public static final String JOIN_BY_USER_GROUPS_TEAMS =
 		UserGroupFinder.class.getName() + ".joinByUserGroupsTeams";
 
-	public static String JOIN_BY_USER_GROUPS_USERS =
+	public static final String JOIN_BY_USER_GROUPS_USERS =
 		UserGroupFinder.class.getName() + ".joinByUserGroupsUsers";
 
-	public int countByC_N_D(
-			long companyId, String name, String description,
+	@Override
+	public int countByKeywords(
+			long companyId, String keywords,
 			LinkedHashMap<String, Object> params)
 		throws SystemException {
 
-		name = StringUtil.lowerCase(name);
-		description = StringUtil.lowerCase(description);
+		String[] names = null;
+		String[] descriptions = null;
+		boolean andOperator = false;
+
+		if (Validator.isNotNull(keywords)) {
+			names = CustomSQLUtil.keywords(keywords);
+			descriptions = CustomSQLUtil.keywords(keywords);
+		}
+		else {
+			andOperator = true;
+		}
+
+		return countByC_N_D(
+			companyId, names, descriptions, params, andOperator);
+	}
+
+	@Override
+	public int countByC_N_D(
+			long companyId, String name, String description,
+			LinkedHashMap<String, Object> params, boolean andOperator)
+		throws SystemException {
+
+		String[] names = CustomSQLUtil.keywords(name);
+		String[] descriptions = CustomSQLUtil.keywords(description);
+
+		return countByC_N_D(
+			companyId, names, descriptions, params, andOperator);
+	}
+
+	@Override
+	public int countByC_N_D(
+			long companyId, String[] names, String[] descriptions,
+			LinkedHashMap<String, Object> params, boolean andOperator)
+		throws SystemException {
+
+		names = CustomSQLUtil.keywords(names);
+		descriptions = CustomSQLUtil.keywords(descriptions);
 
 		Session session = null;
 
@@ -84,8 +117,14 @@ public class UserGroupFinderImpl
 
 			String sql = CustomSQLUtil.get(COUNT_BY_C_N_D);
 
+			sql = CustomSQLUtil.replaceKeywords(
+				sql, "lower(UserGroup.name)", StringPool.LIKE, false, names);
+			sql = CustomSQLUtil.replaceKeywords(
+				sql, "lower(UserGroup.description)", StringPool.LIKE, true,
+				descriptions);
 			sql = StringUtil.replace(sql, "[$JOIN$]", getJoin(params));
 			sql = StringUtil.replace(sql, "[$WHERE$]", getWhere(params));
+			sql = CustomSQLUtil.replaceAndOperator(sql, andOperator);
 
 			SQLQuery q = session.createSQLQuery(sql);
 
@@ -94,13 +133,12 @@ public class UserGroupFinderImpl
 			QueryPos qPos = QueryPos.getInstance(q);
 
 			setJoin(qPos, params);
-			qPos.add(companyId);
-			qPos.add(name);
-			qPos.add(name);
-			qPos.add(description);
-			qPos.add(description);
 
-			Iterator<Long> itr = q.list().iterator();
+			qPos.add(companyId);
+			qPos.add(names, 2);
+			qPos.add(descriptions, 2);
+
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -120,6 +158,31 @@ public class UserGroupFinderImpl
 		}
 	}
 
+	@Override
+	public List<UserGroup> findByKeywords(
+			long companyId, String keywords,
+			LinkedHashMap<String, Object> params, int start, int end,
+			OrderByComparator obc)
+		throws SystemException {
+
+		String[] names = null;
+		String[] descriptions = null;
+		boolean andOperator = false;
+
+		if (Validator.isNotNull(keywords)) {
+			names = CustomSQLUtil.keywords(keywords);
+			descriptions = CustomSQLUtil.keywords(keywords);
+		}
+		else {
+			andOperator = true;
+		}
+
+		return findByC_N_D(
+			companyId, names, descriptions, params, andOperator, start, end,
+			obc);
+	}
+
+	@Override
 	public UserGroup findByC_N(long companyId, String name)
 		throws NoSuchUserGroupException, SystemException {
 
@@ -141,10 +204,10 @@ public class UserGroupFinderImpl
 			qPos.add(companyId);
 			qPos.add(name);
 
-			List<UserGroup> list = q.list();
+			List<UserGroup> userGroups = q.list();
 
-			if (!list.isEmpty()) {
-				return list.get(0);
+			if (!userGroups.isEmpty()) {
+				return userGroups.get(0);
 			}
 		}
 		catch (Exception e) {
@@ -165,14 +228,30 @@ public class UserGroupFinderImpl
 		throw new NoSuchUserGroupException(sb.toString());
 	}
 
+	@Override
 	public List<UserGroup> findByC_N_D(
 			long companyId, String name, String description,
-			LinkedHashMap<String, Object> params, int start, int end,
-			OrderByComparator obc)
+			LinkedHashMap<String, Object> params, boolean andOperator,
+			int start, int end, OrderByComparator obc)
 		throws SystemException {
 
-		name = StringUtil.lowerCase(name);
-		description = StringUtil.lowerCase(description);
+		String[] names = CustomSQLUtil.keywords(name);
+		String[] descriptions = CustomSQLUtil.keywords(description);
+
+		return findByC_N_D(
+			companyId, names, descriptions, params, andOperator, start, end,
+			obc);
+	}
+
+	@Override
+	public List<UserGroup> findByC_N_D(
+			long companyId, String[] names, String[] descriptions,
+			LinkedHashMap<String, Object> params, boolean andOperator,
+			int start, int end, OrderByComparator obc)
+		throws SystemException {
+
+		names = CustomSQLUtil.keywords(names);
+		descriptions = CustomSQLUtil.keywords(descriptions);
 
 		Session session = null;
 
@@ -181,8 +260,15 @@ public class UserGroupFinderImpl
 
 			String sql = CustomSQLUtil.get(FIND_BY_C_N_D);
 
+			sql = CustomSQLUtil.replaceKeywords(
+				sql, "lower(UserGroup.name)", StringPool.LIKE, false, names);
+			sql = CustomSQLUtil.replaceKeywords(
+				sql, "lower(UserGroup.description)", StringPool.LIKE, true,
+				descriptions);
+
 			sql = StringUtil.replace(sql, "[$JOIN$]", getJoin(params));
 			sql = StringUtil.replace(sql, "[$WHERE$]", getWhere(params));
+			sql = CustomSQLUtil.replaceAndOperator(sql, andOperator);
 			sql = CustomSQLUtil.replaceOrderBy(sql, obc);
 
 			SQLQuery q = session.createSQLQuery(sql);
@@ -192,14 +278,12 @@ public class UserGroupFinderImpl
 			QueryPos qPos = QueryPos.getInstance(q);
 
 			setJoin(qPos, params);
-			qPos.add(companyId);
-			qPos.add(name);
-			qPos.add(name);
-			qPos.add(description);
-			qPos.add(description);
 
-			return (List<UserGroup>)QueryUtil.list(
-				q, getDialect(), start, end);
+			qPos.add(companyId);
+			qPos.add(names, 2);
+			qPos.add(descriptions, 2);
+
+			return (List<UserGroup>)QueryUtil.list(q, getDialect(), start, end);
 		}
 		catch (Exception e) {
 			throw new SystemException(e);
@@ -216,11 +300,7 @@ public class UserGroupFinderImpl
 
 		StringBundler sb = new StringBundler(params.size());
 
-		Iterator<Map.Entry<String, Object>> itr = params.entrySet().iterator();
-
-		while (itr.hasNext()) {
-			Map.Entry<String, Object> entry = itr.next();
-
+		for (Map.Entry<String, Object> entry : params.entrySet()) {
 			String key = entry.getKey();
 			Object value = entry.getValue();
 
@@ -235,10 +315,7 @@ public class UserGroupFinderImpl
 	protected String getJoin(String key) {
 		String join = StringPool.BLANK;
 
-		if (key.equals("permissionsResourceId")) {
-			join = CustomSQLUtil.get(JOIN_BY_GROUPS_PERMISSIONS);
-		}
-		else if (key.equals("userGroupGroupRole")) {
+		if (key.equals("userGroupGroupRole")) {
 			join = CustomSQLUtil.get(JOIN_BY_USER_GROUP_GROUP_ROLE);
 		}
 		else if (key.equals("userGroupsGroups")) {
@@ -272,33 +349,53 @@ public class UserGroupFinderImpl
 
 		StringBundler sb = new StringBundler(params.size());
 
-		Iterator<Map.Entry<String, Object>> itr = params.entrySet().iterator();
-
-		while (itr.hasNext()) {
-			Map.Entry<String, Object> entry = itr.next();
-
+		for (Map.Entry<String, Object> entry : params.entrySet()) {
 			String key = entry.getKey();
 			Object value = entry.getValue();
 
 			if (Validator.isNotNull(value)) {
-				sb.append(getWhere(key));
+				sb.append(getWhere(key, value));
 			}
 		}
 
 		return sb.toString();
 	}
 
-	protected String getWhere(String key) {
+	protected String getWhere(String key, Object value) {
 		String join = StringPool.BLANK;
 
-		if (key.equals("permissionsResourceId")) {
-			join = CustomSQLUtil.get(JOIN_BY_GROUPS_PERMISSIONS);
-		}
-		else if (key.equals("userGroupGroupRole")) {
+		if (key.equals("userGroupGroupRole")) {
 			join = CustomSQLUtil.get(JOIN_BY_USER_GROUP_GROUP_ROLE);
 		}
 		else if (key.equals("userGroupsGroups")) {
-			join = CustomSQLUtil.get(JOIN_BY_USER_GROUPS_GROUPS);
+			if (value instanceof Long) {
+				join = CustomSQLUtil.get(JOIN_BY_USER_GROUPS_GROUPS);
+			}
+			else if (value instanceof Long[]) {
+				Long[] userGroupIds = (Long[])value;
+
+				if (userGroupIds.length == 0) {
+					join = "WHERE (Groups_UserGroups.groupId = -1)";
+				}
+				else {
+					StringBundler sb = new StringBundler(
+						userGroupIds.length * 2 + 1);
+
+					sb.append("WHERE (");
+
+					for (int i = 0; i < userGroupIds.length; i++) {
+						sb.append("(Groups_UserGroups.groupId = ?) ");
+
+						if ((i + 1) < userGroupIds.length) {
+							sb.append("OR ");
+						}
+					}
+
+					sb.append(StringPool.CLOSE_PARENTHESIS);
+
+					join = sb.toString();
+				}
+			}
 		}
 		else if (key.equals("userGroupsRoles")) {
 			join = CustomSQLUtil.get(JOIN_BY_USER_GROUPS_ROLES);
@@ -327,37 +424,34 @@ public class UserGroupFinderImpl
 	protected void setJoin(
 		QueryPos qPos, LinkedHashMap<String, Object> params) {
 
-		if (params != null) {
-			Iterator<Map.Entry<String, Object>> itr =
-				params.entrySet().iterator();
+		if (params == null) {
+			return;
+		}
 
-			while (itr.hasNext()) {
-				Map.Entry<String, Object> entry = itr.next();
+		for (Map.Entry<String, Object> entry : params.entrySet()) {
+			Object value = entry.getValue();
 
-				Object value = entry.getValue();
+			if (value instanceof Long) {
+				Long valueLong = (Long)value;
 
-				if (value instanceof Long) {
-					Long valueLong = (Long)value;
+				if (Validator.isNotNull(valueLong)) {
+					qPos.add(valueLong);
+				}
+			}
+			else if (value instanceof Long[]) {
+				Long[] valueArray = (Long[])value;
 
-					if (Validator.isNotNull(valueLong)) {
-						qPos.add(valueLong);
+				for (int i = 0; i < valueArray.length; i++) {
+					if (Validator.isNotNull(valueArray[i])) {
+						qPos.add(valueArray[i]);
 					}
 				}
-				else if (value instanceof Long[]) {
-					Long[] valueArray = (Long[])value;
+			}
+			else if (value instanceof String) {
+				String valueString = (String)value;
 
-					for (int i = 0; i < valueArray.length; i++) {
-						if (Validator.isNotNull(valueArray[i])) {
-							qPos.add(valueArray[i]);
-						}
-					}
-				}
-				else if (value instanceof String) {
-					String valueString = (String)value;
-
-					if (Validator.isNotNull(valueString)) {
-						qPos.add(valueString);
-					}
+				if (Validator.isNotNull(valueString)) {
+					qPos.add(valueString);
 				}
 			}
 		}

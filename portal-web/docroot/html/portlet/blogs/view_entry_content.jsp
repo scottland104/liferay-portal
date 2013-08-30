@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,8 +25,8 @@ AssetEntry assetEntry = (AssetEntry)request.getAttribute("view_entry_content.jsp
 %>
 
 <c:choose>
-	<c:when test="<%= BlogsEntryPermission.contains(permissionChecker, entry, ActionKeys.VIEW) && (entry.isApproved() || (entry.getUserId() == user.getUserId()) || BlogsEntryPermission.contains(permissionChecker, entry, ActionKeys.UPDATE)) %>">
-		<div class="entry <%= entry.isApproved() ? "" : "draft" %>">
+	<c:when test="<%= BlogsEntryPermission.contains(permissionChecker, entry, ActionKeys.VIEW) && (entry.isVisible() || (entry.getUserId() == user.getUserId()) || BlogsEntryPermission.contains(permissionChecker, entry, ActionKeys.UPDATE)) %>">
+		<div class="entry <%= WorkflowConstants.getStatusLabel(entry.getStatus()) %>" id="<portlet:namespace /><%= entry.getEntryId() %>">
 			<div class="entry-content">
 
 				<%
@@ -35,7 +35,7 @@ AssetEntry assetEntry = (AssetEntry)request.getAttribute("view_entry_content.jsp
 
 				<c:if test="<%= !entry.isApproved() %>">
 					<h3>
-						<liferay-ui:message key='<%= entry.isPending() ? "pending-approval" : "draft" %>' />
+						<liferay-ui:message key='<%= entry.isPending() ? "pending-approval" : WorkflowConstants.getStatusLabel(entry.getStatus()) %>' />
 					</h3>
 				</c:if>
 
@@ -45,24 +45,20 @@ AssetEntry assetEntry = (AssetEntry)request.getAttribute("view_entry_content.jsp
 					<portlet:param name="urlTitle" value="<%= entry.getUrlTitle() %>" />
 				</portlet:renderURL>
 
-				<c:if test='<%= strutsAction.equals("/blogs/view_entry") %>'>
-					<portlet:renderURL var="blogsURL">
-						<portlet:param name="struts_action" value="/blogs/view" />
-					</portlet:renderURL>
+				<c:if test='<%= !strutsAction.equals("/blogs/view_entry") %>'>
+					<div class="entry-title">
+						<h2><aui:a href="<%= viewEntryURL %>"><%= HtmlUtil.escape(entry.getTitle()) %></aui:a></h2>
+					</div>
 				</c:if>
 
-				<div class="entry-title">
-					<c:if test='<%= !strutsAction.equals("/blogs/view_entry") %>'>
-						<h2><aui:a href="<%= viewEntryURL %>"><%= HtmlUtil.escape(entry.getTitle()) %></aui:a></h2>
-					</c:if>
-				</div>
-
 				<div class="entry-date">
+					<span class="hide-accessible"><liferay-ui:message key="published-date" /></span>
+
 					<%= dateFormatDateTime.format(entry.getDisplayDate()) %>
 				</div>
 			</div>
 
-			<portlet:renderURL windowState="<%= WindowState.NORMAL.toString() %>" var="bookmarkURL">
+			<portlet:renderURL var="bookmarkURL" windowState="<%= WindowState.NORMAL.toString() %>">
 				<portlet:param name="struts_action" value="/blogs/view_entry" />
 				<portlet:param name="urlTitle" value="<%= entry.getUrlTitle() %>" />
 			</portlet:renderURL>
@@ -72,7 +68,8 @@ AssetEntry assetEntry = (AssetEntry)request.getAttribute("view_entry_content.jsp
 					displayStyle="<%= socialBookmarksDisplayStyle %>"
 					target="_blank"
 					title="<%= entry.getTitle() %>"
-					url="<%= bookmarkURL.toString() %>"
+					types="<%= socialBookmarksTypes %>"
+					url="<%= PortalUtil.getCanonicalURL(bookmarkURL.toString(), themeDisplay, layout) %>"
 				/>
 			</c:if>
 
@@ -104,12 +101,15 @@ AssetEntry assetEntry = (AssetEntry)request.getAttribute("view_entry_content.jsp
 									modelResourceDescription="<%= entry.getTitle() %>"
 									resourcePrimKey="<%= String.valueOf(entry.getEntryId()) %>"
 									var="permissionsEntryURL"
+									windowState="<%= LiferayWindowState.POP_UP.toString() %>"
 								/>
 
 								<liferay-ui:icon
 									image="permissions"
 									label="<%= true %>"
+									method="get"
 									url="<%= permissionsEntryURL %>"
+									useDialog="<%= true %>"
 								/>
 							</td>
 						</c:if>
@@ -122,13 +122,14 @@ AssetEntry assetEntry = (AssetEntry)request.getAttribute("view_entry_content.jsp
 
 								<portlet:actionURL var="deleteEntryURL">
 									<portlet:param name="struts_action" value="/blogs/edit_entry" />
-									<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.DELETE %>" />
+									<portlet:param name="<%= Constants.CMD %>" value="<%= TrashUtil.isTrashEnabled(scopeGroupId) ? Constants.MOVE_TO_TRASH : Constants.DELETE %>" />
 									<portlet:param name="redirect" value="<%= viewURL %>" />
 									<portlet:param name="entryId" value="<%= String.valueOf(entry.getEntryId()) %>" />
 								</portlet:actionURL>
 
 								<liferay-ui:icon-delete
 									label="<%= true %>"
+									trash="<%= TrashUtil.isTrashEnabled(scopeGroupId) %>"
 									url="<%= deleteEntryURL %>"
 								/>
 							</td>
@@ -140,15 +141,38 @@ AssetEntry assetEntry = (AssetEntry)request.getAttribute("view_entry_content.jsp
 
 			<div class="entry-body">
 				<c:choose>
-					<c:when test='<%= pageDisplayStyle.equals(RSSUtil.DISPLAY_STYLE_ABSTRACT) && !strutsAction.equals("/blogs/view_entry") %>'>
-						<%= StringUtil.shorten(HtmlUtil.stripHtml(entry.getContent()), pageAbstractLength) %>
+					<c:when test='<%= displayStyle.equals(BlogsUtil.DISPLAY_STYLE_ABSTRACT) && !strutsAction.equals("/blogs/view_entry") %>'>
+						<c:if test="<%= entry.isSmallImage() %>">
+							<div class="asset-small-image">
+								<img alt="" class="asset-small-image" src="<%= HtmlUtil.escape(entry.getEntryImageURL(themeDisplay)) %>" width="150" />
+							</div>
+						</c:if>
+
+						<%
+						String summary = entry.getDescription();
+
+						if (Validator.isNull(summary)) {
+							summary = entry.getContent();
+						}
+						%>
+
+						<%= StringUtil.shorten(HtmlUtil.stripHtml(summary), pageAbstractLength) %>
 
 						<br />
 
-						 <aui:a href="<%= viewEntryURL %>"><liferay-ui:message arguments='<%= new Object[] {"aui-helper-hidden-accessible", entry.getTitle()} %>' key="read-more-x-about-x" /> &raquo;</aui:a>
+						 <aui:a href="<%= viewEntryURL %>"><liferay-ui:message arguments='<%= new Object[] {"hide-accessible", HtmlUtil.escape(entry.getTitle())} %>' key="read-more-x-about-x" /> &raquo;</aui:a>
 					</c:when>
-					<c:when test='<%= pageDisplayStyle.equals(RSSUtil.DISPLAY_STYLE_FULL_CONTENT) || strutsAction.equals("/blogs/view_entry") %>'>
-						<%= entry.getContent() %>
+					<c:when test='<%= displayStyle.equals(BlogsUtil.DISPLAY_STYLE_FULL_CONTENT) || strutsAction.equals("/blogs/view_entry") %>'>
+
+						<%
+						String entryContentId = "blogs-entry-content-" + entry.getEntryId();
+
+						boolean inlineEditEnabled = BlogsEntryPermission.contains(permissionChecker, entry, ActionKeys.UPDATE) && BrowserSnifferUtil.isRtf(request) && !WorkflowDefinitionLinkLocalServiceUtil.hasWorkflowDefinitionLink(themeDisplay.getCompanyId(), scopeGroupId, BlogsEntry.class.getName());
+						%>
+
+						<div <%= inlineEditEnabled ? "class=\"lfr-editable\" contenteditable=\"true\" id=\"" + entryContentId + "\" spellcheck=\"false\"" : StringPool.BLANK %>>
+							<%= entry.getContent() %>
+						</div>
 
 						<liferay-ui:custom-attributes-available className="<%= BlogsEntry.class.getName() %>">
 							<liferay-ui:custom-attribute-list
@@ -158,16 +182,31 @@ AssetEntry assetEntry = (AssetEntry)request.getAttribute("view_entry_content.jsp
 								label="<%= true %>"
 							/>
 						</liferay-ui:custom-attributes-available>
+
+						<c:if test="<%= inlineEditEnabled %>">
+							<portlet:actionURL var="updateEntryContent">
+								<portlet:param name="struts_action" value="/blogs/edit_entry" />
+								<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.UPDATE_CONTENT %>" />
+								<portlet:param name="entryId" value="<%= String.valueOf(entry.getEntryId()) %>" />
+							</portlet:actionURL>
+
+							<liferay-ui:input-editor
+								editorImpl="ckeditor"
+								inlineEdit="<%= true %>"
+								inlineEditSaveURL="<%= updateEntryContent %>"
+								name="<%= entryContentId %>"
+							/>
+						</c:if>
 					</c:when>
-					<c:when test='<%= pageDisplayStyle.equals(RSSUtil.DISPLAY_STYLE_TITLE) && !strutsAction.equals("/blogs/view_entry") %>'>
-						<aui:a href="<%= viewEntryURL %>"><liferay-ui:message arguments='<%= new Object[] {"aui-helper-hidden-accessible", entry.getTitle()} %>' key="read-more-x-about-x" /> &raquo;</aui:a>
+					<c:when test='<%= displayStyle.equals(BlogsUtil.DISPLAY_STYLE_TITLE) && !strutsAction.equals("/blogs/view_entry") %>'>
+						<aui:a href="<%= viewEntryURL %>"><liferay-ui:message arguments='<%= new Object[] {"hide-accessible", HtmlUtil.escape(entry.getTitle())} %>' key="read-more-x-about-x" /> &raquo;</aui:a>
 					</c:when>
 				</c:choose>
 			</div>
 
 			<div class="entry-footer">
 				<div class="entry-author">
-					<liferay-ui:message key="written-by" /> <%= HtmlUtil.escape(PortalUtil.getUserName(entry.getUserId(), entry.getUserName())) %>
+					<liferay-ui:message key="written-by" /> <%= HtmlUtil.escape(PortalUtil.getUserName(entry)) %>
 				</div>
 
 				<div class="stats">
@@ -230,10 +269,11 @@ AssetEntry assetEntry = (AssetEntry)request.getAttribute("view_entry_content.jsp
 					/>
 				</span>
 
-				<c:if test='<%= pageDisplayStyle.equals(RSSUtil.DISPLAY_STYLE_FULL_CONTENT) || strutsAction.equals("/blogs/view_entry") %>'>
+				<c:if test='<%= displayStyle.equals(BlogsUtil.DISPLAY_STYLE_FULL_CONTENT) || strutsAction.equals("/blogs/view_entry") %>'>
 					<c:if test="<%= enableRelatedAssets %>">
 						<div class="entry-links">
 							<liferay-ui:asset-links
+								assetEntryId="<%= (assetEntry != null) ? assetEntry.getEntryId() : 0 %>"
 								className="<%= BlogsEntry.class.getName() %>"
 								classPK="<%= entry.getEntryId() %>"
 							/>
@@ -242,10 +282,12 @@ AssetEntry assetEntry = (AssetEntry)request.getAttribute("view_entry_content.jsp
 
 					<c:if test='<%= enableSocialBookmarks && socialBookmarksDisplayPosition.equals("bottom") %>'>
 						<liferay-ui:social-bookmarks
+							contentId="<%= String.valueOf(entry.getEntryId()) %>"
 							displayStyle="<%= socialBookmarksDisplayStyle %>"
 							target="_blank"
 							title="<%= entry.getTitle() %>"
-							url="<%= bookmarkURL.toString() %>"
+							types="<%= socialBookmarksTypes %>"
+							url="<%= PortalUtil.getCanonicalURL(bookmarkURL.toString(), themeDisplay, layout) %>"
 						/>
 					</c:if>
 

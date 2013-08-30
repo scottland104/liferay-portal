@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,7 +34,7 @@ import java.io.Serializable;
  * @see com.liferay.portal.model.impl.ClassNameModelImpl
  * @generated
  */
-public interface ClassNameModel extends BaseModel<ClassName> {
+public interface ClassNameModel extends BaseModel<ClassName>, TypedModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -60,13 +60,17 @@ public interface ClassNameModel extends BaseModel<ClassName> {
 	 *
 	 * @return the fully qualified class name of this class name
 	 */
+	@Override
 	public String getClassName();
+
+	public void setClassName(String className);
 
 	/**
 	 * Returns the class name ID of this class name.
 	 *
 	 * @return the class name ID of this class name
 	 */
+	@Override
 	public long getClassNameId();
 
 	/**
@@ -74,6 +78,7 @@ public interface ClassNameModel extends BaseModel<ClassName> {
 	 *
 	 * @param classNameId the class name ID of this class name
 	 */
+	@Override
 	public void setClassNameId(long classNameId);
 
 	/**
@@ -91,37 +96,60 @@ public interface ClassNameModel extends BaseModel<ClassName> {
 	 */
 	public void setValue(String value);
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(ClassName className);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<ClassName> toCacheModel();
 
+	@Override
 	public ClassName toEscapedModel();
 
+	@Override
+	public ClassName toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

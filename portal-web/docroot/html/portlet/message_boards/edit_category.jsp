@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,7 +25,15 @@ long categoryId = MBUtil.getCategoryId(request, category);
 
 long parentCategoryId = BeanParamUtil.getLong(category, request, "parentCategoryId", MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID);
 
-String displayStyle = BeanParamUtil.getString(category, request, "displayStyle", MBCategoryConstants.DEFAULT_DISPLAY_STYLE);
+String defaultDisplayStyle = MBCategoryConstants.DEFAULT_DISPLAY_STYLE;
+
+if ((category == null) && (parentCategoryId > 0)) {
+	MBCategory parentCategory = MBCategoryLocalServiceUtil.getCategory(parentCategoryId);
+
+	defaultDisplayStyle = parentCategory.getDisplayStyle();
+}
+
+String displayStyle = BeanParamUtil.getString(category, request, "displayStyle", defaultDisplayStyle);
 
 MBMailingList mailingList = null;
 
@@ -36,12 +44,41 @@ try {
 }
 catch (NoSuchMailingListException nsmle) {
 }
+
+if ((category == null) && (mailingList == null)) {
+	try {
+		if (parentCategoryId > 0) {
+			mailingList = MBMailingListLocalServiceUtil.getCategoryMailingList(scopeGroupId, parentCategoryId);
+		}
+	}
+	catch (NoSuchMailingListException nsmle) {
+	}
+}
+
+if (category != null) {
+	MBUtil.addPortletBreadcrumbEntries(category, request, renderResponse);
+
+	if (!layout.isTypeControlPanel()) {
+		PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "edit"), currentURL);
+	}
+}
+else {
+	if (parentCategoryId > 0) {
+		MBUtil.addPortletBreadcrumbEntries(parentCategoryId, request, renderResponse);
+	}
+
+	if (!layout.isTypeControlPanel()) {
+		PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "add-category"), currentURL);
+	}
+}
 %>
+
+<liferay-util:include page="/html/portlet/message_boards/top_links.jsp" />
 
 <liferay-ui:header
 	backURL="<%= redirect %>"
 	localizeTitle="<%= (category == null) %>"
-	title='<%= (category == null) ? "new-category" : category.getName() %>'
+	title='<%= (category == null) ? "add-category" : LanguageUtil.format(pageContext, "edit-x", category.getName()) %>'
 />
 
 <portlet:actionURL var="editCategoryURL">
@@ -67,7 +104,7 @@ catch (NoSuchMailingListException nsmle) {
 	<aui:model-context bean="<%= category %>" model="<%= MBCategory.class %>" />
 
 	<aui:fieldset>
-		<aui:field-wrapper label="parent-category">
+		<c:if test="<%= parentCategoryId != MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID %>">
 
 			<%
 			String parentCategoryName = StringPool.BLANK;
@@ -77,34 +114,23 @@ catch (NoSuchMailingListException nsmle) {
 
 				parentCategoryName = parentCategory.getName();
 			}
-			catch (NoSuchCategoryException nscce) {
+			catch (NoSuchCategoryException nsce) {
 			}
 			%>
 
-			<portlet:renderURL var="viewCategoryURL">
-				<portlet:param name="struts_action" value="/message_boards/view" />
-				<portlet:param name="mbCategoryId" value="<%= String.valueOf(parentCategoryId) %>" />
-			</portlet:renderURL>
+			<c:if test="<%= category != null %>">
+				<aui:field-wrapper label="parent-category">
+					<portlet:renderURL var="viewCategoryURL">
+						<portlet:param name="struts_action" value="/message_boards/view" />
+						<portlet:param name="mbCategoryId" value="<%= String.valueOf(parentCategoryId) %>" />
+					</portlet:renderURL>
 
-			<aui:a href="<%= viewCategoryURL %>" id="parentCategoryName"><%= parentCategoryName %></aui:a>
+					<aui:a href="<%= viewCategoryURL %>" id="parentCategoryName"><%= HtmlUtil.escape(parentCategoryName) %></aui:a>
+				</aui:field-wrapper>
+			</c:if>
+		</c:if>
 
-			<portlet:renderURL windowState="<%= LiferayWindowState.POP_UP.toString() %>" var="selectCategoryURL">
-				<portlet:param name="struts_action" value="/message_boards/select_category" />
-				<portlet:param name="mbCategoryId" value="<%= String.valueOf((category == null) ? MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID : category.getParentCategoryId()) %>" />
-			</portlet:renderURL>
-
-			<%
-			String taglibOpenCategoryWindow = "var categoryWindow = window.open('" + HtmlUtil.escape(selectCategoryURL) + "','category', 'directories=no,height=640,location=no,menubar=no,resizable=yes,scrollbars=yes,status=no,toolbar=no,width=680'); void(''); categoryWindow.focus();";
-			%>
-
-			<aui:button onClick="<%= taglibOpenCategoryWindow %>" value="select" />
-
-			<aui:button id="removeCategoryButton" onClick='<%= renderResponse.getNamespace() + "removeCategory();" %>' value="remove" />
-
-			<aui:input inlineLabel="left" label="merge-with-parent-category" name="mergeWithParentCategory" type="checkbox" />
-		</aui:field-wrapper>
-
-		<aui:input name="name" />
+		<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" name="name" />
 
 		<aui:input name="description" />
 
@@ -148,7 +174,7 @@ catch (NoSuchMailingListException nsmle) {
 
 				<aui:input fieldParam="mailingListActive" name="active" />
 
-				<aui:input inlineLabel="left" label="allow-anonymous-emails" name="allowAnonymous" />
+				<aui:input label="allow-anonymous-emails" name="allowAnonymous" />
 
 				<div id="<portlet:namespace />mailingListSettings">
 					<aui:input name="emailAddress" />
@@ -162,15 +188,15 @@ catch (NoSuchMailingListException nsmle) {
 						%>
 
 						<aui:field-wrapper label="protocol">
-							<aui:input checked='<%= protocol.startsWith("pop3") %>' inlineLabel="left" label="pop" name="inProtocol" type="radio" value="pop3" />
-							<aui:input checked='<%= protocol.startsWith("imap") %>' inlineLabel="left" label="imap" name="inProtocol" type="radio" value="imap" />
+							<aui:input checked='<%= protocol.startsWith("pop3") %>' label="pop" name="inProtocol" type="radio" value="pop3" />
+							<aui:input checked='<%= protocol.startsWith("imap") %>' label="imap" name="inProtocol" type="radio" value="imap" />
 						</aui:field-wrapper>
 
 						<aui:input label="server-name" name="inServerName" />
 
 						<aui:input label="server-port" name="inServerPort" value="110" />
 
-						<aui:input inlineLabel="left" label="use-a-secure-network-connection" name="inUseSSL" />
+						<aui:input label="use-a-secure-network-connection" name="inUseSSL" />
 
 						<aui:input label="user-name" name="inUserName" />
 
@@ -182,14 +208,14 @@ catch (NoSuchMailingListException nsmle) {
 					<aui:fieldset label="outgoing">
 						<aui:input label="email-address" name="outEmailAddress" />
 
-						<aui:input inlineLabel="left" label="use-custom-outgoing-server" name="outCustom" />
+						<aui:input label="use-custom-outgoing-server" name="outCustom" />
 
 						<div id="<portlet:namespace />outCustomSettings">
 							<aui:input label="server-name" name="outServerName" />
 
 							<aui:input label="server-port" name="outServerPort" value="25" />
 
-							<aui:input inlineLabel="left" label="use-a-secure-network-connection" name="outUseSSL" />
+							<aui:input label="use-a-secure-network-connection" name="outUseSSL" />
 
 							<aui:input label="user-name" name="outUserName" />
 
@@ -204,9 +230,9 @@ catch (NoSuchMailingListException nsmle) {
 	<br />
 
 	<c:if test="<%= (category == null) && PropsValues.CAPTCHA_CHECK_PORTLET_MESSAGE_BOARDS_EDIT_CATEGORY %>">
-		<portlet:actionURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" var="captchaURL">
+		<portlet:resourceURL var="captchaURL">
 			<portlet:param name="struts_action" value="/message_boards/captcha" />
-		</portlet:actionURL>
+		</portlet:resourceURL>
 
 		<liferay-ui:captcha url="<%= captchaURL %>" />
 	</c:if>
@@ -219,48 +245,12 @@ catch (NoSuchMailingListException nsmle) {
 </aui:form>
 
 <aui:script>
-	function <portlet:namespace />removeCategory() {
-		document.<portlet:namespace />fm.<portlet:namespace />parentCategoryId.value = "<%= MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID %>";
-
-		var nameEl = document.getElementById("<portlet:namespace />parentCategoryName");
-
-		nameEl.href = "";
-		nameEl.innerHTML = "";
-	}
-
 	function <portlet:namespace />saveCategory() {
 		document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= (category == null) ? Constants.ADD : Constants.UPDATE %>";
+
 		submitForm(document.<portlet:namespace />fm);
 	}
-
-	function <portlet:namespace />selectCategory(parentCategoryId, parentCategoryName) {
-		document.<portlet:namespace />fm.<portlet:namespace />parentCategoryId.value = parentCategoryId;
-
-		var nameEl = document.getElementById("<portlet:namespace />parentCategoryName");
-
-		nameEl.href = "<portlet:renderURL><portlet:param name="struts_action" value="/message_boards/view" /></portlet:renderURL>&<portlet:namespace />mbCategoryId=" + parentCategoryId;
-		nameEl.innerHTML = parentCategoryName + "&nbsp;";
-	}
-
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />name);
-	</c:if>
 
 	Liferay.Util.toggleBoxes('<portlet:namespace />mailingListActiveCheckbox', '<portlet:namespace />mailingListSettings');
 	Liferay.Util.toggleBoxes('<portlet:namespace />outCustomCheckbox', '<portlet:namespace />outCustomSettings');
 </aui:script>
-
-<%
-if (category != null) {
-	MBUtil.addPortletBreadcrumbEntries(category, request, renderResponse);
-
-	PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "edit"), currentURL);
-}
-else {
-	if (parentCategoryId > 0) {
-		MBUtil.addPortletBreadcrumbEntries(parentCategoryId, request, renderResponse);
-	}
-
-	PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "add-category"), currentURL);
-}
-%>

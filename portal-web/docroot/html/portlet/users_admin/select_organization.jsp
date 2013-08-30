@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,62 +17,61 @@
 <%@ include file="/html/portlet/users_admin/init.jsp" %>
 
 <%
+String p_u_i_d = ParamUtil.getString(request, "p_u_i_d");
+String eventName = ParamUtil.getString(request, "eventName", liferayPortletResponse.getNamespace() + "selectOrganization");
 String target = ParamUtil.getString(request, "target");
+
+User selUser = PortalUtil.getSelectedUser(request);
 
 PortletURL portletURL = renderResponse.createRenderURL();
 
 portletURL.setParameter("struts_action", "/users_admin/select_organization");
+
+if (selUser != null) {
+	portletURL.setParameter("p_u_i_d", String.valueOf(selUser.getUserId()));
+}
+
+portletURL.setParameter("eventName", eventName);
 
 if (Validator.isNotNull(target)) {
 	portletURL.setParameter("target", target);
 }
 %>
 
-<aui:form action="<%= portletURL.toString() %>" method="post" name="fm">
+<aui:form action="<%= portletURL.toString() %>" method="post" name="selectOrganizationFm">
 	<liferay-ui:header
 		title="organizations"
 	/>
 
 	<liferay-ui:search-container
 		searchContainer="<%= new OrganizationSearch(renderRequest, portletURL) %>"
+		var="organizationSearchContainer"
 	>
 		<liferay-ui:search-form
 			page="/html/portlet/users_admin/organization_search.jsp"
 		/>
 
 		<%
-		OrganizationSearchTerms searchTerms = (OrganizationSearchTerms)searchContainer.getSearchTerms();
+		OrganizationSearchTerms searchTerms = (OrganizationSearchTerms)organizationSearchContainer.getSearchTerms();
+
+		long parentOrganizationId = OrganizationConstants.ANY_PARENT_ORGANIZATION_ID;
+
+		LinkedHashMap<String, Object> organizationParams = new LinkedHashMap<String, Object>();
+
+		if (filterManageableOrganizations) {
+			organizationParams.put("organizationsTree", user.getOrganizations());
+		}
 		%>
 
 		<liferay-ui:search-container-results>
-
-			<%
-			LinkedHashMap<String, Object> organizationParams = new LinkedHashMap<String, Object>();
-
-			if (filterManageableOrganizations) {
-				Long[][] leftAndRightOrganizationIds = UsersAdminUtil.getLeftAndRightOrganizationIds(user.getOrganizations());
-
-				organizationParams.put("organizationsTree", leftAndRightOrganizationIds);
-			}
-
-			if (searchTerms.isAdvancedSearch()) {
-				results = OrganizationLocalServiceUtil.search(company.getCompanyId(), OrganizationConstants.ANY_PARENT_ORGANIZATION_ID, searchTerms.getName(), searchTerms.getType(), searchTerms.getStreet(), searchTerms.getCity(), searchTerms.getZip(), searchTerms.getRegionIdObj(), searchTerms.getCountryIdObj(), organizationParams, searchTerms.isAndOperator(), searchContainer.getStart(), searchContainer.getEnd(), searchContainer.getOrderByComparator());
-			}
-			else {
-				results = OrganizationLocalServiceUtil.search(company.getCompanyId(), OrganizationConstants.ANY_PARENT_ORGANIZATION_ID, searchTerms.getKeywords(), searchTerms.getType(), searchTerms.getRegionIdObj(), searchTerms.getCountryIdObj(), organizationParams, searchContainer.getStart(), searchContainer.getEnd(), searchContainer.getOrderByComparator());
-			}
-
-			if (searchTerms.isAdvancedSearch()) {
-				total = OrganizationLocalServiceUtil.searchCount(company.getCompanyId(), OrganizationConstants.ANY_PARENT_ORGANIZATION_ID, searchTerms.getName(), searchTerms.getType(), searchTerms.getStreet(), searchTerms.getCity(), searchTerms.getZip(), searchTerms.getRegionIdObj(), searchTerms.getCountryIdObj(), organizationParams, searchTerms.isAndOperator());
-			}
-			else {
-				total = OrganizationLocalServiceUtil.searchCount(company.getCompanyId(), OrganizationConstants.ANY_PARENT_ORGANIZATION_ID, searchTerms.getKeywords(), searchTerms.getType(), searchTerms.getRegionIdObj(), searchTerms.getCountryIdObj(), organizationParams);
-			}
-
-			pageContext.setAttribute("results", results);
-			pageContext.setAttribute("total", total);
-			%>
-
+			<c:choose>
+				<c:when test="<%= PropsValues.ORGANIZATIONS_INDEXER_ENABLED && PropsValues.ORGANIZATIONS_SEARCH_WITH_INDEX %>">
+					<%@ include file="/html/portlet/users_admin/organization_search_results_index.jspf" %>
+				</c:when>
+				<c:otherwise>
+					<%@ include file="/html/portlet/users_admin/organization_search_results_database.jspf" %>
+				</c:otherwise>
+			</c:choose>
 		</liferay-ui:search-container-results>
 
 		<liferay-ui:search-container-row
@@ -81,34 +80,7 @@ if (Validator.isNotNull(target)) {
 			keyProperty="organizationId"
 			modelVar="organization"
 		>
-
-			<%
-			String rowHREF = null;
-
-			if (OrganizationPermissionUtil.contains(permissionChecker, organization.getOrganizationId(), ActionKeys.ASSIGN_MEMBERS)) {
-				StringBundler sb = new StringBundler(10);
-
-				sb.append("javascript:opener.");
-				sb.append(renderResponse.getNamespace());
-				sb.append("selectOrganization('");
-				sb.append(organization.getOrganizationId());
-				sb.append("', '");
-				sb.append(organization.getGroup().getGroupId());
-				sb.append("', '");
-				sb.append(UnicodeFormatter.toString(organization.getName()));
-				sb.append("', '");
-				sb.append(UnicodeLanguageUtil.get(pageContext, organization.getType()));
-				sb.append("', '");
-				sb.append(target);
-				sb.append("');");
-				sb.append("window.close();");
-
-				rowHREF = sb.toString();
-			}
-			%>
-
 			<liferay-ui:search-container-column-text
-				href="<%= rowHREF %>"
 				name="name"
 				orderable="<%= true %>"
 				property="name"
@@ -116,7 +88,6 @@ if (Validator.isNotNull(target)) {
 
 			<liferay-ui:search-container-column-text
 				buffer="buffer"
-				href="<%= rowHREF %>"
 				name="parent-organization"
 			>
 
@@ -139,35 +110,59 @@ if (Validator.isNotNull(target)) {
 			</liferay-ui:search-container-column-text>
 
 			<liferay-ui:search-container-column-text
-				href="<%= rowHREF %>"
 				name="type"
 				orderable="<%= true %>"
 				value="<%= LanguageUtil.get(pageContext, organization.getType()) %>"
 			/>
 
 			<liferay-ui:search-container-column-text
-				href="<%= rowHREF %>"
 				name="city"
 				property="address.city"
 			/>
 
 			<liferay-ui:search-container-column-text
-				href="<%= rowHREF %>"
 				name="region"
 				property="address.region.name"
 			/>
 
 			<liferay-ui:search-container-column-text
-				href="<%= rowHREF %>"
 				name="country"
 				property="address.country.name"
 			/>
+
+			<liferay-ui:search-container-column-text>
+				<c:if test="<%= (Validator.isNull(p_u_i_d) || OrganizationMembershipPolicyUtil.isMembershipAllowed((selUser != null) ? selUser.getUserId() : 0, organization.getOrganizationId())) %>">
+
+					<%
+					Map<String, Object> data = new HashMap<String, Object>();
+
+					data.put("groupid", organization.getGroupId());
+					data.put("name", HtmlUtil.escape(organization.getName()));
+					data.put("organizationid", organization.getOrganizationId());
+					data.put("type", LanguageUtil.get(pageContext, organization.getType()));
+					%>
+
+					<aui:button cssClass="selector-button" data="<%= data %>" value="choose" />
+				</c:if>
+			</liferay-ui:search-container-column-text>
 		</liferay-ui:search-container-row>
 
 		<liferay-ui:search-iterator />
 	</liferay-ui:search-container>
 </aui:form>
 
-<aui:script>
-	Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />name);
+<aui:script use="aui-base">
+	var Util = Liferay.Util;
+
+	A.one('#<portlet:namespace />selectOrganizationFm').delegate(
+		'click',
+		function(event) {
+			var result = Util.getAttributes(event.currentTarget, 'data-');
+
+			Util.getOpener().Liferay.fire('<%= HtmlUtil.escapeJS(eventName) %>', result);
+
+			Util.getWindow().hide();
+		},
+		'.selector-button'
+	);
 </aui:script>

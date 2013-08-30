@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -30,11 +30,6 @@ if (organizationId > 0) {
 }
 %>
 
-<portlet:renderURL windowState="<%= LiferayWindowState.POP_UP.toString() %>" var="organizationSelectorURL">
-	<portlet:param name="struts_action" value="/portlet_configuration/select_organization" />
-	<portlet:param name="tabs1" value="organizations" />
-</portlet:renderURL>
-
 <liferay-portlet:actionURL portletConfiguration="true" var="configurationURL" />
 
 <aui:form action="<%= configurationURL %>" method="post" name="fm">
@@ -52,7 +47,7 @@ if (organizationId > 0) {
 			<aui:field-wrapper label="organization">
 				<span id="<portlet:namespace />organizationName"><%= HtmlUtil.escape(organizationName) %></span>
 
-				<aui:button name="selectOrganizationButton" onClick='<%= renderResponse.getNamespace() + "openOrganizationSelector();" %>' value="select" />
+				<aui:button name="selectOrganizationButton" value="select" />
 
 				<aui:button disabled="<%= organizationId <= 0 %>" name="removeOrganizationButton" onClick='<%= renderResponse.getNamespace() + "removeOrganization();" %>' value="remove" />
 			</aui:field-wrapper>
@@ -88,7 +83,14 @@ if (organizationId > 0) {
 			<aui:option label="100" selected="<%= max == 100 %>" />
 		</aui:select>
 
-		<aui:input name="preferences--enableRssSubscription--" type="checkbox" value="<%= enableRssSubscription %>" />
+		<c:if test="<%= PortalUtil.isRSSFeedsEnabled() %>">
+			<liferay-ui:rss-settings
+				delta="<%= rssDelta %>"
+				displayStyle="<%= rssDisplayStyle %>"
+				enabled="<%= enableRSS %>"
+				feedType="<%= rssFeedType %>"
+			/>
+		</c:if>
 
 		<aui:input name="preferences--showTags--" type="checkbox" value="<%= showTags %>" />
 	</aui:fieldset>
@@ -99,12 +101,6 @@ if (organizationId > 0) {
 </aui:form>
 
 <aui:script>
-	function <portlet:namespace />openOrganizationSelector() {
-		var organizationWindow = window.open('<%= organizationSelectorURL %>', 'organization', 'directories=no,height=640,location=no,menubar=no,resizable=yes,scrollbars=yes,status=no,toolbar=no,width=680');
-
-		organizationWindow.focus();
-	}
-
 	function <portlet:namespace />removeOrganization() {
 		document.<portlet:namespace />fm.<portlet:namespace />organizationId.value = "";
 
@@ -114,19 +110,35 @@ if (organizationId > 0) {
 
 		document.getElementById("<portlet:namespace />removeOrganizationButton").disabled = true;
 	}
-
-	function <portlet:namespace />selectOrganization(organizationId, groupId, name) {
-		document.<portlet:namespace />fm.<portlet:namespace />organizationId.value = organizationId;
-
-		var nameEl = document.getElementById("<portlet:namespace />organizationName");
-
-		nameEl.innerHTML = name + "&nbsp;";
-
-		document.getElementById("<portlet:namespace />removeOrganizationButton").disabled = false;
-	}
 </aui:script>
 
 <aui:script use="aui-base">
+	A.one('#<portlet:namespace />selectOrganizationButton').on(
+		'click',
+		function(event) {
+			Liferay.Util.selectEntity(
+				{
+					dialog: {
+						constrain: true,
+						modal: true
+					},
+					id: '<portlet:namespace />selectOrganization',
+					title: '<liferay-ui:message arguments="organization" key="select-x" />',
+					uri: '<portlet:renderURL windowState="<%= LiferayWindowState.POP_UP.toString() %>"><portlet:param name="struts_action" value="/portlet_configuration/select_organization" /><portlet:param name="tabs1" value="organizations" /></portlet:renderURL>'
+				},
+				function(event) {
+					document.<portlet:namespace />fm.<portlet:namespace />organizationId.value = event.organizationid;
+
+					var nameEl = document.getElementById('<portlet:namespace />organizationName');
+
+					nameEl.innerHTML = event.name + '&nbsp;';
+
+					document.getElementById('<portlet:namespace />removeOrganizationButton').disabled = false;
+				}
+			);
+		}
+	);
+
 	var selectionMethod = A.one('#<portlet:namespace />selectionMethod');
 
 	function showHiddenFields() {

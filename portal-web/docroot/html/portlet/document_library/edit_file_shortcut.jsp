@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -91,7 +91,7 @@ portletURL.setParameter("fileShortcutId", String.valueOf(fileShortcutId));
 	<liferay-ui:error exception="<%= NoSuchFileEntryException.class %>" message="the-document-could-not-be-found" />
 
 	<aui:fieldset>
-		<div class="portlet-msg-info">
+		<div class="alert alert-info">
 			<liferay-ui:message key="you-can-create-a-shortcut-to-any-document-that-you-have-read-access-for" />
 		</div>
 
@@ -105,15 +105,7 @@ portletURL.setParameter("fileShortcutId", String.valueOf(fileShortcutId));
 			<%= toGroupName %>
 			</span>
 
-			<portlet:renderURL windowState="<%= LiferayWindowState.POP_UP.toString() %>" var="selectGroupURL">
-				<portlet:param name="struts_action" value="/document_library/select_group" />
-			</portlet:renderURL>
-
-			<%
-			String taglibOpenGroupWindow = "var toGroupWindow = window.open('" + selectGroupURL + "','toGroup', 'directories=no,height=640,location=no,menubar=no,resizable=yes,scrollbars=yes,status=no,toolbar=no,width=680'); void(''); toGroupWindow.focus();";
-			%>
-
-			<aui:button onClick='<%= taglibOpenGroupWindow %>' value="select" />
+			<aui:button name="selectGroupButton" value="select" />
 		</aui:field-wrapper>
 
 		<aui:field-wrapper label="document">
@@ -126,15 +118,7 @@ portletURL.setParameter("fileShortcutId", String.valueOf(fileShortcutId));
 			<%= toFileEntryTitle %>
 			</span>
 
-			<portlet:renderURL windowState="<%= LiferayWindowState.POP_UP.toString() %>" var="selectFileEntryURL">
-				<portlet:param name="struts_action" value="/document_library/select_file_entry" />
-			</portlet:renderURL>
-
-			<%
-			String taglibOpenFileEntryWindow = "var toFileEntryWindow = window.open(" + renderResponse.getNamespace() + "createSelectFileEntryURL('" + selectFileEntryURL.toString() + "'),'toGroup', 'directories=no,height=640,location=no,menubar=no,resizable=yes,scrollbars=yes,status=no,toolbar=no,width=680'); void(''); toFileEntryWindow.focus();";
-			%>
-
-			<aui:button disabled="<%= (toGroup == null) %>" name="selectToFileEntryButton" onClick='<%= taglibOpenFileEntryWindow %>' value="select" />
+			<aui:button disabled="<%= (toGroup == null) %>" name="selectToFileEntryButton" value="select" />
 		</aui:field-wrapper>
 
 		<c:if test="<%= fileShortcut == null %>">
@@ -153,7 +137,78 @@ portletURL.setParameter("fileShortcutId", String.valueOf(fileShortcutId));
 	</aui:fieldset>
 </aui:form>
 
+<portlet:renderURL var="selectGroupURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
+	<portlet:param name="struts_action" value="/document_library/select_group" />
+</portlet:renderURL>
+
+<portlet:renderURL var="selectFileEntryURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
+	<portlet:param name="struts_action" value="/document_library/select_file_entry" />
+</portlet:renderURL>
+
+<aui:script use="aui-base,escape">
+	var selectToFileEntryButton = A.one('#<portlet:namespace />selectToFileEntryButton');
+
+	A.one('#<portlet:namespace />selectGroupButton').on(
+		'click',
+		function(event) {
+			Liferay.Util.selectEntity(
+				{
+					dialog: {
+						constrain: true,
+						modal: true,
+						width: 680
+					},
+					id: '<portlet:namespace />selectGroup',
+					title: '<liferay-ui:message arguments="site" key="select-x" />',
+					uri: '<%= selectGroupURL.toString() %>'
+				},
+				function(event) {
+					var A = AUI();
+
+					if (document.<portlet:namespace />fm.<portlet:namespace />toGroupId.value != event.groupid) {
+						<portlet:namespace />selectFileEntry("", "");
+					}
+
+					document.<portlet:namespace />fm.<portlet:namespace />toGroupId.value = event.groupid;
+					document.<portlet:namespace />fm.<portlet:namespace />toFileEntryId.value = 0;
+
+					var nameEl = document.getElementById("<portlet:namespace />toGroupName");
+
+					nameEl.innerHTML = A.Escape.html(event.groupdescriptivename) + "&nbsp;";
+
+					Liferay.Util.toggleDisabled(selectToFileEntryButton, false);
+				}
+			);
+		}
+	);
+
+	selectToFileEntryButton.on(
+		'click',
+		function(event) {
+			Liferay.Util.selectEntity(
+				{
+					dialog: {
+						constrain: true,
+						modal: true,
+						width: 680
+					},
+					id: <portlet:namespace />createSelectFileEntryId(),
+					title: '<liferay-ui:message arguments="file" key="select-x" />',
+					uri: <portlet:namespace />createSelectFileEntryURL('<%= selectFileEntryURL.toString() %>')
+				},
+				function(event) {
+					<portlet:namespace />selectFileEntry(event.entryid, event.entryname);
+				}
+			);
+		}
+	);
+</aui:script>
+
 <aui:script>
+	function <portlet:namespace />createSelectFileEntryId() {
+		return '<portlet:namespace />selectFileEntry_' + document.<portlet:namespace />fm.<portlet:namespace />toGroupId.value;
+	}
+
 	function <portlet:namespace />createSelectFileEntryURL(url) {
 		url += '&<portlet:namespace />groupId=' + document.<portlet:namespace />fm.<portlet:namespace />toGroupId.value;
 		url += '&<portlet:namespace />fileEntryId=' + document.<portlet:namespace />fm.<portlet:namespace />toFileEntryId.value;
@@ -163,6 +218,7 @@ portletURL.setParameter("fileShortcutId", String.valueOf(fileShortcutId));
 
 	function <portlet:namespace />saveFileShortcut() {
 		document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= (fileShortcut == null) ? Constants.ADD : Constants.UPDATE %>";
+
 		submitForm(document.<portlet:namespace />fm);
 	}
 
@@ -177,33 +233,6 @@ portletURL.setParameter("fileShortcutId", String.valueOf(fileShortcutId));
 
 		titleEl.innerHTML = title;
 	}
-
-	Liferay.provide(
-		window,
-		'<portlet:namespace />selectGroup',
-		function(groupId, groupName) {
-			var A = AUI();
-
-			if (document.<portlet:namespace />fm.<portlet:namespace />toGroupId.value != groupId) {
-				<portlet:namespace />selectFileEntry("", "");
-			}
-
-			document.<portlet:namespace />fm.<portlet:namespace />toGroupId.value = groupId;
-			document.<portlet:namespace />fm.<portlet:namespace />toFileEntryId.value = 0;
-
-			var nameEl = document.getElementById("<portlet:namespace />toGroupName");
-
-			nameEl.innerHTML = groupName + "&nbsp;";
-
-			var button = A.one('#<portlet:namespace />selectToFileEntryButton');
-
-			if (button) {
-				button.set('disabled', false);
-				button.ancestor('.aui-button').removeClass('aui-button-disabled');
-			}
-		},
-		['aui-base']
-	);
 </aui:script>
 
 <%

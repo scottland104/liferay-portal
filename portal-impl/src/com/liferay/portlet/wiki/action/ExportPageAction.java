@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,7 +19,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
-import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -32,7 +31,6 @@ import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PrefsPropsUtil;
 import com.liferay.portal.util.WebKeys;
-import com.liferay.portlet.ActionRequestImpl;
 import com.liferay.portlet.PortletURLImpl;
 import com.liferay.portlet.documentlibrary.util.DocumentConversionUtil;
 import com.liferay.portlet.wiki.model.WikiPage;
@@ -64,8 +62,9 @@ public class ExportPageAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		try {
@@ -81,26 +80,24 @@ public class ExportPageAction extends PortletAction {
 				(ThemeDisplay)actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
 
 			PortletURL viewPageURL = new PortletURLImpl(
-				(ActionRequestImpl)actionRequest,
-				portletConfig.getPortletName(), themeDisplay.getPlid(),
-				PortletRequest.RENDER_PHASE);
+				actionRequest, portletConfig.getPortletName(),
+				themeDisplay.getPlid(), PortletRequest.RENDER_PHASE);
 
-			viewPageURL.setPortletMode(PortletMode.VIEW);
-			viewPageURL.setWindowState(WindowState.MAXIMIZED);
 			viewPageURL.setParameter("struts_action", "/wiki/view");
 			viewPageURL.setParameter("nodeName", nodeName);
 			viewPageURL.setParameter("title", title);
+			viewPageURL.setPortletMode(PortletMode.VIEW);
+			viewPageURL.setWindowState(WindowState.MAXIMIZED);
 
 			PortletURL editPageURL = new PortletURLImpl(
-				(ActionRequestImpl)actionRequest,
-				portletConfig.getPortletName(), themeDisplay.getPlid(),
-				PortletRequest.RENDER_PHASE);
+				actionRequest, portletConfig.getPortletName(),
+				themeDisplay.getPlid(), PortletRequest.RENDER_PHASE);
 
-			editPageURL.setPortletMode(PortletMode.VIEW);
-			editPageURL.setWindowState(WindowState.MAXIMIZED);
 			editPageURL.setParameter("struts_action", "/wiki/edit_page");
 			editPageURL.setParameter("nodeId", String.valueOf(nodeId));
 			editPageURL.setParameter("title", title);
+			editPageURL.setPortletMode(PortletMode.VIEW);
+			editPageURL.setWindowState(WindowState.MAXIMIZED);
 
 			HttpServletRequest request = PortalUtil.getHttpServletRequest(
 				actionRequest);
@@ -144,10 +141,8 @@ public class ExportPageAction extends PortletAction {
 
 		String content = page.getContent();
 
-		String attachmentURLPrefix =
-			themeDisplay.getPathMain() + "/wiki/get_page_attachment?" +
-				"p_l_id=" + themeDisplay.getPlid() + "&nodeId=" + nodeId +
-					"&title=" + HttpUtil.encodeURL(title) + "&fileName=";
+		String attachmentURLPrefix = WikiUtil.getAttachmentURLPrefix(
+			themeDisplay.getPathMain(), themeDisplay.getPlid(), nodeId, title);
 
 		try {
 			content = WikiUtil.convert(

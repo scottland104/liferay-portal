@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,8 +17,6 @@
 <%@ include file="/html/portlet/users_admin/init.jsp" %>
 
 <%
-themeDisplay.setIncludeServiceJs(true);
-
 OrganizationSearch searchContainer = (OrganizationSearch)request.getAttribute("liferay-ui:search:searchContainer");
 
 OrganizationDisplayTerms displayTerms = (OrganizationDisplayTerms)searchContainer.getDisplayTerms();
@@ -37,12 +35,13 @@ if (displayTerms.getParentOrganizationId() > 0) {
 %>
 
 <liferay-ui:search-toggle
-	id="toggle_id_users_admin_organization_search"
-	displayTerms="<%= displayTerms %>"
+	autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>"
 	buttonLabel="search"
+	displayTerms="<%= displayTerms %>"
+	id="toggle_id_users_admin_organization_search"
 >
 	<aui:fieldset>
-		<aui:input name="<%= displayTerms.NAME %>" size="20" value="<%= displayTerms.getName() %>" />
+		<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" name="<%= displayTerms.NAME %>" size="20" value="<%= displayTerms.getName() %>" />
 
 		<aui:input name="<%= displayTerms.STREET %>" size="20" value="<%= displayTerms.getStreet() %>" />
 
@@ -67,16 +66,9 @@ if (displayTerms.getParentOrganizationId() > 0) {
 
 		<aui:select label="region" name="<%= displayTerms.REGION_ID %>"></aui:select>
 
-		<aui:input name="<%= displayTerms.ZIP %>" size="20" value="<%= displayTerms.getZip() %>" />
+		<aui:input label="postal-code" name="<%= displayTerms.ZIP %>" size="20" value="<%= displayTerms.getZip() %>" />
 	</aui:fieldset>
 </liferay-ui:search-toggle>
-
-<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-	<aui:script>
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace /><%= displayTerms.NAME %>);
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace /><%= displayTerms.KEYWORDS %>);
-	</aui:script>
-</c:if>
 
 <aui:script use="liferay-dynamic-select">
 	new Liferay.DynamicSelect(
@@ -84,7 +76,8 @@ if (displayTerms.getParentOrganizationId() > 0) {
 			{
 				select: '<portlet:namespace /><%= displayTerms.COUNTRY_ID %>',
 				selectData: Liferay.Address.getCountries,
-				selectDesc: 'name',
+				selectDesc: 'nameCurrentValue',
+				selectSort: '<%= true %>',
 				selectId: 'countryId',
 				selectVal: '<%= displayTerms.getCountryId() %>'
 			},

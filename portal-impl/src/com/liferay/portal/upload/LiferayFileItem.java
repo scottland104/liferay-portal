@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,9 +14,11 @@
 
 package com.liferay.portal.upload;
 
+import com.liferay.portal.kernel.memory.DeleteFileFinalizeAction;
+import com.liferay.portal.kernel.memory.FinalizeManager;
+import com.liferay.portal.kernel.upload.FileItem;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.JavaProps;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.util.PropsUtil;
 
@@ -29,7 +31,7 @@ import org.apache.commons.fileupload.disk.DiskFileItem;
  * @author Zongliang Li
  * @author Harry Mark
  */
-public class LiferayFileItem extends DiskFileItem {
+public class LiferayFileItem extends DiskFileItem implements FileItem {
 
 	public static final int THRESHOLD_SIZE = GetterUtil.getInteger(
 		PropsUtil.get(LiferayFileItem.class.getName() + ".threshold.size"));
@@ -43,13 +45,16 @@ public class LiferayFileItem extends DiskFileItem {
 			repository);
 
 		_fileName = fileName;
+		_sizeThreshold = sizeThreshold;
 		_repository = repository;
 	}
 
+	@Override
 	public String getEncodedString() {
 		return _encodedString;
 	}
 
+	@Override
 	public String getFileName() {
 		if (_fileName == null) {
 			return null;
@@ -65,16 +70,23 @@ public class LiferayFileItem extends DiskFileItem {
 			return _fileName;
 		}
 		else {
-			return _fileName.substring(pos + 1, _fileName.length());
+			return _fileName.substring(pos + 1);
 		}
 	}
 
+	@Override
+	public String getFileNameExtension() {
+		return FileUtil.getExtension(_fileName);
+	}
+
+	@Override
 	public String getFullFileName() {
 		return _fileName;
 	}
 
-	public String getFileNameExtension() {
-		return FileUtil.getExtension(_fileName);
+	@Override
+	public int getSizeThreshold() {
+		return _sizeThreshold;
 	}
 
 	@Override
@@ -94,6 +106,7 @@ public class LiferayFileItem extends DiskFileItem {
 		}
 	}
 
+	@Override
 	public void setString(String encode) {
 		try {
 			_encodedString = getString(encode);
@@ -114,9 +127,8 @@ public class LiferayFileItem extends DiskFileItem {
 
 		File tempFile = new File(_repository, tempFileName);
 
-		if (!JavaProps.hasSunBug6291034()) {
-			tempFile.deleteOnExit();
-		}
+		FinalizeManager.register(
+			tempFile, new DeleteFileFinalizeAction(tempFile.getAbsolutePath()));
 
 		return tempFile;
 	}
@@ -137,10 +149,11 @@ public class LiferayFileItem extends DiskFileItem {
 		return id;
 	}
 
-	private static int _counter = 0;
+	private static int _counter;
 
+	private String _encodedString;
 	private String _fileName;
 	private File _repository;
-	private String _encodedString;
+	private int _sizeThreshold;
 
 }

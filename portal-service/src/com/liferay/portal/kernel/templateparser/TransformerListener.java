@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,25 +18,18 @@ import java.util.Map;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Tina Tina
  */
 public interface TransformerListener {
 
-	public String getLanguageId();
+	public String onOutput(
+		String output, String languageId, Map<String, String> tokens);
 
-	public Map<String, String> getTokens();
+	public String onScript(
+		String script, String xml, String languageId,
+		Map<String, String> tokens);
 
-	public boolean isTemplateDriven();
-
-	public String onOutput(String s);
-
-	public String onScript(String s);
-
-	public String onXml(String s);
-
-	public void setLanguageId(String languageId);
-
-	public void setTemplateDriven(boolean templateDriven);
-
-	public void setTokens(Map<String, String> tokens);
+	public String onXml(
+		String xml, String languageId, Map<String, String> tokens);
 
 }

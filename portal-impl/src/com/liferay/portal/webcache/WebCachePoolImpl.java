@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.cache.SingleVMPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.webcache.WebCacheException;
 import com.liferay.portal.kernel.webcache.WebCacheItem;
@@ -26,39 +27,43 @@ import com.liferay.portal.kernel.webcache.WebCachePool;
 /**
  * @author Brian Wing Shun Chan
  */
+@DoPrivileged
 public class WebCachePoolImpl implements WebCachePool {
 
-	public static final String CACHE_NAME = WebCachePool.class.getName();
-
 	public void afterPropertiesSet() {
-		_cache = _singleVMPool.getCache(CACHE_NAME);
+		_portalCache = (PortalCache<String, Object>)_singleVMPool.getCache(
+			_CACHE_NAME);
 	}
 
+	@Override
 	public void clear() {
-		_cache.removeAll();
+		_portalCache.removeAll();
 	}
 
+	@Override
 	public Object get(String key, WebCacheItem wci) {
-		Object obj = _cache.get(key);
+		Object obj = _portalCache.get(key);
 
-		if (obj == null) {
-			try {
-				obj = wci.convert(key);
+		if (obj != null) {
+			return obj;
+		}
 
-				int timeToLive = (int)(wci.getRefreshTime() / Time.SECOND);
+		try {
+			obj = wci.convert(key);
 
-				_cache.put(key, obj, timeToLive);
-			}
-			catch (WebCacheException wce) {
-				if (_log.isWarnEnabled()) {
-					Throwable cause = wce.getCause();
+			int timeToLive = (int)(wci.getRefreshTime() / Time.SECOND);
 
-					if (cause != null) {
-						_log.warn(cause, cause);
-					}
-					else {
-						_log.warn(wce, wce);
-					}
+			_portalCache.put(key, obj, timeToLive);
+		}
+		catch (WebCacheException wce) {
+			if (_log.isWarnEnabled()) {
+				Throwable cause = wce.getCause();
+
+				if (cause != null) {
+					_log.warn(cause, cause);
+				}
+				else {
+					_log.warn(wce, wce);
 				}
 			}
 		}
@@ -66,17 +71,20 @@ public class WebCachePoolImpl implements WebCachePool {
 		return obj;
 	}
 
+	@Override
 	public void remove(String key) {
-		_cache.remove(key);
+		_portalCache.remove(key);
 	}
 
 	public void setSingleVMPool(SingleVMPool singleVMPool) {
 		_singleVMPool = singleVMPool;
 	}
 
+	private static final String _CACHE_NAME = WebCachePool.class.getName();
+
 	private static Log _log = LogFactoryUtil.getLog(WebCachePoolImpl.class);
 
+	private PortalCache<String, Object> _portalCache;
 	private SingleVMPool _singleVMPool;
-	private PortalCache _cache;
 
 }

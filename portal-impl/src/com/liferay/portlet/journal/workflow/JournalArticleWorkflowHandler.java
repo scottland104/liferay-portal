@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,6 +22,8 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.security.permission.ResourceActionsUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.theme.ThemeDisplay;
+import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.util.PortletKeys;
 import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
 
@@ -38,16 +40,17 @@ import java.util.Map;
  */
 public class JournalArticleWorkflowHandler extends BaseWorkflowHandler {
 
-	public static final String CLASS_NAME = JournalArticle.class.getName();
-
+	@Override
 	public String getClassName() {
-		return CLASS_NAME;
+		return JournalArticle.class.getName();
 	}
 
+	@Override
 	public String getType(Locale locale) {
-		return ResourceActionsUtil.getModelResource(locale, CLASS_NAME);
+		return ResourceActionsUtil.getModelResource(locale, getClassName());
 	}
 
+	@Override
 	public JournalArticle updateStatus(
 			int status, Map<String, Serializable> workflowContext)
 		throws PortalException, SystemException {
@@ -58,14 +61,18 @@ public class JournalArticleWorkflowHandler extends BaseWorkflowHandler {
 			(String)workflowContext.get(
 				WorkflowConstants.CONTEXT_ENTRY_CLASS_PK));
 
-		ServiceContext serviceContext = (ServiceContext)workflowContext.get(
-			"serviceContext");
-
 		JournalArticle article = JournalArticleLocalServiceUtil.getArticle(
 			classPK);
 
+		ServiceContext serviceContext = (ServiceContext)workflowContext.get(
+			"serviceContext");
+
+		String articleURL = PortalUtil.getControlPanelFullURL(
+			serviceContext.getScopeGroupId(), PortletKeys.JOURNAL, null);
+
 		return JournalArticleLocalServiceUtil.updateStatus(
-			userId, article, status, null, serviceContext);
+			userId, article, status, articleURL, workflowContext,
+			serviceContext);
 	}
 
 	@Override

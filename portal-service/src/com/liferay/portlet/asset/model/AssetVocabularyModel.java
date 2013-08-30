@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,11 +14,12 @@
 
 package com.liferay.portlet.asset.model;
 
+import com.liferay.portal.LocaleException;
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.model.BaseModel;
 import com.liferay.portal.model.CacheModel;
-import com.liferay.portal.model.GroupedModel;
+import com.liferay.portal.model.StagedGroupedModel;
 import com.liferay.portal.service.ServiceContext;
 
 import com.liferay.portlet.expando.model.ExpandoBridge;
@@ -43,7 +44,7 @@ import java.util.Map;
  * @generated
  */
 public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
-	GroupedModel {
+	StagedGroupedModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -70,6 +71,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 * @return the uuid of this asset vocabulary
 	 */
 	@AutoEscape
+	@Override
 	public String getUuid();
 
 	/**
@@ -77,6 +79,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 *
 	 * @param uuid the uuid of this asset vocabulary
 	 */
+	@Override
 	public void setUuid(String uuid);
 
 	/**
@@ -98,6 +101,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 *
 	 * @return the group ID of this asset vocabulary
 	 */
+	@Override
 	public long getGroupId();
 
 	/**
@@ -105,6 +109,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 *
 	 * @param groupId the group ID of this asset vocabulary
 	 */
+	@Override
 	public void setGroupId(long groupId);
 
 	/**
@@ -112,6 +117,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 *
 	 * @return the company ID of this asset vocabulary
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -119,6 +125,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 *
 	 * @param companyId the company ID of this asset vocabulary
 	 */
+	@Override
 	public void setCompanyId(long companyId);
 
 	/**
@@ -126,6 +133,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 *
 	 * @return the user ID of this asset vocabulary
 	 */
+	@Override
 	public long getUserId();
 
 	/**
@@ -133,6 +141,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 *
 	 * @param userId the user ID of this asset vocabulary
 	 */
+	@Override
 	public void setUserId(long userId);
 
 	/**
@@ -141,6 +150,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 * @return the user uuid of this asset vocabulary
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getUserUuid() throws SystemException;
 
 	/**
@@ -148,6 +158,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 *
 	 * @param userUuid the user uuid of this asset vocabulary
 	 */
+	@Override
 	public void setUserUuid(String userUuid);
 
 	/**
@@ -156,6 +167,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 * @return the user name of this asset vocabulary
 	 */
 	@AutoEscape
+	@Override
 	public String getUserName();
 
 	/**
@@ -163,6 +175,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 *
 	 * @param userName the user name of this asset vocabulary
 	 */
+	@Override
 	public void setUserName(String userName);
 
 	/**
@@ -170,6 +183,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 *
 	 * @return the create date of this asset vocabulary
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -177,6 +191,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 *
 	 * @param createDate the create date of this asset vocabulary
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -184,6 +199,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 *
 	 * @return the modified date of this asset vocabulary
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -191,6 +207,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 *
 	 * @param modifiedDate the modified date of this asset vocabulary
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
@@ -221,6 +238,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 * @param locale the locale of the language
 	 * @return the localized title of this asset vocabulary
 	 */
+	@AutoEscape
 	public String getTitle(Locale locale);
 
 	/**
@@ -230,6 +248,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized title of this asset vocabulary. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getTitle(Locale locale, boolean useDefault);
 
 	/**
@@ -238,6 +257,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 * @param languageId the ID of the language
 	 * @return the localized title of this asset vocabulary
 	 */
+	@AutoEscape
 	public String getTitle(String languageId);
 
 	/**
@@ -247,7 +267,14 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized title of this asset vocabulary
 	 */
+	@AutoEscape
 	public String getTitle(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getTitleCurrentLanguageId();
+
+	@AutoEscape
+	public String getTitleCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized titles of this asset vocabulary.
@@ -280,6 +307,8 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 */
 	public void setTitle(String title, Locale locale, Locale defaultLocale);
 
+	public void setTitleCurrentLanguageId(String languageId);
+
 	/**
 	 * Sets the localized titles of this asset vocabulary from the map of locales and localized titles.
 	 *
@@ -308,6 +337,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 * @param locale the locale of the language
 	 * @return the localized description of this asset vocabulary
 	 */
+	@AutoEscape
 	public String getDescription(Locale locale);
 
 	/**
@@ -317,6 +347,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized description of this asset vocabulary. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getDescription(Locale locale, boolean useDefault);
 
 	/**
@@ -325,6 +356,7 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 * @param languageId the ID of the language
 	 * @return the localized description of this asset vocabulary
 	 */
+	@AutoEscape
 	public String getDescription(String languageId);
 
 	/**
@@ -334,7 +366,14 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized description of this asset vocabulary
 	 */
+	@AutoEscape
 	public String getDescription(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getDescriptionCurrentLanguageId();
+
+	@AutoEscape
+	public String getDescriptionCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized descriptions of this asset vocabulary.
@@ -368,6 +407,8 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	public void setDescription(String description, Locale locale,
 		Locale defaultLocale);
 
+	public void setDescriptionCurrentLanguageId(String languageId);
+
 	/**
 	 * Sets the localized descriptions of this asset vocabulary from the map of locales and localized descriptions.
 	 *
@@ -399,37 +440,69 @@ public interface AssetVocabularyModel extends BaseModel<AssetVocabulary>,
 	 */
 	public void setSettings(String settings);
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	public String[] getAvailableLanguageIds();
+
+	public String getDefaultLanguageId();
+
+	public void prepareLocalizedFieldsForImport() throws LocaleException;
+
+	public void prepareLocalizedFieldsForImport(Locale defaultImportLocale)
+		throws LocaleException;
+
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(AssetVocabulary assetVocabulary);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<AssetVocabulary> toCacheModel();
 
+	@Override
 	public AssetVocabulary toEscapedModel();
 
+	@Override
+	public AssetVocabulary toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

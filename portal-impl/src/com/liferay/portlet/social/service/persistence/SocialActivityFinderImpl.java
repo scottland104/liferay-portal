@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -36,62 +36,63 @@ public class SocialActivityFinderImpl
 	extends BasePersistenceImpl<SocialActivity>
 	implements SocialActivityFinder {
 
-	public static String COUNT_BY_GROUP_ID =
+	public static final String COUNT_BY_GROUP_ID =
 		SocialActivityFinder.class.getName() + ".countByGroupId";
 
-	public static String COUNT_BY_GROUP_USERS =
+	public static final String COUNT_BY_GROUP_USERS =
 		SocialActivityFinder.class.getName() + ".countByGroupUsers";
 
-	public static String COUNT_BY_ORGANIZATION_ID =
+	public static final String COUNT_BY_ORGANIZATION_ID =
 		SocialActivityFinder.class.getName() + ".countByOrganizationId";
 
-	public static String COUNT_BY_ORGANIZATION_USERS =
+	public static final String COUNT_BY_ORGANIZATION_USERS =
 		SocialActivityFinder.class.getName() + ".countByOrganizationUsers";
 
-	public static String COUNT_BY_RELATION =
+	public static final String COUNT_BY_RELATION =
 		SocialActivityFinder.class.getName() + ".countByRelation";
 
-	public static String COUNT_BY_RELATION_TYPE =
+	public static final String COUNT_BY_RELATION_TYPE =
 		SocialActivityFinder.class.getName() + ".countByRelationType";
 
-	public static String COUNT_BY_USER_GROUPS =
+	public static final String COUNT_BY_USER_GROUPS =
 		SocialActivityFinder.class.getName() + ".countByUserGroups";
 
-	public static String COUNT_BY_USER_GROUPS_AND_ORGANIZATIONS =
+	public static final String COUNT_BY_USER_GROUPS_AND_ORGANIZATIONS =
 		SocialActivityFinder.class.getName() +
 			".countByUserGroupsAndOrganizations";
 
-	public static String COUNT_BY_USER_ORGANIZATIONS =
+	public static final String COUNT_BY_USER_ORGANIZATIONS =
 		SocialActivityFinder.class.getName() + ".countByUserOrganizations";
 
-	public static String FIND_BY_GROUP_ID =
+	public static final String FIND_BY_GROUP_ID =
 		SocialActivityFinder.class.getName() + ".findByGroupId";
 
-	public static String FIND_BY_GROUP_USERS =
+	public static final String FIND_BY_GROUP_USERS =
 		SocialActivityFinder.class.getName() + ".findByGroupUsers";
 
-	public static String FIND_BY_ORGANIZATION_ID =
+	public static final String FIND_BY_ORGANIZATION_ID =
 		SocialActivityFinder.class.getName() + ".findByOrganizationId";
 
-	public static String FIND_BY_ORGANIZATION_USERS =
+	public static final String FIND_BY_ORGANIZATION_USERS =
 		SocialActivityFinder.class.getName() + ".findByOrganizationUsers";
 
-	public static String FIND_BY_RELATION =
+	public static final String FIND_BY_RELATION =
 		SocialActivityFinder.class.getName() + ".findByRelation";
 
-	public static String FIND_BY_RELATION_TYPE =
+	public static final String FIND_BY_RELATION_TYPE =
 		SocialActivityFinder.class.getName() + ".findByRelationType";
 
-	public static String FIND_BY_USER_GROUPS =
+	public static final String FIND_BY_USER_GROUPS =
 		SocialActivityFinder.class.getName() + ".findByUserGroups";
 
-	public static String FIND_BY_USER_GROUPS_AND_ORGANIZATIONS =
+	public static final String FIND_BY_USER_GROUPS_AND_ORGANIZATIONS =
 		SocialActivityFinder.class.getName() +
 			".findByUserGroupsAndOrganizations";
 
-	public static String FIND_BY_USER_ORGANIZATIONS =
+	public static final String FIND_BY_USER_ORGANIZATIONS =
 		SocialActivityFinder.class.getName() + ".findByUserOrganizations";
 
+	@Override
 	public int countByGroupId(long groupId) throws SystemException {
 		Session session = null;
 
@@ -108,7 +109,7 @@ public class SocialActivityFinderImpl
 
 			qPos.add(groupId);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -128,6 +129,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public int countByGroupUsers(long groupId) throws SystemException {
 		Session session = null;
 
@@ -144,7 +146,7 @@ public class SocialActivityFinderImpl
 
 			qPos.add(groupId);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -164,6 +166,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public int countByOrganizationId(long organizationId)
 		throws SystemException {
 
@@ -182,7 +185,7 @@ public class SocialActivityFinderImpl
 
 			qPos.add(organizationId);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -202,6 +205,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public int countByOrganizationUsers(long organizationId)
 		throws SystemException {
 
@@ -220,7 +224,7 @@ public class SocialActivityFinderImpl
 
 			qPos.add(organizationId);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -240,6 +244,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public int countByRelation(long userId) throws SystemException {
 		Session session = null;
 
@@ -256,7 +261,7 @@ public class SocialActivityFinderImpl
 
 			qPos.add(userId);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -276,6 +281,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public int countByRelationType(long userId, int type)
 		throws SystemException {
 
@@ -295,7 +301,7 @@ public class SocialActivityFinderImpl
 			qPos.add(userId);
 			qPos.add(type);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -315,6 +321,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public int countByUserGroups(long userId) throws SystemException {
 		Session session = null;
 
@@ -330,8 +337,10 @@ public class SocialActivityFinderImpl
 			QueryPos qPos = QueryPos.getInstance(q);
 
 			qPos.add(userId);
+			qPos.add(userId);
+			qPos.add(userId);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -351,6 +360,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public int countByUserGroupsAndOrganizations(long userId)
 		throws SystemException {
 
@@ -373,7 +383,7 @@ public class SocialActivityFinderImpl
 
 			int count = 0;
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			while (itr.hasNext()) {
 				Long l = itr.next();
@@ -393,6 +403,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public int countByUserOrganizations(long userId) throws SystemException {
 		Session session = null;
 
@@ -409,7 +420,7 @@ public class SocialActivityFinderImpl
 
 			qPos.add(userId);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -429,6 +440,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public List<SocialActivity> findByGroupId(long groupId, int start, int end)
 		throws SystemException {
 
@@ -458,6 +470,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public List<SocialActivity> findByGroupUsers(
 			long groupId, int start, int end)
 		throws SystemException {
@@ -488,6 +501,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public List<SocialActivity> findByOrganizationId(
 			long organizationId, int start, int end)
 		throws SystemException {
@@ -518,6 +532,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public List<SocialActivity> findByOrganizationUsers(
 			long organizationId, int start, int end)
 		throws SystemException {
@@ -548,6 +563,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public List<SocialActivity> findByRelation(long userId, int start, int end)
 		throws SystemException {
 
@@ -577,6 +593,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public List<SocialActivity> findByRelationType(
 			long userId, int type, int start, int end)
 		throws SystemException {
@@ -608,6 +625,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public List<SocialActivity> findByUserGroups(
 			long userId, int start, int end)
 		throws SystemException {
@@ -626,6 +644,8 @@ public class SocialActivityFinderImpl
 			QueryPos qPos = QueryPos.getInstance(q);
 
 			qPos.add(userId);
+			qPos.add(userId);
+			qPos.add(userId);
 
 			return (List<SocialActivity>)QueryUtil.list(
 				q, getDialect(), start, end);
@@ -638,6 +658,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public List<SocialActivity> findByUserGroupsAndOrganizations(
 			long userId, int start, int end)
 		throws SystemException {
@@ -684,6 +705,7 @@ public class SocialActivityFinderImpl
 		}
 	}
 
+	@Override
 	public List<SocialActivity> findByUserOrganizations(
 			long userId, int start, int end)
 		throws SystemException {

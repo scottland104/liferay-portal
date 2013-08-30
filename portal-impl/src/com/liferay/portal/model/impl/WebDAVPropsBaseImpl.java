@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -37,7 +37,13 @@ public abstract class WebDAVPropsBaseImpl extends WebDAVPropsModelImpl
 	 *
 	 * Never modify or reference this class directly. All methods that expect a web d a v props model instance should use the {@link WebDAVProps} interface instead.
 	 */
+	@Override
 	public void persist() throws SystemException {
-		WebDAVPropsLocalServiceUtil.updateWebDAVProps(this);
+		if (this.isNew()) {
+			WebDAVPropsLocalServiceUtil.addWebDAVProps(this);
+		}
+		else {
+			WebDAVPropsLocalServiceUtil.updateWebDAVProps(this);
+		}
 	}
 }

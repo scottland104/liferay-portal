@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,7 +24,6 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
@@ -34,34 +33,26 @@ import java.util.Properties;
 public class PropertiesTransformerListener extends BaseTransformerListener {
 
 	@Override
-	public String onOutput(String s) {
+	public String onOutput(
+		String output, String languageId, Map<String, String> tokens) {
+
 		if (_log.isDebugEnabled()) {
 			_log.debug("onOutput");
 		}
 
-		s = replace(s);
-
-		return s;
+		return replace(output, languageId, tokens);
 	}
 
 	@Override
-	public String onScript(String s) {
+	public String onScript(
+		String script, String xml, String languageId,
+		Map<String, String> tokens) {
+
 		if (_log.isDebugEnabled()) {
 			_log.debug("onScript");
 		}
 
-		s = replace(s);
-
-		return s;
-	}
-
-	@Override
-	public String onXml(String s) {
-		if (_log.isDebugEnabled()) {
-			_log.debug("onXml");
-		}
-
-		return s;
+		return replace(script, languageId, tokens);
 	}
 
 	/**
@@ -70,13 +61,13 @@ public class PropertiesTransformerListener extends BaseTransformerListener {
 	 *
 	 * @return the processed string
 	 */
-	protected String replace(String s) {
-		Map<String, String> tokens = getTokens();
+	protected String replace(
+		String s, String languageId, Map<String, String> tokens) {
 
 		String templateId = tokens.get("template_id");
 
 		if ((templateId == null) ||
-			((templateId != null) && (templateId.equals(_GLOBAL_PROPERTIES)))) {
+			((templateId != null) && templateId.equals(_GLOBAL_PROPERTIES))) {
 
 			// Return the original string if no template ID is specified or if
 			// the template ID is GLOBAL-PROPERTIES to prevent an infinite loop.
@@ -93,10 +84,11 @@ public class PropertiesTransformerListener extends BaseTransformerListener {
 
 			newTokens.put("template_id", _GLOBAL_PROPERTIES);
 
-			long groupId = GetterUtil.getLong(tokens.get("group_id"));
+			long articleGroupId = GetterUtil.getLong(
+				tokens.get("article_group_id"));
 
 			String script = JournalUtil.getTemplateScript(
-				groupId, _GLOBAL_PROPERTIES, newTokens, getLanguageId());
+				articleGroupId, _GLOBAL_PROPERTIES, newTokens, languageId);
 
 			PropertiesUtil.load(properties, script);
 		}
@@ -121,12 +113,7 @@ public class PropertiesTransformerListener extends BaseTransformerListener {
 
 		int counter = 0;
 
-		Iterator<Map.Entry<Object, Object>> itr =
-			properties.entrySet().iterator();
-
-		while (itr.hasNext()) {
-			Map.Entry<Object, Object> entry = itr.next();
-
+		for (Map.Entry<Object, Object> entry : properties.entrySet()) {
 			String key = (String)entry.getKey();
 			String value = (String)entry.getValue();
 

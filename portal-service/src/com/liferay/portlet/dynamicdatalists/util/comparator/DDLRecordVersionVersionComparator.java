@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,6 +34,7 @@ public class DDLRecordVersionVersionComparator
 		_ascending = ascending;
 	}
 
+	@Override
 	public int compare(
 		DDLRecordVersion recordVersion1, DDLRecordVersion recordVersion2) {
 
@@ -48,10 +49,10 @@ public class DDLRecordVersionVersionComparator
 		if ((versionParts1.length != 2) && (versionParts2.length != 2)) {
 			value = 0;
 		}
-		else if ((versionParts1.length != 2)) {
+		else if (versionParts1.length != 2) {
 			value = -1;
 		}
-		else if ((versionParts2.length != 2)) {
+		else if (versionParts2.length != 2) {
 			value = 1;
 		}
 		else if (versionParts1[0] > versionParts2[0]) {

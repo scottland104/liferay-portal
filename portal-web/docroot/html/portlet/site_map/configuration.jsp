@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -101,6 +101,21 @@ List layoutList = layoutView.getList();
 		<aui:input name="preferences--useHtmlTitle--" type="checkbox" value="<%= useHtmlTitle %>" />
 
 		<aui:input name="preferences--showHiddenPages--" type="checkbox" value="<%= showHiddenPages %>" />
+
+		<div class="display-template">
+
+			<%
+			TemplateHandler templateHandler = TemplateHandlerRegistryUtil.getTemplateHandler(LayoutSet.class.getName());
+			%>
+
+			<liferay-ui:ddm-template-selector
+				classNameId="<%= PortalUtil.getClassNameId(templateHandler.getClassName()) %>"
+				displayStyle="<%= displayStyle %>"
+				displayStyleGroupId="<%= displayStyleGroupId %>"
+				refreshURL="<%= currentURL %>"
+				showEmptyOption="<%= true %>"
+			/>
+		</div>
 	</aui:fieldset>
 
 	<aui:button-row>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,7 @@
 
 package com.liferay.portlet.documentlibrary.store;
 
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.FileUtil;
@@ -54,14 +55,14 @@ public class AdvancedFileSystemStore extends FileSystemStore {
 					repositoryDir.getPath() + StringPool.SLASH + directory));
 		}
 
-		return fileNames.toArray(new String[0]);
+		return fileNames.toArray(new String[fileNames.size()]);
 	}
 
 	@Override
 	public void updateFile(
 			long companyId, long repositoryId, String fileName,
 			String newFileName)
-		throws SystemException {
+		throws PortalException, SystemException {
 
 		super.updateFile(companyId, repositoryId, fileName, newFileName);
 
@@ -84,7 +85,15 @@ public class AdvancedFileSystemStore extends FileSystemStore {
 					FileUtil.stripExtension(fileNameVersion) +
 						StringPool.PERIOD + _HOOK_EXTENSION);
 
-			fileNameVersionFile.renameTo(newFileNameVersionFile);
+			boolean renamed = FileUtil.move(
+				fileNameVersionFile, newFileNameVersionFile);
+
+			if (!renamed) {
+				throw new SystemException(
+					"File name version file was not renamed from " +
+						fileNameVersionFile.getPath() + " to " +
+							newFileNameVersionFile.getPath());
+			}
 		}
 	}
 
@@ -95,7 +104,7 @@ public class AdvancedFileSystemStore extends FileSystemStore {
 			return;
 		}
 
-		for (int i = 0;i < fileNameFragmentLength;i += 2) {
+		for (int i = 0; i < fileNameFragmentLength; i += 2) {
 			if ((i + 2) < fileNameFragmentLength) {
 				sb.append(fileNameFragment.substring(i, i + 2));
 				sb.append(StringPool.SLASH);
@@ -116,9 +125,7 @@ public class AdvancedFileSystemStore extends FileSystemStore {
 
 		String shortFileName = FileUtil.getShortFileName(fileName);
 
-		if (shortFileName.equals("DLFE") ||
-			Validator.isNumber(shortFileName)) {
-
+		if (shortFileName.equals("DLFE") || Validator.isNumber(shortFileName)) {
 			String[] curFileNames = FileUtil.listDirs(fileName);
 
 			for (String curFileName : curFileNames) {
@@ -175,7 +182,7 @@ public class AdvancedFileSystemStore extends FileSystemStore {
 		if (fileNameFragment.startsWith("DLFE-")) {
 			fileNameFragment = fileNameFragment.substring(5);
 
-			sb.append("DLFE" + StringPool.SLASH);
+			sb.append("DLFE/");
 		}
 
 		buildPath(sb, fileNameFragment);
@@ -185,6 +192,12 @@ public class AdvancedFileSystemStore extends FileSystemStore {
 		File fileNameDir = new File(
 			repositoryDir + StringPool.SLASH + sb.toString() +
 				StringPool.SLASH + fileNameFragment + ext);
+
+		File parentFile = fileNameDir.getParentFile();
+
+		if (!parentFile.exists()) {
+			parentFile.mkdirs();
+		}
 
 		return fileNameDir;
 	}
@@ -209,7 +222,7 @@ public class AdvancedFileSystemStore extends FileSystemStore {
 			if (fileNameFragment.startsWith("DLFE-")) {
 				fileNameFragment = fileNameFragment.substring(5);
 
-				sb.append("DLFE" + StringPool.SLASH);
+				sb.append("DLFE/");
 			}
 
 			buildPath(sb, fileNameFragment);
@@ -235,7 +248,7 @@ public class AdvancedFileSystemStore extends FileSystemStore {
 	}
 
 	@Override
-	protected String getHeadVersionNumber(
+	protected String getHeadVersionLabel(
 		long companyId, long repositoryId, String fileName) {
 
 		File fileNameDir = getFileNameDir(companyId, repositoryId, fileName);
@@ -244,29 +257,28 @@ public class AdvancedFileSystemStore extends FileSystemStore {
 			return VERSION_DEFAULT;
 		}
 
-		String[] versionNumbers = FileUtil.listFiles(fileNameDir);
+		String[] versionLabels = FileUtil.listFiles(fileNameDir);
 
-		String headVersionNumber = VERSION_DEFAULT;
+		String headVersionLabel = VERSION_DEFAULT;
 
-		for (int i = 0; i < versionNumbers.length; i++) {
-			String versionNumberFragment = versionNumbers[i];
+		for (int i = 0; i < versionLabels.length; i++) {
+			String versionLabelFragment = versionLabels[i];
 
-			int x = versionNumberFragment.lastIndexOf(CharPool.UNDERLINE);
-			int y = versionNumberFragment.lastIndexOf(CharPool.PERIOD);
+			int x = versionLabelFragment.lastIndexOf(CharPool.UNDERLINE);
+			int y = versionLabelFragment.lastIndexOf(CharPool.PERIOD);
 
 			if (x > -1) {
-				versionNumberFragment = versionNumberFragment.substring(
-					x + 1, y);
+				versionLabelFragment = versionLabelFragment.substring(x + 1, y);
 			}
 
-			String versionNumber = versionNumberFragment;
+			String versionLabel = versionLabelFragment;
 
-			if (DLUtil.compareVersions(versionNumber, headVersionNumber) > 0) {
-				headVersionNumber = versionNumber;
+			if (DLUtil.compareVersions(versionLabel, headVersionLabel) > 0) {
+				headVersionLabel = versionLabel;
 			}
 		}
 
-		return headVersionNumber;
+		return headVersionLabel;
 	}
 
 	private static final String _HOOK_EXTENSION = "afsh";

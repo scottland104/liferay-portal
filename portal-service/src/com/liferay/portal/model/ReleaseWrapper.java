@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,26 +14,108 @@
 
 package com.liferay.portal.model;
 
+import com.liferay.portal.kernel.util.Validator;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * <p>
  * This class is a wrapper for {@link Release}.
  * </p>
  *
- * @author    Brian Wing Shun Chan
- * @see       Release
+ * @author Brian Wing Shun Chan
+ * @see Release
  * @generated
  */
-public class ReleaseWrapper implements Release {
+public class ReleaseWrapper implements Release, ModelWrapper<Release> {
 	public ReleaseWrapper(Release release) {
 		_release = release;
 	}
 
+	@Override
 	public Class<?> getModelClass() {
 		return Release.class;
 	}
 
+	@Override
 	public String getModelClassName() {
 		return Release.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("releaseId", getReleaseId());
+		attributes.put("createDate", getCreateDate());
+		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("servletContextName", getServletContextName());
+		attributes.put("buildNumber", getBuildNumber());
+		attributes.put("buildDate", getBuildDate());
+		attributes.put("verified", getVerified());
+		attributes.put("state", getState());
+		attributes.put("testString", getTestString());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long releaseId = (Long)attributes.get("releaseId");
+
+		if (releaseId != null) {
+			setReleaseId(releaseId);
+		}
+
+		Date createDate = (Date)attributes.get("createDate");
+
+		if (createDate != null) {
+			setCreateDate(createDate);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
+		}
+
+		String servletContextName = (String)attributes.get("servletContextName");
+
+		if (servletContextName != null) {
+			setServletContextName(servletContextName);
+		}
+
+		Integer buildNumber = (Integer)attributes.get("buildNumber");
+
+		if (buildNumber != null) {
+			setBuildNumber(buildNumber);
+		}
+
+		Date buildDate = (Date)attributes.get("buildDate");
+
+		if (buildDate != null) {
+			setBuildDate(buildDate);
+		}
+
+		Boolean verified = (Boolean)attributes.get("verified");
+
+		if (verified != null) {
+			setVerified(verified);
+		}
+
+		Integer state = (Integer)attributes.get("state");
+
+		if (state != null) {
+			setState(state);
+		}
+
+		String testString = (String)attributes.get("testString");
+
+		if (testString != null) {
+			setTestString(testString);
+		}
 	}
 
 	/**
@@ -41,6 +123,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @return the primary key of this release
 	*/
+	@Override
 	public long getPrimaryKey() {
 		return _release.getPrimaryKey();
 	}
@@ -50,6 +133,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @param primaryKey the primary key of this release
 	*/
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		_release.setPrimaryKey(primaryKey);
 	}
@@ -59,6 +143,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @return the release ID of this release
 	*/
+	@Override
 	public long getReleaseId() {
 		return _release.getReleaseId();
 	}
@@ -68,6 +153,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @param releaseId the release ID of this release
 	*/
+	@Override
 	public void setReleaseId(long releaseId) {
 		_release.setReleaseId(releaseId);
 	}
@@ -77,6 +163,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @return the create date of this release
 	*/
+	@Override
 	public java.util.Date getCreateDate() {
 		return _release.getCreateDate();
 	}
@@ -86,6 +173,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @param createDate the create date of this release
 	*/
+	@Override
 	public void setCreateDate(java.util.Date createDate) {
 		_release.setCreateDate(createDate);
 	}
@@ -95,6 +183,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @return the modified date of this release
 	*/
+	@Override
 	public java.util.Date getModifiedDate() {
 		return _release.getModifiedDate();
 	}
@@ -104,6 +193,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @param modifiedDate the modified date of this release
 	*/
+	@Override
 	public void setModifiedDate(java.util.Date modifiedDate) {
 		_release.setModifiedDate(modifiedDate);
 	}
@@ -113,6 +203,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @return the servlet context name of this release
 	*/
+	@Override
 	public java.lang.String getServletContextName() {
 		return _release.getServletContextName();
 	}
@@ -122,6 +213,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @param servletContextName the servlet context name of this release
 	*/
+	@Override
 	public void setServletContextName(java.lang.String servletContextName) {
 		_release.setServletContextName(servletContextName);
 	}
@@ -131,6 +223,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @return the build number of this release
 	*/
+	@Override
 	public int getBuildNumber() {
 		return _release.getBuildNumber();
 	}
@@ -140,6 +233,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @param buildNumber the build number of this release
 	*/
+	@Override
 	public void setBuildNumber(int buildNumber) {
 		_release.setBuildNumber(buildNumber);
 	}
@@ -149,6 +243,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @return the build date of this release
 	*/
+	@Override
 	public java.util.Date getBuildDate() {
 		return _release.getBuildDate();
 	}
@@ -158,6 +253,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @param buildDate the build date of this release
 	*/
+	@Override
 	public void setBuildDate(java.util.Date buildDate) {
 		_release.setBuildDate(buildDate);
 	}
@@ -167,6 +263,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @return the verified of this release
 	*/
+	@Override
 	public boolean getVerified() {
 		return _release.getVerified();
 	}
@@ -176,6 +273,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @return <code>true</code> if this release is verified; <code>false</code> otherwise
 	*/
+	@Override
 	public boolean isVerified() {
 		return _release.isVerified();
 	}
@@ -185,8 +283,29 @@ public class ReleaseWrapper implements Release {
 	*
 	* @param verified the verified of this release
 	*/
+	@Override
 	public void setVerified(boolean verified) {
 		_release.setVerified(verified);
+	}
+
+	/**
+	* Returns the state of this release.
+	*
+	* @return the state of this release
+	*/
+	@Override
+	public int getState() {
+		return _release.getState();
+	}
+
+	/**
+	* Sets the state of this release.
+	*
+	* @param state the state of this release
+	*/
+	@Override
+	public void setState(int state) {
+		_release.setState(state);
 	}
 
 	/**
@@ -194,6 +313,7 @@ public class ReleaseWrapper implements Release {
 	*
 	* @return the test string of this release
 	*/
+	@Override
 	public java.lang.String getTestString() {
 		return _release.getTestString();
 	}
@@ -203,46 +323,64 @@ public class ReleaseWrapper implements Release {
 	*
 	* @param testString the test string of this release
 	*/
+	@Override
 	public void setTestString(java.lang.String testString) {
 		_release.setTestString(testString);
 	}
 
+	@Override
 	public boolean isNew() {
 		return _release.isNew();
 	}
 
+	@Override
 	public void setNew(boolean n) {
 		_release.setNew(n);
 	}
 
+	@Override
 	public boolean isCachedModel() {
 		return _release.isCachedModel();
 	}
 
+	@Override
 	public void setCachedModel(boolean cachedModel) {
 		_release.setCachedModel(cachedModel);
 	}
 
+	@Override
 	public boolean isEscapedModel() {
 		return _release.isEscapedModel();
 	}
 
-	public void setEscapedModel(boolean escapedModel) {
-		_release.setEscapedModel(escapedModel);
-	}
-
+	@Override
 	public java.io.Serializable getPrimaryKeyObj() {
 		return _release.getPrimaryKeyObj();
 	}
 
+	@Override
 	public void setPrimaryKeyObj(java.io.Serializable primaryKeyObj) {
 		_release.setPrimaryKeyObj(primaryKeyObj);
 	}
 
+	@Override
 	public com.liferay.portlet.expando.model.ExpandoBridge getExpandoBridge() {
 		return _release.getExpandoBridge();
 	}
 
+	@Override
+	public void setExpandoBridgeAttributes(
+		com.liferay.portal.model.BaseModel<?> baseModel) {
+		_release.setExpandoBridgeAttributes(baseModel);
+	}
+
+	@Override
+	public void setExpandoBridgeAttributes(
+		com.liferay.portlet.expando.model.ExpandoBridge expandoBridge) {
+		_release.setExpandoBridgeAttributes(expandoBridge);
+	}
+
+	@Override
 	public void setExpandoBridgeAttributes(
 		com.liferay.portal.service.ServiceContext serviceContext) {
 		_release.setExpandoBridgeAttributes(serviceContext);
@@ -253,6 +391,7 @@ public class ReleaseWrapper implements Release {
 		return new ReleaseWrapper((Release)_release.clone());
 	}
 
+	@Override
 	public int compareTo(com.liferay.portal.model.Release release) {
 		return _release.compareTo(release);
 	}
@@ -262,12 +401,19 @@ public class ReleaseWrapper implements Release {
 		return _release.hashCode();
 	}
 
+	@Override
 	public com.liferay.portal.model.CacheModel<com.liferay.portal.model.Release> toCacheModel() {
 		return _release.toCacheModel();
 	}
 
+	@Override
 	public com.liferay.portal.model.Release toEscapedModel() {
 		return new ReleaseWrapper(_release.toEscapedModel());
+	}
+
+	@Override
+	public com.liferay.portal.model.Release toUnescapedModel() {
+		return new ReleaseWrapper(_release.toUnescapedModel());
 	}
 
 	@Override
@@ -275,19 +421,49 @@ public class ReleaseWrapper implements Release {
 		return _release.toString();
 	}
 
+	@Override
 	public java.lang.String toXmlString() {
 		return _release.toXmlString();
 	}
 
+	@Override
 	public void persist()
 		throws com.liferay.portal.kernel.exception.SystemException {
 		_release.persist();
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof ReleaseWrapper)) {
+			return false;
+		}
+
+		ReleaseWrapper releaseWrapper = (ReleaseWrapper)obj;
+
+		if (Validator.equals(_release, releaseWrapper._release)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedModel}
+	 */
 	public Release getWrappedRelease() {
 		return _release;
 	}
 
+	@Override
+	public Release getWrappedModel() {
+		return _release;
+	}
+
+	@Override
 	public void resetOriginalValues() {
 		_release.resetOriginalValues();
 	}

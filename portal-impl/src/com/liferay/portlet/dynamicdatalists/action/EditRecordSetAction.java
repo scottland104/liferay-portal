@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -53,8 +53,9 @@ public class EditRecordSetAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
@@ -75,14 +76,14 @@ public class EditRecordSetAction extends PortletAction {
 			if (e instanceof NoSuchRecordSetException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				setForward(actionRequest, "portlet.dynamic_data_lists.error");
 			}
 			else if (e instanceof RecordSetDDMStructureIdException ||
 					 e instanceof RecordSetNameException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 			}
 			else {
 				throw e;
@@ -92,8 +93,9 @@ public class EditRecordSetAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -103,7 +105,7 @@ public class EditRecordSetAction extends PortletAction {
 				ActionUtil.getRecordSet(renderRequest);
 			}
 		}
-		catch (NoSuchRecordSetException nsee) {
+		catch (NoSuchRecordSetException nsrse) {
 
 			// Let this slide because the user can manually input an record set
 			// key for a new record set that does not yet exist
@@ -111,16 +113,17 @@ public class EditRecordSetAction extends PortletAction {
 		}
 		catch (Exception e) {
 			if (e instanceof PrincipalException) {
-				SessionErrors.add(renderRequest, e.getClass().getName());
+				SessionErrors.add(renderRequest, e.getClass());
 
-				return mapping.findForward("portlet.dynamic_data_lists.error");
+				return actionMapping.findForward(
+					"portlet.dynamic_data_lists.error");
 			}
 			else {
 				throw e;
 			}
 		}
 
-		return mapping.findForward(
+		return actionMapping.findForward(
 			getForward(
 				renderRequest, "portlet.dynamic_data_lists.edit_record_set"));
 	}
@@ -178,19 +181,19 @@ public class EditRecordSetAction extends PortletAction {
 			actionRequest, "portletResource");
 
 		if (Validator.isNotNull(portletResource)) {
-			PortletPreferences preferences =
+			PortletPreferences portletPreferences =
 				PortletPreferencesFactoryUtil.getPortletSetup(
 					actionRequest, portletResource);
 
-			preferences.reset("detailDDMTemplateId");
-			preferences.reset("editable");
-			preferences.reset("listDDMTemplateId");
-			preferences.reset("spreadsheet");
+			portletPreferences.reset("displayDDMTemplateId");
+			portletPreferences.reset("editable");
+			portletPreferences.reset("formDDMTemplateId");
+			portletPreferences.reset("spreadsheet");
 
-			preferences.setValue(
+			portletPreferences.setValue(
 				"recordSetId", String.valueOf(recordSet.getRecordSetId()));
 
-			preferences.store();
+			portletPreferences.store();
 		}
 
 		return recordSet;

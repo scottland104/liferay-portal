@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,9 @@
 
 package com.liferay.portlet.documentlibrary.action;
 
+import com.liferay.portal.kernel.portlet.LiferayPortletConfig;
 import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.security.auth.PrincipalException;
@@ -28,6 +30,9 @@ import com.liferay.portlet.documentlibrary.NoSuchFileShortcutException;
 import com.liferay.portlet.documentlibrary.model.DLFileShortcut;
 import com.liferay.portlet.documentlibrary.service.DLAppServiceUtil;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
@@ -40,13 +45,15 @@ import org.apache.struts.action.ActionMapping;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Levente Hudák
  */
 public class EditFileShortcutAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
@@ -56,7 +63,18 @@ public class EditFileShortcutAction extends PortletAction {
 				updateFileShortcut(actionRequest);
 			}
 			else if (cmd.equals(Constants.DELETE)) {
-				deleteFileShortcut(actionRequest);
+				deleteFileShortcut(
+					(LiferayPortletConfig)portletConfig, actionRequest, false);
+			}
+			else if (cmd.equals(Constants.MOVE)) {
+				moveFileShortcut(actionRequest, false);
+			}
+			else if (cmd.equals(Constants.MOVE_FROM_TRASH)) {
+				moveFileShortcut(actionRequest, true);
+			}
+			else if (cmd.equals(Constants.MOVE_TO_TRASH)) {
+				deleteFileShortcut(
+					(LiferayPortletConfig)portletConfig, actionRequest, true);
 			}
 
 			sendRedirect(actionRequest, actionResponse);
@@ -65,14 +83,14 @@ public class EditFileShortcutAction extends PortletAction {
 			if (e instanceof NoSuchFileShortcutException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				setForward(actionRequest, "portlet.document_library.error");
 			}
 			else if (e instanceof FileShortcutPermissionException ||
 					 e instanceof NoSuchFileEntryException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 			}
 			else {
 				throw e;
@@ -82,8 +100,9 @@ public class EditFileShortcutAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -93,26 +112,85 @@ public class EditFileShortcutAction extends PortletAction {
 			if (e instanceof NoSuchFileShortcutException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(renderRequest, e.getClass().getName());
+				SessionErrors.add(renderRequest, e.getClass());
 
-				return mapping.findForward("portlet.document_library.error");
+				return actionMapping.findForward(
+					"portlet.document_library.error");
 			}
 			else {
 				throw e;
 			}
 		}
 
-		return mapping.findForward(getForward(
-			renderRequest, "portlet.document_library.edit_file_shortcut"));
+		return actionMapping.findForward(
+			getForward(
+				renderRequest, "portlet.document_library.edit_file_shortcut"));
 	}
 
-	protected void deleteFileShortcut(ActionRequest actionRequest)
+	protected void deleteFileShortcut(
+			LiferayPortletConfig liferayPortletConfig,
+			ActionRequest actionRequest, boolean moveToTrash)
 		throws Exception {
 
 		long fileShortcutId = ParamUtil.getLong(
 			actionRequest, "fileShortcutId");
 
-		DLAppServiceUtil.deleteFileShortcut(fileShortcutId);
+		if (moveToTrash) {
+			DLFileShortcut fileShortcut =
+				DLAppServiceUtil.moveFileShortcutToTrash(fileShortcutId);
+
+			Map<String, String[]> data = new HashMap<String, String[]>();
+
+			data.put(
+				"deleteEntryClassName",
+				new String[] {DLFileShortcut.class.getName()});
+
+			if (fileShortcut != null) {
+				data.put(
+					"deleteEntryTitle",
+					new String[] {fileShortcut.getToTitle()});
+			}
+
+			data.put(
+				"restoreFileShortcutIds",
+				new String[] {String.valueOf(fileShortcutId)});
+
+			SessionMessages.add(
+				actionRequest,
+				liferayPortletConfig.getPortletId() +
+					SessionMessages.KEY_SUFFIX_DELETE_SUCCESS_DATA, data);
+
+			hideDefaultSuccessMessage(liferayPortletConfig, actionRequest);
+		}
+		else {
+			DLAppServiceUtil.deleteFileShortcut(fileShortcutId);
+		}
+	}
+
+	protected void moveFileShortcut(
+			ActionRequest actionRequest, boolean moveFromTrash)
+		throws Exception {
+
+		long fileShortcutId = ParamUtil.getLong(
+			actionRequest, "fileShortcutId");
+
+		long newFolderId = ParamUtil.getLong(actionRequest, "newFolderId");
+
+		DLFileShortcut fileShortcut = DLAppServiceUtil.getFileShortcut(
+			fileShortcutId);
+
+		ServiceContext serviceContext = ServiceContextFactory.getInstance(
+			DLFileShortcut.class.getName(), actionRequest);
+
+		if (moveFromTrash) {
+			DLAppServiceUtil.moveFileShortcutFromTrash(
+				fileShortcutId, newFolderId, serviceContext);
+		}
+		else {
+			DLAppServiceUtil.updateFileShortcut(
+				fileShortcutId, newFolderId, fileShortcut.getToFileEntryId(),
+				serviceContext);
+		}
 	}
 
 	protected void updateFileShortcut(ActionRequest actionRequest)

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -28,7 +28,7 @@ import com.liferay.portal.model.User;
 import com.liferay.portal.security.ldap.LDAPSettingsUtil;
 import com.liferay.portal.security.ldap.PortalLDAPImporterUtil;
 import com.liferay.portal.security.ldap.PortalLDAPUtil;
-import com.liferay.portal.security.pwd.PwdEncryptor;
+import com.liferay.portal.security.pwd.PasswordEncryptorUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.util.PrefsPropsUtil;
 import com.liferay.portal.util.PropsValues;
@@ -51,6 +51,7 @@ import javax.naming.ldap.LdapContext;
 /**
  * @author Brian Wing Shun Chan
  * @author Scott Lee
+ * @author Josef Sustacek
  */
 public class LDAPAuth implements Authenticator {
 
@@ -65,6 +66,7 @@ public class LDAPAuth implements Authenticator {
 	public static final String RESULT_PASSWORD_RESET =
 		"2.16.840.1.113730.3.4.4";
 
+	@Override
 	public int authenticateByEmailAddress(
 			long companyId, String emailAddress, String password,
 			Map<String, String[]> headerMap, Map<String, String[]> parameterMap)
@@ -81,6 +83,7 @@ public class LDAPAuth implements Authenticator {
 		}
 	}
 
+	@Override
 	public int authenticateByScreenName(
 			long companyId, String screenName, String password,
 			Map<String, String[]> headerMap, Map<String, String[]> parameterMap)
@@ -97,6 +100,7 @@ public class LDAPAuth implements Authenticator {
 		}
 	}
 
+	@Override
 	public int authenticateByUserId(
 			long companyId, long userId, String password,
 			Map<String, String[]> headerMap, Map<String, String[]> parameterMap)
@@ -149,7 +153,7 @@ public class LDAPAuth implements Authenticator {
 
 				// Get LDAP bind results
 
-				Control[] responseControls =  innerCtx.getResponseControls();
+				Control[] responseControls = innerCtx.getResponseControls();
 
 				ldapAuthResult.setAuthenticated(true);
 				ldapAuthResult.setResponseControl(responseControls);
@@ -157,8 +161,8 @@ public class LDAPAuth implements Authenticator {
 			catch (Exception e) {
 				if (_log.isDebugEnabled()) {
 					_log.debug(
-						"Failed to bind to the LDAP server with userDN "
-							+ userDN + " and password " + password);
+						"Failed to bind to the LDAP server with userDN " +
+							userDN + " and password " + password);
 				}
 
 				_log.error("Failed to bind to the LDAP server", e);
@@ -185,10 +189,8 @@ public class LDAPAuth implements Authenticator {
 					PropsKeys.LDAP_AUTH_PASSWORD_ENCRYPTION_ALGORITHM);
 
 				if (Validator.isNotNull(algorithm)) {
-					encryptedPassword =
-						"{" + algorithm + "}" +
-							PwdEncryptor.encrypt(
-								algorithm, password, ldapPassword);
+					encryptedPassword = PasswordEncryptorUtil.encrypt(
+						algorithm, password, ldapPassword);
 				}
 
 				if (ldapPassword.equals(encryptedPassword)) {
@@ -209,7 +211,7 @@ public class LDAPAuth implements Authenticator {
 	}
 
 	protected int authenticate(
-			long companyId, long ldapServerId, String emailAddress,
+			long ldapServerId, long companyId, String emailAddress,
 			String screenName, long userId, String password)
 		throws Exception {
 
@@ -221,6 +223,8 @@ public class LDAPAuth implements Authenticator {
 		if (ldapContext == null) {
 			return FAILURE;
 		}
+
+		NamingEnumeration<SearchResult> enu = null;
 
 		try {
 			String baseDN = PrefsPropsUtil.getString(
@@ -242,8 +246,7 @@ public class LDAPAuth implements Authenticator {
 				SearchControls.SUBTREE_SCOPE, 1, 0,
 				new String[] {userMappingsScreenName}, false, false);
 
-			NamingEnumeration<SearchResult> enu = ldapContext.search(
-				baseDN, filter, searchControls);
+			enu = ldapContext.search(baseDN, filter, searchControls);
 
 			if (enu.hasMoreElements()) {
 				if (_log.isDebugEnabled()) {
@@ -258,37 +261,33 @@ public class LDAPAuth implements Authenticator {
 				Attributes attributes = PortalLDAPUtil.getUserAttributes(
 					ldapServerId, companyId, ldapContext, fullUserDN);
 
-				LDAPAuthResult ldapAuthResult = null;
+				LDAPAuthResult ldapAuthResult = authenticate(
+					ldapContext, companyId, attributes, fullUserDN, password);
 
-				if (PropsValues.LDAP_IMPORT_USER_PASSWORD_ENABLED) {
-					ldapAuthResult = authenticate(
-						ldapContext, companyId, attributes, fullUserDN,
-						password);
+				// Process LDAP failure codes
 
-					// Process LDAP failure codes
+				String errorMessage = ldapAuthResult.getErrorMessage();
 
-					String errorMessage = ldapAuthResult.getErrorMessage();
+				if (errorMessage != null) {
+					int pos = errorMessage.indexOf(
+						PrefsPropsUtil.getString(
+							companyId, PropsKeys.LDAP_ERROR_USER_LOCKOUT));
 
-					if (errorMessage != null) {
-						if (errorMessage.indexOf(PrefsPropsUtil.getString(
-								companyId, PropsKeys.LDAP_ERROR_USER_LOCKOUT))
-									!= -1) {
-
-							throw new UserLockoutException();
-						}
-						else if (errorMessage.indexOf(PrefsPropsUtil.getString(
-							companyId, PropsKeys.LDAP_ERROR_PASSWORD_EXPIRED))
-								!= -1) {
-
-							throw new PasswordExpiredException();
-						}
+					if (pos != -1) {
+						throw new UserLockoutException();
 					}
 
-					if (!ldapAuthResult.isAuthenticated() &&
-						PropsValues.LDAP_IMPORT_USER_PASSWORD_ENABLED) {
+					pos = errorMessage.indexOf(
+						PrefsPropsUtil.getString(
+							companyId, PropsKeys.LDAP_ERROR_PASSWORD_EXPIRED));
 
-						return FAILURE;
+					if (pos != -1) {
+						throw new PasswordExpiredException();
 					}
+				}
+
+				if (!ldapAuthResult.isAuthenticated()) {
+					return FAILURE;
 				}
 
 				// Get user or create from LDAP
@@ -298,21 +297,11 @@ public class LDAPAuth implements Authenticator {
 
 				// Process LDAP success codes
 
-				if (ldapAuthResult != null) {
-					String resultCode = ldapAuthResult.getResponseControl();
+				String resultCode = ldapAuthResult.getResponseControl();
 
-					if (resultCode.equals(
-							LDAPAuth.RESULT_PASSWORD_EXP_WARNING)) {
-
-						UserLocalServiceUtil.updatePasswordReset(
-							user.getUserId(), true);
-					}
-					else if (resultCode.equals(
-								LDAPAuth.RESULT_PASSWORD_RESET)) {
-
-						UserLocalServiceUtil.updatePasswordReset(
-							user.getUserId(), true);
-					}
+				if (resultCode.equals(LDAPAuth.RESULT_PASSWORD_RESET)) {
+					UserLocalServiceUtil.updatePasswordReset(
+						user.getUserId(), true);
 				}
 			}
 			else {
@@ -322,8 +311,6 @@ public class LDAPAuth implements Authenticator {
 
 				return DNE;
 			}
-
-			enu.close();
 		}
 		catch (Exception e) {
 			if (e instanceof PasswordExpiredException ||
@@ -337,6 +324,10 @@ public class LDAPAuth implements Authenticator {
 			return FAILURE;
 		}
 		finally {
+			if (enu != null) {
+				enu.close();
+			}
+
 			if (ldapContext != null) {
 				ldapContext.close();
 			}
@@ -362,16 +353,36 @@ public class LDAPAuth implements Authenticator {
 			_log.debug("Authenticator is enabled");
 		}
 
+		int preferredLDAPServerResult = authenticateAgainstPreferredLDAPServer(
+			companyId, emailAddress, screenName, userId, password);
+
+		if (preferredLDAPServerResult == SUCCESS) {
+			if (PrefsPropsUtil.getBoolean(
+					companyId, PropsKeys.LDAP_IMPORT_USER_PASSWORD_ENABLED)) {
+
+				return preferredLDAPServerResult;
+			}
+
+			return Authenticator.SKIP_LIFERAY_CHECK;
+		}
+
 		long[] ldapServerIds = StringUtil.split(
 			PrefsPropsUtil.getString(companyId, "ldap.server.ids"), 0L);
 
 		for (long ldapServerId : ldapServerIds) {
 			int result = authenticate(
-				companyId, ldapServerId, emailAddress, screenName, userId,
+				ldapServerId, companyId, emailAddress, screenName, userId,
 				password);
 
 			if (result == SUCCESS) {
-				return result;
+				if (PrefsPropsUtil.getBoolean(
+						companyId,
+						PropsKeys.LDAP_IMPORT_USER_PASSWORD_ENABLED)) {
+
+					return result;
+				}
+
+				return Authenticator.SKIP_LIFERAY_CHECK;
 			}
 		}
 
@@ -386,16 +397,88 @@ public class LDAPAuth implements Authenticator {
 			}
 
 			int result = authenticate(
-				companyId, ldapServerId, emailAddress, screenName, userId,
+				ldapServerId, companyId, emailAddress, screenName, userId,
 				password);
 
 			if (result == SUCCESS) {
-				return result;
+				if (PrefsPropsUtil.getBoolean(
+						companyId,
+						PropsKeys.LDAP_IMPORT_USER_PASSWORD_ENABLED)) {
+
+					return result;
+				}
+
+				return Authenticator.SKIP_LIFERAY_CHECK;
 			}
 		}
 
 		return authenticateRequired(
 			companyId, userId, emailAddress, screenName, true, FAILURE);
+	}
+
+	protected int authenticateAgainstPreferredLDAPServer(
+			long companyId, String emailAddress, String screenName, long userId,
+			String password)
+		throws Exception {
+
+		int result = DNE;
+
+		User user = null;
+
+		try {
+			if (userId > 0) {
+				user = UserLocalServiceUtil.getUserById(companyId, userId);
+			}
+			else if (Validator.isNotNull(emailAddress)) {
+				user = UserLocalServiceUtil.getUserByEmailAddress(
+					companyId, emailAddress);
+			}
+			else if (Validator.isNotNull(screenName)) {
+				user = UserLocalServiceUtil.getUserByScreenName(
+					companyId, screenName);
+			}
+			else {
+				if (_log.isDebugEnabled()) {
+					_log.debug("Unable to get preferred LDAP server");
+				}
+
+				return result;
+			}
+		}
+		catch (NoSuchUserException nsue) {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Unable to get preferred LDAP server", nsue);
+			}
+
+			return result;
+		}
+
+		long ldapServerId = user.getLdapServerId();
+
+		if (ldapServerId < 0) {
+			return result;
+		}
+
+		String postfix = LDAPSettingsUtil.getPropertyPostfix(ldapServerId);
+
+		String providerUrl = PrefsPropsUtil.getString(
+			user.getCompanyId(), PropsKeys.LDAP_BASE_PROVIDER_URL + postfix);
+
+		if (Validator.isNull(providerUrl)) {
+			return result;
+		}
+
+		if (_log.isDebugEnabled()) {
+			_log.debug(
+				"Using LDAP server ID " + ldapServerId +
+					" to authenticate user " + user.getUserId());
+		}
+
+		result = authenticate(
+			ldapServerId, companyId, emailAddress, screenName, userId,
+			password);
+
+		return result;
 	}
 
 	protected int authenticateOmniadmin(
@@ -404,34 +487,32 @@ public class LDAPAuth implements Authenticator {
 
 		// Only allow omniadmin if Liferay password checking is enabled
 
-		if (PropsValues.AUTH_PIPELINE_ENABLE_LIFERAY_CHECK) {
-			if (userId > 0) {
-				if (OmniadminUtil.isOmniadmin(userId)) {
+		if (!PropsValues.AUTH_PIPELINE_ENABLE_LIFERAY_CHECK) {
+			return FAILURE;
+		}
+
+		if (userId > 0) {
+			if (OmniadminUtil.isOmniadmin(userId)) {
+				return SUCCESS;
+			}
+		}
+		else if (Validator.isNotNull(emailAddress)) {
+			User user = UserLocalServiceUtil.fetchUserByEmailAddress(
+				companyId, emailAddress);
+
+			if (user != null) {
+				if (OmniadminUtil.isOmniadmin(user)) {
 					return SUCCESS;
 				}
 			}
-			else if (Validator.isNotNull(emailAddress)) {
-				try {
-					User user = UserLocalServiceUtil.getUserByEmailAddress(
-						companyId, emailAddress);
+		}
+		else if (Validator.isNotNull(screenName)) {
+			User user = UserLocalServiceUtil.fetchUserByScreenName(
+				companyId, screenName);
 
-					if (OmniadminUtil.isOmniadmin(user.getUserId())) {
-						return SUCCESS;
-					}
-				}
-				catch (NoSuchUserException nsue) {
-				}
-			}
-			else if (Validator.isNotNull(screenName)) {
-				try {
-					User user = UserLocalServiceUtil.getUserByScreenName(
-						companyId, screenName);
-
-					if (OmniadminUtil.isOmniadmin(user.getUserId())) {
-						return SUCCESS;
-					}
-				}
-				catch (NoSuchUserException nsue) {
+			if (user != null) {
+				if (OmniadminUtil.isOmniadmin(user)) {
+					return SUCCESS;
 				}
 			}
 		}

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,15 +15,15 @@
 package com.liferay.portlet.asset.service;
 
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
-import com.liferay.portal.kernel.util.MethodCache;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the asset tag remote service. This utility wraps {@link com.liferay.portlet.asset.service.impl.AssetTagServiceImpl} and is the primary access point for service operations in application layer code running on a remote server.
- *
- * <p>
- * This is a remote service. Methods of this service are expected to have security checks based on the propagated JAAS credentials because this service can be accessed remotely.
- * </p>
+ * Provides the remote service utility for AssetTag. This utility wraps
+ * {@link com.liferay.portlet.asset.service.impl.AssetTagServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on a remote server. Methods of this service are expected to have security
+ * checks based on the propagated JAAS credentials because this service can be
+ * accessed remotely.
  *
  * @author Brian Wing Shun Chan
  * @see AssetTagService
@@ -37,6 +37,25 @@ public class AssetTagServiceUtil {
 	 *
 	 * Never modify this class directly. Add custom service methods to {@link com.liferay.portlet.asset.service.impl.AssetTagServiceImpl} and rerun ServiceBuilder to regenerate this class.
 	 */
+
+	/**
+	* Returns the Spring bean ID for this bean.
+	*
+	* @return the Spring bean ID for this bean
+	*/
+	public static java.lang.String getBeanIdentifier() {
+		return getService().getBeanIdentifier();
+	}
+
+	/**
+	* Sets the Spring bean ID for this bean.
+	*
+	* @param beanIdentifier the Spring bean ID for this bean
+	*/
+	public static void setBeanIdentifier(java.lang.String beanIdentifier) {
+		getService().setBeanIdentifier(beanIdentifier);
+	}
+
 	public static com.liferay.portlet.asset.model.AssetTag addTag(
 		java.lang.String name, java.lang.String[] tagProperties,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -81,6 +100,16 @@ public class AssetTagServiceUtil {
 		return getService().getGroupTagsCount(groupId);
 	}
 
+	public static com.liferay.portlet.asset.model.AssetTagDisplay getGroupTagsDisplay(
+		long groupId, java.lang.String name, int start, int end)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().getGroupTagsDisplay(groupId, name, start, end);
+	}
+
+	/**
+	* @deprecated As of 6.2.0, replaced by {@link #getGroupTagsDisplay(long,
+	String, int, int)}
+	*/
 	public static com.liferay.portal.kernel.json.JSONObject getJSONGroupTags(
 		long groupId, java.lang.String name, int start, int end)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -115,10 +144,28 @@ public class AssetTagServiceUtil {
 	}
 
 	public static java.util.List<com.liferay.portlet.asset.model.AssetTag> getTags(
+		long[] groupIds, java.lang.String name,
+		java.lang.String[] tagProperties, int start, int end)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().getTags(groupIds, name, tagProperties, start, end);
+	}
+
+	public static java.util.List<com.liferay.portlet.asset.model.AssetTag> getTags(
 		java.lang.String className, long classPK)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return getService().getTags(className, classPK);
+	}
+
+	public static int getTagsCount(long groupId, long classNameId,
+		java.lang.String name)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().getTagsCount(groupId, classNameId, name);
+	}
+
+	public static int getTagsCount(long groupId, java.lang.String name)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().getTagsCount(groupId, name);
 	}
 
 	public static int getTagsCount(long groupId, java.lang.String name,
@@ -148,6 +195,13 @@ public class AssetTagServiceUtil {
 		return getService().search(groupId, name, tagProperties, start, end);
 	}
 
+	public static com.liferay.portal.kernel.json.JSONArray search(
+		long[] groupIds, java.lang.String name,
+		java.lang.String[] tagProperties, int start, int end)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().search(groupIds, name, tagProperties, start, end);
+	}
+
 	public static com.liferay.portlet.asset.model.AssetTag updateTag(
 		long tagId, java.lang.String name, java.lang.String[] tagProperties,
 		com.liferay.portal.service.ServiceContext serviceContext)
@@ -162,20 +216,15 @@ public class AssetTagServiceUtil {
 
 			ReferenceRegistry.registerReference(AssetTagServiceUtil.class,
 				"_service");
-			MethodCache.remove(AssetTagService.class);
 		}
 
 		return _service;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setService(AssetTagService service) {
-		MethodCache.remove(AssetTagService.class);
-
-		_service = service;
-
-		ReferenceRegistry.registerReference(AssetTagServiceUtil.class,
-			"_service");
-		MethodCache.remove(AssetTagService.class);
 	}
 
 	private static AssetTagService _service;

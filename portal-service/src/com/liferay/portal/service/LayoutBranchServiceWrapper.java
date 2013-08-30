@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,19 +15,39 @@
 package com.liferay.portal.service;
 
 /**
- * <p>
- * This class is a wrapper for {@link LayoutBranchService}.
- * </p>
+ * Provides a wrapper for {@link LayoutBranchService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       LayoutBranchService
+ * @author Brian Wing Shun Chan
+ * @see LayoutBranchService
  * @generated
  */
-public class LayoutBranchServiceWrapper implements LayoutBranchService {
+public class LayoutBranchServiceWrapper implements LayoutBranchService,
+	ServiceWrapper<LayoutBranchService> {
 	public LayoutBranchServiceWrapper(LayoutBranchService layoutBranchService) {
 		_layoutBranchService = layoutBranchService;
 	}
 
+	/**
+	* Returns the Spring bean ID for this bean.
+	*
+	* @return the Spring bean ID for this bean
+	*/
+	@Override
+	public java.lang.String getBeanIdentifier() {
+		return _layoutBranchService.getBeanIdentifier();
+	}
+
+	/**
+	* Sets the Spring bean ID for this bean.
+	*
+	* @param beanIdentifier the Spring bean ID for this bean
+	*/
+	@Override
+	public void setBeanIdentifier(java.lang.String beanIdentifier) {
+		_layoutBranchService.setBeanIdentifier(beanIdentifier);
+	}
+
+	@Override
 	public com.liferay.portal.model.LayoutBranch addLayoutBranch(
 		long layoutRevisionId, java.lang.String name,
 		java.lang.String description, boolean master,
@@ -38,12 +58,14 @@ public class LayoutBranchServiceWrapper implements LayoutBranchService {
 			description, master, serviceContext);
 	}
 
+	@Override
 	public void deleteLayoutBranch(long layoutBranchId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		_layoutBranchService.deleteLayoutBranch(layoutBranchId);
 	}
 
+	@Override
 	public com.liferay.portal.model.LayoutBranch updateLayoutBranch(
 		long layoutBranchId, java.lang.String name,
 		java.lang.String description,
@@ -54,12 +76,28 @@ public class LayoutBranchServiceWrapper implements LayoutBranchService {
 			description, serviceContext);
 	}
 
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
+	 */
 	public LayoutBranchService getWrappedLayoutBranchService() {
 		return _layoutBranchService;
 	}
 
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
+	 */
 	public void setWrappedLayoutBranchService(
 		LayoutBranchService layoutBranchService) {
+		_layoutBranchService = layoutBranchService;
+	}
+
+	@Override
+	public LayoutBranchService getWrappedService() {
+		return _layoutBranchService;
+	}
+
+	@Override
+	public void setWrappedService(LayoutBranchService layoutBranchService) {
 		_layoutBranchService = layoutBranchService;
 	}
 

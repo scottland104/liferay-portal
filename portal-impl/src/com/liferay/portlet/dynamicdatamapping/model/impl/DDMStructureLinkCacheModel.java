@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.model.CacheModel;
 
 import com.liferay.portlet.dynamicdatamapping.model.DDMStructureLink;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing DDMStructureLink in entity cache.
  *
@@ -26,7 +31,8 @@ import com.liferay.portlet.dynamicdatamapping.model.DDMStructureLink;
  * @see DDMStructureLink
  * @generated
  */
-public class DDMStructureLinkCacheModel implements CacheModel<DDMStructureLink> {
+public class DDMStructureLinkCacheModel implements CacheModel<DDMStructureLink>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(9);
@@ -44,6 +50,7 @@ public class DDMStructureLinkCacheModel implements CacheModel<DDMStructureLink> 
 		return sb.toString();
 	}
 
+	@Override
 	public DDMStructureLink toEntityModel() {
 		DDMStructureLinkImpl ddmStructureLinkImpl = new DDMStructureLinkImpl();
 
@@ -55,6 +62,23 @@ public class DDMStructureLinkCacheModel implements CacheModel<DDMStructureLink> 
 		ddmStructureLinkImpl.resetOriginalValues();
 
 		return ddmStructureLinkImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		structureLinkId = objectInput.readLong();
+		classNameId = objectInput.readLong();
+		classPK = objectInput.readLong();
+		structureId = objectInput.readLong();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(structureLinkId);
+		objectOutput.writeLong(classNameId);
+		objectOutput.writeLong(classPK);
+		objectOutput.writeLong(structureId);
 	}
 
 	public long structureLinkId;

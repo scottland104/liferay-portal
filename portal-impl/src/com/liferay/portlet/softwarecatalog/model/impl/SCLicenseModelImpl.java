@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portlet.softwarecatalog.model.impl;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -31,12 +32,12 @@ import com.liferay.portlet.softwarecatalog.model.SCLicenseSoap;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base model implementation for the SCLicense service. Represents a row in the &quot;SCLicense&quot; database table, with each column mapped to a property of this class.
@@ -81,6 +82,12 @@ public class SCLicenseModelImpl extends BaseModelImpl<SCLicense>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portlet.softwarecatalog.model.SCLicense"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portlet.softwarecatalog.model.SCLicense"),
+			true);
+	public static long ACTIVE_COLUMN_BITMASK = 1L;
+	public static long RECOMMENDED_COLUMN_BITMASK = 2L;
+	public static long NAME_COLUMN_BITMASK = 4L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -89,6 +96,10 @@ public class SCLicenseModelImpl extends BaseModelImpl<SCLicense>
 	 * @return the normal model instance
 	 */
 	public static SCLicense toModel(SCLicenseSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		SCLicense model = new SCLicenseImpl();
 
 		model.setLicenseId(soapModel.getLicenseId());
@@ -108,6 +119,10 @@ public class SCLicenseModelImpl extends BaseModelImpl<SCLicense>
 	 * @return the normal model instances
 	 */
 	public static List<SCLicense> toModels(SCLicenseSoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<SCLicense> models = new ArrayList<SCLicense>(soapModels.length);
 
 		for (SCLicenseSoap soapModel : soapModels) {
@@ -115,14 +130,6 @@ public class SCLicenseModelImpl extends BaseModelImpl<SCLicense>
 		}
 
 		return models;
-	}
-
-	public Class<?> getModelClass() {
-		return SCLicense.class;
-	}
-
-	public String getModelClassName() {
-		return SCLicense.class.getName();
 	}
 
 	public static final String MAPPING_TABLE_SCLICENSES_SCPRODUCTENTRIES_NAME = "SCLicenses_SCProductEntries";
@@ -143,32 +150,102 @@ public class SCLicenseModelImpl extends BaseModelImpl<SCLicense>
 	public SCLicenseModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _licenseId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setLicenseId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_licenseId);
+		return _licenseId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return SCLicense.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return SCLicense.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("licenseId", getLicenseId());
+		attributes.put("name", getName());
+		attributes.put("url", getUrl());
+		attributes.put("openSource", getOpenSource());
+		attributes.put("active", getActive());
+		attributes.put("recommended", getRecommended());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long licenseId = (Long)attributes.get("licenseId");
+
+		if (licenseId != null) {
+			setLicenseId(licenseId);
+		}
+
+		String name = (String)attributes.get("name");
+
+		if (name != null) {
+			setName(name);
+		}
+
+		String url = (String)attributes.get("url");
+
+		if (url != null) {
+			setUrl(url);
+		}
+
+		Boolean openSource = (Boolean)attributes.get("openSource");
+
+		if (openSource != null) {
+			setOpenSource(openSource);
+		}
+
+		Boolean active = (Boolean)attributes.get("active");
+
+		if (active != null) {
+			setActive(active);
+		}
+
+		Boolean recommended = (Boolean)attributes.get("recommended");
+
+		if (recommended != null) {
+			setRecommended(recommended);
+		}
+	}
+
 	@JSON
+	@Override
 	public long getLicenseId() {
 		return _licenseId;
 	}
 
+	@Override
 	public void setLicenseId(long licenseId) {
 		_licenseId = licenseId;
 	}
 
 	@JSON
+	@Override
 	public String getName() {
 		if (_name == null) {
 			return StringPool.BLANK;
@@ -178,11 +255,15 @@ public class SCLicenseModelImpl extends BaseModelImpl<SCLicense>
 		}
 	}
 
+	@Override
 	public void setName(String name) {
+		_columnBitmask = -1L;
+
 		_name = name;
 	}
 
 	@JSON
+	@Override
 	public String getUrl() {
 		if (_url == null) {
 			return StringPool.BLANK;
@@ -192,78 +273,108 @@ public class SCLicenseModelImpl extends BaseModelImpl<SCLicense>
 		}
 	}
 
+	@Override
 	public void setUrl(String url) {
 		_url = url;
 	}
 
 	@JSON
+	@Override
 	public boolean getOpenSource() {
 		return _openSource;
 	}
 
+	@Override
 	public boolean isOpenSource() {
 		return _openSource;
 	}
 
+	@Override
 	public void setOpenSource(boolean openSource) {
 		_openSource = openSource;
 	}
 
 	@JSON
+	@Override
 	public boolean getActive() {
 		return _active;
 	}
 
+	@Override
 	public boolean isActive() {
 		return _active;
 	}
 
+	@Override
 	public void setActive(boolean active) {
+		_columnBitmask |= ACTIVE_COLUMN_BITMASK;
+
+		if (!_setOriginalActive) {
+			_setOriginalActive = true;
+
+			_originalActive = _active;
+		}
+
 		_active = active;
 	}
 
+	public boolean getOriginalActive() {
+		return _originalActive;
+	}
+
 	@JSON
+	@Override
 	public boolean getRecommended() {
 		return _recommended;
 	}
 
+	@Override
 	public boolean isRecommended() {
 		return _recommended;
 	}
 
+	@Override
 	public void setRecommended(boolean recommended) {
+		_columnBitmask |= RECOMMENDED_COLUMN_BITMASK;
+
+		if (!_setOriginalRecommended) {
+			_setOriginalRecommended = true;
+
+			_originalRecommended = _recommended;
+		}
+
 		_recommended = recommended;
 	}
 
-	@Override
-	public SCLicense toEscapedModel() {
-		if (isEscapedModel()) {
-			return (SCLicense)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (SCLicense)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
+	public boolean getOriginalRecommended() {
+		return _originalRecommended;
+	}
 
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(0,
-					SCLicense.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(0,
+			SCLicense.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public SCLicense toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (SCLicense)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -282,6 +393,7 @@ public class SCLicenseModelImpl extends BaseModelImpl<SCLicense>
 		return scLicenseImpl;
 	}
 
+	@Override
 	public int compareTo(SCLicense scLicense) {
 		int value = 0;
 
@@ -296,18 +408,15 @@ public class SCLicenseModelImpl extends BaseModelImpl<SCLicense>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof SCLicense)) {
 			return false;
 		}
 
-		SCLicense scLicense = null;
-
-		try {
-			scLicense = (SCLicense)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		SCLicense scLicense = (SCLicense)obj;
 
 		long primaryKey = scLicense.getPrimaryKey();
 
@@ -326,6 +435,17 @@ public class SCLicenseModelImpl extends BaseModelImpl<SCLicense>
 
 	@Override
 	public void resetOriginalValues() {
+		SCLicenseModelImpl scLicenseModelImpl = this;
+
+		scLicenseModelImpl._originalActive = scLicenseModelImpl._active;
+
+		scLicenseModelImpl._setOriginalActive = false;
+
+		scLicenseModelImpl._originalRecommended = scLicenseModelImpl._recommended;
+
+		scLicenseModelImpl._setOriginalRecommended = false;
+
+		scLicenseModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -380,6 +500,7 @@ public class SCLicenseModelImpl extends BaseModelImpl<SCLicense>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(22);
 
@@ -418,7 +539,7 @@ public class SCLicenseModelImpl extends BaseModelImpl<SCLicense>
 	}
 
 	private static ClassLoader _classLoader = SCLicense.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			SCLicense.class
 		};
 	private long _licenseId;
@@ -426,7 +547,11 @@ public class SCLicenseModelImpl extends BaseModelImpl<SCLicense>
 	private String _url;
 	private boolean _openSource;
 	private boolean _active;
+	private boolean _originalActive;
+	private boolean _setOriginalActive;
 	private boolean _recommended;
-	private transient ExpandoBridge _expandoBridge;
-	private SCLicense _escapedModelProxy;
+	private boolean _originalRecommended;
+	private boolean _setOriginalRecommended;
+	private long _columnBitmask;
+	private SCLicense _escapedModel;
 }

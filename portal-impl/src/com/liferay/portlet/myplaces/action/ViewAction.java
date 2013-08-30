@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -54,43 +54,10 @@ import org.apache.struts.action.ActionMapping;
 public class ViewAction extends PortletAction {
 
 	@Override
-	public ActionForward strutsExecute(
-			ActionMapping mapping, ActionForm form, HttpServletRequest request,
-			HttpServletResponse response)
-		throws Exception {
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		long groupId = ParamUtil.getLong(request, "groupId");
-		String privateLayoutParam = request.getParameter("privateLayout");
-
-		List<Layout> layouts = getLayouts(groupId, privateLayoutParam);
-
-		if (layouts.isEmpty()) {
-			SessionErrors.add(
-				request, NoSuchLayoutSetException.class.getName(),
-				new NoSuchLayoutSetException(
-					"{groupId=" + groupId + ",privateLayout=" +
-						privateLayoutParam + "}"));
-		}
-
-		String redirect = getRedirect(
-			themeDisplay, layouts, groupId, privateLayoutParam);
-
-		if (Validator.isNull(redirect)) {
-			redirect = ParamUtil.getString(request, "redirect");
-		}
-
-		response.sendRedirect(redirect);
-
-		return null;
-	}
-
-	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
@@ -124,11 +91,53 @@ public class ViewAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
-		return mapping.findForward("portlet.my_sites.view");
+		return actionMapping.findForward("portlet.my_sites.view");
+	}
+
+	@Override
+	public ActionForward strutsExecute(
+			ActionMapping actionMapping, ActionForm actionForm,
+			HttpServletRequest request, HttpServletResponse response)
+		throws Exception {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		long groupId = ParamUtil.getLong(request, "groupId");
+		String privateLayoutParam = request.getParameter("privateLayout");
+
+		List<Layout> layouts = getLayouts(groupId, privateLayoutParam);
+
+		if (layouts.isEmpty()) {
+			SessionErrors.add(
+				request, NoSuchLayoutSetException.class.getName(),
+				new NoSuchLayoutSetException(
+					"{groupId=" + groupId + ",privateLayout=" +
+						privateLayoutParam + "}"));
+		}
+
+		String redirect = getRedirect(
+			themeDisplay, layouts, groupId, privateLayoutParam);
+
+		if (Validator.isNull(redirect)) {
+			redirect = ParamUtil.getString(request, "redirect");
+		}
+
+		response.sendRedirect(redirect);
+
+		return null;
+	}
+
+	protected List<Layout> getLayouts(long groupId, boolean privateLayout)
+		throws Exception {
+
+		return LayoutLocalServiceUtil.getLayouts(
+			groupId, privateLayout, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID);
 	}
 
 	protected List<Layout> getLayouts(long groupId, String privateLayoutParam)
@@ -154,13 +163,6 @@ public class ViewAction extends PortletAction {
 		return layouts;
 	}
 
-	protected List<Layout> getLayouts(long groupId, boolean privateLayout)
-		throws Exception {
-
-		return LayoutLocalServiceUtil.getLayouts(
-			groupId, privateLayout, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID);
-	}
-
 	protected String getRedirect(
 			ThemeDisplay themeDisplay, List<Layout> layouts, long groupId,
 			String privateLayoutParam)
@@ -169,33 +171,26 @@ public class ViewAction extends PortletAction {
 		PermissionChecker permissionChecker =
 			themeDisplay.getPermissionChecker();
 
-		boolean checkGuest = permissionChecker.isCheckGuest();
+		for (Layout layout : layouts) {
+			if (!layout.isHidden() &&
+				LayoutPermissionUtil.contains(
+					permissionChecker, layout, ActionKeys.VIEW)) {
 
-		try {
-			for (Layout layout : layouts) {
-				if (layout.isPrivateLayout()) {
-					permissionChecker.setCheckGuest(false);
-				}
-				else {
-					permissionChecker.setCheckGuest(true);
-				}
+				String canonicalURL = PortalUtil.getCanonicalURL(
+					null, themeDisplay, layout, true);
 
-				if (!layout.isHidden() &&
-					LayoutPermissionUtil.contains(
-						permissionChecker, layout, ActionKeys.VIEW)) {
-
-					return PortalUtil.getLayoutURL(layout, themeDisplay);
-				}
+				return PortalUtil.addPreservedParameters(
+					themeDisplay, layout, canonicalURL, true);
 			}
-		}
-		finally {
-			permissionChecker.setCheckGuest(checkGuest);
 		}
 
 		Group group = GroupLocalServiceUtil.getGroup(groupId);
 
-		return PortalUtil.getGroupFriendlyURL(
+		String groupFriendlyURL = PortalUtil.getGroupFriendlyURL(
 			group, GetterUtil.getBoolean(privateLayoutParam), themeDisplay);
+
+		return PortalUtil.addPreservedParameters(
+			themeDisplay, groupFriendlyURL);
 	}
 
 	@Override

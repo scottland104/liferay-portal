@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,55 +14,135 @@
 
 package com.liferay.portlet.messageboards.service.impl;
 
+import com.liferay.portal.kernel.dao.orm.QueryDefinition;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.increment.BufferedIncrement;
 import com.liferay.portal.kernel.increment.NumberIncrement;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.lar.ExportImportThreadLocal;
+import com.liferay.portal.kernel.search.Field;
+import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
-import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.search.SearchContext;
+import com.liferay.portal.kernel.search.Sort;
+import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.model.CompanyConstants;
+import com.liferay.portal.model.Group;
 import com.liferay.portal.model.ResourceConstants;
+import com.liferay.portal.model.SystemEventConstants;
+import com.liferay.portal.model.User;
+import com.liferay.portal.portletfilerepository.PortletFileRepositoryUtil;
 import com.liferay.portal.service.ServiceContext;
-import com.liferay.portlet.documentlibrary.DuplicateDirectoryException;
-import com.liferay.portlet.documentlibrary.NoSuchDirectoryException;
-import com.liferay.portlet.documentlibrary.store.DLStoreUtil;
+import com.liferay.portal.util.PortletKeys;
+import com.liferay.portlet.asset.model.AssetEntry;
+import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
+import com.liferay.portlet.messageboards.NoSuchCategoryException;
 import com.liferay.portlet.messageboards.SplitThreadException;
 import com.liferay.portlet.messageboards.model.MBCategory;
 import com.liferay.portlet.messageboards.model.MBCategoryConstants;
 import com.liferay.portlet.messageboards.model.MBMessage;
 import com.liferay.portlet.messageboards.model.MBMessageDisplay;
-import com.liferay.portlet.messageboards.model.MBMessageFlag;
-import com.liferay.portlet.messageboards.model.MBMessageFlagConstants;
 import com.liferay.portlet.messageboards.model.MBThread;
 import com.liferay.portlet.messageboards.model.MBThreadConstants;
 import com.liferay.portlet.messageboards.model.MBTreeWalker;
 import com.liferay.portlet.messageboards.service.base.MBThreadLocalServiceBaseImpl;
-
-import java.io.IOException;
-import java.io.InputStream;
+import com.liferay.portlet.messageboards.util.MBUtil;
+import com.liferay.portlet.social.model.SocialActivityConstants;
+import com.liferay.portlet.trash.model.TrashEntry;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Shuyang Zhou
  */
 public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 
+	@Override
+	public MBThread addThread(
+			long categoryId, MBMessage message, ServiceContext serviceContext)
+		throws PortalException, SystemException {
+
+		// Thread
+
+		Date now = new Date();
+
+		long threadId = message.getThreadId();
+
+		if (!message.isRoot() || (threadId <= 0)) {
+			threadId = counterLocalService.increment();
+		}
+
+		MBThread thread = mbThreadPersistence.create(threadId);
+
+		thread.setUuid(serviceContext.getUuid());
+		thread.setGroupId(message.getGroupId());
+		thread.setCompanyId(message.getCompanyId());
+		thread.setUserId(message.getUserId());
+		thread.setUserName(message.getUserName());
+		thread.setCreateDate(serviceContext.getCreateDate(now));
+		thread.setModifiedDate(serviceContext.getModifiedDate(now));
+		thread.setCategoryId(categoryId);
+		thread.setRootMessageId(message.getMessageId());
+		thread.setRootMessageUserId(message.getUserId());
+
+		if (message.isAnonymous()) {
+			thread.setLastPostByUserId(0);
+		}
+		else {
+			thread.setLastPostByUserId(message.getUserId());
+		}
+
+		thread.setLastPostDate(message.getCreateDate());
+
+		if (message.getPriority() != MBThreadConstants.PRIORITY_NOT_GIVEN) {
+			thread.setPriority(message.getPriority());
+		}
+
+		thread.setStatus(message.getStatus());
+		thread.setStatusByUserId(message.getStatusByUserId());
+		thread.setStatusByUserName(message.getStatusByUserName());
+		thread.setStatusDate(message.getStatusDate());
+
+		mbThreadPersistence.update(thread);
+
+		// Asset
+
+		if (categoryId >= 0) {
+			assetEntryLocalService.updateEntry(
+				message.getUserId(), message.getGroupId(),
+				thread.getStatusDate(), thread.getLastPostDate(),
+				MBThread.class.getName(), thread.getThreadId(),
+				thread.getUuid(), 0, new long[0], new String[0], false, null,
+				null, null, null, String.valueOf(thread.getRootMessageId()),
+				null, null, null, null, 0, 0, null, false);
+		}
+
+		return thread;
+	}
+
+	@Override
 	public void deleteThread(long threadId)
 		throws PortalException, SystemException {
 
 		MBThread thread = mbThreadPersistence.findByPrimaryKey(threadId);
 
-		deleteThread(thread);
+		mbThreadLocalService.deleteThread(thread);
 	}
 
+	@Override
+	@SystemEvent(
+		action = SystemEventConstants.ACTION_SKIP, send = false,
+		type = SystemEventConstants.TYPE_DELETE)
 	public void deleteThread(MBThread thread)
 		throws PortalException, SystemException {
 
@@ -71,21 +151,28 @@ public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 
 		// Indexer
 
-		Indexer indexer = IndexerRegistryUtil.getIndexer(MBMessage.class);
+		Indexer messageIndexer = IndexerRegistryUtil.nullSafeGetIndexer(
+			MBMessage.class);
 
-		indexer.delete(thread);
+		messageIndexer.delete(thread);
 
 		// Attachments
 
-		long companyId = rootMessage.getCompanyId();
-		long repositoryId = CompanyConstants.SYSTEM;
-		String dirName = thread.getAttachmentsDir();
+		long folderId = thread.getAttachmentsFolderId();
 
-		try {
-			DLStoreUtil.deleteDirectory(companyId, repositoryId, dirName);
+		if (folderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+			PortletFileRepositoryUtil.deleteFolder(folderId);
 		}
-		catch (NoSuchDirectoryException nsde) {
-		}
+
+		// Subscriptions
+
+		subscriptionLocalService.deleteSubscriptions(
+			thread.getCompanyId(), MBThread.class.getName(),
+			thread.getThreadId());
+
+		// Thread flags
+
+		mbThreadFlagPersistence.removeByThreadId(thread.getThreadId());
 
 		// Messages
 
@@ -94,30 +181,21 @@ public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 
 		for (MBMessage message : messages) {
 
-			// Social
-
-			socialActivityLocalService.deleteActivities(
-				MBMessage.class.getName(), message.getMessageId());
-
 			// Ratings
 
 			ratingsStatsLocalService.deleteStats(
-				MBMessage.class.getName(), message.getMessageId());
+				message.getWorkflowClassName(), message.getMessageId());
 
 			// Asset
 
 			assetEntryLocalService.deleteEntry(
-				MBMessage.class.getName(), message.getMessageId());
-
-			// Message flags
-
-			mbMessageFlagPersistence.removeByMessageId(message.getMessageId());
+				message.getWorkflowClassName(), message.getMessageId());
 
 			// Resources
 
 			if (!message.isDiscussion()) {
 				resourceLocalService.deleteResource(
-					message.getCompanyId(), MBMessage.class.getName(),
+					message.getCompanyId(), message.getWorkflowClassName(),
 					ResourceConstants.SCOPE_INDIVIDUAL, message.getMessageId());
 			}
 
@@ -146,32 +224,84 @@ public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 			(rootMessage.getCategoryId() !=
 				MBCategoryConstants.DISCUSSION_CATEGORY_ID)) {
 
-			MBCategory category = mbCategoryPersistence.findByPrimaryKey(
-				thread.getCategoryId());
+			try {
+				MBCategory category = mbCategoryPersistence.findByPrimaryKey(
+					thread.getCategoryId());
 
-			category.setThreadCount(category.getThreadCount() - 1);
-			category.setMessageCount(
-				category.getMessageCount() - thread.getMessageCount());
-
-			mbCategoryPersistence.update(category, false);
+				MBUtil.updateCategoryStatistics(
+					category.getCompanyId(), category.getCategoryId());
+			}
+			catch (NoSuchCategoryException nsce) {
+				if (!thread.isInTrash()) {
+					throw nsce;
+				}
+			}
 		}
+
+		// Thread Asset
+
+		AssetEntry assetEntry = assetEntryLocalService.fetchEntry(
+			MBThread.class.getName(), thread.getThreadId());
+
+		if (assetEntry != null) {
+			assetEntry.setTitle(rootMessage.getSubject());
+
+			assetEntryLocalService.updateAssetEntry(assetEntry);
+		}
+
+		assetEntryLocalService.deleteEntry(
+			MBThread.class.getName(), thread.getThreadId());
+
+		// Trash
+
+		trashEntryLocalService.deleteEntry(
+			MBThread.class.getName(), thread.getThreadId());
+
+		// Indexer
+
+		Indexer threadIndexer = IndexerRegistryUtil.nullSafeGetIndexer(
+			MBThread.class);
+
+		threadIndexer.delete(thread);
 
 		// Thread
 
 		mbThreadPersistence.remove(thread);
 	}
 
+	@Override
 	public void deleteThreads(long groupId, long categoryId)
+		throws PortalException, SystemException {
+
+		deleteThreads(groupId, categoryId, true);
+	}
+
+	@Override
+	public void deleteThreads(
+			long groupId, long categoryId, boolean includeTrashedEntries)
 		throws PortalException, SystemException {
 
 		List<MBThread> threads = mbThreadPersistence.findByG_C(
 			groupId, categoryId);
 
 		for (MBThread thread : threads) {
-			deleteThread(thread);
+			if (includeTrashedEntries || !thread.isInTrash()) {
+				mbThreadLocalService.deleteThread(thread);
+			}
+		}
+
+		if (mbThreadPersistence.countByGroupId(groupId) == 0) {
+			PortletFileRepositoryUtil.deletePortletRepository(
+				groupId, PortletKeys.MESSAGE_BOARDS);
 		}
 	}
 
+	@Override
+	public MBThread fetchThread(long threadId) throws SystemException {
+		return mbThreadPersistence.fetchByPrimaryKey(threadId);
+	}
+
+	@Override
 	public int getCategoryThreadsCount(
 			long groupId, long categoryId, int status)
 		throws SystemException {
@@ -185,153 +315,265 @@ public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 		}
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getGroupThreads(long,
+	 *             QueryDefinition)}
+	 */
+	@Override
 	public List<MBThread> getGroupThreads(
 			long groupId, int status, int start, int end)
 		throws SystemException {
 
-		if (status == WorkflowConstants.STATUS_ANY) {
-			return mbThreadPersistence.findByG_NotC(
-				groupId, MBCategoryConstants.DISCUSSION_CATEGORY_ID, start,
-				end);
-		}
-		else {
-			return mbThreadPersistence.findByG_NotC_S(
-				groupId, MBCategoryConstants.DISCUSSION_CATEGORY_ID, status,
-				start, end);
-		}
+		QueryDefinition queryDefinition = new QueryDefinition(
+			status, start, end, null);
+
+		return getGroupThreads(groupId, queryDefinition);
 	}
 
+	@Override
 	public List<MBThread> getGroupThreads(
-			long groupId, long userId, int status, boolean subscribed,
-			boolean includeAnonymous, int start, int end)
-		throws PortalException, SystemException {
+			long groupId, long userId, boolean subscribed,
+			boolean includeAnonymous, QueryDefinition queryDefinition)
+		throws SystemException {
 
 		if (userId <= 0) {
-			if (status == WorkflowConstants.STATUS_ANY) {
-				return mbThreadPersistence.findByG_NotC(
-					groupId, MBCategoryConstants.DISCUSSION_CATEGORY_ID, start,
-					end);
-			}
-			else {
-				return mbThreadPersistence.findByG_NotC_S(
-					groupId, MBCategoryConstants.DISCUSSION_CATEGORY_ID, status,
-					start, end);
-			}
+			return getGroupThreads(groupId, queryDefinition);
 		}
 		else {
 			if (subscribed) {
-				return mbThreadFinder.findByS_G_U_C_S(
-					groupId, userId, null, status, start, end);
+				return mbThreadFinder.findByS_G_U_C(
+					groupId, userId, null, queryDefinition);
 			}
 			else {
-				List<Long> threadIds = null;
-
 				if (includeAnonymous) {
-					threadIds = mbMessageFinder.findByG_U_C_S(
-						groupId, userId, null, status, start, end);
+					return mbThreadFinder.findByG_U_C(
+						groupId, userId, null, queryDefinition);
 				}
 				else {
-					threadIds = mbMessageFinder.findByG_U_C_A_S(
-						groupId, userId, null, false, status, start, end);
+					return mbThreadFinder.findByG_U_C_A(
+						groupId, userId, null, false, queryDefinition);
 				}
-
-				List<MBThread> threads = new ArrayList<MBThread>(
-					threadIds.size());
-
-				for (long threadId : threadIds) {
-					MBThread thread = mbThreadPersistence.findByPrimaryKey(
-						threadId);
-
-					threads.add(thread);
-				}
-
-				return threads;
 			}
 		}
 	}
 
+	@Override
+	public List<MBThread> getGroupThreads(
+			long groupId, long userId, boolean subscribed,
+			QueryDefinition queryDefinition)
+		throws SystemException {
+
+		return getGroupThreads(
+			groupId, userId, subscribed, true, queryDefinition);
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getGroupThreads(long, long,
+	 *             boolean, boolean, QueryDefinition)}
+	 */
+	@Override
+	public List<MBThread> getGroupThreads(
+			long groupId, long userId, int status, boolean subscribed,
+			boolean includeAnonymous, int start, int end)
+		throws SystemException {
+
+		QueryDefinition queryDefinition = new QueryDefinition(
+			status, start, end, null);
+
+		return getGroupThreads(
+			groupId, userId, subscribed, includeAnonymous, queryDefinition);
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getGroupThreads(long, long,
+	 *             boolean, QueryDefinition)}
+	 */
+	@Override
 	public List<MBThread> getGroupThreads(
 			long groupId, long userId, int status, boolean subscribed,
 			int start, int end)
-		throws PortalException, SystemException {
-
-		return getGroupThreads(
-			groupId, userId, status, subscribed, true, start, end);
-	}
-
-	public List<MBThread> getGroupThreads(
-			long groupId, long userId, int status, int start, int end)
-		throws PortalException, SystemException {
-
-		return getGroupThreads(groupId, userId, status, false, start, end);
-	}
-
-	public int getGroupThreadsCount(long groupId, int status)
 		throws SystemException {
 
-		if (status == WorkflowConstants.STATUS_ANY) {
-			return mbThreadPersistence.countByG_NotC(
-				groupId, MBCategoryConstants.DISCUSSION_CATEGORY_ID);
+		QueryDefinition queryDefinition = new QueryDefinition(
+			status, start, end, null);
+
+		return getGroupThreads(groupId, userId, subscribed, queryDefinition);
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getGroupThreads(long, long,
+	 *             QueryDefinition)}
+	 */
+	@Override
+	public List<MBThread> getGroupThreads(
+			long groupId, long userId, int status, int start, int end)
+		throws SystemException {
+
+		QueryDefinition queryDefinition = new QueryDefinition(
+			status, start, end, null);
+
+		return getGroupThreads(groupId, userId, false, queryDefinition);
+	}
+
+	@Override
+	public List<MBThread> getGroupThreads(
+			long groupId, long userId, QueryDefinition queryDefinition)
+		throws SystemException {
+
+		return getGroupThreads(groupId, userId, false, queryDefinition);
+	}
+
+	@Override
+	public List<MBThread> getGroupThreads(
+			long groupId, QueryDefinition queryDefinition)
+		throws SystemException {
+
+		if (queryDefinition.isExcludeStatus()) {
+			return mbThreadPersistence.findByG_NotC_NotS(
+				groupId, MBCategoryConstants.DISCUSSION_CATEGORY_ID,
+				queryDefinition.getStatus(), queryDefinition.getStart(),
+				queryDefinition.getEnd());
 		}
 		else {
-			return mbThreadPersistence.countByG_NotC_S(
-				groupId, MBCategoryConstants.DISCUSSION_CATEGORY_ID, status);
+			return mbThreadPersistence.findByG_NotC_S(
+				groupId, MBCategoryConstants.DISCUSSION_CATEGORY_ID,
+				queryDefinition.getStatus(), queryDefinition.getStart(),
+				queryDefinition.getEnd());
 		}
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getGroupThreadsCount(long,
+	 *             QueryDefinition)}
+	 */
+	@Override
+	public int getGroupThreadsCount(long groupId, int status)
+			throws SystemException {
+
+		QueryDefinition queryDefinition = new QueryDefinition(status);
+
+		return getGroupThreadsCount(groupId, queryDefinition);
+	}
+
+	@Override
+	public int getGroupThreadsCount(
+			long groupId, long userId, boolean subscribed,
+			boolean includeAnonymous, QueryDefinition queryDefinition)
+		throws SystemException {
+
+		if (userId <= 0) {
+			return getGroupThreadsCount(groupId, queryDefinition);
+		}
+		else {
+			if (subscribed) {
+				return mbThreadFinder.countByS_G_U_C(
+					groupId, userId, null, queryDefinition);
+			}
+			else {
+				if (includeAnonymous) {
+					return mbThreadFinder.countByG_U_C(
+						groupId, userId, null, queryDefinition);
+				}
+				else {
+					return mbThreadFinder.countByG_U_C_A(
+						groupId, userId, null, false, queryDefinition);
+				}
+			}
+		}
+	}
+
+	@Override
+	public int getGroupThreadsCount(
+			long groupId, long userId, boolean subscribed,
+			QueryDefinition queryDefinition)
+		throws SystemException {
+
+		return getGroupThreadsCount(
+			groupId, userId, subscribed, true, queryDefinition);
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getGroupThreadsCount(long,
+	 *             long, QueryDefinition)}
+	 */
+	@Override
 	public int getGroupThreadsCount(long groupId, long userId, int status)
 		throws SystemException {
 
-		return getGroupThreadsCount(groupId, userId, status, false);
+		QueryDefinition queryDefinition = new QueryDefinition(status);
+
+		return getGroupThreadsCount(groupId, userId, false, queryDefinition);
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getGroupThreadsCount(long,
+	 *             long, boolean, QueryDefinition)}
+	 */
+	@Override
 	public int getGroupThreadsCount(
 			long groupId, long userId, int status, boolean subscribed)
 		throws SystemException {
 
-		return getGroupThreadsCount(groupId, userId, status, subscribed, true);
+		QueryDefinition queryDefinition = new QueryDefinition(status);
+
+		return getGroupThreadsCount(
+			groupId, userId, subscribed, true, queryDefinition);
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getGroupThreadsCount(long,
+	 *             long, boolean, boolean, QueryDefinition)}
+	 */
+	@Override
 	public int getGroupThreadsCount(
 			long groupId, long userId, int status, boolean subscribed,
 			boolean includeAnonymous)
 		throws SystemException {
 
-		if (userId <= 0) {
-			if (status == WorkflowConstants.STATUS_ANY) {
-				return mbThreadPersistence.countByG_NotC(
-					groupId, MBCategoryConstants.DISCUSSION_CATEGORY_ID);
-			}
-			else {
-				return mbThreadPersistence.countByG_NotC_S(
-					groupId, MBCategoryConstants.DISCUSSION_CATEGORY_ID,
-					status);
-			}
+		QueryDefinition queryDefinition = new QueryDefinition(status);
+
+		return getGroupThreadsCount(
+			groupId, userId, subscribed, includeAnonymous, queryDefinition);
+	}
+
+	@Override
+	public int getGroupThreadsCount(
+			long groupId, long userId, QueryDefinition queryDefinition)
+		throws SystemException {
+
+		return getGroupThreadsCount(groupId, userId, false, queryDefinition);
+	}
+
+	@Override
+	public int getGroupThreadsCount(
+			long groupId, QueryDefinition queryDefinition)
+		throws SystemException {
+
+		if (queryDefinition.isExcludeStatus()) {
+			return mbThreadPersistence.countByG_NotC_NotS(
+				groupId, MBCategoryConstants.DISCUSSION_CATEGORY_ID,
+				queryDefinition.getStatus());
 		}
 		else {
-			if (subscribed) {
-				return mbThreadFinder.countByS_G_U_C_S(
-					groupId, userId, null, status);
-			}
-			else {
-				if (includeAnonymous) {
-					return mbMessageFinder.countByG_U_C_S(
-						groupId, userId, null, status);
-				}
-				else {
-					return mbMessageFinder.countByG_U_C_A_S(
-						groupId, userId, null, false, status);
-				}
-			}
+			return mbThreadPersistence.countByG_NotC_S(
+				groupId, MBCategoryConstants.DISCUSSION_CATEGORY_ID,
+				queryDefinition.getStatus());
 		}
 	}
 
+	@Override
+	public List<MBThread> getNoAssetThreads() throws SystemException {
+		return mbThreadFinder.findByNoAssets();
+	}
+
+	@Override
 	public List<MBThread> getPriorityThreads(long categoryId, double priority)
 		throws PortalException, SystemException {
 
 		return getPriorityThreads(categoryId, priority, false);
 	}
 
+	@Override
 	public List<MBThread> getPriorityThreads(
 			long categoryId, double priority, boolean inherit)
 		throws PortalException, SystemException {
@@ -357,12 +599,14 @@ public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 		return threads;
 	}
 
+	@Override
 	public MBThread getThread(long threadId)
 		throws PortalException, SystemException {
 
 		return mbThreadPersistence.findByPrimaryKey(threadId);
 	}
 
+	@Override
 	public List<MBThread> getThreads(
 			long groupId, long categoryId, int status, int start, int end)
 		throws SystemException {
@@ -377,6 +621,7 @@ public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 		}
 	}
 
+	@Override
 	public int getThreadsCount(long groupId, long categoryId, int status)
 		throws SystemException {
 
@@ -389,44 +634,64 @@ public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 		}
 	}
 
-	public void incrementViewCounter(long threadId)
-		throws PortalException, SystemException {
+	@Override
+	public boolean hasAnswerMessage(long threadId) throws SystemException {
+		int count = mbMessagePersistence.countByT_A(threadId, true);
 
-		mbThreadLocalService.incrementViewCounter(threadId, 1);
+		if (count > 0) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 
-	@BufferedIncrement(incrementClass = NumberIncrement.class)
-	public void incrementViewCounter(long threadId, int increment)
+	@BufferedIncrement(
+		configuration = "MBThread", incrementClass = NumberIncrement.class)
+	@Override
+	public MBThread incrementViewCounter(long threadId, int increment)
 		throws PortalException, SystemException {
 
 		MBThread thread = mbThreadPersistence.findByPrimaryKey(threadId);
 
+		if (ExportImportThreadLocal.isImportInProcess()) {
+			return thread;
+		}
+
 		thread.setViewCount(thread.getViewCount() + increment);
 
-		mbThreadPersistence.update(thread, false);
+		mbThreadPersistence.update(thread);
+
+		return thread;
 	}
 
+	@Override
 	public MBThread moveThread(long groupId, long categoryId, long threadId)
 		throws PortalException, SystemException {
 
-		MBThread thread = mbThreadPersistence.findByPrimaryKey(
-			threadId);
+		MBThread thread = mbThreadPersistence.findByPrimaryKey(threadId);
 
 		long oldCategoryId = thread.getCategoryId();
 
 		MBCategory oldCategory = null;
 
 		if (oldCategoryId != MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) {
-			oldCategory = mbCategoryPersistence.findByPrimaryKey(
+			oldCategory = mbCategoryPersistence.fetchByPrimaryKey(
 				oldCategoryId);
 		}
 
 		MBCategory category = null;
 
 		if (categoryId != MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) {
-			category = mbCategoryPersistence.findByPrimaryKey(
-				categoryId);
+			category = mbCategoryPersistence.fetchByPrimaryKey(categoryId);
 		}
+
+		// Thread
+
+		thread.setModifiedDate(new Date());
+		thread.setCategoryId(categoryId);
+
+		mbThreadPersistence.update(thread);
 
 		// Messages
 
@@ -436,45 +701,173 @@ public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 		for (MBMessage message : messages) {
 			message.setCategoryId(categoryId);
 
-			mbMessagePersistence.update(message, false);
+			mbMessagePersistence.update(message);
 
 			// Indexer
 
 			if (!message.isDiscussion()) {
-				Indexer indexer = IndexerRegistryUtil.getIndexer(
+				Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(
 					MBMessage.class);
 
 				indexer.reindex(message);
 			}
 		}
 
-		// Thread
-
-		thread.setCategoryId(categoryId);
-
-		mbThreadPersistence.update(thread, false);
-
 		// Category
 
 		if ((oldCategory != null) && (categoryId != oldCategoryId)) {
-			oldCategory.setThreadCount(oldCategory.getThreadCount() - 1);
-			oldCategory.setMessageCount(
-				oldCategory.getMessageCount() - thread.getMessageCount());
-
-			mbCategoryPersistence.update(oldCategory, false);
+			MBUtil.updateCategoryStatistics(
+				oldCategory.getCompanyId(), oldCategory.getCategoryId());
 		}
 
 		if ((category != null) && (categoryId != oldCategoryId)) {
-			category.setThreadCount(category.getThreadCount() + 1);
-			category.setMessageCount(
-				category.getMessageCount() + thread.getMessageCount());
-
-			mbCategoryPersistence.update(category, false);
+			MBUtil.updateCategoryStatistics(
+				category.getCompanyId(), category.getCategoryId());
 		}
+
+		// Indexer
+
+		Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+			MBThread.class);
+
+		indexer.reindex(thread);
 
 		return thread;
 	}
 
+	@Override
+	public MBThread moveThreadFromTrash(
+			long userId, long categoryId, long threadId)
+		throws PortalException, SystemException {
+
+		MBThread thread = mbThreadPersistence.findByPrimaryKey(threadId);
+
+		if (thread.isInTrash()) {
+			restoreThreadFromTrash(userId, threadId);
+		}
+		else {
+			updateStatus(
+				userId, threadId, thread.getStatus(),
+				WorkflowConstants.STATUS_ANY);
+		}
+
+		return moveThread(thread.getGroupId(), categoryId, threadId);
+	}
+
+	@Override
+	public void moveThreadsToTrash(long groupId, long userId)
+		throws PortalException, SystemException {
+
+		List<MBThread> threads = mbThreadPersistence.findByGroupId(groupId);
+
+		for (MBThread thread : threads) {
+			moveThreadToTrash(userId, thread);
+		}
+	}
+
+	@Override
+	public MBThread moveThreadToTrash(long userId, long threadId)
+		throws PortalException, SystemException {
+
+		MBThread thread = mbThreadPersistence.findByPrimaryKey(threadId);
+
+		return moveThreadToTrash(userId, thread);
+	}
+
+	@Override
+	public MBThread moveThreadToTrash(long userId, MBThread thread)
+		throws PortalException, SystemException {
+
+		if (thread.getCategoryId() ==
+				MBCategoryConstants.DISCUSSION_CATEGORY_ID) {
+
+			return thread;
+		}
+
+		int oldStatus = thread.getStatus();
+
+		if (oldStatus == WorkflowConstants.STATUS_PENDING) {
+			thread.setStatus(WorkflowConstants.STATUS_DRAFT);
+
+			mbThreadPersistence.update(thread);
+		}
+
+		return updateStatus(
+			userId, thread.getThreadId(), WorkflowConstants.STATUS_IN_TRASH,
+			WorkflowConstants.STATUS_ANY);
+	}
+
+	@Override
+	public void restoreThreadFromTrash(long userId, long threadId)
+		throws PortalException, SystemException {
+
+		MBThread thread = getThread(threadId);
+
+		if (thread.getCategoryId() ==
+				MBCategoryConstants.DISCUSSION_CATEGORY_ID) {
+
+			return;
+		}
+
+		TrashEntry trashEntry = trashEntryLocalService.getEntry(
+			MBThread.class.getName(), threadId);
+
+		updateStatus(
+			userId, threadId, trashEntry.getStatus(),
+			WorkflowConstants.STATUS_ANY);
+	}
+
+	@Override
+	public Hits search(
+			long groupId, long userId, long creatorUserId, int status,
+			int start, int end)
+		throws PortalException, SystemException {
+
+		return search(groupId, userId, creatorUserId, 0, 0, status, start, end);
+	}
+
+	@Override
+	public Hits search(
+			long groupId, long userId, long creatorUserId, long startDate,
+			long endDate, int status, int start, int end)
+		throws PortalException, SystemException {
+
+		Indexer indexer = IndexerRegistryUtil.getIndexer(
+			MBThread.class.getName());
+
+		SearchContext searchContext = new SearchContext();
+
+		searchContext.setAttribute(Field.STATUS, status);
+
+		if (endDate > 0) {
+			searchContext.setAttribute("endDate", endDate);
+		}
+
+		searchContext.setAttribute("paginationType", "none");
+
+		if (creatorUserId > 0) {
+			searchContext.setAttribute(
+				"participantUserId", String.valueOf(creatorUserId));
+		}
+
+		if (startDate > 0) {
+			searchContext.setAttribute("startDate", startDate);
+		}
+
+		Group group = groupLocalService.getGroup(groupId);
+
+		searchContext.setCompanyId(group.getCompanyId());
+
+		searchContext.setEnd(end);
+		searchContext.setGroupIds(new long[] {groupId});
+		searchContext.setSorts(new Sort("lastPostDate", true));
+		searchContext.setStart(start);
+		searchContext.setUserId(userId);
+
+		return indexer.search(searchContext);
+	}
+
+	@Override
 	public MBThread splitThread(
 			long messageId, String subject, ServiceContext serviceContext)
 		throws PortalException, SystemException {
@@ -489,29 +882,19 @@ public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 		MBThread oldThread = message.getThread();
 		MBMessage rootMessage = mbMessagePersistence.findByPrimaryKey(
 			oldThread.getRootMessageId());
-		String oldAttachmentsDir = message.getAttachmentsDir();
 
 		// Message flags
 
-		mbMessageFlagLocalService.deleteAnswerFlags(
-			oldThread.getThreadId(), message.getMessageId());
-
-		int count = mbMessageFlagPersistence.countByT_F(
-			oldThread.getThreadId(), MBMessageFlagConstants.ANSWER_FLAG);
-
-		if (count == 1) {
-			MBMessageFlag messageFlag = mbMessageFlagPersistence.fetchByU_M_F(
-				rootMessage.getUserId(), rootMessage.getMessageId(),
-				MBMessageFlagConstants.ANSWER_FLAG);
-
-			messageFlag.setFlag(MBMessageFlagConstants.QUESTION_FLAG);
-
-			mbMessageFlagPersistence.update(messageFlag, false);
-		}
+		mbMessageLocalService.updateAnswer(message, false, true);
 
 		// Create new thread
 
-		MBThread thread = addThread(message.getCategoryId(), message);
+		MBThread thread = addThread(
+			message.getCategoryId(), message, serviceContext);
+
+		oldThread.setModifiedDate(serviceContext.getModifiedDate(new Date()));
+
+		mbThreadPersistence.update(oldThread);
 
 		// Update messages
 
@@ -544,7 +927,7 @@ public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 
 				curMessage.setSubject(curSubject);
 
-				mbMessagePersistence.update(curMessage, false);
+				mbMessagePersistence.update(curMessage);
 			}
 
 			message.setSubject(subject);
@@ -553,40 +936,31 @@ public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 		message.setThreadId(thread.getThreadId());
 		message.setRootMessageId(thread.getRootMessageId());
 		message.setParentMessageId(0);
-		message.setAttachmentsDir(null);
 
-		mbMessagePersistence.update(message, false);
-
-		// Attachments
-
-		moveAttachmentsFromOldThread(message, oldAttachmentsDir);
+		mbMessagePersistence.update(message);
 
 		// Indexer
 
 		if (!message.isDiscussion()) {
-			Indexer indexer = IndexerRegistryUtil.getIndexer(MBMessage.class);
+			Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+				MBMessage.class);
 
 			indexer.reindex(message);
 		}
 
 		// Update children
 
-		int messagesMoved = 1;
-
-		messagesMoved += moveChildrenMessages(
-			message, category, oldThread.getThreadId());
+		moveChildrenMessages(message, category, oldThread.getThreadId());
 
 		// Update new thread
 
-		thread.setMessageCount(messagesMoved);
-
-		mbThreadPersistence.update(thread, false);
+		MBUtil.updateThreadMessageCount(
+			thread.getCompanyId(), thread.getThreadId());
 
 		// Update old thread
 
-		oldThread.setMessageCount(oldThread.getMessageCount() - messagesMoved);
-
-		mbThreadPersistence.update(oldThread, false);
+		MBUtil.updateThreadMessageCount(
+			oldThread.getCompanyId(), oldThread.getThreadId());
 
 		// Category
 
@@ -595,17 +969,145 @@ public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 			(message.getCategoryId() !=
 				MBCategoryConstants.DISCUSSION_CATEGORY_ID)) {
 
-			category.setThreadCount(category.getThreadCount() + 1);
-
-			mbCategoryPersistence.update(category, false);
+			MBUtil.updateCategoryThreadCount(
+				category.getCompanyId(), category.getCategoryId());
 		}
+
+		// Indexer
+
+		Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+			MBThread.class);
+
+		indexer.reindex(oldThread);
+		indexer.reindex(message.getThread());
+
+		return thread;
+	}
+
+	@Override
+	public void updateQuestion(long threadId, boolean question)
+		throws PortalException, SystemException {
+
+		MBThread thread = mbThreadPersistence.findByPrimaryKey(threadId);
+
+		if (thread.isQuestion() == question) {
+			return;
+		}
+
+		thread.setQuestion(question);
+
+		mbThreadPersistence.update(thread);
+
+		if (!question) {
+			MBMessage message = mbMessagePersistence.findByPrimaryKey(
+				thread.getRootMessageId());
+
+			mbMessageLocalService.updateAnswer(message, false, true);
+		}
+	}
+
+	@Override
+	public MBThread updateStatus(
+			long userId, long threadId, int status, int categoryStatus)
+		throws PortalException, SystemException {
+
+		MBThread thread = mbThreadPersistence.findByPrimaryKey(threadId);
+
+		if (categoryStatus != WorkflowConstants.STATUS_IN_TRASH) {
+
+			// Thread
+
+			User user = userPersistence.findByPrimaryKey(userId);
+
+			Date now = new Date();
+
+			int oldStatus = thread.getStatus();
+
+			thread.setModifiedDate(now);
+			thread.setStatus(status);
+			thread.setStatusByUserId(user.getUserId());
+			thread.setStatusByUserName(user.getFullName());
+			thread.setStatusDate(now);
+
+			mbThreadPersistence.update(thread);
+
+			// Messages
+
+			updateDependentStatus(thread.getGroupId(), threadId, status);
+
+			if (thread.getCategoryId() !=
+					MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) {
+
+				// Category
+
+				MBCategory category = mbCategoryPersistence.fetchByPrimaryKey(
+					thread.getCategoryId());
+
+				if (category != null) {
+					MBUtil.updateCategoryStatistics(
+						category.getCompanyId(), category.getCategoryId());
+				}
+			}
+
+			MBMessage message = mbMessageLocalService.getMBMessage(
+				thread.getRootMessageId());
+
+			JSONObject extraDataJSONObject = JSONFactoryUtil.createJSONObject();
+
+			extraDataJSONObject.put("rootMessageId", thread.getRootMessageId());
+			extraDataJSONObject.put("title", message.getSubject());
+
+			if (status == WorkflowConstants.STATUS_IN_TRASH) {
+
+				// Social
+
+				socialActivityLocalService.addActivity(
+					userId, thread.getGroupId(), MBThread.class.getName(),
+					thread.getThreadId(),
+					SocialActivityConstants.TYPE_MOVE_TO_TRASH,
+					extraDataJSONObject.toString(), 0);
+
+				// Trash
+
+				trashEntryLocalService.addTrashEntry(
+					userId, thread.getGroupId(), MBThread.class.getName(),
+					thread.getThreadId(), oldStatus, null, null);
+			}
+			else {
+
+				// Social
+
+				socialActivityLocalService.addActivity(
+					userId, thread.getGroupId(), MBThread.class.getName(),
+					thread.getThreadId(),
+					SocialActivityConstants.TYPE_RESTORE_FROM_TRASH,
+					extraDataJSONObject.toString(), 0);
+
+				// Trash
+
+				trashEntryLocalService.deleteEntry(
+					MBThread.class.getName(), thread.getThreadId());
+			}
+		}
+		else {
+			updateDependentStatus(thread.getGroupId(), threadId, status);
+		}
+
+		// Indexer
+
+		Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+			MBThread.class);
+
+		indexer.reindex(thread);
 
 		return thread;
 	}
 
 	/**
-	 * @deprecated {@link #incrementViewCounter(long, int)}
+	 * @deprecated As of 6.2.0, replaced by {@link #incrementViewCounter(long,
+	 *             int)}
 	 */
+	@Override
 	public MBThread updateThread(long threadId, int viewCount)
 		throws PortalException, SystemException {
 
@@ -613,138 +1115,105 @@ public class MBThreadLocalServiceImpl extends MBThreadLocalServiceBaseImpl {
 
 		thread.setViewCount(viewCount);
 
-		mbThreadPersistence.update(thread, false);
+		mbThreadPersistence.update(thread);
 
 		return thread;
 	}
 
-	protected MBThread addThread(long categoryId, MBMessage message)
-		throws SystemException {
-
-		long threadId = counterLocalService.increment();
-
-		MBThread thread = mbThreadPersistence.create(threadId);
-
-		thread.setGroupId(message.getGroupId());
-		thread.setCompanyId(message.getCompanyId());
-		thread.setCategoryId(categoryId);
-		thread.setRootMessageId(message.getMessageId());
-		thread.setRootMessageUserId(message.getUserId());
-		thread.setStatus(message.getStatus());
-		thread.setStatusByUserId(message.getStatusByUserId());
-		thread.setStatusByUserName(message.getStatusByUserName());
-		thread.setStatusDate(message.getStatusDate());
-
-		thread.setMessageCount(thread.getMessageCount() + 1);
-
-		if (message.isAnonymous()) {
-			thread.setLastPostByUserId(0);
-		}
-		else {
-			thread.setLastPostByUserId(message.getUserId());
-		}
-
-		thread.setLastPostDate(message.getCreateDate());
-
-		if (message.getPriority() != MBThreadConstants.PRIORITY_NOT_GIVEN) {
-			thread.setPriority(message.getPriority());
-		}
-
-		mbThreadPersistence.update(thread, false);
-
-		return thread;
-	}
-
-	protected void moveAttachmentsFromOldThread(
-			MBMessage message, String oldAttachmentsDir)
-		throws PortalException, SystemException {
-
-		if (!message.getAttachments()) {
-			return;
-		}
-
-		long companyId = message.getCompanyId();
-		long repositoryId = CompanyConstants.SYSTEM;
-		String newAttachmentsDir = message.getAttachmentsDir();
-
-		try {
-			DLStoreUtil.addDirectory(
-				companyId, repositoryId, newAttachmentsDir);
-		}
-		catch (DuplicateDirectoryException dde) {
-		}
-
-		String[] fileNames = DLStoreUtil.getFileNames(
-			companyId, repositoryId, oldAttachmentsDir);
-
-		for (String fileName : fileNames) {
-			String name = StringUtil.extractLast(fileName, StringPool.SLASH);
-			InputStream is = DLStoreUtil.getFileAsStream(
-				companyId, repositoryId, fileName);
-
-			try {
-				DLStoreUtil.addFile(
-					companyId, repositoryId, newAttachmentsDir + "/" + name,
-					false, is);
-			}
-			finally {
-				try {
-					is.close();
-				}
-				catch (IOException ioe) {
-					_log.error(ioe);
-				}
-			}
-
-			DLStoreUtil.deleteFile(companyId, repositoryId, fileName);
-		}
-
-		try {
-			DLStoreUtil.deleteDirectory(
-				companyId, repositoryId, oldAttachmentsDir);
-		}
-		catch (NoSuchDirectoryException nsde) {
-		}
-	}
-
-	protected int moveChildrenMessages(
+	protected void moveChildrenMessages(
 			MBMessage parentMessage, MBCategory category, long oldThreadId)
 		throws PortalException, SystemException {
-
-		int messagesMoved = 0;
 
 		List<MBMessage> messages = mbMessagePersistence.findByT_P(
 			oldThreadId, parentMessage.getMessageId());
 
 		for (MBMessage message : messages) {
-			String oldAttachmentsDir = message.getAttachmentsDir();
-
 			message.setCategoryId(parentMessage.getCategoryId());
 			message.setThreadId(parentMessage.getThreadId());
 			message.setRootMessageId(parentMessage.getRootMessageId());
-			message.setAttachmentsDir(null);
 
-			mbMessagePersistence.update(message, false);
-
-			moveAttachmentsFromOldThread(message, oldAttachmentsDir);
+			mbMessagePersistence.update(message);
 
 			if (!message.isDiscussion()) {
-				Indexer indexer = IndexerRegistryUtil.getIndexer(
+				Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(
 					MBMessage.class);
 
 				indexer.reindex(message);
 			}
 
-			messagesMoved++;
-
-			messagesMoved += moveChildrenMessages(
-				message, category, oldThreadId);
+			moveChildrenMessages(message, category, oldThreadId);
 		}
-
-		return messagesMoved;
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(
-		MBThreadLocalServiceImpl.class);
+	protected void updateDependentStatus(
+			long groupId, long threadId, int status)
+		throws PortalException, SystemException {
+
+		Set<Long> userIds = new HashSet<Long>();
+
+		List<MBMessage> messages = mbMessageLocalService.getThreadMessages(
+			threadId, WorkflowConstants.STATUS_ANY);
+
+		for (MBMessage message : messages) {
+			if (message.isDiscussion()) {
+				continue;
+			}
+
+			userIds.add(message.getUserId());
+
+			if (status == WorkflowConstants.STATUS_IN_TRASH) {
+
+				// Asset
+
+				if (message.getStatus() == WorkflowConstants.STATUS_APPROVED) {
+					assetEntryLocalService.updateVisible(
+						MBMessage.class.getName(), message.getMessageId(),
+						false);
+				}
+
+				// Indexer
+
+				Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+					MBMessage.class);
+
+				indexer.reindex(message);
+
+				// Workflow
+
+				if (message.getStatus() == WorkflowConstants.STATUS_PENDING) {
+					message.setStatus(WorkflowConstants.STATUS_DRAFT);
+
+					mbMessagePersistence.update(message);
+
+					workflowInstanceLinkLocalService.deleteWorkflowInstanceLink(
+						message.getCompanyId(), message.getGroupId(),
+						MBMessage.class.getName(), message.getMessageId());
+				}
+			}
+			else {
+
+				// Asset
+
+				if (message.getStatus() == WorkflowConstants.STATUS_APPROVED) {
+					assetEntryLocalService.updateVisible(
+						MBMessage.class.getName(), message.getMessageId(),
+						true);
+				}
+
+				// Indexer
+
+				Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+					MBMessage.class);
+
+				indexer.reindex(message);
+			}
+		}
+
+		// Statistics
+
+		for (long userId : userIds) {
+			mbStatsUserLocalService.updateStatsUser(groupId, userId);
+		}
+	}
 
 }

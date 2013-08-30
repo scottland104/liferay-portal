@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,6 +24,8 @@ import com.liferay.portal.model.MembershipRequest;
 import com.liferay.portal.model.MembershipRequestConstants;
 import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.service.MembershipRequestServiceUtil;
+import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.service.ServiceContextFactory;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.WebKeys;
@@ -45,8 +47,9 @@ public class ReplyMembershipRequestAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		try {
@@ -60,21 +63,23 @@ public class ReplyMembershipRequestAction extends PortletAction {
 			String replyComments = ParamUtil.getString(
 				actionRequest, "replyComments");
 
-			MembershipRequest membershipRequest =
-				MembershipRequestServiceUtil.getMembershipRequest(
-					membershipRequestId);
+			ServiceContext serviceContext = ServiceContextFactory.getInstance(
+				actionRequest);
 
 			MembershipRequestServiceUtil.updateStatus(
-				membershipRequestId, replyComments, statusId);
+				membershipRequestId, replyComments, statusId, serviceContext);
 
 			if (statusId == MembershipRequestConstants.STATUS_APPROVED) {
+				MembershipRequest membershipRequest =
+					MembershipRequestServiceUtil.getMembershipRequest(
+						membershipRequestId);
+
 				LiveUsers.joinGroup(
-					themeDisplay.getCompanyId(),
-					membershipRequest.getGroupId(),
+					themeDisplay.getCompanyId(), membershipRequest.getGroupId(),
 					new long[] {membershipRequest.getUserId()});
 			}
 
-			SessionMessages.add(actionRequest, "membership_reply_sent");
+			SessionMessages.add(actionRequest, "membershipReplySent");
 
 			sendRedirect(actionRequest, actionResponse);
 		}
@@ -82,13 +87,12 @@ public class ReplyMembershipRequestAction extends PortletAction {
 			if (e instanceof NoSuchGroupException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				setForward(actionRequest, "portlet.sites_admin.error");
 			}
 			else if (e instanceof MembershipRequestCommentsException) {
-
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				setForward(
 					actionRequest,
@@ -99,10 +103,12 @@ public class ReplyMembershipRequestAction extends PortletAction {
 			}
 		}
 	}
+
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -112,17 +118,18 @@ public class ReplyMembershipRequestAction extends PortletAction {
 			if (e instanceof NoSuchGroupException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(renderRequest, e.getClass().getName());
+				SessionErrors.add(renderRequest, e.getClass());
 
-				return mapping.findForward("portlet.sites_admin.error");
+				return actionMapping.findForward("portlet.sites_admin.error");
 			}
 			else {
 				throw e;
 			}
 		}
 
-		return mapping.findForward(getForward(
-			renderRequest, "portlet.sites_admin.reply_membership_request"));
+		return actionMapping.findForward(
+			getForward(
+				renderRequest, "portlet.sites_admin.reply_membership_request"));
 	}
 
 }

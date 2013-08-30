@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,26 +25,31 @@ public class ValueMapperWrapper implements ValueMapper {
 		_valueMapper = valueMapper;
 	}
 
-	public ValueMapper getValueMapper() {
-		return _valueMapper;
-	}
-
-	public Object getNewValue(Object oldValue) throws Exception {
-		return _valueMapper.getNewValue(oldValue);
-	}
-
-	public void mapValue(Object oldValue, Object newValue) throws Exception {
-		_valueMapper.mapValue(oldValue, newValue);
-	}
-
+	@Override
 	public void appendException(Object exception) {
 		_valueMapper.appendException(exception);
 	}
 
+	@Override
+	public Object getNewValue(Object oldValue) throws Exception {
+		return _valueMapper.getNewValue(oldValue);
+	}
+
+	public ValueMapper getValueMapper() {
+		return _valueMapper;
+	}
+
+	@Override
 	public Iterator<Object> iterator() throws Exception {
 		return _valueMapper.iterator();
 	}
 
+	@Override
+	public void mapValue(Object oldValue, Object newValue) throws Exception {
+		_valueMapper.mapValue(oldValue, newValue);
+	}
+
+	@Override
 	public int size() throws Exception {
 		return _valueMapper.size();
 	}

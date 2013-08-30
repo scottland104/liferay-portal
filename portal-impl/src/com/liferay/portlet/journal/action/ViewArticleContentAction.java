@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,12 +15,13 @@
 package com.liferay.portlet.journal.action;
 
 import com.liferay.portal.kernel.language.LanguageUtil;
-import com.liferay.portal.kernel.servlet.ImageServletTokenUtil;
 import com.liferay.portal.kernel.upload.UploadServletRequest;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
@@ -30,6 +31,7 @@ import com.liferay.portal.service.ImageLocalServiceUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.WebKeys;
+import com.liferay.portal.webserver.WebServerServletTokenUtil;
 import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.model.JournalArticleConstants;
 import com.liferay.portlet.journal.model.impl.JournalArticleImpl;
@@ -37,12 +39,11 @@ import com.liferay.portlet.journal.service.JournalArticleImageLocalServiceUtil;
 import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
 import com.liferay.portlet.journal.service.JournalArticleServiceUtil;
 import com.liferay.portlet.journal.util.JournalUtil;
-import com.liferay.util.PwdGenerator;
 
 import java.io.File;
 
 import java.util.Date;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -54,18 +55,19 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 /**
- * @author Brian Wing Shun Chan
- * @author Raymond Augé
+ * @author     Brian Wing Shun Chan
+ * @author     Raymond Augé
+ * @deprecated As of 6.2.0, replaced by {@link PreviewArticleContentAction}
  */
 public class ViewArticleContentAction extends Action {
 
 	@Override
 	public ActionForward execute(
-			ActionMapping mapping, ActionForm form, HttpServletRequest request,
-			HttpServletResponse response)
+			ActionMapping actionMapping, ActionForm actionForm,
+			HttpServletRequest request, HttpServletResponse response)
 		throws Exception {
 
-		UploadServletRequest uploadRequest = null;
+		UploadServletRequest uploadServletRequest = null;
 
 		try {
 			String cmd = ParamUtil.getString(request, Constants.CMD);
@@ -83,16 +85,18 @@ public class ViewArticleContentAction extends Action {
 			String output = null;
 
 			if (cmd.equals(Constants.PREVIEW)) {
-				uploadRequest = PortalUtil.getUploadServletRequest(request);
+				uploadServletRequest = PortalUtil.getUploadServletRequest(
+					request);
 
-				String title = ParamUtil.getString(uploadRequest, "title");
+				String title = ParamUtil.getString(
+					uploadServletRequest, "title");
 				String description = ParamUtil.getString(
-					uploadRequest, "description");
-				String type = ParamUtil.getString(uploadRequest, "type");
+					uploadServletRequest, "description");
+				String type = ParamUtil.getString(uploadServletRequest, "type");
 				String structureId = ParamUtil.getString(
-					uploadRequest, "structureId");
+					uploadServletRequest, "structureId");
 				String templateId = ParamUtil.getString(
-					uploadRequest, "templateId");
+					uploadServletRequest, "templateId");
 
 				Date now = new Date();
 
@@ -100,21 +104,20 @@ public class ViewArticleContentAction extends Action {
 				Date modifiedDate = now;
 				Date displayDate = now;
 
-				User user = PortalUtil.getUser(uploadRequest);
+				User user = PortalUtil.getUser(uploadServletRequest);
 
-				String xml = ParamUtil.getString(uploadRequest, "xml");
+				String xml = ParamUtil.getString(uploadServletRequest, "xml");
 
 				Document doc = SAXReaderUtil.read(xml);
 
 				Element root = doc.getRootElement();
 
 				String previewArticleId =
-					"PREVIEW_" +
-						PwdGenerator.getPassword(PwdGenerator.KEY3, 10);
+					"PREVIEW_" + StringUtil.randomString(10);
 
 				format(
 					groupId, articleId, version, previewArticleId, root,
-					uploadRequest);
+					uploadServletRequest);
 
 				Map<String, String> tokens = JournalUtil.getTokens(
 					groupId, themeDisplay);
@@ -142,6 +145,14 @@ public class ViewArticleContentAction extends Action {
 				output = JournalArticleLocalServiceUtil.getArticleContent(
 					article, templateId, null, languageId, themeDisplay);
 			}
+			else if (cmd.equals(Constants.VIEW)) {
+				JournalArticle article = JournalArticleServiceUtil.getArticle(
+					groupId, articleId, version);
+
+				output = JournalArticleLocalServiceUtil.getArticleContent(
+					article, article.getTemplateId(), null, languageId,
+					themeDisplay);
+			}
 			else {
 				output = JournalArticleServiceUtil.getArticleContent(
 					groupId, articleId, version, languageId, themeDisplay);
@@ -150,11 +161,11 @@ public class ViewArticleContentAction extends Action {
 			request.setAttribute(WebKeys.JOURNAL_ARTICLE_CONTENT, output);
 
 			if (output.startsWith("<?xml ")) {
-				return mapping.findForward(
+				return actionMapping.findForward(
 					"portlet.journal.raw_article_content");
 			}
 			else {
-				return mapping.findForward(
+				return actionMapping.findForward(
 					"portlet.journal.view_article_content");
 			}
 		}
@@ -164,8 +175,8 @@ public class ViewArticleContentAction extends Action {
 			return null;
 		}
 		finally {
-			if (uploadRequest != null) {
-				uploadRequest.cleanUp();
+			if (uploadServletRequest != null) {
+				uploadServletRequest.cleanUp();
 			}
 		}
 	}
@@ -173,20 +184,18 @@ public class ViewArticleContentAction extends Action {
 	protected void format(
 			long groupId, String articleId, double version,
 			String previewArticleId, Element root,
-			UploadServletRequest uploadRequest)
+			UploadServletRequest uploadServletRequest)
 		throws Exception {
 
-		Iterator<Element> itr = root.elements().iterator();
+		List<Element> elements = root.elements();
 
-		while (itr.hasNext()) {
-			Element el = itr.next();
+		for (Element element : elements) {
+			Element dynamicContent = element.element("dynamic-content");
 
-			Element dynamicContent = el.element("dynamic-content");
-
-			String elInstanceId = el.attributeValue(
+			String elInstanceId = element.attributeValue(
 				"instance-id", StringPool.BLANK);
-			String elName = el.attributeValue("name", StringPool.BLANK);
-			String elType = el.attributeValue("type", StringPool.BLANK);
+			String elName = element.attributeValue("name", StringPool.BLANK);
+			String elType = element.attributeValue("type", StringPool.BLANK);
 			String elContent = StringPool.BLANK;
 			String elLanguage = StringPool.BLANK;
 
@@ -202,17 +211,17 @@ public class ViewArticleContentAction extends Action {
 			}
 
 			if (elType.equals("image") && Validator.isNull(elContent)) {
-				File file = uploadRequest.getFile(
+				File file = uploadServletRequest.getFile(
 					"structure_image_" + elName + elLanguage);
 				byte[] bytes = FileUtil.getBytes(file);
 
-				if ((bytes != null) && (bytes.length > 0)) {
+				if (ArrayUtil.isNotEmpty(bytes)) {
 					long imageId =
 						JournalArticleImageLocalServiceUtil.getArticleImageId(
 							groupId, previewArticleId, version, elInstanceId,
 							elName, elLanguage, true);
 
-					String token = ImageServletTokenUtil.getToken(imageId);
+					String token = WebServerServletTokenUtil.getToken(imageId);
 
 					dynamicContent.setText(
 						"/image/journal/article?img_id=" + imageId + "&t=" +
@@ -222,12 +231,14 @@ public class ViewArticleContentAction extends Action {
 				}
 				else {
 					if (Validator.isNotNull(articleId)) {
-						long imageId = JournalArticleImageLocalServiceUtil.
-							getArticleImageId(
-								groupId, articleId, version, elInstanceId,
-								elName, elLanguage);
+						long imageId =
+							JournalArticleImageLocalServiceUtil.
+								getArticleImageId(
+									groupId, articleId, version, elInstanceId,
+									elName, elLanguage);
 
-						String token = ImageServletTokenUtil.getToken(imageId);
+						String token = WebServerServletTokenUtil.getToken(
+							imageId);
 
 						dynamicContent.setText(
 							"/image/journal/article?img_id=" + imageId +
@@ -237,8 +248,8 @@ public class ViewArticleContentAction extends Action {
 			}
 
 			format(
-				groupId, articleId, version, previewArticleId, el,
-				uploadRequest);
+				groupId, articleId, version, previewArticleId, element,
+				uploadServletRequest);
 		}
 	}
 

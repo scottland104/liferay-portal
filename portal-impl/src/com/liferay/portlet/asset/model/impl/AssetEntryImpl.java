@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,89 +14,78 @@
 
 package com.liferay.portlet.asset.model.impl;
 
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portlet.asset.AssetRendererFactoryRegistryUtil;
 import com.liferay.portlet.asset.model.AssetCategory;
+import com.liferay.portlet.asset.model.AssetRenderer;
+import com.liferay.portlet.asset.model.AssetRendererFactory;
 import com.liferay.portlet.asset.model.AssetTag;
 import com.liferay.portlet.asset.service.AssetCategoryLocalServiceUtil;
 import com.liferay.portlet.asset.service.AssetTagLocalServiceUtil;
-import com.liferay.portlet.social.model.SocialEquityAssetEntry;
-import com.liferay.portlet.social.model.SocialEquityValue;
-import com.liferay.portlet.social.service.persistence.SocialEquityAssetEntryUtil;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Juan Fernández
  */
 public class AssetEntryImpl extends AssetEntryBaseImpl {
 
 	public AssetEntryImpl() {
 	}
 
+	@Override
+	public AssetRenderer getAssetRenderer() {
+		AssetRendererFactory assetRendererFactory =
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(
+				getClassName());
+
+		try {
+			return assetRendererFactory.getAssetRenderer(getClassPK());
+		}
+		catch (Exception e) {
+			if (_log.isWarnEnabled()) {
+				_log.warn("Unable to get asset renderer", e);
+			}
+		}
+
+		return null;
+	}
+
+	@Override
+	public AssetRendererFactory getAssetRendererFactory() {
+		return
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(
+				getClassName());
+	}
+
+	@Override
 	public List<AssetCategory> getCategories() throws SystemException {
 		return AssetCategoryLocalServiceUtil.getEntryCategories(getEntryId());
 	}
 
+	@Override
 	public long[] getCategoryIds() throws SystemException {
 		return StringUtil.split(
 			ListUtil.toString(
 				getCategories(), AssetCategory.CATEGORY_ID_ACCESSOR), 0L);
 	}
 
-	public double getSocialInformationEquity() {
-		if (_socialInformationEquity == null) {
-			try {
-				SocialEquityAssetEntry equityAssetEntry =
-					SocialEquityAssetEntryUtil.findByAssetEntryId(
-						getEntryId());
-
-				SocialEquityValue socialEquityValue = new SocialEquityValue(
-					equityAssetEntry.getInformationK(),
-					equityAssetEntry.getInformationB());
-
-				_socialInformationEquity = new AtomicReference<Double>(
-					socialEquityValue.getValue());
-			}
-			catch (PortalException pe) {
-				return 0;
-			}
-			catch (SystemException se) {
-				return 0;
-			}
-		}
-
-		return _socialInformationEquity.get();
-	}
-
+	@Override
 	public String[] getTagNames() throws SystemException {
 		return StringUtil.split(
 			ListUtil.toString(getTags(), AssetTag.NAME_ACCESSOR));
 	}
 
+	@Override
 	public List<AssetTag> getTags() throws SystemException {
 		return AssetTagLocalServiceUtil.getEntryTags(getEntryId());
 	}
 
-	public void updateSocialInformationEquity(double value) {
-		if (_socialInformationEquity != null) {
-			double currentValue = 0;
-			double newValue = 0;
-
-			do {
-				currentValue = _socialInformationEquity.get();
-
-				newValue = currentValue + value;
-
-			}
-			while (!_socialInformationEquity.compareAndSet(
-						currentValue, newValue));
-		}
-	}
-
-	private AtomicReference<Double> _socialInformationEquity = null;
+	private static Log _log = LogFactoryUtil.getLog(AssetEntryImpl.class);
 
 }

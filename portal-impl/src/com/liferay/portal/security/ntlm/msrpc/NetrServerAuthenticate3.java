@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,13 +23,13 @@ import jcifs.dcerpc.ndr.NdrBuffer;
 public class NetrServerAuthenticate3 extends DcerpcMessage {
 
 	public NetrServerAuthenticate3(
-		String primaryName, String accountName,	int secureChannelType,
+		String primaryName, String accountName, int secureChannelType,
 		String computerName, byte[] clientCredential, byte[] serverCredential,
 		int negotiateFlags) {
 
 		_primaryName = primaryName;
 		_accountName = accountName;
-		_secureChannelType = (short) secureChannelType;
+		_secureChannelType = (short)secureChannelType;
 		_computerName = computerName;
 		_clientCredential = clientCredential;
 		_serverCredential = serverCredential;
@@ -48,7 +48,7 @@ public class NetrServerAuthenticate3 extends DcerpcMessage {
 		ndrBuffer = ndrBuffer.derive(index);
 
 		for (int i = 0; i < 8; i++) {
-			_serverCredential[i] = (byte) ndrBuffer.dec_ndr_small();
+			_serverCredential[i] = (byte)ndrBuffer.dec_ndr_small();
 		}
 
 		_negotiateFlags = ndrBuffer.dec_ndr_long();

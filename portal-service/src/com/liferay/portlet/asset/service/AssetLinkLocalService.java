@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,14 +19,14 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
+import com.liferay.portal.service.BaseLocalService;
 import com.liferay.portal.service.PersistedModelLocalService;
 
 /**
- * The interface for the asset link local service.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
+ * Provides the local service interface for AssetLink. Methods of this
+ * service will not have security checks based on the propagated JAAS
+ * credentials because this service can only be accessed from within the same
+ * VM.
  *
  * @author Brian Wing Shun Chan
  * @see AssetLinkLocalServiceUtil
@@ -36,7 +36,8 @@ import com.liferay.portal.service.PersistedModelLocalService;
  */
 @Transactional(isolation = Isolation.PORTAL, rollbackFor =  {
 	PortalException.class, SystemException.class})
-public interface AssetLinkLocalService extends PersistedModelLocalService {
+public interface AssetLinkLocalService extends BaseLocalService,
+	PersistedModelLocalService {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -67,10 +68,12 @@ public interface AssetLinkLocalService extends PersistedModelLocalService {
 	* Deletes the asset link with the primary key from the database. Also notifies the appropriate model listeners.
 	*
 	* @param linkId the primary key of the asset link
+	* @return the asset link that was removed
 	* @throws PortalException if a asset link with the primary key could not be found
 	* @throws SystemException if a system exception occurred
 	*/
-	public void deleteAssetLink(long linkId)
+	public com.liferay.portlet.asset.model.AssetLink deleteAssetLink(
+		long linkId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException;
 
@@ -78,11 +81,14 @@ public interface AssetLinkLocalService extends PersistedModelLocalService {
 	* Deletes the asset link from the database. Also notifies the appropriate model listeners.
 	*
 	* @param assetLink the asset link
+	* @return the asset link that was removed
 	* @throws SystemException if a system exception occurred
 	*/
-	public void deleteAssetLink(
+	public com.liferay.portlet.asset.model.AssetLink deleteAssetLink(
 		com.liferay.portlet.asset.model.AssetLink assetLink)
 		throws com.liferay.portal.kernel.exception.SystemException;
+
+	public com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery();
 
 	/**
 	* Performs a dynamic query on the database and returns the matching rows.
@@ -100,7 +106,7 @@ public interface AssetLinkLocalService extends PersistedModelLocalService {
 	* Performs a dynamic query on the database and returns a range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.asset.model.impl.AssetLinkModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -118,7 +124,7 @@ public interface AssetLinkLocalService extends PersistedModelLocalService {
 	* Performs a dynamic query on the database and returns an ordered range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.asset.model.impl.AssetLinkModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -147,6 +153,23 @@ public interface AssetLinkLocalService extends PersistedModelLocalService {
 		throws com.liferay.portal.kernel.exception.SystemException;
 
 	/**
+	* Returns the number of rows that match the dynamic query.
+	*
+	* @param dynamicQuery the dynamic query
+	* @param projection the projection to apply to the query
+	* @return the number of rows that match the dynamic query
+	* @throws SystemException if a system exception occurred
+	*/
+	public long dynamicQueryCount(
+		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		com.liferay.portal.kernel.dao.orm.Projection projection)
+		throws com.liferay.portal.kernel.exception.SystemException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public com.liferay.portlet.asset.model.AssetLink fetchAssetLink(long linkId)
+		throws com.liferay.portal.kernel.exception.SystemException;
+
+	/**
 	* Returns the asset link with the primary key.
 	*
 	* @param linkId the primary key of the asset link
@@ -159,6 +182,7 @@ public interface AssetLinkLocalService extends PersistedModelLocalService {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException;
 
+	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public com.liferay.portal.model.PersistedModel getPersistedModel(
 		java.io.Serializable primaryKeyObj)
@@ -169,7 +193,7 @@ public interface AssetLinkLocalService extends PersistedModelLocalService {
 	* Returns a range of all the asset links.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.asset.model.impl.AssetLinkModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param start the lower bound of the range of asset links
@@ -204,18 +228,6 @@ public interface AssetLinkLocalService extends PersistedModelLocalService {
 		throws com.liferay.portal.kernel.exception.SystemException;
 
 	/**
-	* Updates the asset link in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
-	*
-	* @param assetLink the asset link
-	* @param merge whether to merge the asset link with the current session. See {@link com.liferay.portal.service.persistence.BatchSession#update(com.liferay.portal.kernel.dao.orm.Session, com.liferay.portal.model.BaseModel, boolean)} for an explanation.
-	* @return the asset link that was updated
-	* @throws SystemException if a system exception occurred
-	*/
-	public com.liferay.portlet.asset.model.AssetLink updateAssetLink(
-		com.liferay.portlet.asset.model.AssetLink assetLink, boolean merge)
-		throws com.liferay.portal.kernel.exception.SystemException;
-
-	/**
 	* Returns the Spring bean ID for this bean.
 	*
 	* @return the Spring bean ID for this bean
@@ -229,49 +241,185 @@ public interface AssetLinkLocalService extends PersistedModelLocalService {
 	*/
 	public void setBeanIdentifier(java.lang.String beanIdentifier);
 
+	/**
+	* Adds a new asset link.
+	*
+	* @param userId the primary key of the link's creator
+	* @param entryId1 the primary key of the first asset entry
+	* @param entryId2 the primary key of the second asset entry
+	* @param type the link type. Acceptable values include {@link
+	com.liferay.portlet.asset.model.AssetLinkConstants#TYPE_RELATED}
+	which is a bidirectional relationship and {@link
+	com.liferay.portlet.asset.model.AssetLinkConstants#TYPE_CHILD}
+	which is a unidirectional relationship. For more information see
+	{@link com.liferay.portlet.asset.model.AssetLinkConstants}
+	* @param weight the weight of the relationship, allowing precedence
+	ordering of links
+	* @return the asset link
+	* @throws PortalException if the user could not be found
+	* @throws SystemException if a system exception occurred
+	*/
 	public com.liferay.portlet.asset.model.AssetLink addLink(long userId,
 		long entryId1, long entryId2, int type, int weight)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException;
 
+	/**
+	* Deletes the asset link.
+	*
+	* @param link the asset link
+	* @throws SystemException if a system exception occurred
+	*/
 	public void deleteLink(com.liferay.portlet.asset.model.AssetLink link)
 		throws com.liferay.portal.kernel.exception.SystemException;
 
+	/**
+	* Deletes the asset link.
+	*
+	* @param linkId the primary key of the asset link
+	* @throws PortalException if the asset link could not be found
+	* @throws SystemException if a system exception occurred
+	*/
 	public void deleteLink(long linkId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException;
 
+	/**
+	* Deletes all links associated with the asset entry.
+	*
+	* @param entryId the primary key of the asset entry
+	* @throws SystemException if a system exception occurred
+	*/
 	public void deleteLinks(long entryId)
 		throws com.liferay.portal.kernel.exception.SystemException;
 
+	/**
+	* Delete all links that associate the two asset entries.
+	*
+	* @param entryId1 the primary key of the first asset entry
+	* @param entryId2 the primary key of the second asset entry
+	* @throws SystemException if a system exception occurred
+	*/
 	public void deleteLinks(long entryId1, long entryId2)
 		throws com.liferay.portal.kernel.exception.SystemException;
 
+	/**
+	* Returns all the asset links whose first entry ID is the given entry ID.
+	*
+	* @param entryId the primary key of the asset entry
+	* @return the asset links whose first entry ID is the given entry ID
+	* @throws SystemException if a system exception occurred
+	*/
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public java.util.List<com.liferay.portlet.asset.model.AssetLink> getDirectLinks(
 		long entryId)
 		throws com.liferay.portal.kernel.exception.SystemException;
 
+	/**
+	* Returns all the asset links of the given link type whose first entry ID
+	* is the given entry ID.
+	*
+	* @param entryId the primary key of the asset entry
+	* @param typeId the link type. Acceptable values include {@link
+	com.liferay.portlet.asset.model.AssetLinkConstants#TYPE_RELATED}
+	which is a bidirectional relationship and {@link
+	com.liferay.portlet.asset.model.AssetLinkConstants#TYPE_CHILD}
+	which is a unidirectional relationship. For more information see
+	{@link com.liferay.portlet.asset.model.AssetLinkConstants}
+	* @return the asset links of the given link type whose first entry ID is
+	the given entry ID
+	* @throws SystemException if a system exception occurred
+	*/
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public java.util.List<com.liferay.portlet.asset.model.AssetLink> getDirectLinks(
 		long entryId, int typeId)
 		throws com.liferay.portal.kernel.exception.SystemException;
 
+	/**
+	* Returns all the asset links whose first or second entry ID is the given
+	* entry ID.
+	*
+	* @param entryId the primary key of the asset entry
+	* @return the asset links whose first or second entry ID is the given entry
+	ID
+	* @throws SystemException if a system exception occurred
+	*/
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public java.util.List<com.liferay.portlet.asset.model.AssetLink> getLinks(
 		long entryId)
 		throws com.liferay.portal.kernel.exception.SystemException;
 
+	/**
+	* Returns all the asset links of the given link type whose first or second
+	* entry ID is the given entry ID.
+	*
+	* @param entryId the primary key of the asset entry
+	* @param typeId the link type. Acceptable values include {@link
+	com.liferay.portlet.asset.model.AssetLinkConstants#TYPE_RELATED}
+	which is a bidirectional relationship and {@link
+	com.liferay.portlet.asset.model.AssetLinkConstants#TYPE_CHILD}
+	which is a unidirectional relationship. For more information see
+	{@link com.liferay.portlet.asset.model.AssetLinkConstants}
+	* @return the asset links of the given link type whose first or second
+	entry ID is the given entry ID
+	* @throws SystemException if a system exception occurred
+	*/
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public java.util.List<com.liferay.portlet.asset.model.AssetLink> getLinks(
 		long entryId, int typeId)
 		throws com.liferay.portal.kernel.exception.SystemException;
 
+	/**
+	* Returns all the asset links of the given link type whose second entry ID
+	* is the given entry ID.
+	*
+	* @param entryId the primary key of the asset entry
+	* @param typeId the link type. Acceptable values include {@link
+	com.liferay.portlet.asset.model.AssetLinkConstants#TYPE_RELATED}
+	which is a bidirectional relationship and {@link
+	com.liferay.portlet.asset.model.AssetLinkConstants#TYPE_CHILD}
+	which is a unidirectional relationship. For more information see
+	{@link com.liferay.portlet.asset.model.AssetLinkConstants}
+	* @return the asset links of the given link type whose second entry ID is
+	the given entry ID
+	* @throws SystemException if a system exception occurred
+	*/
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public java.util.List<com.liferay.portlet.asset.model.AssetLink> getReverseLinks(
 		long entryId, int typeId)
 		throws com.liferay.portal.kernel.exception.SystemException;
 
+	public com.liferay.portlet.asset.model.AssetLink updateLink(long userId,
+		long entryId1, long entryId2, int typeId, int weight)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException;
+
+	/**
+	* Updates all links of the asset entry, replacing them with links
+	* associating the asset entry with the asset entries of the given link
+	* entry IDs.
+	*
+	* <p>
+	* If no link exists with a given link entry ID, a new link is created
+	* associating the current asset entry with the asset entry of that link
+	* entry ID. An existing link is deleted if either of its entry IDs is not
+	* contained in the given link entry IDs.
+	* </p>
+	*
+	* @param userId the primary key of the user updating the links
+	* @param entryId the primary key of the asset entry to be managed
+	* @param linkEntryIds the primary keys of the asset entries to be linked
+	with the asset entry to be managed
+	* @param typeId the type of the asset links to be created. Acceptable
+	values include {@link
+	com.liferay.portlet.asset.model.AssetLinkConstants#TYPE_RELATED}
+	which is a bidirectional relationship and {@link
+	com.liferay.portlet.asset.model.AssetLinkConstants#TYPE_CHILD}
+	which is a unidirectional relationship. For more information see
+	{@link com.liferay.portlet.asset.model.AssetLinkConstants}
+	* @throws PortalException if the user could not be found
+	* @throws SystemException if a system exception occurred
+	*/
 	public void updateLinks(long userId, long entryId, long[] linkEntryIds,
 		int typeId)
 		throws com.liferay.portal.kernel.exception.PortalException,

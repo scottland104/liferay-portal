@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,7 +21,7 @@ if (mergeUrlTags || mergeLayoutTags) {
 	String[] compilerTagNames = new String[0];
 
 	if (mergeUrlTags) {
-		compilerTagNames = (String[])request.getAttribute(WebKeys.TAGS_COMPILER_ENTRIES);
+		compilerTagNames = ParamUtil.getParameterValues(request, "tags");
 	}
 
 	if (mergeLayoutTags) {
@@ -34,7 +34,7 @@ if (mergeUrlTags || mergeLayoutTags) {
 
 	String titleEntry = null;
 
-	if ((compilerTagNames != null) && (compilerTagNames.length > 0)) {
+	if (ArrayUtil.isNotEmpty(compilerTagNames)) {
 		String[] newAssetTagNames = ArrayUtil.append(allAssetTagNames, compilerTagNames);
 
 		allAssetTagNames = ArrayUtil.distinct(newAssetTagNames, new StringComparator());
@@ -78,26 +78,67 @@ if (enableTagBasedNavigation && selectionStyle.equals("manual") && ((assetEntryQ
 	selectionStyle = "dynamic";
 }
 
-Group group = themeDisplay.getScopeGroup();
+Group scopeGroup = themeDisplay.getScopeGroup();
 %>
 
-<c:if test="<%= (group != null) && (!group.hasStagingGroup() || group.isStagingGroup()) && !portletName.equals(PortletKeys.RELATED_ASSETS) %>">
-	<aui:form name="fm">
+<c:if test="<%= showAddContentButton && (scopeGroup != null) && (!scopeGroup.hasStagingGroup() || scopeGroup.isStagingGroup()) && !portletName.equals(PortletKeys.HIGHEST_RATED_ASSETS) && !portletName.equals(PortletKeys.MOST_VIEWED_ASSETS) && !portletName.equals(PortletKeys.RELATED_ASSETS) %>">
 
-		<%
-		for (long groupId : groupIds) {
-		%>
+	<%
+	addPortletURLs = AssetUtil.getAddPortletURLs(liferayPortletRequest, liferayPortletResponse, classNameIds, classTypeIds, allAssetCategoryIds, allAssetTagNames, null);
 
-			<div class="add-asset-selector">
-				<%@ include file="/html/portlet/asset_publisher/add_asset.jspf" %>
-			</div>
+	for (long groupId : groupIds) {
+	%>
 
-		<%
-		}
-		%>
+		<div class="lfr-meta-actions add-asset-selector">
+			<%@ include file="/html/portlet/asset_publisher/add_asset.jspf" %>
+		</div>
 
-	</aui:form>
+	<%
+	}
+	%>
+
 </c:if>
+
+<div class="subscribe-action">
+	<c:if test="<%= !portletName.equals(PortletKeys.HIGHEST_RATED_ASSETS) && !portletName.equals(PortletKeys.MOST_VIEWED_ASSETS) && !portletName.equals(PortletKeys.RECENT_CONTENT) && !portletName.equals(PortletKeys.RELATED_ASSETS) && PortletPermissionUtil.contains(permissionChecker, plid, portletDisplay.getId(), ActionKeys.SUBSCRIBE) && AssetPublisherUtil.getEmailAssetEntryAddedEnabled(portletPreferences) %>">
+		<c:choose>
+			<c:when test="<%= AssetPublisherUtil.isSubscribed(themeDisplay.getCompanyId(), user.getUserId(), themeDisplay.getPlid(), portletDisplay.getId()) %>">
+				<portlet:actionURL var="unsubscribeURL">
+					<portlet:param name="struts_action" value="/asset_publisher/edit_subscription" />
+					<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.UNSUBSCRIBE %>" />
+					<portlet:param name="redirect" value="<%= currentURL %>" />
+				</portlet:actionURL>
+
+				<liferay-ui:icon
+					image="unsubscribe"
+					label="<%= true %>"
+					url="<%= unsubscribeURL %>"
+				/>
+			</c:when>
+			<c:otherwise>
+				<portlet:actionURL var="subscribeURL">
+					<portlet:param name="struts_action" value="/asset_publisher/edit_subscription" />
+					<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.SUBSCRIBE %>" />
+					<portlet:param name="redirect" value="<%= currentURL %>" />
+				</portlet:actionURL>
+
+				<liferay-ui:icon
+					image="subscribe"
+					label="<%= true %>"
+					url="<%= subscribeURL %>"
+				/>
+			</c:otherwise>
+		</c:choose>
+	</c:if>
+
+	<c:if test="<%= enableRSS %>">
+		<liferay-portlet:resourceURL varImpl="rssURL">
+			<portlet:param name="struts_action" value="/asset_publisher/rss" />
+		</liferay-portlet:resourceURL>
+
+		<liferay-ui:rss resourceURL="<%= rssURL %>" />
+	</c:if>
+</div>
 
 <%
 PortletURL portletURL = renderResponse.createRenderURL();
@@ -110,33 +151,20 @@ if (!paginationType.equals("none")) {
 }
 %>
 
-<c:if test='<%= (assetCategoryId > 0) && selectionStyle.equals("dynamic") %>'>
-	<h1 class="asset-categorization-title">
-		<%= LanguageUtil.format(pageContext, "content-with-x-x", new String[] {assetVocabularyName, assetCategoryName}) %>
-	</h1>
-
-	<%
-	AssetUtil.addPortletBreadcrumbEntries(assetCategoryId, request, portletURL);
-	%>
-
+<c:if test="<%= showMetadataDescriptions %>">
+	<liferay-ui:categorization-filter
+		assetType="content"
+		portletURL="<%= portletURL %>"
+	/>
 </c:if>
 
-<c:if test='<%= Validator.isNotNull(assetTagName) && selectionStyle.equals("dynamic") %>'>
-	<h1 class="asset-categorization-title">
-		<%= LanguageUtil.format(pageContext, "content-with-tag-x", HtmlUtil.escape(assetTagName)) %>
-	</h1>
+<%
+long portletDisplayDDMTemplateId = PortletDisplayTemplateUtil.getPortletDisplayTemplateDDMTemplateId(displayStyleGroupId, displayStyle);
 
-	<%
-	AssetUtil.addPortletBreadcrumbEntry(request, assetTagName, currentURL);
-	%>
+Map<String, Object> contextObjects = new HashMap<String, Object>();
 
-</c:if>
-
-<c:if test='<%= portletName.equals(PortletKeys.RELATED_ASSETS) && (assetEntryQuery.getLinkedAssetEntryId() > 0) %>'>
-	<h1 class="related-assets-title">
-		<%= LanguageUtil.format(pageContext, "content-related-to-x", AssetEntryServiceUtil.getEntry(assetEntryQuery.getLinkedAssetEntryId()).getTitle(locale)) %>
-	</h1>
-</c:if>
+contextObjects.put(PortletDisplayTemplateConstants.ASSET_PUBLISHER_HELPER, AssetPublisherHelperUtil.getAssetPublisherHelper());
+%>
 
 <c:choose>
 	<c:when test='<%= selectionStyle.equals("dynamic") %>'>
@@ -149,26 +177,6 @@ if (!paginationType.equals("none")) {
 
 <c:if test='<%= !paginationType.equals("none") && (searchContainer.getTotal() > searchContainer.getResults().size()) %>'>
 	<liferay-ui:search-paginator searchContainer="<%= searchContainer %>" type="<%= paginationType %>" />
-</c:if>
-
-<c:if test="<%= enableRSS %>">
-	<portlet:resourceURL var="rssURL">
-		<portlet:param name="struts_action" value="/asset_publisher/rss" />
-	</portlet:resourceURL>
-
-	<div class="subscribe">
-		<liferay-ui:icon
-			image="rss"
-			label="<%= true %>"
-			method="get"
-			target="_blank"
-			url="<%= rssURL %>"
-		/>
-	</div>
-
-	<liferay-util:html-top>
-		<link href="<%= HtmlUtil.escape(rssURL) %>" rel="alternate" title="RSS" type="application/rss+xml" />
-	</liferay-util:html-top>
 </c:if>
 
 <%!

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,48 +24,43 @@ String sourceName = (String)request.getAttribute("liferay-ui:diff:sourceName");
 String targetName = (String)request.getAttribute("liferay-ui:diff:targetName");
 List<DiffResult>[] diffResults = (List<DiffResult>[])request.getAttribute("liferay-ui:diff:diffResults");
 
-List sourceResults = diffResults[0];
-List targetResults = diffResults[1];
+List<DiffResult> sourceResults = diffResults[0];
+List<DiffResult> targetResults = diffResults[1];
 %>
 
 <c:choose>
 	<c:when test="<%= !sourceResults.isEmpty() %>">
-		<table class="taglib-search-iterator" id="taglib-diff-results">
+		<table class="table table-bordered table-hover table-striped" id="taglib-diff-results">
 		<tr>
-			<td>
+			<td class="table-cell">
 				<%= sourceName %>
 			</td>
-			<td>
+			<td class="table-cell">
 				<%= targetName %>
 			</td>
 		</tr>
 
 		<%
-		Iterator<DiffResult> sourceItr = sourceResults.iterator();
-		Iterator<DiffResult> targetItr = targetResults.iterator();
-
-		while (sourceItr.hasNext()) {
-			DiffResult sourceResult = sourceItr.next();
-			DiffResult targetResult = targetItr.next();
+		for (int i = 0; i < sourceResults.size(); i++) {
+			DiffResult sourceResult = sourceResults.get(i);
+			DiffResult targetResult = targetResults.get(i);
 		%>
 
-			<tr class="portlet-section-header results-header">
-				<th>
+			<tr>
+				<th class="table-header">
 					<liferay-ui:message key="line" /> <%= sourceResult.getLineNumber() %>
 				</th>
-				<th>
+				<th class="table-header">
 					<liferay-ui:message key="line" /> <%= targetResult.getLineNumber() %>
 				</th>
 			</tr>
+
 			<tr>
-				<td class="lfr-top" width="50%">
+				<td class="table-cell" width="50%">
 					<table class="taglib-diff-table">
 
 					<%
-					Iterator<String> itr = sourceResult.getChangedLines().iterator();
-
-					while (itr.hasNext()) {
-						String changedLine = itr.next();
+					for (String changedLine : sourceResult.getChangedLines()) {
 					%>
 
 						<tr class="lfr-top">
@@ -82,10 +77,7 @@ List targetResults = diffResults[1];
 					<table class="taglib-diff-table">
 
 					<%
-					itr = targetResult.getChangedLines().iterator();
-
-					while (itr.hasNext()) {
-						String changedLine = itr.next();
+					for (String changedLine : targetResult.getChangedLines()) {
 					%>
 
 						<tr class="lfr-top">

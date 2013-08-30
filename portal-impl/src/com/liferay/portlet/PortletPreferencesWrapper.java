@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -40,40 +40,88 @@ public class PortletPreferencesWrapper
 		_lifecycle = lifecycle;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof PortletPreferencesWrapper)) {
+			return false;
+		}
+
+		PortletPreferencesWrapper portletPreferencesWrapper =
+			(PortletPreferencesWrapper)obj;
+
+		if (getPortletPreferencesImpl().equals(
+				portletPreferencesWrapper.getPortletPreferencesImpl())) {
+
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	@Override
 	public Map<String, String[]> getMap() {
 		return _portletPreferences.getMap();
 	}
 
+	@Override
 	public Enumeration<String> getNames() {
 		return _portletPreferences.getNames();
 	}
 
+	public PortletPreferencesImpl getPortletPreferencesImpl() {
+		return (PortletPreferencesImpl)_portletPreferences;
+	}
+
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #getPortletPreferencesImpl}
+	 */
+	public PortletPreferencesImpl getPreferencesImpl() {
+		return getPortletPreferencesImpl();
+	}
+
+	@Override
 	public String getValue(String key, String def) {
 		return _portletPreferences.getValue(key, def);
 	}
 
-	public void setValue(String key, String value) throws ReadOnlyException {
-		_portletPreferences.setValue(key, value);
-	}
-
+	@Override
 	public String[] getValues(String key, String[] def) {
 		return _portletPreferences.getValues(key, def);
 	}
 
+	@Override
+	public int hashCode() {
+		return _portletPreferences.hashCode();
+	}
+
+	@Override
+	public boolean isReadOnly(String key) {
+		return _portletPreferences.isReadOnly(key);
+	}
+
+	@Override
+	public void reset(String key) throws ReadOnlyException {
+		_portletPreferences.reset(key);
+	}
+
+	@Override
+	public void setValue(String key, String value) throws ReadOnlyException {
+		_portletPreferences.setValue(key, value);
+	}
+
+	@Override
 	public void setValues(String key, String[] values)
 		throws ReadOnlyException {
 
 		_portletPreferences.setValues(key, values);
 	}
 
-	public boolean isReadOnly(String key) {
-		return _portletPreferences.isReadOnly(key);
-	}
-
-	public void reset(String key) throws ReadOnlyException {
-		_portletPreferences.reset(key);
-	}
-
+	@Override
 	public void store() throws IOException, ValidatorException {
 		if (PropsValues.TCK_URL) {
 
@@ -93,41 +141,6 @@ public class PortletPreferencesWrapper
 
 			_portletPreferences.store();
 		}
-	}
-
-	public PortletPreferencesImpl getPortletPreferencesImpl() {
-		return (PortletPreferencesImpl)_portletPreferences;
-	}
-
-	/**
-	 * @deprecated {@link #getPortletPreferencesImpl}
-	 */
-	public PortletPreferencesImpl getPreferencesImpl() {
-		return getPortletPreferencesImpl();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		PortletPreferencesWrapper portletPreferencesWrapper =
-			(PortletPreferencesWrapper)obj;
-
-		if (this == portletPreferencesWrapper) {
-			return true;
-		}
-
-		if (getPortletPreferencesImpl().equals(
-				portletPreferencesWrapper.getPortletPreferencesImpl())) {
-
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-
-	@Override
-	public int hashCode() {
-		return _portletPreferences.hashCode();
 	}
 
 	private String _lifecycle;

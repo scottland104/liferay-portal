@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -30,7 +30,11 @@ if (classPK > 0) {
 }
 
 for (int i = 0; i < organizations.size(); i++) {
-	organizationAddresses.addAll(AddressServiceUtil.getAddresses(Organization.class.getName(), organizations.get(i).getOrganizationId()));
+	try {
+		organizationAddresses.addAll(AddressServiceUtil.getAddresses(Organization.class.getName(), organizations.get(i).getOrganizationId()));
+	}
+	catch (Exception e) {
+	}
 }
 %>
 
@@ -56,29 +60,7 @@ for (int i = 0; i < organizations.size(); i++) {
 			%>
 
 				<li class="<%= address.isPrimary() ? "primary" : "" %>">
-					<em class="mailing-name"><%= mailingName %></em>
-
-					<c:if test="<%= Validator.isNotNull(street1) %>">
-						<%= HtmlUtil.escape(street1) %><br />
-					</c:if>
-
-					<c:if test="<%= Validator.isNotNull(street2) %>">
-						<%= HtmlUtil.escape(street2) %><br />
-					</c:if>
-
-					<c:if test="<%= Validator.isNotNull(street3) %>">
-						<%= HtmlUtil.escape(street3) %><br />
-					</c:if>
-
-					<c:if test="<%= Validator.isNotNull(zipCode) %>">
-						<%= zipCode %>,
-					</c:if>
-
-					<c:if test="<%= Validator.isNotNull(city) %>">
-						<%= HtmlUtil.escape(city) %>
-					</c:if>
-
-					<c:if test="<%= address.isMailing() %>">(<liferay-ui:message key="mailing" />)</c:if>
+					<%@ include file="/html/portlet/directory/user/addresses_address.jspf" %>
 				</li>
 
 			<%
@@ -108,28 +90,7 @@ for (int i = 0; i < organizations.size(); i++) {
 			%>
 
 				<li class="<%= address.isPrimary() ? "primary" : "" %>">
-					<em class="mailing-name"><%= mailingName %></em>
-					<c:if test="<%= Validator.isNotNull(street1) %>">
-						<%= HtmlUtil.escape(street1) %><br />
-					</c:if>
-
-					<c:if test="<%= Validator.isNotNull(street2) %>">
-						<%= HtmlUtil.escape(street2) %><br />
-					</c:if>
-
-					<c:if test="<%= Validator.isNotNull(street3) %>">
-						<%= HtmlUtil.escape(street3) %><br />
-					</c:if>
-
-					<c:if test="<%= Validator.isNotNull(zipCode) %>">
-						<%= zipCode %>,
-					</c:if>
-
-					<c:if test="<%= Validator.isNotNull(city) %>">
-						<%= HtmlUtil.escape(city) %>
-					</c:if>
-
-					<c:if test="<%= address.isMailing() %>">(<liferay-ui:message key="mailing" />)</c:if>
+					<%@ include file="/html/portlet/directory/user/addresses_address.jspf" %>
 				</li>
 
 			<%

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,11 +20,11 @@ import com.liferay.portal.kernel.deploy.hot.HotDeployException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
-import com.liferay.portal.kernel.util.ObjectValuePair;
+import com.liferay.portal.model.LayoutTemplate;
 import com.liferay.portal.service.LayoutTemplateLocalServiceUtil;
+import com.liferay.portal.util.WebKeys;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -37,28 +37,36 @@ import javax.servlet.ServletContext;
  */
 public class LayoutTemplateHotDeployListener extends BaseHotDeployListener {
 
-	public void invokeDeploy(HotDeployEvent event) throws HotDeployException {
+	@Override
+	public void invokeDeploy(HotDeployEvent hotDeployEvent)
+		throws HotDeployException {
+
 		try {
-			doInvokeDeploy(event);
+			doInvokeDeploy(hotDeployEvent);
 		}
 		catch (Throwable t) {
 			throwHotDeployException(
-				event, "Error registering layout templates for ", t);
+				hotDeployEvent, "Error registering layout templates for ", t);
 		}
 	}
 
-	public void invokeUndeploy(HotDeployEvent event) throws HotDeployException {
+	@Override
+	public void invokeUndeploy(HotDeployEvent hotDeployEvent)
+		throws HotDeployException {
+
 		try {
-			doInvokeUndeploy(event);
+			doInvokeUndeploy(hotDeployEvent);
 		}
 		catch (Throwable t) {
 			throwHotDeployException(
-				event, "Error unregistering layout templates for ", t);
+				hotDeployEvent, "Error unregistering layout templates for ", t);
 		}
 	}
 
-	protected void doInvokeDeploy(HotDeployEvent event) throws Exception {
-		ServletContext servletContext = event.getServletContext();
+	protected void doInvokeDeploy(HotDeployEvent hotDeployEvent)
+		throws Exception {
+
+		ServletContext servletContext = hotDeployEvent.getServletContext();
 
 		String servletContextName = servletContext.getServletContextName();
 
@@ -80,29 +88,34 @@ public class LayoutTemplateHotDeployListener extends BaseHotDeployListener {
 			_log.info("Registering layout templates for " + servletContextName);
 		}
 
-		List<ObjectValuePair<String, Boolean>> layoutTemplateIds =
+		List<LayoutTemplate> layoutTemplates =
 			LayoutTemplateLocalServiceUtil.init(
 				servletContextName, servletContext, xmls,
-				event.getPluginPackage());
+				hotDeployEvent.getPluginPackage());
 
-		_vars.put(servletContextName, layoutTemplateIds);
+		_layoutTemplates.put(servletContextName, layoutTemplates);
+
+		servletContext.setAttribute(
+			WebKeys.PLUGIN_LAYOUT_TEMPLATES, layoutTemplates);
 
 		if (_log.isInfoEnabled()) {
-			if (layoutTemplateIds.size() == 1) {
+			if (layoutTemplates.size() == 1) {
 				_log.info(
 					"1 layout template for " + servletContextName +
 						" is available for use");
 			}
 			else {
 				_log.info(
-					layoutTemplateIds.size() + " layout templates for " +
+					layoutTemplates.size() + " layout templates for " +
 						servletContextName + " are available for use");
 			}
 		}
 	}
 
-	protected void doInvokeUndeploy(HotDeployEvent event) throws Exception {
-		ServletContext servletContext = event.getServletContext();
+	protected void doInvokeUndeploy(HotDeployEvent hotDeployEvent)
+		throws Exception {
+
+		ServletContext servletContext = hotDeployEvent.getServletContext();
 
 		String servletContextName = servletContext.getServletContextName();
 
@@ -110,10 +123,10 @@ public class LayoutTemplateHotDeployListener extends BaseHotDeployListener {
 			_log.debug("Invoking undeploy for " + servletContextName);
 		}
 
-		List<ObjectValuePair<String, Boolean>> layoutTemplateIds =
-			_vars.get(servletContextName);
+		List<LayoutTemplate> layoutTemplates = _layoutTemplates.get(
+			servletContextName);
 
-		if (layoutTemplateIds == null) {
+		if (layoutTemplates == null) {
 			return;
 		}
 
@@ -122,18 +135,11 @@ public class LayoutTemplateHotDeployListener extends BaseHotDeployListener {
 				"Unregistering layout templates for " + servletContextName);
 		}
 
-		Iterator<ObjectValuePair<String, Boolean>> itr =
-			layoutTemplateIds.iterator();
-
-		while (itr.hasNext()) {
-			ObjectValuePair<String, Boolean> ovp = itr.next();
-
-			String layoutTemplateId = ovp.getKey();
-			Boolean standard = ovp.getValue();
-
+		for (LayoutTemplate layoutTemplate : layoutTemplates) {
 			try {
 				LayoutTemplateLocalServiceUtil.uninstallLayoutTemplate(
-					layoutTemplateId, standard.booleanValue());
+					layoutTemplate.getLayoutTemplateId(),
+					layoutTemplate.isStandard());
 			}
 			catch (Exception e) {
 				_log.error(e, e);
@@ -141,15 +147,15 @@ public class LayoutTemplateHotDeployListener extends BaseHotDeployListener {
 		}
 
 		if (_log.isInfoEnabled()) {
-			if (layoutTemplateIds.size() == 1) {
+			if (layoutTemplates.size() == 1) {
 				_log.info(
 					"1 layout template for " + servletContextName +
 						" was unregistered");
 			}
 			else {
 				_log.info(
-					layoutTemplateIds.size() + " layout templates for " +
-						servletContextName + " was unregistered");
+					layoutTemplates.size() + " layout templates for " +
+						servletContextName + " were unregistered");
 			}
 		}
 	}
@@ -157,7 +163,7 @@ public class LayoutTemplateHotDeployListener extends BaseHotDeployListener {
 	private static Log _log = LogFactoryUtil.getLog(
 		LayoutTemplateHotDeployListener.class);
 
-	private static Map<String, List<ObjectValuePair<String, Boolean>>> _vars =
-		new HashMap<String, List<ObjectValuePair<String, Boolean>>>();
+	private static Map<String, List<LayoutTemplate>> _layoutTemplates =
+		new HashMap<String, List<LayoutTemplate>>();
 
 }

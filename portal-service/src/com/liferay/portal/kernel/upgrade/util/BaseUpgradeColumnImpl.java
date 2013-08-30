@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,25 +32,22 @@ public abstract class BaseUpgradeColumnImpl implements UpgradeColumn {
 		_oldColumnType = oldColumnType;
 	}
 
+	@Override
 	public String getName() {
 		return _name;
 	}
 
-	public long increment() throws SystemException {
-		DB db = DBFactoryUtil.getDB();
-
-		return db.increment();
+	@Override
+	public Integer getNewColumnType(Integer defaultType) {
+		return defaultType;
 	}
 
-	public boolean isApplicable(String name) {
-		if (_name.equals(name)) {
-			return true;
-		}
-		else {
-			return false;
-		}
+	@Override
+	public Object getNewValue() {
+		return _newValue;
 	}
 
+	@Override
 	public Integer getOldColumnType(Integer defaultType) {
 		if (_oldColumnType == null) {
 			return defaultType;
@@ -60,29 +57,41 @@ public abstract class BaseUpgradeColumnImpl implements UpgradeColumn {
 		}
 	}
 
+	@Override
 	public Object getOldValue() {
 		return _oldValue;
 	}
 
-	public void setOldValue(Object oldValue) {
-		_oldValue = oldValue;
+	@Override
+	public long increment() throws SystemException {
+		DB db = DBFactoryUtil.getDB();
+
+		return db.increment();
 	}
 
-	public Integer getNewColumnType(Integer defaultType) {
-		return defaultType;
+	@Override
+	public boolean isApplicable(String name) {
+		if (_name.equals(name)) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 
-	public Object getNewValue() {
-		return _newValue;
-	}
-
+	@Override
 	public void setNewValue(Object newValue) {
 		_newValue = newValue;
 	}
 
+	@Override
+	public void setOldValue(Object oldValue) {
+		_oldValue = oldValue;
+	}
+
 	private String _name;
+	private Object _newValue;
 	private Integer _oldColumnType;
 	private Object _oldValue;
-	private Object _newValue;
 
 }

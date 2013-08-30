@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -83,7 +83,7 @@ portletURL.setParameter("modelResource", modelResource);
 				</aui:field-wrapper>
 			</c:when>
 			<c:otherwise>
-				<aui:input helpMessage="custom-field-key-help" label="key" name="name" />
+				<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" helpMessage="custom-field-key-help" label="key" name="name" />
 			</c:otherwise>
 		</c:choose>
 
@@ -135,8 +135,8 @@ portletURL.setParameter("modelResource", modelResource);
 					%>
 
 					<aui:select name="defaultValue">
-						<aui:option label="true" selected="<%= curValue %>" value="true" />
-						<aui:option label="false" selected="<%= !curValue %>" value="false" />
+						<aui:option label="<%= true %>" selected="<%= curValue %>" value="true" />
+						<aui:option label="<%= false %>" selected="<%= !curValue %>" value="false" />
 					</aui:select>
 				</c:when>
 				<c:when test="<%= type == ExpandoColumnConstants.BOOLEAN_ARRAY %>">
@@ -153,49 +153,49 @@ portletURL.setParameter("modelResource", modelResource);
 
 					<aui:field-wrapper label="default-value">
 						<liferay-ui:input-date
-							dayValue="<%= defaultValueDate.get(Calendar.DATE) %>"
 							dayParam="defaultValueDay"
+							dayValue="<%= defaultValueDate.get(Calendar.DATE) %>"
 							disabled="<%= false %>"
 							firstDayOfWeek="<%= defaultValueDate.getFirstDayOfWeek() - 1 %>"
 							monthParam="defaultValueMonth"
 							monthValue="<%= defaultValueDate.get(Calendar.MONTH) %>"
 							yearParam="defaultValueYear"
 							yearValue="<%= defaultValueDate.get(Calendar.YEAR) %>"
-							yearRangeStart="<%= defaultValueDate.get(Calendar.YEAR) - 100 %>"
-							yearRangeEnd="<%= defaultValueDate.get(Calendar.YEAR) + 100 %>"
 						/>
 
 						<liferay-ui:input-time
+							amPmParam="defaultValueAmPm"
+							amPmValue="<%= defaultValueDate.get(Calendar.AM_PM) %>"
+							disabled="<%= false %>"
 							hourParam="defaultValueHour"
 							hourValue="<%= defaultValueDate.get(Calendar.HOUR) %>"
 							minuteParam="defaultValueMinute"
 							minuteValue="<%= defaultValueDate.get(Calendar.MINUTE) %>"
-							minuteInterval="<%= 1 %>"
-							amPmParam="defaultValueAmPm"
-							amPmValue="<%= defaultValueDate.get(Calendar.AM_PM) %>"
-							disabled="<%= false %>"
 						/>
 					</aui:field-wrapper>
 				</c:when>
 				<c:when test="<%= type == ExpandoColumnConstants.DATE_ARRAY %>">
 				</c:when>
 				<c:when test="<%= type == ExpandoColumnConstants.DOUBLE_ARRAY %>">
-					<aui:input cssClass="lfr-textarea-container" name="defaultValue" type="textarea" value="<%= StringUtil.merge((double[])defaultValue, StringPool.NEW_LINE) %>" />
+					<aui:input cssClass="lfr-textarea-container" helpMessage="enter-one-value-per-line" label="values" name="defaultValue" required="<%= true %>" type="textarea" value="<%= StringUtil.merge((double[])defaultValue, StringPool.NEW_LINE) %>" />
 				</c:when>
 				<c:when test="<%= type == ExpandoColumnConstants.FLOAT_ARRAY %>">
-					<aui:input cssClass="lfr-textarea-container" name="defaultValue" type="textarea" value="<%= StringUtil.merge((float[])defaultValue, StringPool.NEW_LINE) %>" />
+					<aui:input cssClass="lfr-textarea-container" helpMessage="enter-one-value-per-line" label="values" name="defaultValue" required="<%= true %>" type="textarea" value="<%= StringUtil.merge((float[])defaultValue, StringPool.NEW_LINE) %>" />
 				</c:when>
 				<c:when test="<%= type == ExpandoColumnConstants.INTEGER_ARRAY %>">
-					<aui:input cssClass="lfr-textarea-container" name="defaultValue" type="textarea" value="<%= StringUtil.merge((int[])defaultValue, StringPool.NEW_LINE) %>" />
+					<aui:input cssClass="lfr-textarea-container" helpMessage="enter-one-value-per-line" label="values" name="defaultValue" required="<%= true %>" type="textarea" value="<%= StringUtil.merge((int[])defaultValue, StringPool.NEW_LINE) %>" />
 				</c:when>
 				<c:when test="<%= type == ExpandoColumnConstants.LONG_ARRAY %>">
-					<aui:input cssClass="lfr-textarea-container" name="defaultValue" type="textarea" value="<%= StringUtil.merge((long[])defaultValue, StringPool.NEW_LINE) %>" />
+					<aui:input cssClass="lfr-textarea-container" helpMessage="enter-one-value-per-line" label="values" name="defaultValue" required="<%= true %>" type="textarea" value="<%= StringUtil.merge((long[])defaultValue, StringPool.NEW_LINE) %>" />
+				</c:when>
+				<c:when test="<%= type == ExpandoColumnConstants.NUMBER_ARRAY %>">
+					<aui:input cssClass="lfr-textarea-container" helpMessage="enter-one-value-per-line" label="values" name="defaultValue" required="<%= true %>" type="textarea" value="<%= StringUtil.merge((Number[])defaultValue, StringPool.NEW_LINE) %>" />
 				</c:when>
 				<c:when test="<%= type == ExpandoColumnConstants.SHORT_ARRAY %>">
-					<aui:input cssClass="lfr-textarea-container" name="defaultValue" type="textarea" value="<%= StringUtil.merge((short[])defaultValue, StringPool.NEW_LINE) %>" />
+					<aui:input cssClass="lfr-textarea-container" helpMessage="enter-one-value-per-line" label="values" name="defaultValue" required="<%= true %>" type="textarea" value="<%= StringUtil.merge((short[])defaultValue, StringPool.NEW_LINE) %>" />
 				</c:when>
 				<c:when test="<%= type == ExpandoColumnConstants.STRING_ARRAY %>">
-					<aui:input cssClass="lfr-textarea-container" name="defaultValue" type="textarea" value="<%= StringUtil.merge((String[])defaultValue, StringPool.NEW_LINE) %>" />
+					<aui:input cssClass="lfr-textarea-container" helpMessage="enter-one-value-per-line" label="values" name="defaultValue" required="<%= true %>" type="textarea" value="<%= StringUtil.merge((String[])defaultValue, StringPool.NEW_LINE) %>" />
 				</c:when>
 				<c:otherwise>
 					<aui:input cssClass="lfr-input-text-container" name="defaultValue" type="text" value="<%= String.valueOf(defaultValue) %>" />
@@ -209,20 +209,20 @@ portletURL.setParameter("modelResource", modelResource);
 			<aui:input name="PropertyName--hidden--" type="hidden" value="hidden" />
 
 			<aui:select helpMessage="custom-field-hidden-help" label="hidden" name="Property--hidden--">
-				<aui:option label="true" selected="<%= propertyHidden %>" value="1" />
-				<aui:option label="false" selected="<%= !propertyHidden %>" value="0" />
+				<aui:option label="<%= true %>" selected="<%= propertyHidden %>" value="1" />
+				<aui:option label="<%= false %>" selected="<%= !propertyHidden %>" value="0" />
 			</aui:select>
 
 			<aui:input name="PropertyName--visible-with-update-permission--" type="hidden" value="visible-with-update-permission" />
 
 			<aui:select helpMessage="custom-field-visible-with-update-permission-help" label="visible-with-update-permission" name="Property--visible-with-update-permission--">
-				<aui:option label="true" selected="<%= propertyVisibleWithUpdatePermission %>" value="1" />
-				<aui:option label="false" selected="<%= !propertyVisibleWithUpdatePermission %>" value="0" />
+				<aui:option label="<%= true %>" selected="<%= propertyVisibleWithUpdatePermission %>" value="1" />
+				<aui:option label="<%= false %>" selected="<%= !propertyVisibleWithUpdatePermission %>" value="0" />
 			</aui:select>
 
 			<aui:input name="PropertyName--index-type--" type="hidden" value="index-type" />
 
-			<aui:select helpMessage="custom-field-index-type-help" label="searchablility" name="Property--index-type--">
+			<aui:select helpMessage="custom-field-index-type-help" label="searchability" name="Property--index-type--">
 				<aui:option label="not-searchable" selected="<%= propertyIndexType == ExpandoColumnConstants.INDEX_TYPE_NONE %>" value="<%= ExpandoColumnConstants.INDEX_TYPE_NONE %>" />
 
 				<c:if test="<%= (type == ExpandoColumnConstants.STRING) || (type == ExpandoColumnConstants.STRING_ARRAY) %>">
@@ -232,7 +232,7 @@ portletURL.setParameter("modelResource", modelResource);
 				<aui:option label="as-keyword" selected="<%= propertyIndexType == ExpandoColumnConstants.INDEX_TYPE_KEYWORD %>" value="<%= ExpandoColumnConstants.INDEX_TYPE_KEYWORD %>" />
 			</aui:select>
 
-			<c:if test="<%= (type == ExpandoColumnConstants.DOUBLE_ARRAY) || (type == ExpandoColumnConstants.FLOAT_ARRAY) || (type == ExpandoColumnConstants.INTEGER_ARRAY) || (type == ExpandoColumnConstants.LONG_ARRAY) || (type == ExpandoColumnConstants.SHORT_ARRAY) || (type == ExpandoColumnConstants.STRING_ARRAY) %>">
+			<c:if test="<%= (type == ExpandoColumnConstants.DOUBLE_ARRAY) || (type == ExpandoColumnConstants.FLOAT_ARRAY) || (type == ExpandoColumnConstants.INTEGER_ARRAY) || (type == ExpandoColumnConstants.LONG_ARRAY) || (type == ExpandoColumnConstants.NUMBER_ARRAY) || (type == ExpandoColumnConstants.SHORT_ARRAY) || (type == ExpandoColumnConstants.STRING_ARRAY) %>">
 				<aui:input name="PropertyName--display-type--" type="hidden" value="display-type" />
 
 				<aui:select helpMessage="custom-field-display-type-help" label="display-type" name="Property--display-type--">
@@ -247,8 +247,8 @@ portletURL.setParameter("modelResource", modelResource);
 				<aui:input name="PropertyName--secret--" type="hidden" value="secret" />
 
 				<aui:select helpMessage="custom-field-secret-help" label="secret" name="Property--secret--">
-					<aui:option label="true" selected="<%= propertySecret %>" value="1" />
-					<aui:option label="false" selected="<%= !propertySecret %>" value="0" />
+					<aui:option label="<%= true %>" selected="<%= propertySecret %>" value="1" />
+					<aui:option label="<%= false %>" selected="<%= !propertySecret %>" value="0" />
 				</aui:select>
 
 				<aui:input name="PropertyName--height--" type="hidden" value="height" />
@@ -272,12 +272,9 @@ portletURL.setParameter("modelResource", modelResource);
 <aui:script>
 	function <portlet:namespace />saveExpando(options) {
 		document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= (column == null) ? Constants.ADD : Constants.UPDATE %>";
+
 		submitForm(document.<portlet:namespace />fm);
 	}
-
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) && (column == null) %>">
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />name);
-	</c:if>
 </aui:script>
 
 <%

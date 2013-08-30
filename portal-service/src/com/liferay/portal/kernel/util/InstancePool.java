@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,8 +17,8 @@ package com.liferay.portal.kernel.util;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Brian Wing Shun Chan
@@ -46,13 +46,13 @@ public class InstancePool {
 	}
 
 	private InstancePool() {
-		_classPool = new HashMap<String, Object>();
+		_instances = new ConcurrentHashMap<String, Object>();
 	}
 
 	private boolean _contains(String className) {
 		className = className.trim();
 
-		return _classPool.containsKey(className);
+		return _instances.containsKey(className);
 	}
 
 	private Object _get(String className) {
@@ -62,68 +62,69 @@ public class InstancePool {
 	private Object _get(String className, boolean logErrors) {
 		className = className.trim();
 
-		Object obj = _classPool.get(className);
+		Object instance = _instances.get(className);
 
-		if (obj == null) {
-			ClassLoader portalClassLoader =
-				PortalClassLoaderUtil.getClassLoader();
+		if (instance != null) {
+			return instance;
+		}
+
+		ClassLoader portalClassLoader = PortalClassLoaderUtil.getClassLoader();
+
+		try {
+			Class<?> clazz = portalClassLoader.loadClass(className);
+
+			instance = clazz.newInstance();
+
+			_instances.put(className, instance);
+		}
+		catch (Exception e1) {
+			if (logErrors && _log.isWarnEnabled()) {
+				_log.warn(
+					"Unable to load " + className +
+						" with the portal class loader",
+					e1);
+			}
+
+			Thread currentThread = Thread.currentThread();
+
+			ClassLoader contextClassLoader =
+				currentThread.getContextClassLoader();
 
 			try {
-				Class<?> clazz = portalClassLoader.loadClass(className);
+				Class<?> clazz = contextClassLoader.loadClass(className);
 
-				obj = clazz.newInstance();
+				instance = clazz.newInstance();
 
-				_put(className, obj);
+				_instances.put(className, instance);
 			}
-			catch (Exception e1) {
-				if (logErrors && _log.isWarnEnabled()) {
-					_log.warn(
+			catch (Exception e2) {
+				if (logErrors) {
+					_log.error(
 						"Unable to load " + className +
-							" with the portal class loader",
-						e1);
-				}
-
-				Thread currentThread = Thread.currentThread();
-
-				ClassLoader contextClassLoader =
-					currentThread.getContextClassLoader();
-
-				try {
-					Class<?> clazz = contextClassLoader.loadClass(className);
-
-					obj = clazz.newInstance();
-
-					_put(className, obj);
-				}
-				catch (Exception e2) {
-					if (logErrors) {
-						_log.error(
-							"Unable to load " + className +
-								" with the portal class loader or the " +
-									"current context class loader",
-							e2);
-					}
+							" with the portal class loader or the " +
+								"current context class loader",
+						e2);
 				}
 			}
 		}
 
-		return obj;
+		return instance;
 	}
 
 	private void _put(String className, Object obj) {
 		className = className.trim();
 
-		_classPool.put(className, obj);
+		_instances.put(className, obj);
 	}
 
 	private void _reset() {
-		_classPool.clear();
+		_instances.clear();
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(InstancePool.class);
 
 	private static InstancePool _instance = new InstancePool();
 
-	private Map<String, Object> _classPool;
+	private final Map<String, Object> _instances;
 
 }

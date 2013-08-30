@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -45,11 +45,25 @@ import org.springframework.util.ReflectionUtils;
 public class BeanReferenceAnnotationBeanPostProcessor
 	implements BeanFactoryAware, BeanPostProcessor {
 
+	public BeanReferenceAnnotationBeanPostProcessor() {
+		if (_log.isDebugEnabled()) {
+			_log.debug("Creating instance " + this.hashCode());
+		}
+	}
+
 	public void destroy() {
 		_beans.clear();
 	}
 
+	@Override
 	public Object postProcessAfterInitialization(Object bean, String beanName)
+		throws BeansException {
+
+		return bean;
+	}
+
+	@Override
+	public Object postProcessBeforeInitialization(Object bean, String beanName)
 		throws BeansException {
 
 		if (bean instanceof IdentifiableBean) {
@@ -66,17 +80,12 @@ public class BeanReferenceAnnotationBeanPostProcessor
 			}
 		}
 
-		return bean;
-	}
-
-	public Object postProcessBeforeInitialization(Object bean, String beanName)
-		throws BeansException {
-
 		_autoInject(bean, beanName, bean.getClass());
 
 		return bean;
 	}
 
+	@Override
 	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
 		_beanFactory = beanFactory;
 	}
@@ -153,13 +162,15 @@ public class BeanReferenceAnnotationBeanPostProcessor
 
 			ReflectionUtils.makeAccessible(field);
 
+			BeanReferenceRefreshUtil.registerRefreshPoint(
+				targetBean, field, referencedBeanName);
+
 			try {
 				field.set(targetBean, referencedBean);
 			}
 			catch (Throwable t) {
 				throw new BeanCreationException(
-					targetBeanName, "Could not inject BeanReference fields",
-					t);
+					targetBeanName, "Could not inject BeanReference fields", t);
 			}
 		}
 

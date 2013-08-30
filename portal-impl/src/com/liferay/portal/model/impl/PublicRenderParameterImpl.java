@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -31,32 +31,38 @@ public class PublicRenderParameterImpl implements PublicRenderParameter {
 		_portletApp = portletApp;
 	}
 
+	@Override
 	public String getIdentifier() {
 		return _identifier;
 	}
 
-	public void setIdentifier(String identifier) {
-		_identifier = identifier;
-	}
-
-	public QName getQName() {
-		return _qName;
-	}
-
-	public void setQName(QName qName) {
-		_qName = qName;
-	}
-
+	@Override
 	public PortletApp getPortletApp() {
 		return _portletApp;
 	}
 
+	@Override
+	public QName getQName() {
+		return _qName;
+	}
+
+	@Override
+	public void setIdentifier(String identifier) {
+		_identifier = identifier;
+	}
+
+	@Override
 	public void setPortletApp(PortletApp portletApp) {
 		_portletApp = portletApp;
 	}
 
+	@Override
+	public void setQName(QName qName) {
+		_qName = qName;
+	}
+
 	private String _identifier;
-	private QName _qName;
 	private PortletApp _portletApp;
+	private QName _qName;
 
 }

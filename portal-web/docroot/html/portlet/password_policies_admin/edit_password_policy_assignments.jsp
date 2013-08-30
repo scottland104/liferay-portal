@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -62,9 +62,10 @@ portletURL.setParameter("tabs3", tabs3);
 
 <aui:form action="<%= editAssignmentsURL %>" method="post" name="fm">
 	<aui:input name="<%= Constants.CMD %>" type="hidden" />
-	<aui:input name="tabs1" type="hidden" value="<%=tabs1 %>" />
+	<aui:input name="tabs1" type="hidden" value="<%= tabs1 %>" />
 	<aui:input name="tabs2" type="hidden" value="<%= tabs2 %>" />
 	<aui:input name="tabs3" type="hidden" value="<%= tabs3 %>" />
+	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
 	<aui:input name="assignmentsRedirect" type="hidden" />
 	<aui:input name="passwordPolicyId" type="hidden" value="<%= String.valueOf(passwordPolicy.getPasswordPolicyId()) %>" />
 
@@ -82,15 +83,16 @@ portletURL.setParameter("tabs3", tabs3);
 			<liferay-ui:search-container
 				rowChecker="<%= new UserPasswordPolicyChecker(renderResponse, passwordPolicy) %>"
 				searchContainer="<%= new UserSearch(renderRequest, portletURL) %>"
+				var="userSearchContainer"
 			>
 				<liferay-ui:search-form
 					page="/html/portlet/users_admin/user_search.jsp"
 				/>
 
 				<%
-				UserSearchTerms searchTerms = (UserSearchTerms)searchContainer.getSearchTerms();
+				UserSearchTerms searchTerms = (UserSearchTerms)userSearchContainer.getSearchTerms();
 
-				LinkedHashMap userParams = new LinkedHashMap();
+				LinkedHashMap<String, Object> userParams = new LinkedHashMap<String, Object>();
 
 				if (tabs3.equals("current")) {
 					userParams.put("usersPasswordPolicies", new Long(passwordPolicy.getPasswordPolicyId()));
@@ -106,6 +108,7 @@ portletURL.setParameter("tabs3", tabs3);
 					escapedModel="<%= true %>"
 					keyProperty="userId"
 					modelVar="user2"
+					rowIdProperty="screenName"
 				>
 					<liferay-ui:search-container-column-text
 						name="name"
@@ -144,17 +147,18 @@ portletURL.setParameter("tabs3", tabs3);
 			<liferay-ui:search-container
 				rowChecker="<%= new OrganizationPasswordPolicyChecker(renderResponse, passwordPolicy) %>"
 				searchContainer="<%= new OrganizationSearch(renderRequest, portletURL) %>"
+				var="organizationSearchContainer"
 			>
 				<liferay-ui:search-form
 					page="/html/portlet/users_admin/organization_search.jsp"
 				/>
 
 				<%
-				OrganizationSearchTerms searchTerms = (OrganizationSearchTerms)searchContainer.getSearchTerms();
+				OrganizationSearchTerms searchTerms = (OrganizationSearchTerms)organizationSearchContainer.getSearchTerms();
 
 				long parentOrganizationId = OrganizationConstants.ANY_PARENT_ORGANIZATION_ID;
 
-				LinkedHashMap organizationParams = new LinkedHashMap();
+				LinkedHashMap<String, Object> organizationParams = new LinkedHashMap<String, Object>();
 
 				if (tabs3.equals("current")) {
 					organizationParams.put("organizationsPasswordPolicies", new Long(passwordPolicy.getPasswordPolicyId()));
@@ -243,8 +247,9 @@ portletURL.setParameter("tabs3", tabs3);
 		function(assignmentsRedirect) {
 			document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "password_policy_organizations";
 			document.<portlet:namespace />fm.<portlet:namespace />assignmentsRedirect.value = assignmentsRedirect;
-			document.<portlet:namespace />fm.<portlet:namespace />addOrganizationIds.value = Liferay.Util.listCheckedExcept(document.<portlet:namespace />fm, "<portlet:namespace />allRowIds");
-			document.<portlet:namespace />fm.<portlet:namespace />removeOrganizationIds.value = Liferay.Util.listUncheckedExcept(document.<portlet:namespace />fm, "<portlet:namespace />allRowIds");
+			document.<portlet:namespace />fm.<portlet:namespace />addOrganizationIds.value = Liferay.Util.listCheckedExcept(document.<portlet:namespace />fm, '<portlet:namespace />allRowIds');
+			document.<portlet:namespace />fm.<portlet:namespace />removeOrganizationIds.value = Liferay.Util.listUncheckedExcept(document.<portlet:namespace />fm, '<portlet:namespace />allRowIds');
+
 			submitForm(document.<portlet:namespace />fm);
 		},
 		['liferay-util-list-fields']
@@ -256,8 +261,9 @@ portletURL.setParameter("tabs3", tabs3);
 		function(assignmentsRedirect) {
 			document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "password_policy_users";
 			document.<portlet:namespace />fm.<portlet:namespace />assignmentsRedirect.value = assignmentsRedirect;
-			document.<portlet:namespace />fm.<portlet:namespace />addUserIds.value = Liferay.Util.listCheckedExcept(document.<portlet:namespace />fm, "<portlet:namespace />allRowIds");
-			document.<portlet:namespace />fm.<portlet:namespace />removeUserIds.value = Liferay.Util.listUncheckedExcept(document.<portlet:namespace />fm, "<portlet:namespace />allRowIds");
+			document.<portlet:namespace />fm.<portlet:namespace />addUserIds.value = Liferay.Util.listCheckedExcept(document.<portlet:namespace />fm, '<portlet:namespace />allRowIds');
+			document.<portlet:namespace />fm.<portlet:namespace />removeUserIds.value = Liferay.Util.listUncheckedExcept(document.<portlet:namespace />fm, '<portlet:namespace />allRowIds');
+
 			submitForm(document.<portlet:namespace />fm);
 		},
 		['liferay-util-list-fields']

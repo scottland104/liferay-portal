@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.Phone;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -28,12 +33,14 @@ import java.util.Date;
  * @see Phone
  * @generated
  */
-public class PhoneCacheModel implements CacheModel<Phone> {
+public class PhoneCacheModel implements CacheModel<Phone>, Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(25);
+		StringBundler sb = new StringBundler(27);
 
-		sb.append("{phoneId=");
+		sb.append("{uuid=");
+		sb.append(uuid);
+		sb.append(", phoneId=");
 		sb.append(phoneId);
 		sb.append(", companyId=");
 		sb.append(companyId);
@@ -62,8 +69,16 @@ public class PhoneCacheModel implements CacheModel<Phone> {
 		return sb.toString();
 	}
 
+	@Override
 	public Phone toEntityModel() {
 		PhoneImpl phoneImpl = new PhoneImpl();
+
+		if (uuid == null) {
+			phoneImpl.setUuid(StringPool.BLANK);
+		}
+		else {
+			phoneImpl.setUuid(uuid);
+		}
 
 		phoneImpl.setPhoneId(phoneId);
 		phoneImpl.setCompanyId(companyId);
@@ -115,6 +130,68 @@ public class PhoneCacheModel implements CacheModel<Phone> {
 		return phoneImpl;
 	}
 
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		uuid = objectInput.readUTF();
+		phoneId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		userId = objectInput.readLong();
+		userName = objectInput.readUTF();
+		createDate = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
+		classNameId = objectInput.readLong();
+		classPK = objectInput.readLong();
+		number = objectInput.readUTF();
+		extension = objectInput.readUTF();
+		typeId = objectInput.readInt();
+		primary = objectInput.readBoolean();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		if (uuid == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
+
+		objectOutput.writeLong(phoneId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(userId);
+
+		if (userName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(userName);
+		}
+
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(modifiedDate);
+		objectOutput.writeLong(classNameId);
+		objectOutput.writeLong(classPK);
+
+		if (number == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(number);
+		}
+
+		if (extension == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(extension);
+		}
+
+		objectOutput.writeInt(typeId);
+		objectOutput.writeBoolean(primary);
+	}
+
+	public String uuid;
 	public long phoneId;
 	public long companyId;
 	public long userId;

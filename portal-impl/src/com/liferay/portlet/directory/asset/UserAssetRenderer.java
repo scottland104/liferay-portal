@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -42,6 +42,12 @@ public class UserAssetRenderer extends BaseAssetRenderer {
 		_user = user;
 	}
 
+	@Override
+	public String getClassName() {
+		return User.class.getName();
+	}
+
+	@Override
 	public long getClassPK() {
 		return _user.getPrimaryKey();
 	}
@@ -51,14 +57,17 @@ public class UserAssetRenderer extends BaseAssetRenderer {
 		return null;
 	}
 
+	@Override
 	public long getGroupId() {
 		return 0;
 	}
 
+	@Override
 	public String getSummary(Locale locale) {
-		return _user.getFullName();
+		return _user.getComments();
 	}
 
+	@Override
 	public String getTitle(Locale locale) {
 		return _user.getFullName();
 	}
@@ -90,18 +99,22 @@ public class UserAssetRenderer extends BaseAssetRenderer {
 		LiferayPortletResponse liferayPortletResponse,
 		String noSuchEntryRedirect) {
 
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)liferayPortletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		return themeDisplay.getPortalURL() + themeDisplay.getPathMain() +
-			"/directory/find_user?p_u_i_d=" + _user.getUserId();
+		return getURLViewInContext(
+			liferayPortletRequest, noSuchEntryRedirect, "/directory/find_user",
+			"p_u_i_d", _user.getUserId());
 	}
 
+	@Override
 	public long getUserId() {
 		return _user.getUserId();
 	}
 
+	@Override
+	public String getUserName() {
+		return _user.getFullName();
+	}
+
+	@Override
 	public String getUuid() {
 		return _user.getUuid();
 	}
@@ -123,6 +136,7 @@ public class UserAssetRenderer extends BaseAssetRenderer {
 		return false;
 	}
 
+	@Override
 	public String render(
 			RenderRequest renderRequest, RenderResponse renderResponse,
 			String template)

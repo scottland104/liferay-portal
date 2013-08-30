@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -39,12 +39,13 @@ import java.util.List;
 public class ShoppingOrderFinderImpl
 	extends BasePersistenceImpl<ShoppingOrder> implements ShoppingOrderFinder {
 
-	public static String COUNT_BY_G_C_U_N_PPPS =
+	public static final String COUNT_BY_G_C_U_N_PPPS =
 		ShoppingOrderFinder.class.getName() + ".countByG_C_U_N_PPPS";
 
-	public static String FIND_BY_G_C_U_N_PPPS =
+	public static final String FIND_BY_G_C_U_N_PPPS =
 		ShoppingOrderFinder.class.getName() + ".findByG_C_U_N_PPPS";
 
+	@Override
 	public int countByG_C_U_N_PPPS(
 			long groupId, long companyId, long userId, String number,
 			String billingFirstName, String billingLastName,
@@ -63,7 +64,7 @@ public class ShoppingOrderFinderImpl
 			String sql = CustomSQLUtil.get(COUNT_BY_G_C_U_N_PPPS);
 
 			if (userId <= 0) {
-				sql = StringUtil.replace(sql, USER_ID_SQL, StringPool.BLANK);
+				sql = StringUtil.replace(sql, _USER_ID_SQL, StringPool.BLANK);
 			}
 
 			if (Validator.isNull(ppPaymentStatus)) {
@@ -104,7 +105,7 @@ public class ShoppingOrderFinderImpl
 			qPos.add(shippingEmailAddress);
 			qPos.add(ppPaymentStatus);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -124,6 +125,7 @@ public class ShoppingOrderFinderImpl
 		}
 	}
 
+	@Override
 	public List<ShoppingOrder> findByG_C_U_N_PPPS(
 			long groupId, long companyId, long userId, String number,
 			String billingFirstName, String billingLastName,
@@ -143,7 +145,7 @@ public class ShoppingOrderFinderImpl
 			String sql = CustomSQLUtil.get(FIND_BY_G_C_U_N_PPPS);
 
 			if (userId <= 0) {
-				sql = StringUtil.replace(sql, USER_ID_SQL, StringPool.BLANK);
+				sql = StringUtil.replace(sql, _USER_ID_SQL, StringPool.BLANK);
 			}
 
 			if (Validator.isNull(ppPaymentStatus)) {
@@ -196,6 +198,6 @@ public class ShoppingOrderFinderImpl
 		}
 	}
 
-	protected static String USER_ID_SQL = "(userId = ?) AND";
+	private static final String _USER_ID_SQL = "(userId = ?) AND";
 
 }

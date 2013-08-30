@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,11 @@ import com.liferay.portal.model.CacheModel;
 
 import com.liferay.portlet.shopping.model.ShoppingOrderItem;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -29,7 +34,8 @@ import java.util.Date;
  * @see ShoppingOrderItem
  * @generated
  */
-public class ShoppingOrderItemCacheModel implements CacheModel<ShoppingOrderItem> {
+public class ShoppingOrderItemCacheModel implements CacheModel<ShoppingOrderItem>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(21);
@@ -59,6 +65,7 @@ public class ShoppingOrderItemCacheModel implements CacheModel<ShoppingOrderItem
 		return sb.toString();
 	}
 
+	@Override
 	public ShoppingOrderItem toEntityModel() {
 		ShoppingOrderItemImpl shoppingOrderItemImpl = new ShoppingOrderItemImpl();
 
@@ -113,6 +120,66 @@ public class ShoppingOrderItemCacheModel implements CacheModel<ShoppingOrderItem
 		shoppingOrderItemImpl.resetOriginalValues();
 
 		return shoppingOrderItemImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		orderItemId = objectInput.readLong();
+		orderId = objectInput.readLong();
+		itemId = objectInput.readUTF();
+		sku = objectInput.readUTF();
+		name = objectInput.readUTF();
+		description = objectInput.readUTF();
+		properties = objectInput.readUTF();
+		price = objectInput.readDouble();
+		quantity = objectInput.readInt();
+		shippedDate = objectInput.readLong();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(orderItemId);
+		objectOutput.writeLong(orderId);
+
+		if (itemId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(itemId);
+		}
+
+		if (sku == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(sku);
+		}
+
+		if (name == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(name);
+		}
+
+		if (description == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(description);
+		}
+
+		if (properties == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(properties);
+		}
+
+		objectOutput.writeDouble(price);
+		objectOutput.writeInt(quantity);
+		objectOutput.writeLong(shippedDate);
 	}
 
 	public long orderItemId;

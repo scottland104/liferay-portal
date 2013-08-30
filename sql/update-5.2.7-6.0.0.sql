@@ -140,6 +140,8 @@ update DLFileShortcut set statusByUserId = userId;
 update DLFileShortcut set statusByUserName = userId;
 update DLFileShortcut set statusDate = createDate;
 
+drop index IX_6C5E6512 on DLFileVersion;
+
 alter table DLFileVersion add description STRING null;
 alter table DLFileVersion add status INTEGER;
 alter table DLFileVersion add statusByUserId LONG;
@@ -161,7 +163,7 @@ alter table JournalArticle add statusDate DATE;
 COMMIT_TRANSACTION;
 
 update JournalArticle set status = 0 where approved = TRUE;
-update JournalArticle set status = 0 where approved = FALSE;
+update JournalArticle set status = 2 where approved = FALSE;
 update JournalArticle set statusByUserId = approvedByUserId;
 update JournalArticle set statusByUserName = approvedByUserName;
 update JournalArticle set statusDate = approvedDate where expired = FALSE;

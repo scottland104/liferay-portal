@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,8 +32,8 @@ import java.util.List;
  */
 public class TeamServiceImpl extends TeamServiceBaseImpl {
 
-	public Team addTeam(
-			long groupId, String name, String description)
+	@Override
+	public Team addTeam(long groupId, String name, String description)
 		throws PortalException, SystemException {
 
 		GroupPermissionUtil.check(
@@ -43,6 +43,7 @@ public class TeamServiceImpl extends TeamServiceBaseImpl {
 			getUserId(), groupId, name, description);
 	}
 
+	@Override
 	public void deleteTeam(long teamId)
 		throws PortalException, SystemException {
 
@@ -52,6 +53,7 @@ public class TeamServiceImpl extends TeamServiceBaseImpl {
 		teamLocalService.deleteTeam(teamId);
 	}
 
+	@Override
 	public List<Team> getGroupTeams(long groupId)
 		throws PortalException, SystemException {
 
@@ -62,26 +64,26 @@ public class TeamServiceImpl extends TeamServiceBaseImpl {
 
 	}
 
-	public Team getTeam(long teamId)
-		throws PortalException, SystemException {
-
+	@Override
+	public Team getTeam(long teamId) throws PortalException, SystemException {
 		TeamPermissionUtil.check(
 			getPermissionChecker(), teamId, ActionKeys.VIEW);
 
 		return teamLocalService.getTeam(teamId);
 	}
 
+	@Override
 	public Team getTeam(long groupId, String name)
 		throws PortalException, SystemException {
 
 		Team team = teamLocalService.getTeam(groupId, name);
 
-		TeamPermissionUtil.check(
-			getPermissionChecker(), team, ActionKeys.VIEW);
+		TeamPermissionUtil.check(getPermissionChecker(), team, ActionKeys.VIEW);
 
 		return team;
 	}
 
+	@Override
 	public List<Team> getUserTeams(long userId)
 		throws PortalException, SystemException {
 
@@ -91,6 +93,7 @@ public class TeamServiceImpl extends TeamServiceBaseImpl {
 		return teamLocalService.getUserTeams(userId);
 	}
 
+	@Override
 	public List<Team> getUserTeams(long userId, long groupId)
 		throws PortalException, SystemException {
 
@@ -100,6 +103,7 @@ public class TeamServiceImpl extends TeamServiceBaseImpl {
 		return teamLocalService.getUserTeams(userId, groupId);
 	}
 
+	@Override
 	public boolean hasUserTeam(long userId, long teamId)
 		throws PortalException, SystemException {
 
@@ -119,6 +123,7 @@ public class TeamServiceImpl extends TeamServiceBaseImpl {
 		return userPersistence.containsTeam(userId, teamId);
 	}
 
+	@Override
 	public Team updateTeam(long teamId, String name, String description)
 		throws PortalException, SystemException {
 

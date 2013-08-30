@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -33,13 +34,13 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base model implementation for the AssetTag service. Represents a row in the &quot;AssetTag&quot; database table, with each column mapped to a property of this class.
@@ -87,6 +88,11 @@ public class AssetTagModelImpl extends BaseModelImpl<AssetTag>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portlet.asset.model.AssetTag"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portlet.asset.model.AssetTag"),
+			true);
+	public static long GROUPID_COLUMN_BITMASK = 1L;
+	public static long NAME_COLUMN_BITMASK = 2L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -95,6 +101,10 @@ public class AssetTagModelImpl extends BaseModelImpl<AssetTag>
 	 * @return the normal model instance
 	 */
 	public static AssetTag toModel(AssetTagSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		AssetTag model = new AssetTagImpl();
 
 		model.setTagId(soapModel.getTagId());
@@ -117,6 +127,10 @@ public class AssetTagModelImpl extends BaseModelImpl<AssetTag>
 	 * @return the normal model instances
 	 */
 	public static List<AssetTag> toModels(AssetTagSoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<AssetTag> models = new ArrayList<AssetTag>(soapModels.length);
 
 		for (AssetTagSoap soapModel : soapModels) {
@@ -126,83 +140,193 @@ public class AssetTagModelImpl extends BaseModelImpl<AssetTag>
 		return models;
 	}
 
-	public Class<?> getModelClass() {
-		return AssetTag.class;
-	}
-
-	public String getModelClassName() {
-		return AssetTag.class.getName();
-	}
-
-	public static final String MAPPING_TABLE_ASSETENTRIES_ASSETTAGS_NAME = com.liferay.portlet.asset.model.impl.AssetEntryModelImpl.MAPPING_TABLE_ASSETENTRIES_ASSETTAGS_NAME;
-	public static final boolean FINDER_CACHE_ENABLED_ASSETENTRIES_ASSETTAGS = com.liferay.portlet.asset.model.impl.AssetEntryModelImpl.FINDER_CACHE_ENABLED_ASSETENTRIES_ASSETTAGS;
+	public static final String MAPPING_TABLE_ASSETENTRIES_ASSETTAGS_NAME = "AssetEntries_AssetTags";
+	public static final Object[][] MAPPING_TABLE_ASSETENTRIES_ASSETTAGS_COLUMNS = {
+			{ "entryId", Types.BIGINT },
+			{ "tagId", Types.BIGINT }
+		};
+	public static final String MAPPING_TABLE_ASSETENTRIES_ASSETTAGS_SQL_CREATE = "create table AssetEntries_AssetTags (entryId LONG not null,tagId LONG not null,primary key (entryId, tagId))";
+	public static final boolean FINDER_CACHE_ENABLED_ASSETENTRIES_ASSETTAGS = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.finder.cache.enabled.AssetEntries_AssetTags"),
+			true);
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portlet.asset.model.AssetTag"));
 
 	public AssetTagModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _tagId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setTagId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_tagId);
+		return _tagId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return AssetTag.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return AssetTag.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("tagId", getTagId());
+		attributes.put("groupId", getGroupId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("userId", getUserId());
+		attributes.put("userName", getUserName());
+		attributes.put("createDate", getCreateDate());
+		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("name", getName());
+		attributes.put("assetCount", getAssetCount());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long tagId = (Long)attributes.get("tagId");
+
+		if (tagId != null) {
+			setTagId(tagId);
+		}
+
+		Long groupId = (Long)attributes.get("groupId");
+
+		if (groupId != null) {
+			setGroupId(groupId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long userId = (Long)attributes.get("userId");
+
+		if (userId != null) {
+			setUserId(userId);
+		}
+
+		String userName = (String)attributes.get("userName");
+
+		if (userName != null) {
+			setUserName(userName);
+		}
+
+		Date createDate = (Date)attributes.get("createDate");
+
+		if (createDate != null) {
+			setCreateDate(createDate);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
+		}
+
+		String name = (String)attributes.get("name");
+
+		if (name != null) {
+			setName(name);
+		}
+
+		Integer assetCount = (Integer)attributes.get("assetCount");
+
+		if (assetCount != null) {
+			setAssetCount(assetCount);
+		}
+	}
+
 	@JSON
+	@Override
 	public long getTagId() {
 		return _tagId;
 	}
 
+	@Override
 	public void setTagId(long tagId) {
 		_tagId = tagId;
 	}
 
 	@JSON
+	@Override
 	public long getGroupId() {
 		return _groupId;
 	}
 
+	@Override
 	public void setGroupId(long groupId) {
+		_columnBitmask |= GROUPID_COLUMN_BITMASK;
+
+		if (!_setOriginalGroupId) {
+			_setOriginalGroupId = true;
+
+			_originalGroupId = _groupId;
+		}
+
 		_groupId = groupId;
 	}
 
+	public long getOriginalGroupId() {
+		return _originalGroupId;
+	}
+
 	@JSON
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
 		_companyId = companyId;
 	}
 
 	@JSON
+	@Override
 	public long getUserId() {
 		return _userId;
 	}
 
+	@Override
 	public void setUserId(long userId) {
 		_userId = userId;
 	}
 
+	@Override
 	public String getUserUuid() throws SystemException {
 		return PortalUtil.getUserValue(getUserId(), "uuid", _userUuid);
 	}
 
+	@Override
 	public void setUserUuid(String userUuid) {
 		_userUuid = userUuid;
 	}
 
 	@JSON
+	@Override
 	public String getUserName() {
 		if (_userName == null) {
 			return StringPool.BLANK;
@@ -212,29 +336,35 @@ public class AssetTagModelImpl extends BaseModelImpl<AssetTag>
 		}
 	}
 
+	@Override
 	public void setUserName(String userName) {
 		_userName = userName;
 	}
 
 	@JSON
+	@Override
 	public Date getCreateDate() {
 		return _createDate;
 	}
 
+	@Override
 	public void setCreateDate(Date createDate) {
 		_createDate = createDate;
 	}
 
 	@JSON
+	@Override
 	public Date getModifiedDate() {
 		return _modifiedDate;
 	}
 
+	@Override
 	public void setModifiedDate(Date modifiedDate) {
 		_modifiedDate = modifiedDate;
 	}
 
 	@JSON
+	@Override
 	public String getName() {
 		if (_name == null) {
 			return StringPool.BLANK;
@@ -244,48 +374,57 @@ public class AssetTagModelImpl extends BaseModelImpl<AssetTag>
 		}
 	}
 
+	@Override
 	public void setName(String name) {
+		_columnBitmask = -1L;
+
+		if (_originalName == null) {
+			_originalName = _name;
+		}
+
 		_name = name;
 	}
 
+	public String getOriginalName() {
+		return GetterUtil.getString(_originalName);
+	}
+
 	@JSON
+	@Override
 	public int getAssetCount() {
 		return _assetCount;
 	}
 
+	@Override
 	public void setAssetCount(int assetCount) {
 		_assetCount = assetCount;
 	}
 
-	@Override
-	public AssetTag toEscapedModel() {
-		if (isEscapedModel()) {
-			return (AssetTag)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (AssetTag)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					AssetTag.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			AssetTag.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public AssetTag toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (AssetTag)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -307,6 +446,7 @@ public class AssetTagModelImpl extends BaseModelImpl<AssetTag>
 		return assetTagImpl;
 	}
 
+	@Override
 	public int compareTo(AssetTag assetTag) {
 		int value = 0;
 
@@ -321,18 +461,15 @@ public class AssetTagModelImpl extends BaseModelImpl<AssetTag>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof AssetTag)) {
 			return false;
 		}
 
-		AssetTag assetTag = null;
-
-		try {
-			assetTag = (AssetTag)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		AssetTag assetTag = (AssetTag)obj;
 
 		long primaryKey = assetTag.getPrimaryKey();
 
@@ -351,6 +488,15 @@ public class AssetTagModelImpl extends BaseModelImpl<AssetTag>
 
 	@Override
 	public void resetOriginalValues() {
+		AssetTagModelImpl assetTagModelImpl = this;
+
+		assetTagModelImpl._originalGroupId = assetTagModelImpl._groupId;
+
+		assetTagModelImpl._setOriginalGroupId = false;
+
+		assetTagModelImpl._originalName = assetTagModelImpl._name;
+
+		assetTagModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -431,6 +577,7 @@ public class AssetTagModelImpl extends BaseModelImpl<AssetTag>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(31);
 
@@ -481,11 +628,13 @@ public class AssetTagModelImpl extends BaseModelImpl<AssetTag>
 	}
 
 	private static ClassLoader _classLoader = AssetTag.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			AssetTag.class
 		};
 	private long _tagId;
 	private long _groupId;
+	private long _originalGroupId;
+	private boolean _setOriginalGroupId;
 	private long _companyId;
 	private long _userId;
 	private String _userUuid;
@@ -493,7 +642,8 @@ public class AssetTagModelImpl extends BaseModelImpl<AssetTag>
 	private Date _createDate;
 	private Date _modifiedDate;
 	private String _name;
+	private String _originalName;
 	private int _assetCount;
-	private transient ExpandoBridge _expandoBridge;
-	private AssetTag _escapedModelProxy;
+	private long _columnBitmask;
+	private AssetTag _escapedModel;
 }

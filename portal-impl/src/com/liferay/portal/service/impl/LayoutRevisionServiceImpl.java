@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -29,11 +29,12 @@ import com.liferay.portal.service.permission.GroupPermissionUtil;
  */
 public class LayoutRevisionServiceImpl extends LayoutRevisionServiceBaseImpl {
 
+	@Override
 	public LayoutRevision addLayoutRevision(
 			long userId, long layoutSetBranchId, long layoutBranchId,
 			long parentLayoutRevisionId, boolean head, long plid,
-			boolean privateLayout, String name, String title,
-			String description, String keywords, String robots,
+			long portletPreferencesPlid, boolean privateLayout, String name,
+			String title, String description, String keywords, String robots,
 			String typeSettings, boolean iconImage, long iconImageId,
 			String themeId, String colorSchemeId, String wapThemeId,
 			String wapColorSchemeId, String css, ServiceContext serviceContext)
@@ -47,8 +48,8 @@ public class LayoutRevisionServiceImpl extends LayoutRevisionServiceBaseImpl {
 			ActionKeys.ADD_LAYOUT_BRANCH);
 
 		return layoutRevisionLocalService.addLayoutRevision(
-			userId, layoutSetBranchId, layoutBranchId,
-			parentLayoutRevisionId, head, plid, privateLayout, name, title,
+			userId, layoutSetBranchId, layoutBranchId, parentLayoutRevisionId,
+			head, plid, portletPreferencesPlid, privateLayout, name, title,
 			description, keywords, robots, typeSettings, iconImage, iconImageId,
 			themeId, colorSchemeId, wapThemeId, wapColorSchemeId, css,
 			serviceContext);

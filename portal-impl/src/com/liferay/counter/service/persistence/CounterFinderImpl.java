@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,8 @@ import com.liferay.counter.model.Counter;
 import com.liferay.counter.model.CounterHolder;
 import com.liferay.counter.model.CounterRegister;
 import com.liferay.counter.model.impl.CounterImpl;
+import com.liferay.portal.kernel.cache.CacheRegistryItem;
+import com.liferay.portal.kernel.cache.CacheRegistryUtil;
 import com.liferay.portal.kernel.concurrent.CompeteLatch;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.dao.orm.LockMode;
@@ -50,8 +52,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Edward Han
  */
 public class CounterFinderImpl
-	extends BasePersistenceImpl<Dummy> implements CounterFinder {
+	extends BasePersistenceImpl<Dummy>
+	implements CacheRegistryItem, CounterFinder {
 
+	@Override
+	public void afterPropertiesSet() {
+		CacheRegistryUtil.register(this);
+	}
+
+	@Override
 	public List<String> getNames() throws SystemException {
 		Connection connection = null;
 		PreparedStatement preparedStatement = null;
@@ -80,14 +89,22 @@ public class CounterFinderImpl
 		}
 	}
 
+	@Override
+	public String getRegistryName() {
+		return CounterFinderImpl.class.getName();
+	}
+
+	@Override
 	public long increment() throws SystemException {
 		return increment(_NAME);
 	}
 
+	@Override
 	public long increment(String name) throws SystemException {
 		return increment(name, _MINIMUM_INCREMENT_SIZE);
 	}
 
+	@Override
 	public long increment(String name, int size) throws SystemException {
 		if (size < _MINIMUM_INCREMENT_SIZE) {
 			size = _MINIMUM_INCREMENT_SIZE;
@@ -98,6 +115,12 @@ public class CounterFinderImpl
 		return _competeIncrement(counterRegister, size);
 	}
 
+	@Override
+	public void invalidate() {
+		_counterRegisterMap.clear();
+	}
+
+	@Override
 	public void rename(String oldName, String newName) throws SystemException {
 		CounterRegister counterRegister = getCounterRegister(oldName);
 
@@ -137,6 +160,7 @@ public class CounterFinderImpl
 		}
 	}
 
+	@Override
 	public void reset(String name) throws SystemException {
 		CounterRegister counterRegister = getCounterRegister(name);
 
@@ -165,6 +189,7 @@ public class CounterFinderImpl
 		}
 	}
 
+	@Override
 	public void reset(String name, long size) throws SystemException {
 		CounterRegister counterRegister = createCounterRegister(name, size);
 

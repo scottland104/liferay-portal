@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,7 +21,7 @@ String redirect = ParamUtil.getString(request, "redirect");
 
 ShoppingCart cart = ShoppingUtil.getCart(renderRequest);
 
-Map items = cart.getItems();
+Map<ShoppingCartItem, Integer> items = cart.getItems();
 
 ShoppingCoupon coupon = cart.getCoupon();
 
@@ -32,7 +32,7 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 	var itemsInStock = true;
 
 	function <portlet:namespace />checkout() {
-		if (<%= (ShoppingUtil.meetsMinOrder(shoppingPrefs, items)) ? "true" : "false" %>) {
+		if (<%= ShoppingUtil.meetsMinOrder(shoppingPrefs, items) ? "true" : "false" %>) {
 			if (!itemsInStock) {
 				if (confirm("<%= UnicodeLanguageUtil.get(pageContext, "your-cart-has-items-that-are-out-of-stock") %>")) {
 					document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= Constants.CHECKOUT %>";
@@ -54,6 +54,7 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 	function <portlet:namespace />emptyCart() {
 		document.<portlet:namespace />fm.<portlet:namespace />itemIds.value = "";
 		document.<portlet:namespace />fm.<portlet:namespace />couponCodes.value = "";
+
 		submitForm(document.<portlet:namespace />fm);
 	}
 
@@ -62,17 +63,13 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 		var count = 0;
 
 		<%
-		Iterator itr = items.entrySet().iterator();
+		int itemsCount= 0;
 
-		for (int i = 0; itr.hasNext(); i++) {
-			Map.Entry entry = (Map.Entry)itr.next();
-
-			ShoppingCartItem cartItem = (ShoppingCartItem)entry.getKey();
-
+		for (ShoppingCartItem cartItem : items.keySet()) {
 			ShoppingItem item = cartItem.getItem();
 		%>
 
-			count = document.<portlet:namespace />fm.<portlet:namespace />item_<%= item.getItemId() %>_<%= i %>_count.value;
+			count = document.<portlet:namespace />fm.<portlet:namespace />item_<%= item.getItemId() %>_<%= itemsCount %>_count.value;
 
 			for (var i = 0; i < count; i++) {
 				itemIds += "<%= cartItem.getCartItemId() %>,";
@@ -81,10 +78,12 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 			count = 0;
 
 		<%
+			itemsCount++;
 		}
 		%>
 
 		document.<portlet:namespace />fm.<portlet:namespace />itemIds.value = itemIds;
+
 		submitForm(document.<portlet:namespace />fm);
 	}
 </aui:script>
@@ -155,20 +154,17 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 	searchContainer.setEmptyResultsMessage("your-cart-is-empty");
 	searchContainer.setHover(false);
 
-	Set results = items.entrySet();
 	int total = items.size();
 
 	searchContainer.setTotal(total);
 
 	List resultRows = searchContainer.getResultRows();
 
-	Iterator itr = results.iterator();
+	int itemsCount = 0;
 
-	for (int i = 0; itr.hasNext(); i++) {
-		Map.Entry entry = (Map.Entry)itr.next();
-
-		ShoppingCartItem cartItem = (ShoppingCartItem)entry.getKey();
-		Integer count = (Integer)entry.getValue();
+	for (Map.Entry<ShoppingCartItem, Integer> entry : items.entrySet()) {
+		ShoppingCartItem cartItem = entry.getKey();
+		Integer count = entry.getValue();
 
 		ShoppingItem item = cartItem.getItem();
 
@@ -180,10 +176,10 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 		ShoppingItemPrice[] itemPrices = (ShoppingItemPrice[])ShoppingItemPriceLocalServiceUtil.getItemPrices(item.getItemId()).toArray(new ShoppingItemPrice[0]);
 
 		if (!SessionErrors.isEmpty(renderRequest)) {
-			count = new Integer(ParamUtil.getInteger(request, "item_" + item.getItemId() + "_" + i + "_count"));
+			count = new Integer(ParamUtil.getInteger(request, "item_" + item.getItemId() + "_" + itemsCount + "_count"));
 		}
 
-		ResultRow row = new ResultRow(item, item.getItemId(), i);
+		ResultRow row = new ResultRow(item, item.getItemId(), itemsCount);
 
 		PortletURL rowURL = renderResponse.createRenderURL();
 
@@ -208,7 +204,7 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 				sb.append("/shopping/item?img_id=");
 				sb.append(item.getSmallImageId());
 				sb.append("&t=");
-				sb.append(ImageServletTokenUtil.getToken(item.getSmallImageId()));
+				sb.append(WebServerServletTokenUtil.getToken(item.getSmallImageId()));
 			}
 
 			sb.append("\">");
@@ -252,14 +248,14 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 			if (ShoppingUtil.isInStock(item, itemFields, fieldsArray, count)) {
 				sb.append(LanguageUtil.get(pageContext, "availability"));
 				sb.append(": ");
-				sb.append("<div class=\"portlet-msg-success\">");
+				sb.append("<div class=\"alert alert-success\">");
 				sb.append(LanguageUtil.get(pageContext, "in-stock"));
 				sb.append("</div>");
 			}
 			else {
 				sb.append(LanguageUtil.get(pageContext, "availability"));
 				sb.append(": ");
-				sb.append("<div class=\"portlet-msg-error\">");
+				sb.append("<div class=\"alert alert-error\">");
 				sb.append(LanguageUtil.get(pageContext, "out-of-stock"));
 				sb.append("</div>");
 
@@ -277,7 +273,7 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 			int pos = fieldsArray[j].indexOf("=");
 
 			String fieldName = fieldsArray[j].substring(0, pos);
-			String fieldValue = fieldsArray[j].substring(pos + 1, fieldsArray[j].length());
+			String fieldValue = fieldsArray[j].substring(pos + 1);
 
 			sb.append("<br />");
 			sb.append(fieldName);
@@ -316,16 +312,16 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 				sb.append("<strike>");
 				sb.append(currencyFormat.format(itemPrice.getPrice()));
 				sb.append("</strike> ");
-				sb.append("<div class=\"portlet-msg-success\">");
+				sb.append("<div class=\"alert alert-success\">");
 				sb.append(currencyFormat.format(ShoppingUtil.calculateActualPrice(itemPrice)));
 				sb.append("</div> / ");
 				sb.append(LanguageUtil.get(pageContext, "you-save"));
 				sb.append(": ");
-				sb.append("<div class=\"portlet-msg-error\">");
+				sb.append("<div class=\"alert alert-error\">");
 				sb.append(currencyFormat.format(ShoppingUtil.calculateDiscountPrice(itemPrice)));
 				sb.append(" (");
 				sb.append(percentFormat.format(itemPrice.getDiscount()));
-				sb.append(")");
+				sb.append(StringPool.CLOSE_PARENTHESIS);
 				sb.append("</div>");
 			}
 		}
@@ -342,7 +338,7 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 			sb.append("item_");
 			sb.append(item.getItemId());
 			sb.append("_");
-			sb.append(i);
+			sb.append(itemsCount);
 			sb.append("_count\">");
 
 			sb.append("<option value=\"0\">0</option>");
@@ -371,7 +367,7 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 			sb.append("item_");
 			sb.append(item.getItemId());
 			sb.append("_");
-			sb.append(i);
+			sb.append(itemsCount);
 			sb.append("_count\" size=\"2\" type=\"text\" value=\"");
 			sb.append(count);
 			sb.append("\">");
@@ -386,6 +382,8 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 		// Add result row
 
 		resultRows.add(row);
+
+		itemsCount++;
 	}
 	%>
 
@@ -405,13 +403,13 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 			</c:if>
 
 			<c:if test="<%= subtotal != actualSubtotal %>">
-				<strike><%= currencyFormat.format(subtotal) %></strike> <div class="portlet-msg-success"><%= currencyFormat.format(actualSubtotal) %></div>
+				<strike><%= currencyFormat.format(subtotal) %></strike> <div class="alert alert-success"><%= currencyFormat.format(actualSubtotal) %></div>
 			</c:if>
 		</aui:field-wrapper>
 
 		<c:if test="<%= subtotal != actualSubtotal %>">
 			<aui:field-wrapper label="you-save">
-				<div class="portlet-msg-error">
+				<div class="alert alert-error">
 					<%= currencyFormat.format(discountSubtotal) %> (<%= percentFormat.format(ShoppingUtil.calculateDiscountPercent(items)) %>)
 				</div>
 			</aui:field-wrapper>
@@ -474,7 +472,7 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 			<aui:a href='<%= "javascript:" + taglibOpenCouponWindow %>' label='<%= "(" + LanguageUtil.get(pageContext, "description") + ")" %>' style="font-size: xx-small;" />
 
 			<aui:field-wrapper label="coupon-discount">
-				<div class="portlet-msg-error">
+				<div class="alert alert-error">
 					<%= currencyFormat.format(ShoppingUtil.calculateCouponDiscount(items, coupon)) %>
 				</div>
 			</aui:field-wrapper>

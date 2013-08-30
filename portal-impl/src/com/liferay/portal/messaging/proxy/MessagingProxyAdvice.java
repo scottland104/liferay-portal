@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,8 @@ package com.liferay.portal.messaging.proxy;
 
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.proxy.BaseProxyBean;
+import com.liferay.portal.kernel.messaging.proxy.MessageValuesThreadLocal;
+import com.liferay.portal.kernel.messaging.proxy.ProxyModeThreadLocal;
 import com.liferay.portal.kernel.messaging.proxy.ProxyRequest;
 import com.liferay.portal.kernel.messaging.proxy.ProxyResponse;
 import com.liferay.portal.kernel.messaging.sender.SingleDestinationMessageSender;
@@ -57,7 +59,8 @@ public class MessagingProxyAdvice {
 		if (proxyRequest.isSynchronous() ||
 			ProxyModeThreadLocal.isForceSync()) {
 
-			return doInvokeSynchronous(message, baseProxyBean);
+			return doInvokeSynchronous(
+				message, baseProxyBean, proceedingJoinPoint);
 		}
 		else {
 			doInvokeAsynchronous(message, baseProxyBean);
@@ -91,8 +94,9 @@ public class MessagingProxyAdvice {
 	}
 
 	protected Object doInvokeSynchronous(
-			Message message, BaseProxyBean baseProxyBean)
-		throws Exception {
+			Message message, BaseProxyBean baseProxyBean,
+			ProceedingJoinPoint proceedingJoinPoint)
+		throws Throwable {
 
 		SingleDestinationSynchronousMessageSender messageSender =
 			baseProxyBean.getSingleDestinationSynchronousMessageSender();
@@ -107,7 +111,7 @@ public class MessagingProxyAdvice {
 			message);
 
 		if (proxyResponse == null) {
-			return null;
+			return proceedingJoinPoint.proceed();
 		}
 		else if (proxyResponse.hasError()) {
 			throw proxyResponse.getException();

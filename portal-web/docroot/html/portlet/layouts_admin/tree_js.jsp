@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,61 +16,136 @@
 
 <%@ include file="/html/portlet/layouts_admin/init.jsp" %>
 
+<%@ include file="/html/portlet/layouts_admin/init_attributes.jspf" %>
+
 <%
-long groupId = ((Long)request.getAttribute("edit_pages.jsp-groupId")).longValue();
-long selPlid = ((Long)request.getAttribute("edit_pages.jsp-selPlid")).longValue();
-boolean privateLayout = ((Boolean)request.getAttribute("edit_pages.jsp-privateLayout")).booleanValue();
+boolean incomplete = ParamUtil.getBoolean(request, "incomplete", true);
 
-String rootNodeName = (String)request.getAttribute("edit_pages.jsp-rootNodeName");
+String treeLoading = PortalUtil.generateRandomKey(request, "treeLoading");
 
-boolean selectableTree = ParamUtil.getBoolean(request, "selectableTree");
 String treeId = ParamUtil.getString(request, "treeId");
+boolean checkContentDisplayPage = ParamUtil.getBoolean(request, "checkContentDisplayPage", false);
+boolean defaultStateChecked = ParamUtil.getBoolean(request, "defaultStateChecked", false);
+boolean draggableTree = ParamUtil.getBoolean(request, "draggableTree", true);
+boolean expandFirstNode = ParamUtil.getBoolean(request, "expandFirstNode", true);
+boolean saveState = ParamUtil.getBoolean(request, "saveState", true);
+boolean selectableTree = ParamUtil.getBoolean(request, "selectableTree");
 
-PortletURL portletURL = (PortletURL)request.getAttribute("edit_pages.jsp-portletURL");
-
-String modules = "aui-io-request,aui-tree-view,dataschema-xml,datatype-xml";
+String modules = "aui-io-request,aui-tree-view,dataschema-xml,datatype-xml,liferay-store";
 
 if (!selectableTree) {
 	modules += ",liferay-history-manager";
 }
 %>
 
-<div class="lfr-tree-loading" id="<portlet:namespace />treeLoading">
-	<span class="aui-icon aui-icon-loading lfr-tree-loading-icon"></span>
-</div>
-
-<div class="lfr-tree" id="<portlet:namespace /><%= HtmlUtil.escape(treeId) %>Output"></div>
-
 <aui:script use="<%= modules %>">
 	var Lang = A.Lang;
+	var AArray = A.Array;
 
-	var LAYOUT_URL = '<%= portletURL + StringPool.AMPERSAND + portletDisplay.getNamespace() + "selPlid=" %>';
+	var Util = Liferay.Util;
+
+	var GET_LAYOUTS_URL = themeDisplay.getPathMain() + '/layouts_admin/get_layouts';
+
+	var LAYOUT_URL = '<%= portletURL + StringPool.AMPERSAND + portletDisplay.getNamespace() + "selPlid={selPlid}" + StringPool.AMPERSAND + portletDisplay.getNamespace() + "historyKey={historyKey}" %>';
+	var STR_CHILDREN = 'children';
+
+	var TREE_CSS_CLASSES = {
+		pages: {
+			iconCheck: 'tree-icon icon-check',
+			iconCollapsed: 'icon-file',
+			iconExpanded: 'icon-file',
+			iconHitAreaCollapsed: 'tree-hitarea icon-plus',
+			iconHitAreaExpanded: 'tree-hitarea icon-minus',
+			iconLeaf: 'icon-leaf',
+			iconLoading: 'icon-refresh',
+			iconUncheck: 'icon-check'
+		}
+	};
+
+	<%
+	JSONArray checkedNodesJSONArray = JSONFactoryUtil.createJSONArray();
+
+	String checkedLayoutIds = SessionTreeJSClicks.getOpenNodes(request, treeId + "SelectedNode");
+
+	if (Validator.isNotNull(checkedLayoutIds)) {
+		for (long checkedLayoutId : StringUtil.split(checkedLayoutIds, 0L)) {
+			try {
+				Layout checkedLayout = LayoutLocalServiceUtil.getLayout(groupId, privateLayout, checkedLayoutId);
+
+				checkedNodesJSONArray.put(String.valueOf(checkedLayout.getPlid()));
+			}
+			catch (NoSuchLayoutException nsle) {
+			}
+		}
+	}
+	%>
 
 	var TreeUtil = {
+		CHECKED_NODES: <%= checkedNodesJSONArray.toString() %>,
 		DEFAULT_PARENT_LAYOUT_ID: <%= LayoutConstants.DEFAULT_PARENT_LAYOUT_ID %>,
-		OPEN_NODES: '<%= SessionTreeJSClicks.getOpenNodes(request, treeId) %>'.split(','),
+		PAGINATION_LIMIT: <%= PropsValues.LAYOUT_MANAGE_PAGES_INITIAL_CHILDREN %>,
+		PREFIX_GROUP_ID: '_groupId_',
+		PREFIX_LAYOUT: '_layout_',
 		PREFIX_LAYOUT_ID: '_layoutId_',
 		PREFIX_PLID: '_plid_',
-		SELECTED_NODES: '<%= SessionTreeJSClicks.getOpenNodes(request, treeId + "SelectedNode") %>'.split(','),
 
 		afterRenderTree: function(event) {
-			var treeInstance = event.target;
+			var rootNode = event.target.item(0);
 
-			var rootNode = treeInstance.item(0);
-
-			var loadingEl = A.one('#<portlet:namespace />treeLoading');
+			var loadingEl = A.one('#<portlet:namespace />treeLoading<%= treeLoading %>');
 
 			loadingEl.hide();
 
-			TreeUtil.restoreNodeState(rootNode);
+			<c:choose>
+				<c:when test="<%= saveState && selectableTree %>">
+					TreeUtil.restoreCheckedNode(rootNode);
+				</c:when>
+				<c:when test="<%= expandFirstNode %>">
+					rootNode.expand();
+				</c:when>
+			</c:choose>
+
+			TreeUtil.restoreSelectedNode(rootNode);
+
+			rootNode.eachChildren(TreeUtil.restoreSelectedNode);
 		},
 
-		createId: function(layoutId, plid) {
-			return '<%= HtmlUtil.escape(treeId) %>' + TreeUtil.PREFIX_LAYOUT_ID + layoutId + TreeUtil.PREFIX_PLID + plid;
+		createLabel: function(data) {
+			return '<span class="' + data.cssClass + '" title="' + data.title + '">' + data.label + '</span>';
 		},
 
-		createLink: function(label, plid) {
-			return '<a class="layout-tree" href="' + LAYOUT_URL + plid + '">' + Liferay.Util.escapeHTML(label) + '</a>';
+		createListItemId: function(groupId, layoutId, plid) {
+			return '<%= HtmlUtil.escape(treeId) %>' + TreeUtil.PREFIX_LAYOUT_ID + layoutId + TreeUtil.PREFIX_PLID + plid + TreeUtil.PREFIX_GROUP_ID + groupId;
+		},
+
+		createLinkId: function(friendlyURL) {
+			return '<%= HtmlUtil.escape(treeId) %>' + TreeUtil.PREFIX_LAYOUT + friendlyURL.substring(1);
+		},
+
+		createLink: function(data) {
+			var className = 'layout-tree';
+
+			if (data.cssClass) {
+				className += ' ' + data.cssClass;
+			}
+
+			if (<%= checkContentDisplayPage %> && !data.contentDisplayPage) {
+				className += ' layout-page-invalid';
+			}
+
+			var href = Lang.sub(
+				LAYOUT_URL,
+				{
+					historyKey: data.historyKey,
+					selPlid: data.plid
+				}
+			);
+
+			return '<a class="' + className + '" data-uuid="' + data.uuid + '" href="' + href + '" id="' + data.id + '" title="' + data.title + '">' + data.label + '</a>';
+		},
+
+		extractGroupId: function(node) {
+			return node.get('id').match(/groupId_(\d+)/)[1];
 		},
 
 		extractLayoutId: function(node) {
@@ -85,38 +160,175 @@ if (!selectableTree) {
 			var output = [];
 
 			A.each(
-				json,
+				json.layouts,
 				function(node) {
+					var childLayouts = [];
+					var total = 0;
+
+					var hasChildren = node.hasChildren;
+					var nodeChildren = node.children;
+
+					if (nodeChildren) {
+						childLayouts = nodeChildren.layouts;
+						total = nodeChildren.total;
+					}
+
+					var expanded = (total > 0);
+
 					var newNode = {
-						after: {
-							check: function(event) {
-								var plid = TreeUtil.extractPlid(event.target);
+						<c:if test="<%= saveState %>">
+							after: {
+								<c:if test="<%= selectableTree %>">
+									checkedChange: function(event) {
+										if (this === event.originalTarget) {
+											var newVal = event.newVal;
+											var target = event.target;
 
-								TreeUtil.updateSessionTreeClick(plid, true, '<%= HtmlUtil.escape(treeId) %>SelectedNode');
+											var plid = TreeUtil.extractPlid(target);
+
+											TreeUtil.updateSessionTreeCheckedState('<%= HtmlUtil.escape(treeId) %>SelectedNode', plid, newVal);
+
+											TreeUtil.updateCheckedNodes(target, newVal);
+										}
+									},
+								</c:if>
+
+								childrenChange: function(event) {
+									var target = event.target;
+
+									target.set('alwaysShowHitArea', event.newVal.length > 0);
+
+									target.eachChildren(TreeUtil.restoreSelectedNode);
+
+									<c:if test="<%= selectableTree %>">
+										if (target.get('checked')) {
+											TreeUtil.updateCheckedNodes(target, true);
+										}
+
+										TreeUtil.restoreCheckedNode(target);
+									</c:if>
+								},
+
+								expandedChange: function(event) {
+									var layoutId = TreeUtil.extractLayoutId(event.target);
+
+									TreeUtil.updateSessionTreeOpenedState('<%= HtmlUtil.escape(treeId) %>', layoutId, event.newVal);
+								}
 							},
-							uncheck: function(event) {
-								var plid = TreeUtil.extractPlid(event.target);
+						</c:if>
 
-								TreeUtil.updateSessionTreeClick(plid, false, '<%= HtmlUtil.escape(treeId) %>SelectedNode');
-							}
+						alwaysShowHitArea: hasChildren,
+
+						<c:if test="<%= !saveState && defaultStateChecked %>">
+							checked: true,
+						</c:if>
+
+						cssClasses: TREE_CSS_CLASSES,
+						draggable: node.sortable,
+						expanded: expanded,
+						id: TreeUtil.createListItemId(node.groupId, node.layoutId, node.plid),
+						io: {
+							cfg: {
+								data: function(node) {
+									return {
+										groupId: TreeUtil.extractGroupId(node),
+										incomplete: <%= incomplete %>,
+										p_auth: Liferay.authToken,
+										parentLayoutId: TreeUtil.extractLayoutId(node),
+										privateLayout: <%= privateLayout %>,
+										selPlid: '<%= selPlid %>',
+										treeId: '<%= HtmlUtil.escape(treeId) %>'
+									};
+								},
+								method: A.config.io.method,
+								on: {
+									success: function(event, id, xhr) {
+										var instance = this;
+
+										var response;
+
+										try {
+											response = A.JSON.parse(xhr.responseText);
+										}
+										catch (e) {
+										}
+
+										if (response) {
+											instance.get('paginator').total = response.total;
+
+											instance.syncUI();
+										}
+
+										<c:if test="<%= saveState %>">
+											TreeUtil.updatePagination(instance);
+										</c:if>
+									}
+								}
+							},
+							formatter: TreeUtil.formatJSONResults,
+							url: GET_LAYOUTS_URL
 						},
-						alwaysShowHitArea: node.hasChildren,
-						id: TreeUtil.createId(node.layoutId, node.plid),
-						type: '<%= selectableTree ? "task" : "io" %>'
+						leaf: !node.parentable,
+						paginator: {
+							limit: TreeUtil.PAGINATION_LIMIT,
+							offsetParam: 'start',
+							start: Math.max(childLayouts.length - TreeUtil.PAGINATION_LIMIT, 0),
+							total: total
+						},
+						type: '<%= !selectableTree ? "io" : "task" %>'
 					};
 
-					newNode.label = node.name;
+					if (nodeChildren && expanded) {
+						newNode.children = TreeUtil.formatJSONResults(nodeChildren);
+					}
+
+					var cssClass = '';
+					var title = '';
+
+					newNode.label = Util.escapeHTML(node.name);
 
 					if (node.layoutRevisionId) {
-						newNode.label += Lang.sub(' [{layoutBranchName} {layoutRevisionId}]', node);
+						if (!node.layoutRevisionHead) {
+							title = '<%= UnicodeLanguageUtil.get(pageContext, "there-is-not-a-version-of-this-page-marked-as-ready-for-publication") %>';
+						}
+						else if (node.layoutBranchName) {
+							node.layoutBranchName = Util.escapeHTML(node.layoutBranchName);
+
+							newNode.label += Lang.sub(' <span class="layout-branch-name" title="<%= UnicodeLanguageUtil.get(pageContext, "this-is-the-page-variation-that-is-marked-as-ready-for-publication") %>">[{layoutBranchName}]</span>', node);
+						}
 
 						if (node.incomplete) {
-							newNode.label = [newNode.label, 'incomplete'].join('');
+							cssClass = 'incomplete-layout';
+
+							title = '<%= UnicodeLanguageUtil.get(pageContext, "this-page-is-not-enabled-in-this-site-pages-variation,-but-is-available-in-other-variations") %>';
 						}
 					}
 
+					if (!node.sortable) {
+						newNode.cssClass = 'lfr-page-locked';
+					}
+
 					if (!<%= selectableTree %>) {
-						newNode.label = TreeUtil.createLink(newNode.label, node.plid);
+						newNode.label = TreeUtil.createLink(
+							{
+								contentDisplayPage: node.contentDisplayPage,
+								cssClass: cssClass,
+								id: TreeUtil.createLinkId(node.friendlyURL),
+								label: newNode.label,
+								plid: node.plid,
+								title: title,
+								uuid: node.uuid
+							}
+						);
+					}
+					else {
+						newNode.label = TreeUtil.createLabel(
+							{
+								cssClass: cssClass,
+								label: newNode.label,
+								title: title
+							}
+						);
 					}
 
 					output.push(newNode);
@@ -126,34 +338,46 @@ if (!selectableTree) {
 			return output;
 		},
 
-		restoreNodeState: function(node) {
+		restoreCheckedNode: function(node) {
 			var instance = this;
 
-			var id = node.get('id');
+			var plid = TreeUtil.extractPlid(node);
+
+			var tree = node.get('ownerTree');
+
+			var treeNodeTaskSuperClass = A.TreeNodeTask.superclass;
+
+			if (AArray.indexOf(TreeUtil.CHECKED_NODES, plid) > -1) {
+				treeNodeTaskSuperClass.check.call(node, tree);
+			}
+			else {
+				treeNodeTaskSuperClass.uncheck.call(node, tree);
+			}
+
+			AArray.each(node.get(STR_CHILDREN), TreeUtil.restoreCheckedNode);
+		},
+
+		restoreSelectedNode: function(node) {
 			var plid = TreeUtil.extractPlid(node);
 
 			if (plid == '<%= selPlid %>') {
 				node.select();
 			}
-
-			if (A.Array.indexOf(TreeUtil.OPEN_NODES, id) > -1) {
-				node.expand();
-			}
-
-			if (A.Array.indexOf(TreeUtil.SELECTED_NODES, plid) > -1) {
-				if (node.check) {
-					node.check();
-				}
+			else {
+				node.unselect();
 			}
 		},
 
 		updateLayout: function(data) {
-			var updateURL = themeDisplay.getPathMain() + '/layouts_admin/update_page';
-
 			A.io.request(
-				updateURL,
+				themeDisplay.getPathMain() + '/layouts_admin/update_page',
 				{
-					data: data
+					data: A.mix(
+						data,
+						{
+							p_auth: Liferay.authToken
+						}
+					)
 				}
 			);
 		},
@@ -167,48 +391,216 @@ if (!selectableTree) {
 					priority: index
 				}
 			);
-		},
-
-		updateSessionTreeClick: function(id, open, treeId) {
-			var sessionClickURL = themeDisplay.getPathMain() + '/portal/session_tree_js_click';
-
-			var data = {
-				nodeId: id,
-				openNode: open || false,
-				treeId: treeId
-			};
-
-			A.io.request(
-				sessionClickURL,
-				{
-					data: data
-				}
-			);
 		}
+
+		<c:if test="<%= saveState %>">
+			, invokeSessionClick: function(data, callback) {
+				A.mix(
+					data,
+					{
+						useHttpSession: true
+					}
+				);
+
+				A.io.request(
+					themeDisplay.getPathMain() + '/portal/session_click',
+					{
+						after: {
+							success: function(event) {
+								var responseData = this.get('responseData');
+
+								if (callback && responseData) {
+									callback(responseData);
+								}
+							}
+						},
+						data: data
+					}
+				);
+			},
+
+			updatePagination: function(node) {
+				var paginationMap = {};
+
+				var updatePaginationMap = function(map, curNode) {
+					if (A.instanceOf(curNode, A.TreeNodeIO)) {
+						var paginationLimit = TreeUtil.PAGINATION_LIMIT;
+
+						var layoutId = TreeUtil.extractLayoutId(curNode);
+
+						var children = curNode.get(STR_CHILDREN);
+
+						map[layoutId] = Math.ceil(children.length / paginationLimit) * paginationLimit;
+					}
+				}
+
+				TreeUtil.invokeSessionClick(
+					{
+						cmd: 'get',
+						key: '<%= HtmlUtil.escape(treeId) %>:<%= groupId %>:<%= privateLayout %>:Pagination'
+					},
+					function(responseData) {
+						try {
+							paginationMap = A.JSON.parse(responseData);
+						}
+						catch (e) {
+						}
+
+						updatePaginationMap(paginationMap, node)
+
+						node.eachParent(
+							function(parent) {
+								updatePaginationMap(paginationMap, parent);
+							}
+						);
+
+						TreeUtil.invokeSessionClick(
+							{
+								'<%= HtmlUtil.escape(treeId) %>:<%= groupId %>:<%= privateLayout %>:Pagination': A.JSON.stringify(paginationMap)
+							}
+						);
+					}
+				);
+			},
+
+			updateCheckedNodes: function(node, state) {
+				var plid = TreeUtil.extractPlid(node);
+
+				var checkedNodes = TreeUtil.CHECKED_NODES;
+
+				var index = AArray.indexOf(checkedNodes, plid);
+
+				if (state) {
+					if (index == -1) {
+						checkedNodes.push(plid);
+					}
+				}
+				else if (index > -1) {
+					AArray.remove(checkedNodes, index);
+				}
+			},
+
+			updateSessionTreeCheckedState: function(treeId, nodeId, state) {
+				var data = {
+					cmd: state ? 'layoutCheck' : 'layoutUncheck',
+					plid: nodeId
+				};
+
+				TreeUtil.updateSessionTreeClick(treeId, data);
+			},
+
+			updateSessionTreeClick: function(treeId, data) {
+				data = A.merge(
+					{
+						groupId: <%= groupId %>,
+						privateLayout: <%= privateLayout %>,
+						recursive: true,
+						treeId: treeId
+					},
+					data
+				);
+
+				A.io.request(
+					themeDisplay.getPathMain() + '/portal/session_tree_js_click',
+					{
+						data: data
+					}
+				);
+			},
+
+			updateSessionTreeOpenedState: function(treeId, nodeId, state) {
+				var data = {
+					nodeId: nodeId,
+					openNode: state
+				};
+
+				TreeUtil.updateSessionTreeClick(treeId, data);
+			}
+		</c:if>
 	};
 
-	var getLayoutsURL = themeDisplay.getPathMain() + '/layouts_admin/get_layouts';
-	var rootId = TreeUtil.createId(TreeUtil.DEFAULT_PARENT_LAYOUT_ID, 0);
 	var rootLabel = '<%= HtmlUtil.escapeJS(rootNodeName) %>';
 	var treeElId = '<portlet:namespace /><%= HtmlUtil.escape(treeId) %>Output';
 
 	var RootNodeType = A.TreeNodeTask;
 	var TreeViewType = A.TreeView;
 
-	if (!<%= selectableTree %>) {
+	<c:if test="<%= !selectableTree %>">
 		RootNodeType = A.TreeNodeIO;
-		TreeViewType = A.TreeViewDD;
 
-		rootLabel = TreeUtil.createLink(rootLabel, TreeUtil.DEFAULT_PARENT_LAYOUT_ID);
-	}
+		<c:if test="<%= draggableTree %>">
+			TreeViewType = A.TreeViewDD;
+		</c:if>
+
+		<c:if test="<%= !checkContentDisplayPage %>">
+			rootLabel = TreeUtil.createLink(
+				{
+					label: Util.escapeHTML(rootLabel),
+					plid: TreeUtil.DEFAULT_PARENT_LAYOUT_ID
+				}
+			);
+		</c:if>
+	</c:if>
 
 	var rootNode = new RootNodeType(
 		{
+			<c:if test="<%= saveState %>">
+				after: {
+					<c:if test="<%= selectableTree %>">
+						checkedChange: function(event) {
+							var newVal = event.newVal;
+
+							TreeUtil.updateSessionTreeCheckedState('<%= HtmlUtil.escape(treeId) %>SelectedNode', <%= LayoutConstants.DEFAULT_PLID %>, newVal);
+
+							TreeUtil.updateCheckedNodes(event.target, newVal);
+						},
+					</c:if>
+
+					expandedChange: function(event) {
+						Liferay.Store('<%= HtmlUtil.escape(treeId) %>RootNode', event.newVal);
+					}
+				},
+			</c:if>
+
 			alwaysShowHitArea: true,
+
+			<c:if test="<%= !saveState && defaultStateChecked %>">
+				checked: true,
+			</c:if>
+
+			<%
+			long[] openNodes = StringUtil.split(SessionTreeJSClicks.getOpenNodes(request, treeId), 0L);
+
+			JSONObject layoutsJSON = JSONFactoryUtil.createJSONObject(LayoutsTreeUtil.getLayoutsJSON(request, groupId, privateLayout, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID, openNodes, true));
+			%>
+
+			children: TreeUtil.formatJSONResults(<%= layoutsJSON %>),
+			cssClasses: TREE_CSS_CLASSES,
 			draggable: false,
-			id: rootId,
+
+			<c:choose>
+				<c:when test="<%= saveState %>">
+
+					<%
+					boolean rootNodeExpanded = GetterUtil.getBoolean(SessionClicks.get(request, treeId + "RootNode", null), true);
+					%>
+
+					expanded: <%= rootNodeExpanded %>,
+				</c:when>
+				<c:otherwise>
+					expanded: <%= expandFirstNode %>,
+				</c:otherwise>
+			</c:choose>
+
+			id: TreeUtil.createListItemId(<%= groupId %>, TreeUtil.DEFAULT_PARENT_LAYOUT_ID, 0),
 			label: rootLabel,
-			leaf: false
+			leaf: false,
+			paginator: {
+				limit: TreeUtil.PAGINATION_LIMIT,
+				offsetParam: 'start',
+				start: Math.max(<%= layoutsJSON.getJSONArray("layouts").length() %> - TreeUtil.PAGINATION_LIMIT, 0),
+				total: <%= layoutsJSON.getInt("total") %>
+			}
 		}
 	);
 
@@ -217,16 +609,6 @@ if (!selectableTree) {
 	var treeview = new TreeViewType(
 		{
 			after: {
-				collapse: function(event) {
-					var id = event.tree.node.get('id');
-
-					TreeUtil.updateSessionTreeClick(id, false, '<%= HtmlUtil.escape(treeId) %>');
-				},
-				expand: function(event) {
-					var id = event.tree.node.get('id');
-
-					TreeUtil.updateSessionTreeClick(id, true, '<%= HtmlUtil.escape(treeId) %>');
-				},
 				render: TreeUtil.afterRenderTree
 			},
 			boundingBox: '#' + treeElId,
@@ -234,27 +616,64 @@ if (!selectableTree) {
 			io: {
 				cfg: {
 					data: function(node) {
-						var parentLayoutId = TreeUtil.extractLayoutId(node);
-
 						return {
-							groupId: <%= groupId %>,
+							groupId: TreeUtil.extractGroupId(node),
+							incomplete: <%= incomplete %>,
+							p_auth: Liferay.authToken,
+							parentLayoutId: TreeUtil.extractLayoutId(node),
 							privateLayout: <%= privateLayout %>,
-							parentLayoutId: parentLayoutId
+							selPlid: '<%= selPlid %>',
+							treeId: '<%= HtmlUtil.escape(treeId) %>'
 						};
 					},
-					method: AUI.defaults.io.method
+					method: A.config.io.method,
+					on: {
+						success: function(event, id, xhr) {
+							var instance = this;
+
+							var response;
+
+							try {
+								response = A.JSON.parse(xhr.responseText);
+							}
+							catch (e) {
+							}
+
+							if (response) {
+								instance.get('paginator').total = response.total;
+
+								instance.syncUI();
+							}
+
+							<c:if test="<%= saveState %>">
+								TreeUtil.updatePagination(instance);
+							</c:if>
+						}
+					}
 				},
 				formatter: TreeUtil.formatJSONResults,
-				url: getLayoutsURL
+				url: GET_LAYOUTS_URL
 			},
 			on: {
-				append: function(event) {
-					TreeUtil.restoreNodeState(event.tree.node);
+				<c:if test="<%= saveState && selectableTree %>">
+					append: function(event) {
+						TreeUtil.restoreCheckedNode(event.tree.node);
+					},
+				</c:if>
+
+				'drop:hit': function(event) {
+					var dropNode = event.drop.get('node').get('parentNode');
+
+					var dropTreeNode = dropNode.getData('tree-node');
+
+					if (!dropTreeNode.get('draggable')) {
+						event.halt();
+					}
 				},
 				dropAppend: function(event) {
 					var tree = event.tree;
 
-					var index = tree.dragNode.get('parentNode').indexOf(tree.dragNode);
+					var index = tree.dragNode.get('parentNode').getChildrenLength() - 1;
 
 					TreeUtil.updateLayoutParent(
 						TreeUtil.extractPlid(tree.dragNode),
@@ -274,13 +693,24 @@ if (!selectableTree) {
 					);
 				}
 			},
-			paginator: {
-				limit: <%= PropsValues.LAYOUT_MANAGE_PAGES_INITIAL_CHILDREN %>,
-				offsetParam: 'start'
-			},
 			type: 'pages'
 		}
 	).render();
+
+	<c:if test="<%= !saveState && checkContentDisplayPage %>">
+		treeview.on(
+			'append',
+			function(event) {
+				var node = event.tree.node;
+
+				TreeUtil.restoreSelectedNode(node);
+
+				node.eachChildren(TreeUtil.restoreSelectedNode);
+			}
+		);
+	</c:if>
+
+	A.one('#' + treeElId).setData('treeInstance', treeview);
 
 	<c:if test="<%= !selectableTree %>">
 		var History = Liferay.HistoryManager;
@@ -301,7 +731,7 @@ if (!selectableTree) {
 				var currentValue = History.get(HISTORY_SELECTED_PLID);
 
 				if (plid != currentValue) {
-					if (plid == DEFAULT_PLID && Lang.isValue(currentValue)) {
+					if ((plid == DEFAULT_PLID) && Lang.isValue(currentValue)) {
 						plid = null;
 					}
 
@@ -328,7 +758,7 @@ if (!selectableTree) {
 			}
 
 			if (!foundItem) {
-				var children = (node || treeview).get('children');
+				var children = (node || treeview).get(STR_CHILDREN);
 
 				var length = children.length;
 
@@ -372,7 +802,15 @@ if (!selectableTree) {
 
 						var io = layoutsContainer.io;
 
-						io.set('uri', LAYOUT_URL + nodePlid);
+						var uri = Lang.sub(
+							LAYOUT_URL,
+							{
+								historyKey: '',
+								selPlid: nodePlid
+							}
+						);
+
+						io.set('uri', uri);
 
 						io.start();
 					}
@@ -381,3 +819,9 @@ if (!selectableTree) {
 		);
 	</c:if>
 </aui:script>
+
+<div class="lfr-tree-loading" id="<portlet:namespace />treeLoading<%= treeLoading %>">
+	<span class="icon icon-loading lfr-tree-loading-icon"></span>
+</div>
+
+<div class="lfr-tree" id="<portlet:namespace /><%= HtmlUtil.escape(treeId) %>Output"></div>

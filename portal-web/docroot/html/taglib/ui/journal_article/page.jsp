@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,10 +16,13 @@
 
 <%@ include file="/html/taglib/init.jsp" %>
 
+<%@ page import="com.liferay.portal.layoutconfiguration.util.RuntimePageUtil" %>
 <%@ page import="com.liferay.portlet.journal.model.JournalArticleDisplay" %>
 <%@ page import="com.liferay.portlet.journal.model.JournalArticleResource" %>
 <%@ page import="com.liferay.portlet.journal.service.JournalArticleResourceLocalServiceUtil" %>
 <%@ page import="com.liferay.portlet.journalcontent.util.JournalContentUtil" %>
+
+<portlet:defineObjects />
 
 <%
 long articleResourcePrimKey = GetterUtil.getLong((String)request.getAttribute("liferay-ui:journal-article:articleResourcePrimKey"));
@@ -63,10 +66,10 @@ JournalArticleDisplay articleDisplay = JournalContentUtil.getDisplay(groupId, ar
 			<div>
 				<br />
 
-				<liferay-ui:language languageIds="<%= availableLocales %>" displayStyle="<%= 0 %>" />
+				<liferay-ui:language displayStyle="<%= 0 %>" languageIds="<%= availableLocales %>" />
 			</div>
 		</c:if>
 	</c:if>
 
-	<%= articleDisplay.getContent() %>
+	<%= RuntimePageUtil.processXML(request, response, articleDisplay.getContent()) %>
 </c:if>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,7 +25,6 @@ import com.liferay.portal.security.ntlm.msrpc.NetrLogonSamLogon;
 import java.io.IOException;
 
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 
 import jcifs.dcerpc.DcerpcBinding;
 import jcifs.dcerpc.DcerpcHandle;
@@ -41,16 +40,14 @@ public class Netlogon {
 
 	public NtlmUserAccount logon(
 			String domain, String userName, String workstation,
-			byte[] serverChallenge,	byte[] ntResponse, byte[] lmResponse)
+			byte[] serverChallenge, byte[] ntResponse, byte[] lmResponse)
 		throws NtlmLogonException {
 
 		NetlogonConnection netlogonConnection = new NetlogonConnection();
 
 		try {
-
 			netlogonConnection.connect(
-				_domainController,_domainControllerName, _ntlmServiceAccount,
-				_secureRandom);
+				_domainController, _domainControllerName, _ntlmServiceAccount);
 
 			NetlogonAuthenticator netlogonAuthenticator =
 				netlogonConnection.computeNetlogonAuthenticator();
@@ -60,7 +57,7 @@ public class Netlogon {
 					domain, 0x00000820, 0, 0, userName, workstation);
 
 			NetlogonNetworkInfo netlogonNetworkInfo = new NetlogonNetworkInfo(
-				netlogonIdentityInfo, serverChallenge,	ntResponse, lmResponse);
+				netlogonIdentityInfo, serverChallenge, ntResponse, lmResponse);
 
 			NetrLogonSamLogon netrLogonSamLogon = new NetrLogonSamLogon(
 				_domainControllerName, _ntlmServiceAccount.getComputerName(),
@@ -88,16 +85,16 @@ public class Netlogon {
 					"Unable to authenticate user: " + smbe.getMessage());
 			}
 		}
-		catch (NoSuchAlgorithmException e) {
+		catch (NoSuchAlgorithmException nsae) {
 			throw new NtlmLogonException(
 				"Unable to authenticate due to invalid encryption algorithm",
-				e);
+				nsae);
 		}
-		catch (IOException e) {
+		catch (IOException ioe) {
 			throw new NtlmLogonException(
 				"Unable to authenticate due to communication failure with " +
 					"server",
-				e);
+				ioe);
 		}
 		finally {
 			try {
@@ -123,7 +120,6 @@ public class Netlogon {
 	private String _domainController;
 	private String _domainControllerName;
 	private NtlmServiceAccount _ntlmServiceAccount;
-	private SecureRandom _secureRandom = new SecureRandom();
 
 	static {
 		DcerpcBinding.addInterface(

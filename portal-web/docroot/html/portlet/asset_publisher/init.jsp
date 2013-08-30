@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,112 +16,163 @@
 
 <%@ include file="/html/portlet/init.jsp" %>
 
-<%@ page import="com.liferay.portal.NoSuchModelException" %>
-<%@ page import="com.liferay.portal.kernel.repository.model.FileEntry" %>
-<%@ page import="com.liferay.portal.kernel.search.Hits" %>
-<%@ page import="com.liferay.portal.kernel.portlet.LiferayPortletResponse" %>
-<%@ page import="com.liferay.portal.kernel.portlet.LiferayPortletRequest" %>
-<%@ page import="com.liferay.portal.kernel.xml.Document" %>
-<%@ page import="com.liferay.portal.kernel.xml.Element" %>
-<%@ page import="com.liferay.portal.kernel.xml.SAXReaderUtil" %>
-<%@ page import="com.liferay.portal.security.permission.comparator.ModelResourceComparator" %>
-<%@ page import="com.liferay.portlet.asset.AssetRendererFactoryRegistryUtil" %>
-<%@ page import="com.liferay.portlet.asset.NoSuchEntryException" %>
-<%@ page import="com.liferay.portlet.asset.NoSuchTagException" %>
-<%@ page import="com.liferay.portlet.asset.NoSuchTagPropertyException" %>
-<%@ page import="com.liferay.portlet.asset.model.AssetCategory" %>
-<%@ page import="com.liferay.portlet.asset.model.AssetEntry" %>
-<%@ page import="com.liferay.portlet.asset.model.AssetRenderer" %>
-<%@ page import="com.liferay.portlet.asset.model.AssetRendererFactory" %>
-<%@ page import="com.liferay.portlet.asset.model.AssetTag" %>
-<%@ page import="com.liferay.portlet.asset.model.AssetTagProperty" %>
-<%@ page import="com.liferay.portlet.asset.model.AssetVocabulary" %>
-<%@ page import="com.liferay.portlet.asset.service.AssetCategoryLocalServiceUtil" %>
-<%@ page import="com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil" %>
-<%@ page import="com.liferay.portlet.asset.service.AssetEntryServiceUtil" %>
-<%@ page import="com.liferay.portlet.asset.service.AssetTagLocalServiceUtil" %>
-<%@ page import="com.liferay.portlet.asset.service.AssetTagPropertyLocalServiceUtil" %>
-<%@ page import="com.liferay.portlet.asset.service.AssetVocabularyLocalServiceUtil" %>
-<%@ page import="com.liferay.portlet.asset.service.persistence.AssetEntryQuery" %>
-<%@ page import="com.liferay.portlet.asset.util.AssetUtil" %>
-<%@ page import="com.liferay.portlet.assetpublisher.search.AssetDisplayTerms" %>
-<%@ page import="com.liferay.portlet.assetpublisher.search.AssetSearch" %>
-<%@ page import="com.liferay.portlet.assetpublisher.search.AssetSearchTerms" %>
-<%@ page import="com.liferay.portlet.assetpublisher.util.AssetPublisherUtil" %>
-<%@ page import="com.liferay.portlet.documentlibrary.model.DLFileEntryConstants" %>
-<%@ page import="com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil" %>
-<%@ page import="com.liferay.portlet.documentlibrary.util.DocumentConversionUtil" %>
-<%@ page import="com.liferay.portlet.imagegallery.model.IGImage" %>
-<%@ page import="com.liferay.portlet.imagegallery.service.IGImageLocalServiceUtil" %>
-<%@ page import="com.liferay.portlet.journal.model.JournalArticle" %>
-<%@ page import="com.liferay.portlet.journal.model.JournalStructure" %>
-<%@ page import="com.liferay.portlet.journal.service.JournalStructureServiceUtil" %>
-<%@ page import="com.liferay.util.RSSUtil" %>
-<%@ page import="com.liferay.util.xml.DocUtil" %>
+<%@ page import="com.liferay.portal.NoSuchModelException" %><%@
+page import="com.liferay.portal.kernel.search.Hits" %><%@
+page import="com.liferay.portal.kernel.template.TemplateHandler" %><%@
+page import="com.liferay.portal.kernel.template.TemplateHandlerRegistryUtil" %><%@
+page import="com.liferay.portal.kernel.util.DateFormatFactoryUtil" %><%@
+page import="com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil" %><%@
+page import="com.liferay.portal.kernel.util.PredicateFilter" %><%@
+page import="com.liferay.portlet.asset.AssetRendererFactoryRegistryUtil" %><%@
+page import="com.liferay.portlet.asset.DuplicateQueryRuleException" %><%@
+page import="com.liferay.portlet.asset.NoSuchTagException" %><%@
+page import="com.liferay.portlet.asset.NoSuchTagPropertyException" %><%@
+page import="com.liferay.portlet.asset.model.AssetCategory" %><%@
+page import="com.liferay.portlet.asset.model.AssetEntry" %><%@
+page import="com.liferay.portlet.asset.model.AssetRenderer" %><%@
+page import="com.liferay.portlet.asset.model.AssetRendererFactory" %><%@
+page import="com.liferay.portlet.asset.model.AssetTag" %><%@
+page import="com.liferay.portlet.asset.model.AssetTagProperty" %><%@
+page import="com.liferay.portlet.asset.model.AssetVocabulary" %><%@
+page import="com.liferay.portlet.asset.service.AssetCategoryLocalServiceUtil" %><%@
+page import="com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil" %><%@
+page import="com.liferay.portlet.asset.service.AssetEntryServiceUtil" %><%@
+page import="com.liferay.portlet.asset.service.AssetTagLocalServiceUtil" %><%@
+page import="com.liferay.portlet.asset.service.AssetTagPropertyLocalServiceUtil" %><%@
+page import="com.liferay.portlet.asset.service.AssetVocabularyLocalServiceUtil" %><%@
+page import="com.liferay.portlet.asset.service.persistence.AssetEntryQuery" %><%@
+page import="com.liferay.portlet.asset.util.AssetUtil" %><%@
+page import="com.liferay.portlet.assetpublisher.search.AssetDisplayTerms" %><%@
+page import="com.liferay.portlet.assetpublisher.search.AssetSearch" %><%@
+page import="com.liferay.portlet.assetpublisher.util.AssetPublisherHelperUtil" %><%@
+page import="com.liferay.portlet.assetpublisher.util.AssetPublisherUtil" %><%@
+page import="com.liferay.portlet.documentlibrary.util.DocumentConversionUtil" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.model.DDMStructure" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.util.DDMImpl" %><%@
+page import="com.liferay.portlet.dynamicdatamapping.util.DDMIndexerUtil" %><%@
+page import="com.liferay.portlet.messageboards.model.MBDiscussion" %><%@
+page import="com.liferay.portlet.messageboards.model.MBMessage" %><%@
+page import="com.liferay.portlet.portletdisplaytemplate.util.PortletDisplayTemplateConstants" %><%@
+page import="com.liferay.portlet.portletdisplaytemplate.util.PortletDisplayTemplateUtil" %><%@
+page import="com.liferay.util.RSSUtil" %>
 
 <%
-PortletPreferences preferences = renderRequest.getPreferences();
-
 String portletResource = ParamUtil.getString(request, "portletResource");
 
-if (Validator.isNotNull(portletResource)) {
-	preferences = PortletPreferencesFactoryUtil.getPortletSetup(request, portletResource);
-}
+String selectionStyle = GetterUtil.getString(portletPreferences.getValue("selectionStyle", null), "dynamic");
 
-String selectionStyle = preferences.getValue("selectionStyle", null);
+long[] groupIds = AssetPublisherUtil.getGroupIds(portletPreferences, scopeGroupId, layout);
 
-if (Validator.isNull(selectionStyle)) {
-	selectionStyle = "dynamic";
-}
+long[] availableClassNameIds = AssetRendererFactoryRegistryUtil.getClassNameIds(company.getCompanyId());
 
-boolean defaultScope = GetterUtil.getBoolean(preferences.getValue("defaultScope", null), true);
+availableClassNameIds = ArrayUtil.filter(
+	availableClassNameIds,
+	new PredicateFilter<Long>() {
 
-long[] groupIds = AssetPublisherUtil.getGroupIds(preferences, scopeGroupId, layout);
+		public boolean filter(Long classNameId) {
+			AssetRendererFactory assetRendererFactory = AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(PortalUtil.getClassName(classNameId));
 
-long[] availableClassNameIds = AssetRendererFactoryRegistryUtil.getClassNameIds();
+			return assetRendererFactory.isSelectable();
+		}
 
-boolean anyAssetType = GetterUtil.getBoolean(preferences.getValue("anyAssetType", Boolean.TRUE.toString()));
+	});
 
-long[] classNameIds = AssetPublisherUtil.getClassNameIds(preferences, availableClassNameIds);
+boolean anyAssetType = GetterUtil.getBoolean(portletPreferences.getValue("anyAssetType", null), true);
+
+long[] classNameIds = AssetPublisherUtil.getClassNameIds(portletPreferences, availableClassNameIds);
+
+long[] classTypeIds = GetterUtil.getLongValues(portletPreferences.getValues("classTypeIds", null));
+
+String customUserAttributes = GetterUtil.getString(portletPreferences.getValue("customUserAttributes", StringPool.BLANK));
 
 AssetEntryQuery assetEntryQuery = new AssetEntryQuery();
 
+long[] allAssetCategoryIds = new long[0];
 String[] allAssetTagNames = new String[0];
+
+String ddmStructureDisplayFieldValue = StringPool.BLANK;
+String ddmStructureFieldLabel = StringPool.BLANK;
+String ddmStructureFieldName = StringPool.BLANK;
+Serializable ddmStructureFieldValue = null;
+
+boolean subtypeFieldsFilterEnabled = GetterUtil.getBoolean(portletPreferences.getValue("subtypeFieldsFilterEnabled", Boolean.FALSE.toString()));
 
 if (selectionStyle.equals("dynamic")) {
 	if (!ArrayUtil.contains(groupIds, scopeGroupId)) {
-		assetEntryQuery = AssetPublisherUtil.getAssetEntryQuery(preferences, ArrayUtil.append(groupIds, scopeGroupId));
+		assetEntryQuery = AssetPublisherUtil.getAssetEntryQuery(portletPreferences, ArrayUtil.append(groupIds, scopeGroupId));
 	}
 	else {
-		assetEntryQuery = AssetPublisherUtil.getAssetEntryQuery(preferences, groupIds);
+		assetEntryQuery = AssetPublisherUtil.getAssetEntryQuery(portletPreferences, groupIds);
 	}
 
-	allAssetTagNames = AssetPublisherUtil.getAssetTagNames(preferences, scopeGroupId);
+	allAssetTagNames = AssetPublisherUtil.getAssetTagNames(portletPreferences, scopeGroupId);
+
+	assetEntryQuery.setClassTypeIds(classTypeIds);
+
+	if ((classNameIds.length == 1) && (classTypeIds.length == 1)) {
+		AssetRendererFactory assetRendererFactory = AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(PortalUtil.getClassName(classNameIds[0]));
+
+		ddmStructureDisplayFieldValue = GetterUtil.getString(portletPreferences.getValue("ddmStructureDisplayFieldValue", StringPool.BLANK));
+		ddmStructureFieldName = GetterUtil.getString(portletPreferences.getValue("ddmStructureFieldName", StringPool.BLANK));
+		ddmStructureFieldValue = portletPreferences.getValue("ddmStructureFieldValue", StringPool.BLANK);
+
+		if (Validator.isNotNull(ddmStructureFieldName) && Validator.isNotNull(ddmStructureFieldValue)) {
+			List<Tuple> classTypeFieldNames = assetRendererFactory.getClassTypeFieldNames(classTypeIds[0], locale, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+
+			for (Tuple classTypeFieldName : classTypeFieldNames) {
+				String fieldName = (String)classTypeFieldName.getObject(1);
+
+				if (fieldName.equals(ddmStructureFieldName)) {
+					ddmStructureFieldLabel = (String)classTypeFieldName.getObject(0);
+
+					if (subtypeFieldsFilterEnabled) {
+						long ddmStructureId = GetterUtil.getLong(classTypeFieldName.getObject(3));
+
+						assetEntryQuery.setAttribute("ddmStructureFieldName", DDMIndexerUtil.encodeName(ddmStructureId, ddmStructureFieldName, locale));
+						assetEntryQuery.setAttribute("ddmStructureFieldValue", ddmStructureFieldValue);
+					}
+
+					break;
+				}
+			}
+		}
+	}
+
+	AssetPublisherUtil.addUserAttributes(user, StringUtil.split(customUserAttributes), assetEntryQuery);
 }
 
-long assetVocabularyId = GetterUtil.getLong(preferences.getValue("assetVocabularyId", StringPool.BLANK));
+long assetVocabularyId = GetterUtil.getLong(portletPreferences.getValue("assetVocabularyId", StringPool.BLANK));
 
 long assetCategoryId = ParamUtil.getLong(request, "categoryId");
 
-String assetCategoryName = null;
-String assetVocabularyName = null;
+String assetCategoryTitle = null;
+String assetVocabularyTitle = null;
 
 if (assetCategoryId > 0) {
-	assetEntryQuery.setAllCategoryIds(new long[] {assetCategoryId});
+	if (selectionStyle.equals("dynamic")) {
+		allAssetCategoryIds = assetEntryQuery.getAllCategoryIds();
+
+		if (!ArrayUtil.contains(allAssetCategoryIds, assetCategoryId)) {
+			assetEntryQuery.setAllCategoryIds(ArrayUtil.append(allAssetCategoryIds, assetCategoryId));
+		}
+	}
+	else if (selectionStyle.equals("manual")) {
+		allAssetCategoryIds = ArrayUtil.append(allAssetCategoryIds, assetCategoryId);
+	}
 
 	AssetCategory assetCategory = AssetCategoryLocalServiceUtil.getCategory(assetCategoryId);
 
 	assetCategory = assetCategory.toEscapedModel();
 
-	assetCategoryName = assetCategory.getName();
+	assetCategoryTitle = assetCategory.getTitle(locale);
 
 	AssetVocabulary assetVocabulary = AssetVocabularyLocalServiceUtil.getAssetVocabulary(assetCategory.getVocabularyId());
 
 	assetVocabulary = assetVocabulary.toEscapedModel();
 
-	assetVocabularyName = assetVocabulary.getName();
+	assetVocabularyTitle = assetVocabulary.getTitle(locale);
 
-	PortalUtil.setPageKeywords(assetCategory.getName(), request);
+	PortalUtil.setPageKeywords(assetCategoryTitle, request);
 }
 
 String assetTagName = ParamUtil.getString(request, "tag");
@@ -129,15 +180,14 @@ String assetTagName = ParamUtil.getString(request, "tag");
 if (Validator.isNotNull(assetTagName)) {
 	allAssetTagNames = new String[] {assetTagName};
 
-	long[] assetTagIds = AssetTagLocalServiceUtil.getTagIds(scopeGroupId, allAssetTagNames);
+	long[] assetTagIds = AssetTagLocalServiceUtil.getTagIds(groupIds, allAssetTagNames);
 
-	assetEntryQuery.setAllTagIds(assetTagIds);
+	assetEntryQuery.setAnyTagIds(assetTagIds);
 
 	PortalUtil.setPageKeywords(assetTagName, request);
 }
 
-boolean showLinkedAssets = GetterUtil.getBoolean(preferences.getValue("showLinkedAssets", null), false);
-boolean showOnlyLayoutAssets = GetterUtil.getBoolean(preferences.getValue("showOnlyLayoutAssets", null));
+boolean showOnlyLayoutAssets = GetterUtil.getBoolean(portletPreferences.getValue("showOnlyLayoutAssets", null));
 
 if (showOnlyLayoutAssets) {
 	assetEntryQuery.setLayout(layout);
@@ -151,27 +201,35 @@ if (portletName.equals(PortletKeys.RELATED_ASSETS)) {
 	}
 }
 
-boolean mergeUrlTags = GetterUtil.getBoolean(preferences.getValue("mergeUrlTags", null), true);
-boolean mergeLayoutTags = GetterUtil.getBoolean(preferences.getValue("mergeLayoutTags", null), false);
+boolean mergeUrlTags = GetterUtil.getBoolean(portletPreferences.getValue("mergeUrlTags", null), true);
+boolean mergeLayoutTags = GetterUtil.getBoolean(portletPreferences.getValue("mergeLayoutTags", null), false);
 
-String displayStyle = GetterUtil.getString(preferences.getValue("displayStyle", "abstracts"));
+String displayStyle = GetterUtil.getString(portletPreferences.getValue("displayStyle", PropsValues.ASSET_PUBLISHER_DISPLAY_STYLE_DEFAULT));
+long displayStyleGroupId = GetterUtil.getLong(portletPreferences.getValue("displayStyleGroupId", null), themeDisplay.getScopeGroupId());
 
-if (Validator.isNull(displayStyle)) {
-	displayStyle = "abstracts";
+boolean showAddContentButton = GetterUtil.getBoolean(portletPreferences.getValue("showAddContentButton", null), true);
+boolean showAssetTitle = GetterUtil.getBoolean(portletPreferences.getValue("showAssetTitle", null), true);
+boolean showContextLink = GetterUtil.getBoolean(portletPreferences.getValue("showContextLink", null), true);
+int abstractLength = GetterUtil.getInteger(portletPreferences.getValue("abstractLength", null), 200);
+String assetLinkBehavior = GetterUtil.getString(portletPreferences.getValue("assetLinkBehavior", "showFullContent"));
+String orderByColumn1 = GetterUtil.getString(portletPreferences.getValue("orderByColumn1", "modifiedDate"));
+String orderByColumn2 = GetterUtil.getString(portletPreferences.getValue("orderByColumn2", "title"));
+String orderByType1 = GetterUtil.getString(portletPreferences.getValue("orderByType1", "DESC"));
+String orderByType2 = GetterUtil.getString(portletPreferences.getValue("orderByType2", "ASC"));
+boolean excludeZeroViewCount = GetterUtil.getBoolean(portletPreferences.getValue("excludeZeroViewCount", null));
+
+int delta = GetterUtil.getInteger(portletPreferences.getValue("delta", null), SearchContainer.DEFAULT_DELTA);
+
+if (portletName.equals(PortletKeys.RECENT_CONTENT)) {
+	delta = PropsValues.RECENT_CONTENT_MAX_DISPLAY_ITEMS;
 }
 
-boolean showAssetTitle = GetterUtil.getBoolean(preferences.getValue("showAssetTitle", null), true);
-boolean showContextLink = GetterUtil.getBoolean(preferences.getValue("showContextLink", null), true);
-int abstractLength = GetterUtil.getInteger(preferences.getValue("abstractLength", StringPool.BLANK), 200);
-String assetLinkBehavior = GetterUtil.getString(preferences.getValue("assetLinkBehavior", "showFullContent"));
-String orderByColumn1 = GetterUtil.getString(preferences.getValue("orderByColumn1", "modifiedDate"));
-String orderByColumn2 = GetterUtil.getString(preferences.getValue("orderByColumn2", "title"));
-String orderByType1 = GetterUtil.getString(preferences.getValue("orderByType1", "DESC"));
-String orderByType2 = GetterUtil.getString(preferences.getValue("orderByType2", "ASC"));
-boolean excludeZeroViewCount = GetterUtil.getBoolean(preferences.getValue("excludeZeroViewCount", "0"));
-int delta = GetterUtil.getInteger(preferences.getValue("delta", StringPool.BLANK), SearchContainer.DEFAULT_DELTA);
-String paginationType = GetterUtil.getString(preferences.getValue("paginationType", "none"));
-boolean showAvailableLocales = GetterUtil.getBoolean(preferences.getValue("showAvailableLocales", StringPool.BLANK));
+String paginationType = GetterUtil.getString(portletPreferences.getValue("paginationType", "none"));
+
+assetEntryQuery.setPaginationType(paginationType);
+
+boolean showAvailableLocales = GetterUtil.getBoolean(portletPreferences.getValue("showAvailableLocales", null));
+boolean showMetadataDescriptions = GetterUtil.getBoolean(portletPreferences.getValue("showMetadataDescriptions", null), true);
 
 boolean defaultAssetPublisher = false;
 
@@ -179,44 +237,49 @@ UnicodeProperties typeSettingsProperties = layout.getTypeSettingsProperties();
 
 String defaultAssetPublisherPortletId = typeSettingsProperties.getProperty(LayoutTypePortletConstants.DEFAULT_ASSET_PUBLISHER_PORTLET_ID, StringPool.BLANK);
 
-if (defaultAssetPublisherPortletId.equals(portletResource)) {
+if (defaultAssetPublisherPortletId.equals(portletDisplay.getId()) || (Validator.isNotNull(defaultAssetPublisherPortletId) && defaultAssetPublisherPortletId.equals(portletResource))) {
 	defaultAssetPublisher = true;
 }
 
-boolean enableRelatedAssets = GetterUtil.getBoolean(preferences.getValue("enableRelatedAssets", null), true);
-boolean enableRatings = GetterUtil.getBoolean(preferences.getValue("enableRatings", null));
-boolean enableComments = GetterUtil.getBoolean(preferences.getValue("enableComments", null));
-boolean enableCommentRatings = GetterUtil.getBoolean(preferences.getValue("enableCommentRatings", null));
-boolean enableTagBasedNavigation = GetterUtil.getBoolean(preferences.getValue("enableTagBasedNavigation", null));
+boolean enablePermissions = PropsValues.ASSET_PUBLISHER_SEARCH_WITH_INDEX ? true : GetterUtil.getBoolean(portletPreferences.getValue("enablePermissions", null));
+
+assetEntryQuery.setEnablePermissions(enablePermissions);
+
+boolean enableRelatedAssets = GetterUtil.getBoolean(portletPreferences.getValue("enableRelatedAssets", null), true);
+boolean enableRatings = GetterUtil.getBoolean(portletPreferences.getValue("enableRatings", null));
+boolean enableComments = GetterUtil.getBoolean(portletPreferences.getValue("enableComments", null));
+boolean enableCommentRatings = GetterUtil.getBoolean(portletPreferences.getValue("enableCommentRatings", null));
+boolean enableTagBasedNavigation = GetterUtil.getBoolean(portletPreferences.getValue("enableTagBasedNavigation", null));
 
 String[] conversions = DocumentConversionUtil.getConversions("html");
-String[] extensions = preferences.getValues("extensions", new String[0]);
+String[] extensions = portletPreferences.getValues("extensions", new String[0]);
 boolean openOfficeServerEnabled = PrefsPropsUtil.getBoolean(PropsKeys.OPENOFFICE_SERVER_ENABLED, PropsValues.OPENOFFICE_SERVER_ENABLED);
 boolean enableConversions = openOfficeServerEnabled && (extensions != null) && (extensions.length > 0);
-boolean enablePrint = GetterUtil.getBoolean(preferences.getValue("enablePrint", null));
-boolean enableFlags = GetterUtil.getBoolean(preferences.getValue("enableFlags", null));
-boolean enableSocialBookmarks = GetterUtil.getBoolean(preferences.getValue("enableSocialBookmarks", null), true);
-String socialBookmarksDisplayStyle = preferences.getValue("socialBookmarksDisplayStyle", "horizontal");
-String socialBookmarksDisplayPosition = preferences.getValue("socialBookmarksDisplayPosition", "bottom");
+boolean enablePrint = GetterUtil.getBoolean(portletPreferences.getValue("enablePrint", null));
+boolean enableFlags = GetterUtil.getBoolean(portletPreferences.getValue("enableFlags", null));
+boolean enableSocialBookmarks = GetterUtil.getBoolean(portletPreferences.getValue("enableSocialBookmarks", null), true);
+String socialBookmarksDisplayStyle = portletPreferences.getValue("socialBookmarksDisplayStyle", "horizontal");
+String socialBookmarksDisplayPosition = portletPreferences.getValue("socialBookmarksDisplayPosition", "bottom");
 
 String defaultMetadataFields = StringPool.BLANK;
-String allMetadataFields = "create-date,modified-date,publish-date,expiration-date,priority,author,view-count,categories,tags,ratings";
+String allMetadataFields = "create-date,modified-date,publish-date,expiration-date,priority,author,view-count,categories,tags";
 
-String[] metadataFields = StringUtil.split(preferences.getValue("metadataFields", defaultMetadataFields));
+String[] metadataFields = StringUtil.split(portletPreferences.getValue("metadataFields", defaultMetadataFields));
 
-boolean enableRSS = GetterUtil.getBoolean(preferences.getValue("enableRss", null));
-int rssDelta = GetterUtil.getInteger(preferences.getValue("rssDelta", "20"));
-String rssDisplayStyle = preferences.getValue("rssDisplayStyle", RSSUtil.DISPLAY_STYLE_ABSTRACT);
-String rssFormat = preferences.getValue("rssFormat", "atom10");
-String rssName = preferences.getValue("rssName", portletDisplay.getTitle());
+boolean enableRSS = !PortalUtil.isRSSFeedsEnabled() ? false : GetterUtil.getBoolean(portletPreferences.getValue("enableRss", null));
+int rssDelta = GetterUtil.getInteger(portletPreferences.getValue("rssDelta", StringPool.BLANK), SearchContainer.DEFAULT_DELTA);
+String rssDisplayStyle = portletPreferences.getValue("rssDisplayStyle", RSSUtil.DISPLAY_STYLE_ABSTRACT);
+String rssFeedType = portletPreferences.getValue("rssFeedType", RSSUtil.FEED_TYPE_DEFAULT);
+String rssName = portletPreferences.getValue("rssName", portletDisplay.getTitle());
 
-String[] assetEntryXmls = preferences.getValues("assetEntryXml", new String[0]);
+String[] assetEntryXmls = portletPreferences.getValues("assetEntryXml", new String[0]);
 
 boolean viewInContext = assetLinkBehavior.equals("viewInPortlet");
 
 boolean showPortletWithNoResults = false;
 boolean groupByClass = (assetVocabularyId == -1);
-boolean allowEmptyResults = false;
+
+Map<String, PortletURL> addPortletURLs = null;
 
 Format dateFormatDate = FastDateFormatFactoryUtil.getDate(locale, timeZone);
 %>
@@ -224,9 +287,15 @@ Format dateFormatDate = FastDateFormatFactoryUtil.getDate(locale, timeZone);
 <%@ include file="/html/portlet/asset_publisher/init-ext.jsp" %>
 
 <%!
-private String _checkViewURL(String viewURL, String currentURL, ThemeDisplay themeDisplay) {
-	if (Validator.isNotNull(viewURL) && viewURL.startsWith(themeDisplay.getURLPortal())) {
-		viewURL = HttpUtil.setParameter(viewURL, "redirect", currentURL);
+private String _checkViewURL(AssetEntry assetEntry, boolean viewInContext, String viewURL, String currentURL, ThemeDisplay themeDisplay) {
+	if (Validator.isNotNull(viewURL)) {
+		Layout layout = themeDisplay.getLayout();
+
+		String assetEntryLayoutUuid = assetEntry.getLayoutUuid();
+
+		if (!viewInContext || (Validator.isNotNull(assetEntryLayoutUuid) && !assetEntryLayoutUuid.equals(layout.getUuid()))) {
+			viewURL = HttpUtil.setParameter(viewURL, "redirect", currentURL);
+		}
 	}
 
 	return viewURL;

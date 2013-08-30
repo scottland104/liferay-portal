@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,21 +25,26 @@ import java.util.Properties;
 /**
  * @author Jorge Ferrer
  */
-public class LiferayGroupDatabase  implements GroupDatabase {
+public class LiferayGroupDatabase implements GroupDatabase {
 
+	@Override
 	public void commit() {
 	}
 
+	@Override
 	public void delete(Group group) {
 	}
 
+	@Override
 	public Group[] groups() {
 		return new Group[0];
 	}
 
+	@Override
 	public void initialize(WikiEngine engine, Properties props) {
 	}
 
+	@Override
 	public void save(Group group, Principal modifier) {
 	}
 

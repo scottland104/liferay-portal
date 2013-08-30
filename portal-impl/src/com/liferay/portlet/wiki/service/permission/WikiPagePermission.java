@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,6 +22,8 @@ import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.wiki.NoSuchPageException;
+import com.liferay.portlet.wiki.NoSuchPageResourceException;
+import com.liferay.portlet.wiki.model.WikiNode;
 import com.liferay.portlet.wiki.model.WikiPage;
 import com.liferay.portlet.wiki.service.WikiPageLocalServiceUtil;
 
@@ -74,10 +76,15 @@ public class WikiPagePermission {
 			String actionId)
 		throws PortalException, SystemException {
 
-		WikiPage page = WikiPageLocalServiceUtil.getPage(
-			resourcePrimKey, (Boolean)null);
+		try {
+			WikiPage page = WikiPageLocalServiceUtil.getPage(
+				resourcePrimKey, (Boolean)null);
 
-		return contains(permissionChecker, page, actionId);
+			return contains(permissionChecker, page, actionId);
+		}
+		catch (NoSuchPageResourceException nspre) {
+			return false;
+		}
 	}
 
 	public static boolean contains(
@@ -123,6 +130,26 @@ public class WikiPagePermission {
 			if (redirectPage != null) {
 				page = redirectPage;
 			}
+
+			if (PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
+				WikiNode node = page.getNode();
+
+				if (!WikiNodePermission.contains(
+						permissionChecker, node, actionId)) {
+
+					return false;
+				}
+
+				while (page != null) {
+					if (!_hasPermission(permissionChecker, page, actionId)) {
+						return false;
+					}
+
+					page = page.getParentPage();
+				}
+
+				return true;
+			}
 		}
 
 		if (page.isPending()) {
@@ -130,8 +157,8 @@ public class WikiPagePermission {
 				permissionChecker, page.getGroupId(), WikiPage.class.getName(),
 				page.getResourcePrimKey(), actionId);
 
-			if (hasPermission != null) {
-				return hasPermission.booleanValue();
+			if ((hasPermission != null) && hasPermission.booleanValue()) {
+				return true;
 			}
 		}
 
@@ -141,26 +168,23 @@ public class WikiPagePermission {
 			return true;
 		}
 
+		return _hasPermission(permissionChecker, page, actionId);
+	}
+
+	private static boolean _hasPermission(
+		PermissionChecker permissionChecker, WikiPage page, String actionId) {
+
 		if (permissionChecker.hasOwnerPermission(
 				page.getCompanyId(), WikiPage.class.getName(),
-				page.getResourcePrimKey(), page.getUserId(), actionId)) {
+				page.getResourcePrimKey(), page.getUserId(), actionId) ||
+			permissionChecker.hasPermission(
+				page.getGroupId(), WikiPage.class.getName(),
+				page.getResourcePrimKey(), actionId)) {
 
 			return true;
 		}
 
-		if (PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
-			WikiPage parentPage = page.getParentPage();
-
-			if ((parentPage != null) &&
-				!contains(permissionChecker, parentPage, ActionKeys.VIEW)) {
-
-				return false;
-			}
-		}
-
-		return permissionChecker.hasPermission(
-			page.getGroupId(), WikiPage.class.getName(),
-			page.getResourcePrimKey(), actionId);
+		return false;
 	}
 
 }

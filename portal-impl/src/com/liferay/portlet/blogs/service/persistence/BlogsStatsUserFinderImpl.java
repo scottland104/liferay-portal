@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -41,15 +41,16 @@ public class BlogsStatsUserFinderImpl
 	extends BasePersistenceImpl<BlogsStatsUser>
 	implements BlogsStatsUserFinder {
 
-	public static String COUNT_BY_ORGANIZATION_IDS =
+	public static final String COUNT_BY_ORGANIZATION_IDS =
 		BlogsStatsUserFinder.class.getName() + ".countByOrganizationIds";
 
-	public static String FIND_BY_GROUP_IDS =
+	public static final String FIND_BY_GROUP_IDS =
 		BlogsStatsUserFinder.class.getName() + ".findByGroupIds";
 
-	public static String FIND_BY_ORGANIZATION_IDS =
+	public static final String FIND_BY_ORGANIZATION_IDS =
 		BlogsStatsUserFinder.class.getName() + ".findByOrganizationIds";
 
+	@Override
 	public int countByOrganizationId(long organizationId)
 		throws SystemException {
 
@@ -60,6 +61,7 @@ public class BlogsStatsUserFinderImpl
 		return countByOrganizationIds(organizationIds);
 	}
 
+	@Override
 	public int countByOrganizationIds(List<Long> organizationIds)
 		throws SystemException {
 
@@ -86,7 +88,7 @@ public class BlogsStatsUserFinderImpl
 				qPos.add(organizationId);
 			}
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -106,6 +108,7 @@ public class BlogsStatsUserFinderImpl
 		}
 	}
 
+	@Override
 	public List<BlogsStatsUser> findByGroupIds(
 			long companyId, long groupId, int start, int end)
 		throws SystemException {
@@ -160,6 +163,7 @@ public class BlogsStatsUserFinderImpl
 		}
 	}
 
+	@Override
 	public List<BlogsStatsUser> findByOrganizationId(
 			long organizationId, int start, int end, OrderByComparator obc)
 		throws SystemException {
@@ -171,6 +175,7 @@ public class BlogsStatsUserFinderImpl
 		return findByOrganizationIds(organizationIds, start, end, obc);
 	}
 
+	@Override
 	public List<BlogsStatsUser> findByOrganizationIds(
 			List<Long> organizationIds, int start, int end,
 			OrderByComparator obc)

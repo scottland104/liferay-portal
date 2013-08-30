@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,15 +15,15 @@
 package com.liferay.portal.service;
 
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
-import com.liferay.portal.kernel.util.MethodCache;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the portal remote service. This utility wraps {@link com.liferay.portal.service.impl.PortalServiceImpl} and is the primary access point for service operations in application layer code running on a remote server.
- *
- * <p>
- * This is a remote service. Methods of this service are expected to have security checks based on the propagated JAAS credentials because this service can be accessed remotely.
- * </p>
+ * Provides the remote service utility for Portal. This utility wraps
+ * {@link com.liferay.portal.service.impl.PortalServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on a remote server. Methods of this service are expected to have security
+ * checks based on the propagated JAAS credentials because this service can be
+ * accessed remotely.
  *
  * @author Brian Wing Shun Chan
  * @see PortalService
@@ -37,6 +37,25 @@ public class PortalServiceUtil {
 	 *
 	 * Never modify this class directly. Add custom service methods to {@link com.liferay.portal.service.impl.PortalServiceImpl} and rerun ServiceBuilder to regenerate this class.
 	 */
+
+	/**
+	* Returns the Spring bean ID for this bean.
+	*
+	* @return the Spring bean ID for this bean
+	*/
+	public static java.lang.String getBeanIdentifier() {
+		return getService().getBeanIdentifier();
+	}
+
+	/**
+	* Sets the Spring bean ID for this bean.
+	*
+	* @param beanIdentifier the Spring bean ID for this bean
+	*/
+	public static void setBeanIdentifier(java.lang.String beanIdentifier) {
+		getService().setBeanIdentifier(beanIdentifier);
+	}
+
 	public static java.lang.String getAutoDeployDirectory()
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getService().getAutoDeployDirectory();
@@ -78,15 +97,19 @@ public class PortalServiceUtil {
 			.testAddClassNameAndTestTransactionPortletBar_Success(transactionPortletBarText);
 	}
 
-	public static void testCounterIncrement_Rollback()
+	public static void testAutoSyncHibernateSessionStateOnTxCreation()
 		throws com.liferay.portal.kernel.exception.SystemException {
-		getService().testCounterIncrement_Rollback();
+		getService().testAutoSyncHibernateSessionStateOnTxCreation();
 	}
 
 	public static void testDeleteClassName()
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		getService().testDeleteClassName();
+	}
+
+	public static int testGetBuildNumber() {
+		return getService().testGetBuildNumber();
 	}
 
 	public static void testGetUserId() {
@@ -104,19 +127,15 @@ public class PortalServiceUtil {
 
 			ReferenceRegistry.registerReference(PortalServiceUtil.class,
 				"_service");
-			MethodCache.remove(PortalService.class);
 		}
 
 		return _service;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setService(PortalService service) {
-		MethodCache.remove(PortalService.class);
-
-		_service = service;
-
-		ReferenceRegistry.registerReference(PortalServiceUtil.class, "_service");
-		MethodCache.remove(PortalService.class);
 	}
 
 	private static PortalService _service;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,11 @@ import com.liferay.portal.model.CacheModel;
 
 import com.liferay.portlet.journal.model.JournalContentSearch;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing JournalContentSearch in entity cache.
  *
@@ -27,7 +32,8 @@ import com.liferay.portlet.journal.model.JournalContentSearch;
  * @see JournalContentSearch
  * @generated
  */
-public class JournalContentSearchCacheModel implements CacheModel<JournalContentSearch> {
+public class JournalContentSearchCacheModel implements CacheModel<JournalContentSearch>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(15);
@@ -51,6 +57,7 @@ public class JournalContentSearchCacheModel implements CacheModel<JournalContent
 		return sb.toString();
 	}
 
+	@Override
 	public JournalContentSearch toEntityModel() {
 		JournalContentSearchImpl journalContentSearchImpl = new JournalContentSearchImpl();
 
@@ -77,6 +84,41 @@ public class JournalContentSearchCacheModel implements CacheModel<JournalContent
 		journalContentSearchImpl.resetOriginalValues();
 
 		return journalContentSearchImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		contentSearchId = objectInput.readLong();
+		groupId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		privateLayout = objectInput.readBoolean();
+		layoutId = objectInput.readLong();
+		portletId = objectInput.readUTF();
+		articleId = objectInput.readUTF();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(contentSearchId);
+		objectOutput.writeLong(groupId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeBoolean(privateLayout);
+		objectOutput.writeLong(layoutId);
+
+		if (portletId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(portletId);
+		}
+
+		if (articleId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(articleId);
+		}
 	}
 
 	public long contentSearchId;

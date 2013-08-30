@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -46,6 +46,7 @@ long folderId = ParamUtil.getLong(request, "folderId");
 
 	<liferay-ui:error exception="<%= DuplicateFolderNameException.class %>" message="please-enter-a-unique-repository-name" />
 	<liferay-ui:error exception="<%= DuplicateRepositoryNameException.class %>" message="please-enter-a-unique-repository-name" />
+	<liferay-ui:error exception="<%= FolderNameException.class %>" message="please-enter-a-valid-folder-name" />
 	<liferay-ui:error exception="<%= InvalidRepositoryException.class %>" message="please-verify-your-repository-configuration-parameters" />
 	<liferay-ui:error exception="<%= RepositoryNameException.class %>" message="please-enter-a-valid-name" />
 
@@ -56,25 +57,63 @@ long folderId = ParamUtil.getLong(request, "folderId");
 
 		<aui:input name="description" />
 
-		<c:if test="<%= repository == null %>">
-			<aui:select id="repositoryTypes" label="repository-type" name="className">
+		<c:choose>
+			<c:when test="<%= repository == null %>">
+				<aui:select id="repositoryTypes" label="repository-type" name="className">
 
-				<%
-				for (String dlRepositoryImpl : RepositoryFactoryUtil.getRepositoryClassNames()) {
-				%>
+					<%
+					for (String dlRepositoryImpl : RepositoryFactoryUtil.getRepositoryClassNames()) {
+					%>
 
-					<aui:option label="<%= ResourceActionsUtil.getModelResource(locale, dlRepositoryImpl) %>" value="<%= dlRepositoryImpl %>" />
+						<aui:option label="<%= ResourceActionsUtil.getModelResource(locale, dlRepositoryImpl) %>" value="<%= dlRepositoryImpl %>" />
 
-				<%
-				}
-				%>
+					<%
+					}
+					%>
 
-			</aui:select>
+				</aui:select>
 
-			<div id="<portlet:namespace />settingsConfiguration"></div>
+				<div id="<portlet:namespace />settingsConfiguration"></div>
 
-			<div id="<portlet:namespace />settingsParameters"></div>
-		</c:if>
+				<div id="<portlet:namespace />settingsParameters"></div>
+			</c:when>
+			<c:otherwise>
+				<div class="repository-settings-display">
+					<dt>
+						<liferay-ui:message key="repository-type" />
+					</dt>
+					<dd>
+						<%= ResourceActionsUtil.getModelResource(locale, repository.getClassName()) %>
+					</dd>
+
+					<%
+					UnicodeProperties typeSettingsProperties = repository.getTypeSettingsProperties();
+
+					String configuration = typeSettingsProperties.get("configuration-type");
+
+					String[] supportedParameters = RepositoryServiceUtil.getSupportedParameters(repository.getClassNameId(), configuration);
+
+					for (String supportedParameter : supportedParameters) {
+						String supportedParameterValue = typeSettingsProperties.getProperty(supportedParameter);
+
+						if (Validator.isNotNull(supportedParameterValue)) {
+					%>
+
+							<dt>
+								<%= LanguageUtil.get(pageContext, StringUtil.replace(supportedParameter.toLowerCase(), CharPool.UNDERLINE, CharPool.DASH)) %>
+							</dt>
+							<dd>
+								<%= supportedParameterValue %>
+							</dd>
+
+					<%
+						}
+					}
+					%>
+
+				</div>
+			</c:otherwise>
+		</c:choose>
 		<c:if test="<%= repository == null %>">
 			<aui:field-wrapper label="permissions">
 				<liferay-ui:input-permissions
@@ -91,7 +130,7 @@ long folderId = ParamUtil.getLong(request, "folderId");
 	</aui:fieldset>
 </aui:form>
 
-<div class="aui-helper-hidden" id="<portlet:namespace />settingsSupported">
+<div class="hide" id="<portlet:namespace />settingsSupported">
 
 	<%
 	for (String dlRepositoryImpl : RepositoryFactoryUtil.getRepositoryClassNames()) {
@@ -104,8 +143,8 @@ long folderId = ParamUtil.getLong(request, "folderId");
 		for (String supportedConfiguration : supportedConfigurations) {
 		%>
 
-			<div class="settings-configuration <%= ((supportedConfigurations.length == 1) ? "aui-helper-hidden" : "") %>" id="<portlet:namespace />repository-<%= className %>-wrapper">
-				<aui:select id='<%= "repository-" + className %>' inputCssClass="repository-configuration" label="repository-configuration" name="settings--configuration-type--">
+			<div class="settings-configuration <%= ((supportedConfigurations.length == 1) ? "hide" : "") %>" id="<portlet:namespace />repository-<%= className %>-wrapper">
+				<aui:select cssClass="repository-configuration" id='<%= "repository-" + className %>' label="repository-configuration" name="settings--configuration-type--">
 					<aui:option label="<%= LanguageUtil.get(pageContext, StringUtil.replace(supportedConfiguration.toLowerCase(), CharPool.UNDERLINE, CharPool.DASH)) %>" selected="<%= supportedConfiguration.equals(supportedConfigurations[0]) %>" value="<%= supportedConfiguration %>" />
 				</aui:select>
 			</div>
@@ -129,6 +168,7 @@ long folderId = ParamUtil.getLong(request, "folderId");
 		}
 	}
 	%>
+
 </div>
 
 <aui:script use="aui-base">
@@ -183,7 +223,7 @@ long folderId = ParamUtil.getLong(request, "folderId");
 
 <%
 if (repository != null) {
-	DLUtil.addPortletBreadcrumbEntries(repository.getRepositoryId(), request, renderResponse);
+	DLUtil.addPortletBreadcrumbEntries(folderId, request, renderResponse);
 
 	PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "edit"), currentURL);
 }

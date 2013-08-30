@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -37,7 +37,8 @@ import java.util.Date;
  * @see com.liferay.portal.model.impl.ContactModelImpl
  * @generated
  */
-public interface ContactModel extends AuditedModel, BaseModel<Contact> {
+public interface ContactModel extends AttachedModel, AuditedModel,
+	BaseModel<Contact> {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -77,6 +78,7 @@ public interface ContactModel extends AuditedModel, BaseModel<Contact> {
 	 *
 	 * @return the company ID of this contact
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -84,6 +86,7 @@ public interface ContactModel extends AuditedModel, BaseModel<Contact> {
 	 *
 	 * @param companyId the company ID of this contact
 	 */
+	@Override
 	public void setCompanyId(long companyId);
 
 	/**
@@ -91,6 +94,7 @@ public interface ContactModel extends AuditedModel, BaseModel<Contact> {
 	 *
 	 * @return the user ID of this contact
 	 */
+	@Override
 	public long getUserId();
 
 	/**
@@ -98,6 +102,7 @@ public interface ContactModel extends AuditedModel, BaseModel<Contact> {
 	 *
 	 * @param userId the user ID of this contact
 	 */
+	@Override
 	public void setUserId(long userId);
 
 	/**
@@ -106,6 +111,7 @@ public interface ContactModel extends AuditedModel, BaseModel<Contact> {
 	 * @return the user uuid of this contact
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getUserUuid() throws SystemException;
 
 	/**
@@ -113,6 +119,7 @@ public interface ContactModel extends AuditedModel, BaseModel<Contact> {
 	 *
 	 * @param userUuid the user uuid of this contact
 	 */
+	@Override
 	public void setUserUuid(String userUuid);
 
 	/**
@@ -121,6 +128,7 @@ public interface ContactModel extends AuditedModel, BaseModel<Contact> {
 	 * @return the user name of this contact
 	 */
 	@AutoEscape
+	@Override
 	public String getUserName();
 
 	/**
@@ -128,6 +136,7 @@ public interface ContactModel extends AuditedModel, BaseModel<Contact> {
 	 *
 	 * @param userName the user name of this contact
 	 */
+	@Override
 	public void setUserName(String userName);
 
 	/**
@@ -135,6 +144,7 @@ public interface ContactModel extends AuditedModel, BaseModel<Contact> {
 	 *
 	 * @return the create date of this contact
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -142,6 +152,7 @@ public interface ContactModel extends AuditedModel, BaseModel<Contact> {
 	 *
 	 * @param createDate the create date of this contact
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -149,6 +160,7 @@ public interface ContactModel extends AuditedModel, BaseModel<Contact> {
 	 *
 	 * @return the modified date of this contact
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -156,7 +168,50 @@ public interface ContactModel extends AuditedModel, BaseModel<Contact> {
 	 *
 	 * @param modifiedDate the modified date of this contact
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
+
+	/**
+	 * Returns the fully qualified class name of this contact.
+	 *
+	 * @return the fully qualified class name of this contact
+	 */
+	@Override
+	public String getClassName();
+
+	public void setClassName(String className);
+
+	/**
+	 * Returns the class name ID of this contact.
+	 *
+	 * @return the class name ID of this contact
+	 */
+	@Override
+	public long getClassNameId();
+
+	/**
+	 * Sets the class name ID of this contact.
+	 *
+	 * @param classNameId the class name ID of this contact
+	 */
+	@Override
+	public void setClassNameId(long classNameId);
+
+	/**
+	 * Returns the class p k of this contact.
+	 *
+	 * @return the class p k of this contact
+	 */
+	@Override
+	public long getClassPK();
+
+	/**
+	 * Sets the class p k of this contact.
+	 *
+	 * @param classPK the class p k of this contact
+	 */
+	@Override
+	public void setClassPK(long classPK);
 
 	/**
 	 * Returns the account ID of this contact.
@@ -185,6 +240,21 @@ public interface ContactModel extends AuditedModel, BaseModel<Contact> {
 	 * @param parentContactId the parent contact ID of this contact
 	 */
 	public void setParentContactId(long parentContactId);
+
+	/**
+	 * Returns the email address of this contact.
+	 *
+	 * @return the email address of this contact
+	 */
+	@AutoEscape
+	public String getEmailAddress();
+
+	/**
+	 * Sets the email address of this contact.
+	 *
+	 * @param emailAddress the email address of this contact
+	 */
+	public void setEmailAddress(String emailAddress);
 
 	/**
 	 * Returns the first name of this contact.
@@ -519,37 +589,60 @@ public interface ContactModel extends AuditedModel, BaseModel<Contact> {
 	 */
 	public void setHoursOfOperation(String hoursOfOperation);
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(Contact contact);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<Contact> toCacheModel();
 
+	@Override
 	public Contact toEscapedModel();
 
+	@Override
+	public Contact toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

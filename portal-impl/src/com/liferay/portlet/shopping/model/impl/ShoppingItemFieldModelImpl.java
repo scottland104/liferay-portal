@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portlet.shopping.model.impl;
 
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -29,9 +30,10 @@ import com.liferay.portlet.shopping.model.ShoppingItemFieldModel;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the ShoppingItemField service. Represents a row in the &quot;ShoppingItemField&quot; database table, with each column mapped to a property of this class.
@@ -74,53 +76,126 @@ public class ShoppingItemFieldModelImpl extends BaseModelImpl<ShoppingItemField>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portlet.shopping.model.ShoppingItemField"),
 			true);
-
-	public Class<?> getModelClass() {
-		return ShoppingItemField.class;
-	}
-
-	public String getModelClassName() {
-		return ShoppingItemField.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portlet.shopping.model.ShoppingItemField"),
+			true);
+	public static long ITEMID_COLUMN_BITMASK = 1L;
+	public static long NAME_COLUMN_BITMASK = 2L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portlet.shopping.model.ShoppingItemField"));
 
 	public ShoppingItemFieldModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _itemFieldId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setItemFieldId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_itemFieldId);
+		return _itemFieldId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return ShoppingItemField.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return ShoppingItemField.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("itemFieldId", getItemFieldId());
+		attributes.put("itemId", getItemId());
+		attributes.put("name", getName());
+		attributes.put("values", getValues());
+		attributes.put("description", getDescription());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long itemFieldId = (Long)attributes.get("itemFieldId");
+
+		if (itemFieldId != null) {
+			setItemFieldId(itemFieldId);
+		}
+
+		Long itemId = (Long)attributes.get("itemId");
+
+		if (itemId != null) {
+			setItemId(itemId);
+		}
+
+		String name = (String)attributes.get("name");
+
+		if (name != null) {
+			setName(name);
+		}
+
+		String values = (String)attributes.get("values");
+
+		if (values != null) {
+			setValues(values);
+		}
+
+		String description = (String)attributes.get("description");
+
+		if (description != null) {
+			setDescription(description);
+		}
+	}
+
+	@Override
 	public long getItemFieldId() {
 		return _itemFieldId;
 	}
 
+	@Override
 	public void setItemFieldId(long itemFieldId) {
 		_itemFieldId = itemFieldId;
 	}
 
+	@Override
 	public long getItemId() {
 		return _itemId;
 	}
 
+	@Override
 	public void setItemId(long itemId) {
+		_columnBitmask = -1L;
+
+		if (!_setOriginalItemId) {
+			_setOriginalItemId = true;
+
+			_originalItemId = _itemId;
+		}
+
 		_itemId = itemId;
 	}
 
+	public long getOriginalItemId() {
+		return _originalItemId;
+	}
+
+	@Override
 	public String getName() {
 		if (_name == null) {
 			return StringPool.BLANK;
@@ -130,10 +205,14 @@ public class ShoppingItemFieldModelImpl extends BaseModelImpl<ShoppingItemField>
 		}
 	}
 
+	@Override
 	public void setName(String name) {
+		_columnBitmask = -1L;
+
 		_name = name;
 	}
 
+	@Override
 	public String getValues() {
 		if (_values == null) {
 			return StringPool.BLANK;
@@ -143,10 +222,12 @@ public class ShoppingItemFieldModelImpl extends BaseModelImpl<ShoppingItemField>
 		}
 	}
 
+	@Override
 	public void setValues(String values) {
 		_values = values;
 	}
 
+	@Override
 	public String getDescription() {
 		if (_description == null) {
 			return StringPool.BLANK;
@@ -156,39 +237,36 @@ public class ShoppingItemFieldModelImpl extends BaseModelImpl<ShoppingItemField>
 		}
 	}
 
+	@Override
 	public void setDescription(String description) {
 		_description = description;
 	}
 
-	@Override
-	public ShoppingItemField toEscapedModel() {
-		if (isEscapedModel()) {
-			return (ShoppingItemField)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (ShoppingItemField)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(0,
-					ShoppingItemField.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(0,
+			ShoppingItemField.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public ShoppingItemField toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (ShoppingItemField)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -206,6 +284,7 @@ public class ShoppingItemFieldModelImpl extends BaseModelImpl<ShoppingItemField>
 		return shoppingItemFieldImpl;
 	}
 
+	@Override
 	public int compareTo(ShoppingItemField shoppingItemField) {
 		int value = 0;
 
@@ -223,8 +302,7 @@ public class ShoppingItemFieldModelImpl extends BaseModelImpl<ShoppingItemField>
 			return value;
 		}
 
-		value = getName().toLowerCase()
-					.compareTo(shoppingItemField.getName().toLowerCase());
+		value = getName().compareToIgnoreCase(shoppingItemField.getName());
 
 		if (value != 0) {
 			return value;
@@ -235,18 +313,15 @@ public class ShoppingItemFieldModelImpl extends BaseModelImpl<ShoppingItemField>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof ShoppingItemField)) {
 			return false;
 		}
 
-		ShoppingItemField shoppingItemField = null;
-
-		try {
-			shoppingItemField = (ShoppingItemField)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		ShoppingItemField shoppingItemField = (ShoppingItemField)obj;
 
 		long primaryKey = shoppingItemField.getPrimaryKey();
 
@@ -265,6 +340,13 @@ public class ShoppingItemFieldModelImpl extends BaseModelImpl<ShoppingItemField>
 
 	@Override
 	public void resetOriginalValues() {
+		ShoppingItemFieldModelImpl shoppingItemFieldModelImpl = this;
+
+		shoppingItemFieldModelImpl._originalItemId = shoppingItemFieldModelImpl._itemId;
+
+		shoppingItemFieldModelImpl._setOriginalItemId = false;
+
+		shoppingItemFieldModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -321,6 +403,7 @@ public class ShoppingItemFieldModelImpl extends BaseModelImpl<ShoppingItemField>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(19);
 
@@ -355,14 +438,16 @@ public class ShoppingItemFieldModelImpl extends BaseModelImpl<ShoppingItemField>
 	}
 
 	private static ClassLoader _classLoader = ShoppingItemField.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			ShoppingItemField.class
 		};
 	private long _itemFieldId;
 	private long _itemId;
+	private long _originalItemId;
+	private boolean _setOriginalItemId;
 	private String _name;
 	private String _values;
 	private String _description;
-	private transient ExpandoBridge _expandoBridge;
-	private ShoppingItemField _escapedModelProxy;
+	private long _columnBitmask;
+	private ShoppingItemField _escapedModel;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,11 @@ import com.liferay.portal.model.CacheModel;
 
 import com.liferay.portlet.asset.model.AssetTagProperty;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -29,7 +34,8 @@ import java.util.Date;
  * @see AssetTagProperty
  * @generated
  */
-public class AssetTagPropertyCacheModel implements CacheModel<AssetTagProperty> {
+public class AssetTagPropertyCacheModel implements CacheModel<AssetTagProperty>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(19);
@@ -57,6 +63,7 @@ public class AssetTagPropertyCacheModel implements CacheModel<AssetTagProperty> 
 		return sb.toString();
 	}
 
+	@Override
 	public AssetTagProperty toEntityModel() {
 		AssetTagPropertyImpl assetTagPropertyImpl = new AssetTagPropertyImpl();
 
@@ -104,6 +111,52 @@ public class AssetTagPropertyCacheModel implements CacheModel<AssetTagProperty> 
 		assetTagPropertyImpl.resetOriginalValues();
 
 		return assetTagPropertyImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		tagPropertyId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		userId = objectInput.readLong();
+		userName = objectInput.readUTF();
+		createDate = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
+		tagId = objectInput.readLong();
+		key = objectInput.readUTF();
+		value = objectInput.readUTF();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(tagPropertyId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(userId);
+
+		if (userName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(userName);
+		}
+
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(modifiedDate);
+		objectOutput.writeLong(tagId);
+
+		if (key == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(key);
+		}
+
+		if (value == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(value);
+		}
 	}
 
 	public long tagPropertyId;

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,7 +25,9 @@ if (themeDisplay.isSignedIn()) {
 	tabs1Values += ",my_products";
 }
 
-if (PortalPermissionUtil.contains(permissionChecker, ActionKeys.ADD_LICENSE)) {
+boolean hasAddLicensePermission = PortalPermissionUtil.contains(permissionChecker, ActionKeys.ADD_LICENSE);
+
+if (hasAddLicensePermission) {
 	tabs1Values += ",licenses";
 }
 
@@ -49,8 +51,8 @@ portletURL.setParameter("tabs1", tabs1);
 
 <liferay-ui:tabs
 	names="<%= tabs1Names %>"
-	tabsValues="<%= tabs1Values %>"
 	portletURL="<%= portletURL %>"
+	tabsValues="<%= tabs1Values %>"
 />
 
 <c:choose>
@@ -112,26 +114,26 @@ portletURL.setParameter("tabs1", tabs1);
 
 		if (orderByCol.equals("version")) {
 			docComparator.addOrderBy("version", ascending);
-			docComparator.addOrderBy("modified-date");
+			docComparator.addOrderBy(Field.MODIFIED_DATE);
 			docComparator.addOrderBy(Field.TITLE);
 			docComparator.addOrderBy("type");
 		}
 		else if (orderByCol.equals("modified-date")) {
-			docComparator.addOrderBy("modified-date", ascending);
+			docComparator.addOrderBy(Field.MODIFIED_DATE, ascending);
 			docComparator.addOrderBy(Field.TITLE);
 			docComparator.addOrderBy("version");
 			docComparator.addOrderBy("type");
 		}
 		else if (orderByCol.equals("type")) {
 			docComparator.addOrderBy("type", ascending);
-			docComparator.addOrderBy("modified-date");
+			docComparator.addOrderBy(Field.MODIFIED_DATE);
 			docComparator.addOrderBy(Field.TITLE);
 			docComparator.addOrderBy("version");
 		}
 		else {
 			docComparator.addOrderBy(Field.TITLE, ascending);
 			docComparator.addOrderBy("version");
-			docComparator.addOrderBy("modified-date");
+			docComparator.addOrderBy(Field.MODIFIED_DATE);
 			docComparator.addOrderBy("type");
 		}
 
@@ -202,34 +204,29 @@ portletURL.setParameter("tabs1", tabs1);
 
 			// Licenses
 
-			List licenses = productEntry.getLicenses();
+			List<SCLicense> licenses = productEntry.getLicenses();
 
 			if (licenses.isEmpty()) {
 				row.addText(StringPool.BLANK, rowURL);
 			}
 			else {
-				sb = new StringBundler(licenses.size() * 2 - 1);
+				sb = new StringBundler(licenses.size() * 2);
 
-				Iterator itr = licenses.iterator();
-
-				while (itr.hasNext()) {
-					SCLicense license = (SCLicense)itr.next();
-
+				for (SCLicense license : licenses) {
 					license = license.toEscapedModel();
 
 					sb.append(license.getName());
-
-					if (itr.hasNext()) {
-						sb.append(", ");
-					}
+					sb.append(", ");
 				}
+
+				sb.setIndex(sb.index() - 1);
 
 				row.addText(sb.toString(), rowURL);
 			}
 
 			// Modified date
 
-			row.addText(dateFormatDateTime.format(productEntry.getModifiedDate()), rowURL);
+			row.addDate(productEntry.getModifiedDate(), rowURL);
 
 			// Action
 
@@ -241,7 +238,7 @@ portletURL.setParameter("tabs1", tabs1);
 		}
 
 		boolean showAddProductEntryButton = SCPermission.contains(permissionChecker, scopeGroupId, ActionKeys.ADD_PRODUCT_ENTRY);
-		boolean showPermissionsButton = GroupPermissionUtil.contains(permissionChecker, scopeGroupId, ActionKeys.PERMISSIONS);
+		boolean showPermissionsButton = SCPermission.contains(permissionChecker, scopeGroupId, ActionKeys.PERMISSIONS);
 		%>
 
 		<div>
@@ -272,7 +269,7 @@ portletURL.setParameter("tabs1", tabs1);
 		<c:if test="<%= showAddProductEntryButton && showPermissionsButton %>">
 			<div>
 				<c:if test="<%= showAddProductEntryButton %>">
-					<input type="button" value="<liferay-ui:message key="add-product" />" onClick="<portlet:namespace />addProduct();" />
+					<input onClick="<portlet:namespace />addProduct();" type="button" value="<liferay-ui:message key="add-product" />" />
 				</c:if>
 
 				<c:if test="<%= showPermissionsButton %>">
@@ -283,7 +280,7 @@ portletURL.setParameter("tabs1", tabs1);
 						var="permissionsURL"
 					/>
 
-					<input type="button" value="<liferay-ui:message key="permissions" />" onClick="location.href = '<%= permissionsURL %>';" />
+					<input onClick="location.href = '<%= permissionsURL %>';" type="button" value="<liferay-ui:message key="permissions" />" />
 				</c:if>
 			</div>
 
@@ -331,23 +328,21 @@ portletURL.setParameter("tabs1", tabs1);
 		searchContainer.setOrderByCol(orderByCol);
 		searchContainer.setOrderByType(orderByType);
 
+		List results = null;
 		int total = 0;
 
 		if (tabs1.equals("products")) {
 			total = SCProductEntryLocalServiceUtil.getProductEntriesCount(scopeGroupId);
-		}
-		else {
-			total = SCProductEntryLocalServiceUtil.getProductEntriesCount(scopeGroupId, user.getUserId());
-		}
 
-		searchContainer.setTotal(total);
+			searchContainer.setTotal(total);
 
-		List results = null;
-
-		if (tabs1.equals("products")) {
 			results = SCProductEntryLocalServiceUtil.getProductEntries(scopeGroupId, searchContainer.getStart(), searchContainer.getEnd(), orderByComparator);
 		}
 		else {
+			total = SCProductEntryLocalServiceUtil.getProductEntriesCount(scopeGroupId, user.getUserId());
+
+			searchContainer.setTotal(total);
+
 			results = SCProductEntryLocalServiceUtil.getProductEntries(scopeGroupId, user.getUserId(), searchContainer.getStart(), searchContainer.getEnd(), orderByComparator);
 		}
 
@@ -410,34 +405,29 @@ portletURL.setParameter("tabs1", tabs1);
 
 			// Licenses
 
-			List licenses = productEntry.getLicenses();
+			List<SCLicense> licenses = productEntry.getLicenses();
 
 			if (licenses.isEmpty()) {
 				row.addText(StringPool.BLANK, rowURL);
 			}
 			else {
-				sb = new StringBundler(licenses.size() * 2 - 1);
+				sb = new StringBundler(licenses.size() * 2);
 
-				Iterator itr = licenses.iterator();
-
-				while (itr.hasNext()) {
-					SCLicense license = (SCLicense)itr.next();
-
+				for (SCLicense license : licenses) {
 					license = license.toEscapedModel();
 
 					sb.append(license.getName());
-
-					if (itr.hasNext()) {
-						sb.append(", ");
-					}
+					sb.append(", ");
 				}
+
+				sb.setIndex(sb.index() - 1);
 
 				row.addText(sb.toString(), rowURL);
 			}
 
 			// Modified date
 
-			row.addText(dateFormatDateTime.format(productEntry.getModifiedDate()), rowURL);
+			row.addDate(productEntry.getModifiedDate(), rowURL);
 
 			// Action
 
@@ -453,7 +443,7 @@ portletURL.setParameter("tabs1", tabs1);
 
 		<c:if test="<%= showAddProductEntryButton %>">
 			<div>
-				<input type="button" value="<liferay-ui:message key="add-product" />" onClick="location.href = '<portlet:renderURL><portlet:param name="struts_action" value="/software_catalog/edit_product_entry" /><portlet:param name="redirect" value="<%= currentURL %>" /></portlet:renderURL>';" />
+				<input onClick="location.href = '<portlet:renderURL><portlet:param name="struts_action" value="/software_catalog/edit_product_entry" /><portlet:param name="redirect" value="<%= currentURL %>" /></portlet:renderURL>';" type="button" value="<liferay-ui:message key="add-product" />" />
 			</div>
 
 			<br />
@@ -531,13 +521,13 @@ portletURL.setParameter("tabs1", tabs1);
 
 		<%
 		boolean showAddFrameworkVersionButton = SCPermission.contains(permissionChecker, scopeGroupId, ActionKeys.ADD_FRAMEWORK_VERSION);
-		boolean showPermissionsButton = GroupPermissionUtil.contains(permissionChecker, scopeGroupId, ActionKeys.PERMISSIONS);
+		boolean showPermissionsButton = SCPermission.contains(permissionChecker, scopeGroupId, ActionKeys.PERMISSIONS);
 		%>
 
 		<c:if test="<%= showAddFrameworkVersionButton || showPermissionsButton %>">
 			<div>
 				<c:if test="<%= showAddFrameworkVersionButton %>">
-					<input type="button" value="<liferay-ui:message key="add-framework-version" />" onClick="location.href = '<portlet:renderURL><portlet:param name="struts_action" value="/software_catalog/edit_framework_version" /><portlet:param name="redirect" value="<%= currentURL %>" /></portlet:renderURL>';" />
+					<input onClick="location.href = '<portlet:renderURL><portlet:param name="struts_action" value="/software_catalog/edit_framework_version" /><portlet:param name="redirect" value="<%= currentURL %>" /></portlet:renderURL>';" type="button" value="<liferay-ui:message key="add-framework-version" />" />
 				</c:if>
 
 				<c:if test="<%= showPermissionsButton %>">
@@ -548,7 +538,7 @@ portletURL.setParameter("tabs1", tabs1);
 						var="permissionsURL"
 					/>
 
-					<input type="button" value="<liferay-ui:message key="permissions" />" onClick="location.href = '<%= permissionsURL %>';" />
+					<input onClick="location.href = '<%= permissionsURL %>';" type="button" value="<liferay-ui:message key="permissions" />" />
 				</c:if>
 			</div>
 
@@ -643,9 +633,9 @@ portletURL.setParameter("tabs1", tabs1);
 		}
 		%>
 
-		<c:if test="<%= PortalPermissionUtil.contains(permissionChecker, ActionKeys.ADD_LICENSE) %>">
+		<c:if test="<%= hasAddLicensePermission %>">
 			<div>
-				<input type="button" value="<liferay-ui:message key="add-license" />" onClick="location.href = '<portlet:renderURL><portlet:param name="struts_action" value="/software_catalog/edit_license" /><portlet:param name="redirect" value="<%= currentURL %>" /></portlet:renderURL>';" />
+				<input onClick="location.href = '<portlet:renderURL><portlet:param name="struts_action" value="/software_catalog/edit_license" /><portlet:param name="redirect" value="<%= currentURL %>" /></portlet:renderURL>';" type="button" value="<liferay-ui:message key="add-license" />" />
 			</div>
 
 			<br />
@@ -666,6 +656,7 @@ portletURL.setParameter("tabs1", tabs1);
 		}
 
 		document.<portlet:namespace />fm.method = 'post';
+
 		submitForm(document.<portlet:namespace />fm, url);
 	}
 

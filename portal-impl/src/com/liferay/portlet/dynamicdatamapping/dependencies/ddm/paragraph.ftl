@@ -1,9 +1,9 @@
 <#include "../init.ftl">
 
-<#assign style = field.style!"">
+<#assign style = fieldStructure.style!"">
 
-<p style="${htmlUtil.escape(style)}">
-	${label}
+<p style="${escapeAttribute(style)}">
+	${escape(label)}
 
-	${field.children}
+	${fieldStructure.children}
 </p>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -62,9 +62,11 @@ public abstract class BaseSandboxHandler implements SandboxHandler {
 	public void createPluginPackageProperties(File dir, String pluginName)
 		throws IOException {
 
-		StringBundler sb = new StringBundler(10);
+		StringBundler sb = new StringBundler(12);
 
-		sb.append("name=" + pluginName + "\n");
+		sb.append("name=");
+		sb.append(pluginName);
+		sb.append("\n");
 		sb.append("module-group-id=liferay\n");
 		sb.append("module-incremental-version=1\n");
 		sb.append("tags=\n");
@@ -85,6 +87,7 @@ public abstract class BaseSandboxHandler implements SandboxHandler {
 		FileUtil.delete(_engineHostDir + "/" + displayName + ".xml");
 	}
 
+	@Override
 	public void deploy(File dir) throws SandboxDeployException {
 		try {
 			if (!isEnabled(dir)) {
@@ -126,6 +129,7 @@ public abstract class BaseSandboxHandler implements SandboxHandler {
 		}
 	}
 
+	@Override
 	public String getDisplayName(String dirName) {
 		String displayName = dirName.substring(
 			0, dirName.length() - (_pluginType.length() + 1));
@@ -160,6 +164,7 @@ public abstract class BaseSandboxHandler implements SandboxHandler {
 		return true;
 	}
 
+	@Override
 	public void undeploy(File dir) throws SandboxDeployException {
 		try {
 			if (!isEnabled(dir)) {
@@ -187,12 +192,14 @@ public abstract class BaseSandboxHandler implements SandboxHandler {
 			return null;
 		}
 
-		String dirName = System.getenv("CATALINA_BASE") + "/conf";
+		String dirName = System.getProperty("catalina.base") + "/conf";
 
 		String[] fileNames = FileUtil.find(dirName, "**/ROOT.xml", null);
 
 		if (fileNames.length == 0) {
-			_log.error("Unable to locate ROOT.xml under CATALINA_BASE/conf");
+			if (_log.isWarnEnabled()) {
+				_log.warn("Unable to locate ROOT.xml under CATALINA_BASE/conf");
+			}
 
 			return null;
 		}

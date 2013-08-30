@@ -1,4 +1,4 @@
-AUI().add(
+AUI.add(
 	'liferay-undo-manager',
 	function(A) {
 		var Lang = A.Lang;
@@ -7,11 +7,11 @@ AUI().add(
 
 		var CSS_ACTION_UNDO = 'lfr-action-undo';
 
-		var CSS_HELPER_CLEARFIX = 'aui-helper-clearfix';
+		var CSS_HELPER_CLEARFIX = 'helper-clearfix';
 
 		var CSS_ITEMS_LEFT = 'lfr-items-left';
 
-		var CSS_MESSAGE_INFO = 'portlet-msg-info';
+		var CSS_MESSAGE_INFO = 'alert alert-info';
 
 		var CSS_QUEUE = 'lfr-undo-queue';
 
@@ -60,7 +60,7 @@ AUI().add(
 						var clearText = Liferay.Language.get('clear-history');
 						var undoText = Liferay.Language.get('undo-x');
 
-						undoText = A.substitute(undoText, [TPL_UNDO_TEXT]);
+						undoText = Lang.sub(undoText, [TPL_UNDO_TEXT]);
 
 						var contentBox = instance.get('contentBox');
 
@@ -209,6 +209,6 @@ AUI().add(
 	},
 	'',
 	{
-		requires: ['aui-data-set', 'base', 'substitute']
+		requires: ['aui-data-set-deprecated', 'base']
 	}
 );

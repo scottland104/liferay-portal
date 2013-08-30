@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,15 +15,15 @@
 package com.liferay.portlet.documentlibrary.service;
 
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
-import com.liferay.portal.kernel.util.MethodCache;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the d l app local service. This utility wraps {@link com.liferay.portlet.documentlibrary.service.impl.DLAppLocalServiceImpl} and is the primary access point for service operations in application layer code running on the local server.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
+ * Provides the local service utility for DLApp. This utility wraps
+ * {@link com.liferay.portlet.documentlibrary.service.impl.DLAppLocalServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on the local server. Methods of this service will not have security checks
+ * based on the propagated JAAS credentials because this service can only be
+ * accessed from within the same VM.
  *
  * @author Brian Wing Shun Chan
  * @see DLAppLocalService
@@ -59,31 +59,34 @@ public class DLAppLocalServiceUtil {
 	/**
 	* Adds a file entry and associated metadata based on a byte array.
 	*
+	* <p>
+	* This method takes two file names, the <code>sourceFileName</code> and the
+	* <code>title</code>. The <code>sourceFileName</code> corresponds to the
+	* name of the actual file being uploaded. The <code>title</code>
+	* corresponds to a name the client wishes to assign this file after it has
+	* been uploaded to the portal. If it is <code>null</code>, the <code>
+	* sourceFileName</code> will be used.
+	* </p>
+	*
 	* @param userId the primary key of the file entry's creator/owner
 	* @param repositoryId the primary key of the file entry's repository
 	* @param folderId the primary key of the file entry's parent folder
-	* @param sourceFileName the file's original name
+	* @param sourceFileName the original file's name
 	* @param mimeType the file's MIME type
-	* @param title the name to be assigned to the file
+	* @param title the name to be assigned to the file (optionally <code>null
+	</code>)
 	* @param description the file's description
 	* @param changeLog the file's version change log
 	* @param bytes the file's data (optionally <code>null</code>)
-	* @param serviceContext the file entry's service context. Can specify the
-	file entry's asset category IDs, asset tag names, and expando
-	bridge attributes. In a Liferay repository, it may include:
-
-	<ul>
-	<li>
-	fileEntryTypeId - ID for a custom file entry type
-	</li>
-	<li>
-	fieldsMap - mapping for fields associated with a custom file
-	entry type
-	</li>
-	</ul>
+	* @param serviceContext the service context to be applied. Can set the
+	asset category IDs, asset tag names, and expando bridge
+	attributes for the file entry. In a Liferay repository, it may
+	include:  <ul> <li> fileEntryTypeId - ID for a custom file entry
+	type </li> <li> fieldsMap - mapping for fields associated with a
+	custom file entry type </li> </ul>
 	* @return the file entry
-	* @throws PortalException if the parent folder could not be
-	found or if the file entry's information was invalid
+	* @throws PortalException if the parent folder could not be found or if the
+	file entry's information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.kernel.repository.model.FileEntry addFileEntry(
@@ -101,33 +104,37 @@ public class DLAppLocalServiceUtil {
 	}
 
 	/**
-	* Adds a file entry and associated metadata based on a {@link File} object.
+	* Adds a file entry and associated metadata based on a {@link java.io.File}
+	* object.
+	*
+	* <p>
+	* This method takes two file names, the <code>sourceFileName</code> and the
+	* <code>title</code>. The <code>sourceFileName</code> corresponds to the
+	* name of the actual file being uploaded. The <code>title</code>
+	* corresponds to a name the client wishes to assign this file after it has
+	* been uploaded to the portal. If it is <code>null</code>, the <code>
+	* sourceFileName</code> will be used.
+	* </p>
 	*
 	* @param userId the primary key of the file entry's creator/owner
 	* @param repositoryId the primary key of the repository
 	* @param folderId the primary key of the file entry's parent folder
-	* @param sourceFileName the file's original name
+	* @param sourceFileName the original file's name
 	* @param mimeType the file's MIME type
-	* @param title the name to be assigned to the file
+	* @param title the name to be assigned to the file (optionally <code>null
+	</code>)
 	* @param description the file's description
 	* @param changeLog the file's version change log
 	* @param file the file's data (optionally <code>null</code>)
-	* @param serviceContext the file entry's service context. Can specify the
-	file entry's asset category IDs, asset tag names, and expando
-	bridge attributes. In a Liferay repository, it may include:
-
-	<ul>
-	<li>
-	fileEntryTypeId - ID for a custom file entry type
-	</li>
-	<li>
-	fieldsMap - mapping for fields associated with a custom file
-	entry type
-	</li>
-	</ul>
+	* @param serviceContext the service context to be applied. Can set the
+	asset category IDs, asset tag names, and expando bridge
+	attributes for the file entry. In a Liferay repository, it may
+	include:  <ul> <li> fileEntryTypeId - ID for a custom file entry
+	type </li> <li> fieldsMap - mapping for fields associated with a
+	custom file entry type </li> </ul>
 	* @return the file entry
-	* @throws PortalException if the parent folder could not be
-	found or if the file entry's information was invalid
+	* @throws PortalException if the parent folder could not be found or if the
+	file entry's information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.kernel.repository.model.FileEntry addFileEntry(
@@ -145,35 +152,38 @@ public class DLAppLocalServiceUtil {
 	}
 
 	/**
-	* Adds a file entry and associated metadata based on an {@link InputStream}
-	* object.
+	* Adds a file entry and associated metadata based on an {@link
+	* java.io.InputStream} object.
+	*
+	* <p>
+	* This method takes two file names, the <code>sourceFileName</code> and the
+	* <code>title</code>. The <code>sourceFileName</code> corresponds to the
+	* name of the actual file being uploaded. The <code>title</code>
+	* corresponds to a name the client wishes to assign this file after it has
+	* been uploaded to the portal. If it is <code>null</code>, the <code>
+	* sourceFileName</code> will be used.
+	* </p>
 	*
 	* @param userId the primary key of the file entry's creator/owner
 	* @param repositoryId the primary key of the repository
 	* @param folderId the primary key of the file entry's parent folder
-	* @param sourceFileName the file's original name
+	* @param sourceFileName the original file's name
 	* @param mimeType the file's MIME type
-	* @param title the name to be assigned to the file
+	* @param title the name to be assigned to the file (optionally <code>null
+	</code>)
 	* @param description the file's description
 	* @param changeLog the file's version change log
 	* @param is the file's data (optionally <code>null</code>)
 	* @param size the file's size (optionally <code>0</code>)
-	* @param serviceContext the file entry's service context. Can specify the
-	file entry's asset category IDs, asset tag names, and expando
-	bridge attributes. In a Liferay repository, it may include:
-
-	<ul>
-	<li>
-	fileEntryTypeId - ID for a custom file entry type
-	</li>
-	<li>
-	fieldsMap - mapping for fields associated with a custom file
-	entry type
-	</li>
-	</ul>
+	* @param serviceContext the service context to be applied. Can set the
+	asset category IDs, asset tag names, and expando bridge
+	attributes for the file entry. In a Liferay repository, it may
+	include:  <ul> <li> fileEntryTypeId - ID for a custom file entry
+	type </li> <li> fieldsMap - mapping for fields associated with a
+	custom file entry type </li> </ul>
 	* @return the file entry
-	* @throws PortalException if the parent folder could not
-	be found or if the file entry's information was invalid
+	* @throws PortalException if the parent folder could not be found or if the
+	file entry's information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.kernel.repository.model.FileEntry addFileEntry(
@@ -198,7 +208,7 @@ public class DLAppLocalServiceUtil {
 	* @param companyId the primary key of the company
 	* @param userId the primary key of the file rank's creator/owner
 	* @param fileEntryId the primary key of the file entry
-	* @param serviceContext the file rank's service context
+	* @param serviceContext the service context to be applied
 	* @return the file rank
 	* @throws SystemException if a system exception occurred
 	*/
@@ -219,9 +229,9 @@ public class DLAppLocalServiceUtil {
 	* @param repositoryId the primary key of the repository
 	* @param folderId the primary key of the file shortcut's parent folder
 	* @param toFileEntryId the primary key of the file entry to point to
-	* @param serviceContext the file entry's service context. Can specify the
-	file entry's asset category IDs, asset tag names, and expando
-	bridge attributes.
+	* @param serviceContext the service context to be applied. Can set the
+	asset category IDs, asset tag names, and expando bridge
+	attributes for the file entry.
 	* @return the file shortcut
 	* @throws PortalException if the parent folder or file entry could not be
 	found, or if the file shortcut's information was invalid
@@ -245,12 +255,13 @@ public class DLAppLocalServiceUtil {
 	* @param parentFolderId the primary key of the folder's parent folder
 	* @param name the folder's name
 	* @param description the folder's description
-	* @param serviceContext the folder's service context. In a Liferay
-	repository, it may include mountPoint which is a boolean specifying whether the folder is a facade
-	for mounting a third-party repository
+	* @param serviceContext the service context to be applied. In a Liferay
+	repository, it may include mountPoint which is a boolean
+	specifying whether the folder is a facade for mounting a
+	third-party repository
 	* @return the folder
-	* @throws PortalException if the parent folder could not
-	be found or if the new folder's information was invalid
+	* @throws PortalException if the parent folder could not be found or if the
+	new folder's information was invalid
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.kernel.repository.model.Folder addFolder(
@@ -269,8 +280,7 @@ public class DLAppLocalServiceUtil {
 	* supported by the Liferay repository.
 	*
 	* @param repositoryId the primary key of the data's repository
-	* @throws PortalException if the repository could not be
-	found
+	* @throws PortalException if the repository could not be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static void deleteAll(long repositoryId)
@@ -283,8 +293,7 @@ public class DLAppLocalServiceUtil {
 	* Deletes the file entry.
 	*
 	* @param fileEntryId the primary key of the file entry
-	* @throws PortalException if the file entry could not be
-	found
+	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static void deleteFileEntry(long fileEntryId)
@@ -337,8 +346,7 @@ public class DLAppLocalServiceUtil {
 	* repository.
 	*
 	* @param fileShortcutId the primary key of the file shortcut
-	* @throws PortalException if the file shortcut could not
-	be found
+	* @throws PortalException if the file shortcut could not be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static void deleteFileShortcut(long fileShortcutId)
@@ -352,7 +360,8 @@ public class DLAppLocalServiceUtil {
 	* only supported by the Liferay repository.
 	*
 	* @param toFileEntryId the primary key of the associated file entry
-	* @throws PortalException if the file shortcut for the file entry could not be found
+	* @throws PortalException if the file shortcut for the file entry could not
+	be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static void deleteFileShortcuts(long toFileEntryId)
@@ -365,8 +374,7 @@ public class DLAppLocalServiceUtil {
 	* Deletes the folder and all of its subfolders and file entries.
 	*
 	* @param folderId the primary key of the folder
-	* @throws PortalException if the folder could not be
-	found
+	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static void deleteFolder(long folderId)
@@ -376,160 +384,11 @@ public class DLAppLocalServiceUtil {
 	}
 
 	/**
-	* Returns the file entries in the folder.
-	*
-	* @param repositoryId the primary key of the file entry's repository
-	* @param folderId the primary key of the file entry's folder
-	* @return the file entries in the folder
-	* @throws PortalException if the folder could not be
-	found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getFileEntries(
-		long repositoryId, long folderId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService().getFileEntries(repositoryId, folderId);
-	}
-
-	/**
-	* Returns a range of all the file entries in the folder.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end -
-	* start</code> instances. <code>start</code> and <code>end</code> are not
-	* primary keys, they are indexes in the result set. Thus, <code>0</code>
-	* refers to the first result in the set. Setting both <code>start</code>
-	* and <code>end</code> to {@link
-	* com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
-	* result set.
-	* </p>
-	*
-	* @param repositoryId the primary key of the file entry's repository
-	* @param folderId the primary key of the file entry's folder
-	* @param start the lower bound of the range of results
-	* @param end the upper bound of the range of results (not inclusive)
-	* @return the range of file entries in the folder
-	* @throws PortalException if the folder could not be
-	found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getFileEntries(
-		long repositoryId, long folderId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService().getFileEntries(repositoryId, folderId, start, end);
-	}
-
-	/**
-	* Returns an ordered range of all the file entries in the folder.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end -
-	* start</code> instances. <code>start</code> and <code>end</code> are not
-	* primary keys, they are indexes in the result set. Thus, <code>0</code>
-	* refers to the first result in the set. Setting both <code>start</code>
-	* and <code>end</code> to {@link
-	* com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
-	* result set.
-	* </p>
-	*
-	* @param repositoryId the primary key of the file entry's repository
-	* @param folderId the primary key of the file entry's folder
-	* @param start the lower bound of the range of results
-	* @param end the upper bound of the range of results (not inclusive)
-	* @param obc the comparator to order the file entries (optionally
-	<code>null</code>)
-	* @return the range of file entries in the folder ordered by comparator
-	<code>obc</code>
-	* @throws PortalException if the folder could not be
-	found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.kernel.repository.model.FileEntry> getFileEntries(
-		long repositoryId, long folderId, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator obc)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService()
-				   .getFileEntries(repositoryId, folderId, start, end, obc);
-	}
-
-	/**
-	* Returns a range of all the file entries and shortcuts in the folder.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end -
-	* start</code> instances. <code>start</code> and <code>end</code> are not
-	* primary keys, they are indexes in the result set. Thus, <code>0</code>
-	* refers to the first result in the set. Setting both <code>start</code>
-	* and <code>end</code> to {@link
-	* com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
-	* result set.
-	* </p>
-	*
-	* @param repositoryId the primary key of the repository
-	* @param folderId the primary key of the folder
-	* @param status the workflow status
-	* @param start the lower bound of the range of results
-	* @param end the upper bound of the range of results (not inclusive)
-	* @return the range of file entries and shortcuts in the folder
-	* @throws PortalException if the folder could not be
-	found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<java.lang.Object> getFileEntriesAndFileShortcuts(
-		long repositoryId, long folderId, int status, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService()
-				   .getFileEntriesAndFileShortcuts(repositoryId, folderId,
-			status, start, end);
-	}
-
-	/**
-	* Returns the number of file entries and shortcuts in the folder.
-	*
-	* @param repositoryId the primary key of the repository
-	* @param folderId the primary key of the folder
-	* @param status the workflow status
-	* @return the number of file entries and shortcuts in the folder
-	* @throws PortalException if the folder could not be
-	found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int getFileEntriesAndFileShortcutsCount(long repositoryId,
-		long folderId, int status)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService()
-				   .getFileEntriesAndFileShortcutsCount(repositoryId, folderId,
-			status);
-	}
-
-	/**
-	* Returns the number of file entries in the folder.
-	*
-	* @param repositoryId the primary key of the file entry's repository
-	* @param folderId the primary key of the file entry's folder
-	* @return the number of file entries in the folder
-	* @throws PortalException if the folder could not be
-	found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int getFileEntriesCount(long repositoryId, long folderId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService().getFileEntriesCount(repositoryId, folderId);
-	}
-
-	/**
 	* Returns the file entry with the primary key.
 	*
 	* @param fileEntryId the primary key of the file entry
 	* @return the file entry with the primary key
-	* @throws PortalException if the file entry could not be
-	found
+	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.kernel.repository.model.FileEntry getFileEntry(
@@ -559,7 +418,7 @@ public class DLAppLocalServiceUtil {
 	/**
 	* Returns the file entry with the UUID and group.
 	*
-	* @param uuid the file entry's universally unique identifier
+	* @param uuid the file entry's UUID
 	* @param groupId the primary key of the file entry's group
 	* @return the file entry with the UUID and group
 	* @throws PortalException if the file entry could not be found
@@ -593,8 +452,7 @@ public class DLAppLocalServiceUtil {
 	*
 	* @param fileShortcutId the primary key of the file shortcut
 	* @return the file shortcut with the primary key
-	* @throws PortalException if the file shortcut could not
-	be found
+	* @throws PortalException if the file shortcut could not be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portlet.documentlibrary.model.DLFileShortcut getFileShortcut(
@@ -609,8 +467,7 @@ public class DLAppLocalServiceUtil {
 	*
 	* @param fileVersionId the primary key of the file version
 	* @return the file version with the primary key
-	* @throws PortalException if the file version could not
-	be found
+	* @throws PortalException if the file version could not be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.kernel.repository.model.FileVersion getFileVersion(
@@ -625,8 +482,7 @@ public class DLAppLocalServiceUtil {
 	*
 	* @param folderId the primary key of the folder
 	* @return the folder with the primary key
-	* @throws PortalException if the folder could not be
-	found
+	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.kernel.repository.model.Folder getFolder(
@@ -643,7 +499,7 @@ public class DLAppLocalServiceUtil {
 	* @param parentFolderId the primary key of the folder's parent folder
 	* @param name the folder's name
 	* @return the folder with the name in the parent folder
-	* @throws PortalException if the folder could not be found TODO check
+	* @throws PortalException if the folder could not be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.kernel.repository.model.Folder getFolder(
@@ -654,311 +510,13 @@ public class DLAppLocalServiceUtil {
 	}
 
 	/**
-	* Returns all immediate subfolders of the parent folder.
-	*
-	* @param repositoryId the primary key of the folder's repository
-	* @param parentFolderId the primary key of the folder's parent folder
-	* @return the immediate subfolders of the parent folder
-	* @throws PortalException if the parent folder could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.kernel.repository.model.Folder> getFolders(
-		long repositoryId, long parentFolderId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService().getFolders(repositoryId, parentFolderId);
-	}
-
-	/**
-	* Returns all immediate subfolders of the parent folder, optionally
-	* including mount folders for third-party repositories.
-	*
-	* @param repositoryId the primary key of the folder's repository
-	* @param parentFolderId the primary key of the folder's parent folder
-	* @param includeMountFolders whether to include mount folders for
-	third-party repositories
-	* @return the immediate subfolders of the parent folder
-	* @throws PortalException if the parent folder could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.kernel.repository.model.Folder> getFolders(
-		long repositoryId, long parentFolderId, boolean includeMountFolders)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService()
-				   .getFolders(repositoryId, parentFolderId, includeMountFolders);
-	}
-
-	/**
-	* Returns a range of all the immediate subfolders of the parent folder,
-	* optionally including mount folders for third-party repositories.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end -
-	* start</code> instances. <code>start</code> and <code>end</code> are not
-	* primary keys, they are indexes in the result set. Thus, <code>0</code>
-	* refers to the first result in the set. Setting both <code>start</code>
-	* and <code>end</code> to {@link
-	* com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
-	* result set.
-	* </p>
-	*
-	* @param repositoryId the primary key of the folder's repository
-	* @param parentFolderId the primary key of the folder's parent folder
-	* @param includeMountFolders whether to include mount folders for
-	third-party repositories
-	* @param start the lower bound of the range of results
-	* @param end the upper bound of the range of results (not inclusive)
-	* @return the range of immediate subfolders of the parent folder
-	* @throws PortalException if the parent folder could not be
-	found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.kernel.repository.model.Folder> getFolders(
-		long repositoryId, long parentFolderId, boolean includeMountFolders,
-		int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService()
-				   .getFolders(repositoryId, parentFolderId,
-			includeMountFolders, start, end);
-	}
-
-	/**
-	* Returns an ordered range of all the immediate subfolders of the parent
-	* folder.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end -
-	* start</code> instances. <code>start</code> and <code>end</code> are not
-	* primary keys, they are indexes in the result set. Thus, <code>0</code>
-	* refers to the first result in the set. Setting both <code>start</code>
-	* and <code>end</code> to {@link
-	* com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
-	* result set.
-	* </p>
-	*
-	* @param repositoryId the primary key of the folder's repository
-	* @param parentFolderId the primary key of the folder's parent folder
-	* @param includeMountFolders whether to include mount folders for
-	third-party repositories
-	* @param start the lower bound of the range of results
-	* @param end the upper bound of the range of results (not inclusive)
-	* @param obc the comparator to order the folders (optionally
-	<code>null</code>)
-	* @return the range of immediate subfolders of the parent folder ordered by
-	comparator <code>obc</code>
-	* @throws PortalException if the parent folder could not be
-	found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.kernel.repository.model.Folder> getFolders(
-		long repositoryId, long parentFolderId, boolean includeMountFolders,
-		int start, int end, com.liferay.portal.kernel.util.OrderByComparator obc)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService()
-				   .getFolders(repositoryId, parentFolderId,
-			includeMountFolders, start, end, obc);
-	}
-
-	/**
-	* Returns a range of all the immediate subfolders of the parent folder.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end -
-	* start</code> instances. <code>start</code> and <code>end</code> are not
-	* primary keys, they are indexes in the result set. Thus, <code>0</code>
-	* refers to the first result in the set. Setting both <code>start</code>
-	* and <code>end</code> to {@link
-	* com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
-	* result set.
-	* </p>
-	*
-	* @param repositoryId the primary key of the folder's repository
-	* @param parentFolderId the primary key of the folder's parent folder
-	* @param start the lower bound of the range of results
-	* @param end the upper bound of the range of results (not inclusive)
-	* @return the range of immediate subfolders of the parent folder
-	* @throws PortalException if the parent folder could not be
-	found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.kernel.repository.model.Folder> getFolders(
-		long repositoryId, long parentFolderId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService().getFolders(repositoryId, parentFolderId, start, end);
-	}
-
-	/**
-	* Returns an ordered range of all the immediate subfolders of the parent
-	* folder.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end -
-	* start</code> instances. <code>start</code> and <code>end</code> are not
-	* primary keys, they are indexes in the result set. Thus, <code>0</code>
-	* refers to the first result in the set. Setting both <code>start</code>
-	* and <code>end</code> to {@link
-	* com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
-	* result set.
-	* </p>
-	*
-	* @param repositoryId the primary key of the folder's repository
-	* @param parentFolderId the primary key of the folder's parent folder
-	* @param start the lower bound of the range of results
-	* @param end the upper bound of the range of results (not inclusive)
-	* @param obc the comparator to order the folders (optionally
-	<code>null</code>)
-	* @return the range of immediate subfolders of the parent folder ordered by
-	comparator <code>obc</code>
-	* @throws PortalException if the parent folder could not be
-	found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.kernel.repository.model.Folder> getFolders(
-		long repositoryId, long parentFolderId, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator obc)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService()
-				   .getFolders(repositoryId, parentFolderId, start, end, obc);
-	}
-
-	/**
-	* Returns an ordered range of all the immediate subfolders, file entries,
-	* and file shortcuts in the parent folder.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end -
-	* start</code> instances. <code>start</code> and <code>end</code> are not
-	* primary keys, they are indexes in the result set. Thus, <code>0</code>
-	* refers to the first result in the set. Setting both <code>start</code>
-	* and <code>end</code> to {@link
-	* com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
-	* result set.
-	* </p>
-	*
-	* @param repositoryId the primary key of the repository
-	* @param folderId the primary key of the parent folder
-	* @param status the workflow status
-	* @param includeMountFolders whether to include mount folders for
-	third-party repositories
-	* @param start the lower bound of the range of results
-	* @param end the upper bound of the range of results (not inclusive)
-	* @param obc the comparator to order the results (optionally
-	<code>null</code>)
-	* @return the range of immediate subfolders, file entries, and file
-	shortcuts in the parent folder ordered by comparator
-	<code>obc</code>
-	* @throws PortalException if the folder could not be
-	found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<java.lang.Object> getFoldersAndFileEntriesAndFileShortcuts(
-		long repositoryId, long folderId, int status,
-		boolean includeMountFolders, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator obc)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService()
-				   .getFoldersAndFileEntriesAndFileShortcuts(repositoryId,
-			folderId, status, includeMountFolders, start, end, obc);
-	}
-
-	/**
-	* Returns the number of immediate subfolders, file entries, and file
-	* shortcuts in the parent folder.
-	*
-	* @param repositoryId the primary key of the repository
-	* @param folderId the primary key of the parent folder
-	* @param status the workflow status
-	* @param includeMountFolders whether to include mount folders for
-	third-party repositories
-	* @return the number of immediate subfolders, file entries, and file
-	shortcuts in the parent folder
-	* @throws PortalException if the folder could not be
-	found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int getFoldersAndFileEntriesAndFileShortcutsCount(
-		long repositoryId, long folderId, int status,
-		boolean includeMountFolders)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService()
-				   .getFoldersAndFileEntriesAndFileShortcutsCount(repositoryId,
-			folderId, status, includeMountFolders);
-	}
-
-	/**
-	* Returns the number of immediate subfolders of the parent folder.
-	*
-	* @param repositoryId the primary key of the folder's repository
-	* @param parentFolderId the primary key of the folder's parent folder
-	* @return the number of immediate subfolders of the parent folder
-	* @throws PortalException if the parent folder could not
-	be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int getFoldersCount(long repositoryId, long parentFolderId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService().getFoldersCount(repositoryId, parentFolderId);
-	}
-
-	/**
-	* Returns the number of immediate subfolders of the parent folder,
-	* optionally including mount folders for third-party repositories.
-	*
-	* @param repositoryId the primary key of the folder's repository
-	* @param parentFolderId the primary key of the folder's parent folder
-	* @param includeMountFolders whether to include mount folders for
-	third-party repositories
-	* @return the number of immediate subfolders of the parent folder
-	* @throws PortalException if the parent folder could not
-	be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int getFoldersCount(long repositoryId, long parentFolderId,
-		boolean includeMountFolders)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService()
-				   .getFoldersCount(repositoryId, parentFolderId,
-			includeMountFolders);
-	}
-
-	/**
-	* Returns the number of immediate subfolders and file entries across the
-	* folders.
-	*
-	* @param repositoryId the primary key of the repository
-	* @param folderIds the primary keys of folders from which to count
-	immediate subfolders and file entries
-	* @param status the workflow status
-	* @return the number of immediate subfolders and file entries across the
-	folders
-	* @throws PortalException if the repository could not be
-	found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int getFoldersFileEntriesCount(long repositoryId,
-		java.util.List<java.lang.Long> folderIds, int status)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService()
-				   .getFoldersFileEntriesCount(repositoryId, folderIds, status);
-	}
-
-	/**
 	* Returns the mount folder of the repository with the primary key. This
 	* method is only supported by the Liferay repository.
 	*
 	* @param repositoryId the primary key of the repository
 	* @return the folder used for mounting third-party repositories
-	* @throws PortalException if the repository or mount folder could not be found
+	* @throws PortalException if the repository or mount folder could not be
+	found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.kernel.repository.model.Folder getMountFolder(
@@ -969,123 +527,12 @@ public class DLAppLocalServiceUtil {
 	}
 
 	/**
-	* Returns all immediate subfolders of the parent folder that are used for
-	* mounting third-party repositories. This method is only supported by the
-	* Liferay repository.
-	*
-	* @param repositoryId the primary key of the folder's repository
-	* @param parentFolderId the primary key of the folder's parent folder
-	* @return the immediate subfolders of the parent folder that are used for
-	mounting third-party repositories
-	* @throws PortalException if the repository or parent
-	folder could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.kernel.repository.model.Folder> getMountFolders(
-		long repositoryId, long parentFolderId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService().getMountFolders(repositoryId, parentFolderId);
-	}
-
-	/**
-	* Returns a range of all the immediate subfolders of the parent folder that
-	* are used for mounting third-party repositories. This method is only
-	* supported by the Liferay repository.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end -
-	* start</code> instances. <code>start</code> and <code>end</code> are not
-	* primary keys, they are indexes in the result set. Thus, <code>0</code>
-	* refers to the first result in the set. Setting both <code>start</code>
-	* and <code>end</code> to {@link
-	* com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
-	* result set.
-	* </p>
-	*
-	* @param repositoryId the primary key of the repository
-	* @param parentFolderId the primary key of the parent folder
-	* @param start the lower bound of the range of results
-	* @param end the upper bound of the range of results (not inclusive)
-	* @return the range of immediate subfolders of the parent folder that are
-	used for mounting third-party repositories
-	* @throws PortalException if the repository or parent
-	folder could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.kernel.repository.model.Folder> getMountFolders(
-		long repositoryId, long parentFolderId, int start, int end)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService()
-				   .getMountFolders(repositoryId, parentFolderId, start, end);
-	}
-
-	/**
-	* Returns an ordered range of all the immediate subfolders of the parent
-	* folder that are used for mounting third-party repositories. This method
-	* is only supported by the Liferay repository.
-	*
-	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end -
-	* start</code> instances. <code>start</code> and <code>end</code> are not
-	* primary keys, they are indexes in the result set. Thus, <code>0</code>
-	* refers to the first result in the set. Setting both <code>start</code>
-	* and <code>end</code> to {@link
-	* com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full
-	* result set.
-	* </p>
-	*
-	* @param repositoryId the primary key of the folder's repository
-	* @param parentFolderId the primary key of the folder's parent folder
-	* @param start the lower bound of the range of results
-	* @param end the upper bound of the range of results (not inclusive)
-	* @param obc the comparator to order the folders (optionally
-	<code>null</code>)
-	* @return the range of immediate subfolders of the parent folder that are
-	used for mounting third-party repositories ordered by comparator
-	<code>obc</code>
-	* @throws PortalException if the repository or parent
-	folder could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static java.util.List<com.liferay.portal.kernel.repository.model.Folder> getMountFolders(
-		long repositoryId, long parentFolderId, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator obc)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService()
-				   .getMountFolders(repositoryId, parentFolderId, start, end,
-			obc);
-	}
-
-	/**
-	* Returns the number of immediate subfolders of the parent folder that are
-	* used for mounting third-party repositories. This method is only supported
-	* by the Liferay repository.
-	*
-	* @param repositoryId the primary key of the repository
-	* @param parentFolderId the primary key of the parent folder
-	* @return the number of folders of the parent folder that are used for
-	mounting third-party repositories
-	* @throws PortalException if the repository or parent
-	folder could not be found
-	* @throws SystemException if a system exception occurred
-	*/
-	public static int getMountFoldersCount(long repositoryId,
-		long parentFolderId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return getService().getMountFoldersCount(repositoryId, parentFolderId);
-	}
-
-	/**
 	* Moves the file entry to the new folder.
 	*
 	* @param userId the primary key of the user
 	* @param fileEntryId the primary key of the file entry
 	* @param newFolderId the primary key of the new folder
-	* @param serviceContext the file entry's service context
+	* @param serviceContext the service context to be applied
 	* @return the file entry
 	* @throws PortalException if the file entry or the new folder could not be
 	found
@@ -1102,12 +549,118 @@ public class DLAppLocalServiceUtil {
 	}
 
 	/**
+	* Moves the file entry with the primary key to the trash portlet.
+	*
+	* @param userId the primary key of the user
+	* @param fileEntryId the primary key of the file entry
+	* @return the file entry
+	* @throws PortalException if the file entry could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portal.kernel.repository.model.FileEntry moveFileEntryToTrash(
+		long userId, long fileEntryId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService().moveFileEntryToTrash(userId, fileEntryId);
+	}
+
+	public static com.liferay.portal.kernel.repository.model.Folder moveFolder(
+		long userId, long folderId, long parentFolderId,
+		com.liferay.portal.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .moveFolder(userId, folderId, parentFolderId, serviceContext);
+	}
+
+	/**
+	* Restores the file entry with the primary key from the trash portlet.
+	*
+	* @param userId the primary key of the user
+	* @param fileEntryId the primary key of the file entry
+	* @throws PortalException if the file entry could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void restoreFileEntryFromTrash(long userId, long fileEntryId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		getService().restoreFileEntryFromTrash(userId, fileEntryId);
+	}
+
+	/**
+	* Subscribe the user to changes in documents of the file entry type. This
+	* method is only supported by the Liferay repository.
+	*
+	* @param userId the primary key of the user
+	* @param groupId the primary key of the file entry type's group
+	* @param fileEntryTypeId the primary key of the file entry type
+	* @throws PortalException if the user or group could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void subscribeFileEntryType(long userId, long groupId,
+		long fileEntryTypeId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		getService().subscribeFileEntryType(userId, groupId, fileEntryTypeId);
+	}
+
+	/**
+	* Subscribe the user to document changes in the folder. This method is only
+	* supported by the Liferay repository.
+	*
+	* @param userId the primary key of the user
+	* @param groupId the primary key of the folder's group
+	* @param folderId the primary key of the folder
+	* @throws PortalException if the user or group could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void subscribeFolder(long userId, long groupId, long folderId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		getService().subscribeFolder(userId, groupId, folderId);
+	}
+
+	/**
+	* Unsubscribe the user from changes in documents of the file entry type.
+	* This method is only supported by the Liferay repository.
+	*
+	* @param userId the primary key of the user
+	* @param groupId the primary key of the file entry type's group
+	* @param fileEntryTypeId the primary key of the file entry type
+	* @throws PortalException if the user or group could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void unsubscribeFileEntryType(long userId, long groupId,
+		long fileEntryTypeId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		getService().unsubscribeFileEntryType(userId, groupId, fileEntryTypeId);
+	}
+
+	/**
+	* Unsubscribe the user from document changes in the folder. This method is
+	* only supported by the Liferay repository.
+	*
+	* @param userId the primary key of the user
+	* @param groupId the primary key of the folder's group
+	* @param folderId the primary key of the folder
+	* @throws PortalException if the user or group could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void unsubscribeFolder(long userId, long groupId,
+		long folderId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		getService().unsubscribeFolder(userId, groupId, folderId);
+	}
+
+	/**
 	* Updates the file entry's asset replacing its asset categories, tags, and
 	* links.
 	*
 	* @param userId the primary key of the user
-	* @param fileEntry the file entry
-	* @param fileVersion the file version
+	* @param fileEntry the file entry to update
+	* @param fileVersion the file version to update
 	* @param assetCategoryIds the primary keys of the new asset categories
 	* @param assetTagNames the new asset tag names
 	* @param assetLinkEntryIds the primary keys of the new asset link entries
@@ -1128,33 +681,38 @@ public class DLAppLocalServiceUtil {
 
 	/**
 	* Updates a file entry and associated metadata based on a byte array
-	* object.
+	* object. If the file data is <code>null</code>, then only the associated
+	* metadata (i.e., <code>title</code>, <code>description</code>, and
+	* parameters in the <code>serviceContext</code>) will be updated.
+	*
+	* <p>
+	* This method takes two file names, the <code>sourceFileName</code> and the
+	* <code>title</code>. The <code>sourceFileName</code> corresponds to the
+	* name of the actual file being uploaded. The <code>title</code>
+	* corresponds to a name the client wishes to assign this file after it has
+	* been uploaded to the portal.
+	* </p>
 	*
 	* @param userId the primary key of the user
 	* @param fileEntryId the primary key of the file entry
-	* @param sourceFileName the file's original name
-	* @param mimeType the file's MIME type
-	* @param title the name to be assigned to the file
-	* @param description the file's description
-	* @param changeLog the file's version change log
+	* @param sourceFileName the original file's name (optionally
+	<code>null</code>)
+	* @param mimeType the file's MIME type (optionally <code>null</code>)
+	* @param title the new name to be assigned to the file (optionally <code>
+	<code>null</code></code>)
+	* @param description the file's new description
+	* @param changeLog the file's version change log (optionally
+	<code>null</code>)
 	* @param majorVersion whether the new file version is a major version
 	* @param bytes the file's data (optionally <code>null</code>)
-	* @param serviceContext the file entry's service context. Can specify the
-	file entry's asset category IDs, asset tag names, and expando
-	bridge attributes. In a Liferay repository, it may include:
-
-	<ul>
-	<li>
-	fileEntryTypeId - ID for a custom file entry type
-	</li>
-	<li>
-	fieldsMap - mapping for fields associated with a custom file
-	entry type
-	</li>
-	</ul>
+	* @param serviceContext the service context to be applied. Can set the
+	asset category IDs, asset tag names, and expando bridge
+	attributes for the file entry. In a Liferay repository, it may
+	include:  <ul> <li> fileEntryTypeId - ID for a custom file entry
+	type </li> <li> fieldsMap - mapping for fields associated with a
+	custom file entry type </li> </ul>
 	* @return the file entry
-	* @throws PortalException if the file entry could not be
-	found
+	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.kernel.repository.model.FileEntry updateFileEntry(
@@ -1172,34 +730,40 @@ public class DLAppLocalServiceUtil {
 	}
 
 	/**
-	* Updates a file entry and associated metadata based on a {@link File}
-	* object.
+	* Updates a file entry and associated metadata based on a {@link
+	* java.io.File} object. If the file data is <code>null</code>, then only
+	* the associated metadata (i.e., <code>title</code>,
+	* <code>description</code>, and parameters in the
+	* <code>serviceContext</code>) will be updated.
+	*
+	* <p>
+	* This method takes two file names, the <code>sourceFileName</code> and the
+	* <code>title</code>. The <code>sourceFileName</code> corresponds to the
+	* name of the actual file being uploaded. The <code>title</code>
+	* corresponds to a name the client wishes to assign this file after it has
+	* been uploaded to the portal.
+	* </p>
 	*
 	* @param userId the primary key of the user
 	* @param fileEntryId the primary key of the file entry
-	* @param sourceFileName the file's original name
-	* @param mimeType the file's MIME type
-	* @param title the name to be assigned to the file
-	* @param description the file's description
-	* @param changeLog the file's version change log
+	* @param sourceFileName the original file's name (optionally
+	<code>null</code>)
+	* @param mimeType the file's MIME type (optionally <code>null</code>)
+	* @param title the new name to be assigned to the file (optionally <code>
+	<code>null</code></code>)
+	* @param description the file's new description
+	* @param changeLog the file's version change log (optionally
+	<code>null</code>)
 	* @param majorVersion whether the new file version is a major version
 	* @param file EntryId the primary key of the file entry
-	* @param serviceContext the file entry's service context. Can specify the
-	file entry's asset category IDs, asset tag names, and expando
-	bridge attributes. In a Liferay repository, it may include:
-
-	<ul>
-	<li>
-	fileEntryTypeId - ID for a custom file entry type
-	</li>
-	<li>
-	fieldsMap - mapping for fields associated with a custom file
-	entry type
-	</li>
-	</ul>
+	* @param serviceContext the service context to be applied. Can set the
+	asset category IDs, asset tag names, and expando bridge
+	attributes for the file entry. In a Liferay repository, it may
+	include:  <ul> <li> fileEntryTypeId - ID for a custom file entry
+	type </li> <li> fieldsMap - mapping for fields associated with a
+	custom file entry type </li> </ul>
 	* @return the file entry
-	* @throws PortalException if the file entry could not be
-	found
+	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.kernel.repository.model.FileEntry updateFileEntry(
@@ -1217,35 +781,40 @@ public class DLAppLocalServiceUtil {
 	}
 
 	/**
-	* Updates a file entry and associated metadata based on an {@link
-	* InputStream} object.
+	* Updates a file entry and associated metadata based on an {@link java.io.
+	* InputStream} object. If the file data is <code>null</code>, then only the
+	* associated metadata (i.e., <code>title</code>, <code>description</code>,
+	* and parameters in the <code>serviceContext</code>) will be updated.
+	*
+	* <p>
+	* This method takes two file names, the <code>sourceFileName</code> and the
+	* <code>title</code>. The <code>sourceFileName</code> corresponds to the
+	* name of the actual file being uploaded. The <code>title</code>
+	* corresponds to a name the client wishes to assign this file after it has
+	* been uploaded to the portal.
+	* </p>
 	*
 	* @param userId the primary key of the user
 	* @param fileEntryId the primary key of the file entry
-	* @param sourceFileName the file's original name
-	* @param mimeType the file's MIME type
-	* @param title the name to be assigned to the file
-	* @param description the file's description
-	* @param changeLog the file's version change log
+	* @param sourceFileName the original file's name (optionally
+	<code>null</code>)
+	* @param mimeType the file's MIME type (optionally <code>null</code>)
+	* @param title the new name to be assigned to the file (optionally <code>
+	<code>null</code></code>)
+	* @param description the file's new description
+	* @param changeLog the file's version change log (optionally
+	<code>null</code>)
 	* @param majorVersion whether the new file version is a major version
 	* @param is the file's data (optionally <code>null</code>)
 	* @param size the file's size (optionally <code>0</code>)
-	* @param serviceContext the file entry's service context. Can specify the
-	file entry's asset category IDs, asset tag names, and expando
-	bridge attributes. In a Liferay repository, it may include:
-
-	<ul>
-	<li>
-	fileEntryTypeId - ID for a custom file entry type
-	</li>
-	<li>
-	fieldsMap - mapping for fields associated with a custom file
-	entry type
-	</li>
-	</ul>
+	* @param serviceContext the service context to be applied. Can set the
+	asset category IDs, asset tag names, and expando bridge
+	attributes for the file entry. In a Liferay repository, it may
+	include:  <ul> <li> fileEntryTypeId - ID for a custom file entry
+	type </li> <li> fieldsMap - mapping for fields associated with a
+	custom file entry type </li> </ul>
 	* @return the file entry
-	* @throws PortalException if the file entry could not be
-	found
+	* @throws PortalException if the file entry could not be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portal.kernel.repository.model.FileEntry updateFileEntry(
@@ -1270,7 +839,7 @@ public class DLAppLocalServiceUtil {
 	* @param companyId the primary key of the file rank's company
 	* @param userId the primary key of the file rank's creator/owner
 	* @param fileEntryId the primary key of the file rank's file entry
-	* @param serviceContext the file rank's service context
+	* @param serviceContext the service context to be applied
 	* @return the file rank
 	* @throws SystemException if a system exception occurred
 	*/
@@ -1291,9 +860,9 @@ public class DLAppLocalServiceUtil {
 	* @param fileShortcutId the primary key of the file shortcut
 	* @param folderId the primary key of the file shortcut's parent folder
 	* @param toFileEntryId the primary key of the file shortcut's file entry
-	* @param serviceContext the file shortcut's service context. Can specify
-	the file entry's asset category IDs, asset tag names, and expando
-	bridge attributes.
+	* @param serviceContext the service context to be applied. Can set the
+	asset category IDs, asset tag names, and expando bridge
+	attributes for the file entry.
 	* @return the file shortcut
 	* @throws PortalException if the file shortcut, folder, or file entry could
 	not be found
@@ -1332,30 +901,20 @@ public class DLAppLocalServiceUtil {
 	*
 	* @param folderId the primary key of the folder
 	* @param parentFolderId the primary key of the folder's new parent folder
-	* @param name the folder's name
-	* @param description the folder's description
-	* @param serviceContext the folder's service context. In a Liferay
-	repository, it may include:
-
-	<ul>
-	<li>
-	defaultFileEntryTypeId - the file entry type to default all
-	Liferay file entries to
-	</li>
-	<li>
-	fileEntryTypeSearchContainerPrimaryKeys - a comma-delimited list
-	of file entry type primary keys allowed in the given folder and
-	all descendants
-	</li>
-	<li>
-	mountPoint - boolean specifying whether folder is a facade for
-	mounting a third-party repository
-	</li>
-	<li>
+	* @param name the folder's new name
+	* @param description the folder's new description
+	* @param serviceContext the service context to be applied. In a Liferay
+	repository, it may include:  <ul> <li> defaultFileEntryTypeId -
+	the file entry type to default all Liferay file entries to </li>
+	<li> dlFileEntryTypesSearchContainerPrimaryKeys - a
+	comma-delimited list of file entry type primary keys allowed in
+	the given folder and all descendants </li> <li>
 	overrideFileEntryTypes - boolean specifying whether to override
-	ancestral folder's restriction of file entry types allowed
-	</li>
-	</ul>
+	ancestral folder's restriction of file entry types allowed </li>
+	<li> workflowDefinitionXYZ - the workflow definition name
+	specified per file entry type. The parameter name must be the
+	string <code>workflowDefinition</code> appended by the <code>
+	fileEntryTypeId</code> (optionally <code>0</code>). </li> </ul>
 	* @return the folder
 	* @throws PortalException if the current or new parent folder could not be
 	found, or if the new parent folder's information was invalid
@@ -1378,20 +937,15 @@ public class DLAppLocalServiceUtil {
 
 			ReferenceRegistry.registerReference(DLAppLocalServiceUtil.class,
 				"_service");
-			MethodCache.remove(DLAppLocalService.class);
 		}
 
 		return _service;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setService(DLAppLocalService service) {
-		MethodCache.remove(DLAppLocalService.class);
-
-		_service = service;
-
-		ReferenceRegistry.registerReference(DLAppLocalServiceUtil.class,
-			"_service");
-		MethodCache.remove(DLAppLocalService.class);
 	}
 
 	private static DLAppLocalService _service;

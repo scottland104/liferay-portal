@@ -1,11 +1,9 @@
-AUI().add(
+AUI.add(
 	'liferay-asset-tags-selector',
 	function(A) {
 		var Lang = A.Lang;
 
 		var AArray = A.Array;
-
-		var	getClassName = A.ClassNameManager.getClassName;
 
 		var NAME = 'tagselector';
 
@@ -17,13 +15,51 @@ AUI().add(
 
 		var CSS_TAGS_LIST = 'lfr-tags-selector-list';
 
-		var TPL_CHECKED = ' checked="checked" ';
+		var MAP_INVALID_CHARACTERS = AArray.hash(
+			[
+				'"',
+				'#',
+				'%',
+				'&',
+				'*',
+				'+',
+				',',
+				'/',
+				':',
+				';',
+				'<',
+				'=',
+				'>',
+				'?',
+				'@',
+				'[',
+				'\'',
+				'\\',
+				'\n',
+				'\r',
+				']',
+				'`',
+				'{',
+				'|',
+				'}',
+				'~'
+			]
+		);
 
-		var TPL_INPUT = '<label title="{name}"><input type="checkbox" value="{name}" {checked} />{name}</label>';
+		var STR_BLANK = '';
+
+		var TPL_CHECKED = ' checked="checked" ';
 
 		var TPL_LOADING = '<div class="loading-animation" />';
 
-		var TPL_MESSAGE = '<div class="lfr-tag-message">{0}</div>';
+		var TPL_TAG = new A.Template(
+			'<fieldset class="{[(!values.tags || !values.tags.length) ? "', CSS_NO_MATCHES, '" : "', STR_BLANK, '" ]}">',
+				'<tpl for="tags">',
+					'<label title="{name}"><input {checked} type="checkbox" value="{name}" />{name}</label>',
+				'</tpl>',
+				'<div class="lfr-tag-message">{message}</div>',
+			'</fieldset>'
+		);
 
 		var TPL_URL_SUGGESTIONS = 'http://search.yahooapis.com/ContentAnalysisService/V1/termExtraction?appid=YahooDemo&output=json&context={context}';
 
@@ -82,6 +118,10 @@ AUI().add(
 							return instance._getTagsDataSource();
 						}
 					},
+					groupIds: {
+						setter: '_setGroupIds',
+						validator: Lang.isString
+					},
 					guid: {
 						value: ''
 					},
@@ -132,14 +172,16 @@ AUI().add(
 
 						instance._bindTagsSelector();
 
-						instance.entries.after('add', instance._updateHiddenInput, instance);
-						instance.entries.after('remove', instance._updateHiddenInput, instance);
+						var entries = instance.entries;
+
+						entries.after('add', instance._updateHiddenInput, instance);
+						entries.after('remove', instance._updateHiddenInput, instance);
 					},
 
 					addEntries: function() {
 						var instance = this;
 
-						instance._onAddEntryClick();
+						instance._addEntries();
 					},
 
 					syncUI: function() {
@@ -152,51 +194,54 @@ AUI().add(
 						A.each(curEntries, instance.add, instance);
 					},
 
+					_addEntries: function() {
+						var instance = this;
+
+						var text = Liferay.Util.escapeHTML(instance.inputNode.val());
+
+						if (text) {
+							if (text.indexOf(',') > -1) {
+								var items = text.split(',');
+
+								A.each(
+									items,
+									function(item, index, collection) {
+										instance.entries.add(item, {});
+									}
+								);
+							}
+							else {
+								instance.entries.add(text, {});
+							}
+						}
+
+						Liferay.Util.focusFormField(instance.inputNode);
+					},
+
 					_bindTagsSelector: function() {
 						var instance = this;
 
-						instance._submitFormListener = A.Do.before(instance._onAddEntryClick, window, 'submitForm', instance);
+						instance._submitFormListener = A.Do.before(instance._addEntries, window, 'submitForm', instance);
 
-						A.on(
-							'key',
-							instance._onTagsSelectorCommaPress,
-							instance.get('boundingBox'),
-							'down:188',
-							instance
-						);
-					},
-
-					_formatEntry: function(item) {
-						var instance = this;
-
-						var input = A.substitute(TPL_INPUT, item);
-
-						instance._buffer.push(input);
+						instance.get('boundingBox').on('keypress', instance._onKeyPress, instance);
 					},
 
 					_getPopup: function() {
 						var instance = this;
 
 						if (!instance._popup) {
-							var popup = new A.Dialog(
+							var popup = Liferay.Util.Window.getWindow(
 								{
-									bodyContent: TPL_LOADING,
-									constrain: true,
-									draggable: true,
-									hideClass: 'aui-helper-hidden-accessible',
-									preventOverlap: true,
-									stack: true,
-									title: '',
-									width: 320,
-									zIndex: 1000
+									dialog: {
+										cssClass: CSS_POPUP,
+										hideClass: 'hide-accessible'
+									}
 								}
-							).render();
-
-							popup.get('boundingBox').addClass(CSS_POPUP);
+							);
 
 							var bodyNode = popup.bodyNode;
 
-							bodyNode.html('');
+							bodyNode.html(STR_BLANK);
 
 							var searchField = new A.Textfield(
 								{
@@ -216,7 +261,7 @@ AUI().add(
 
 							instance._initSearch();
 
-							var onCheckboxClick = A.bind(instance._onCheckboxClick, instance);
+							var onCheckboxClick = A.bind('_onCheckboxClick', instance);
 
 							entriesNode.delegate('click', onCheckboxClick, 'input[type=checkbox]');
 						}
@@ -227,7 +272,7 @@ AUI().add(
 					_getProxyData: function(context) {
 						var instance = this;
 
-						var suggestionsURL = A.substitute(
+						var suggestionsURL = Lang.sub(
 							TPL_URL_SUGGESTIONS,
 							{
 								context: encodeURIComponent(context)
@@ -244,19 +289,10 @@ AUI().add(
 					_getEntries: function(callback) {
 						var instance = this;
 
-						var portalModelResource = instance.get('portalModelResource');
-
-						var groupIds = [];
-
-						if (!portalModelResource && (themeDisplay.getParentGroupId() != themeDisplay.getCompanyGroupId())) {
-							groupIds.push(themeDisplay.getParentGroupId());
-						}
-
-						groupIds.push(themeDisplay.getCompanyGroupId());
-
-						Liferay.Service.Asset.AssetTag.getGroupsTags(
+						Liferay.Service(
+							'/assettag/get-groups-tags',
 							{
-								groupIds: groupIds
+								groupIds: instance.get('groupIds')
 							},
 							callback
 						);
@@ -265,7 +301,7 @@ AUI().add(
 					_getTagsDataSource: function() {
 						var instance = this;
 
-						var AssetTagSearch = Liferay.Service.Asset.AssetTag.search;
+						var AssetTagSearch = Liferay.Service.bind('/assettag/search');
 
 						AssetTagSearch._serviceQueryCache = {};
 
@@ -275,21 +311,22 @@ AUI().add(
 							{
 								on: {
 									request: function(event) {
-										var term = event.request;
+										var term = decodeURIComponent(event.request);
+
 										var key = term;
 
 										if (term == '*') {
-											term = '';
+											term = STR_BLANK;
 										}
 
 										var serviceQueryObj = serviceQueryCache[key];
 
 										if (!serviceQueryObj) {
 											serviceQueryObj = {
-												groupId: themeDisplay.getParentGroupId(),
+												groupIds: instance.get('groupIds'),
 												name: '%' + term + '%',
-												properties: '',
-												begin: 0,
+												tagProperties: STR_BLANK,
+												start: 0,
 												end: 20
 											};
 
@@ -324,7 +361,7 @@ AUI().add(
 
 										fieldsets.each(
 											function(item, index, collection) {
-												var visibleEntries = item.one('label:not(.aui-helper-hidden)');
+												var visibleEntries = item.one('label:not(.hide)');
 
 												var action = 'addClass';
 
@@ -357,24 +394,9 @@ AUI().add(
 					_onAddEntryClick: function(event) {
 						var instance = this;
 
-						var text = instance.inputNode.val();
+						event.domEvent.preventDefault();
 
-						if (text) {
-							if(text.indexOf(',') > -1) {
-								var items = text.split(',');
-
-								A.each(
-									items,
-									function(item, index, collection) {
-										instance.entries.add(item, {});
-									}
-								);
-							} else {
-								instance.entries.add(text, {});
-							}
-						}
-
-						Liferay.Util.focusFormField(instance.inputNode);
+						instance._addEntries();
 					},
 
 					_onCheckboxClick: function(event) {
@@ -393,12 +415,19 @@ AUI().add(
 						instance[action](value);
 					},
 
-					_onTagsSelectorCommaPress: function(event) {
+					_onKeyPress: function(event) {
 						var instance = this;
 
-						instance._onAddEntryClick();
+						var charCode = event.charCode;
 
-						event.preventDefault();
+						if (charCode == '44') {
+							event.preventDefault();
+
+							instance._addEntries();
+						}
+						else if (MAP_INVALID_CHARACTERS[String.fromCharCode(charCode)]) {
+							event.halt();
+						}
 					},
 
 					_renderIcons: function() {
@@ -406,44 +435,41 @@ AUI().add(
 
 						var contentBox = instance.get('contentBox');
 
-						var toolbar = [
+						var buttonGroup = [
 							{
-								handler: {
-									context: instance,
-									fn: instance._onAddEntryClick
+								icon: 'icon-plus',
+								label: Liferay.Language.get('add'),
+								on: {
+									click: A.bind('_onAddEntryClick', instance)
 								},
-								icon: 'plus',
-								id: 'add',
-								label: Liferay.Language.get('add')
+								title: Liferay.Language.get('add-tags')
 							},
 							{
-								handler: {
-									context: instance,
-									fn: instance._showSelectPopup
+								icon: 'icon-search',
+								label: Liferay.Language.get('select'),
+								on: {
+									click: A.bind('_showSelectPopup', instance)
 								},
-								icon: 'search',
-								id: 'select',
-								label: Liferay.Language.get('select')
+								title: Liferay.Language.get('select-tags')
 							}
 						];
 
 						if (instance.get('contentCallback')) {
-							toolbar.push(
+							buttonGroup.push(
 								{
-									handler: {
-										context: instance,
-										fn: instance._showSuggestionsPopup
+									icon: 'icon-comment',
+									label: Liferay.Language.get('suggestions'),
+									on: {
+										click: A.bind('_showSuggestionsPopup', instance)
 									},
-									icon: 'comment',
-									id: 'suggest',
-									label: Liferay.Language.get('suggestions')
+									title: Liferay.Language.get('suggestions')
 								}
 							);
 						}
 
 						instance.icons = new A.Toolbar(
 							{
-								children: toolbar
+								children: [buttonGroup]
 							}
 						).render(contentBox);
 
@@ -452,16 +478,38 @@ AUI().add(
 						instance.entryHolder.placeAfter(iconsBoundingBox);
 					},
 
+					_renderTemplate: function(data) {
+						var instance = this;
+
+						var popup = instance._popup;
+
+						TPL_TAG.render(
+							{
+								checked: data.checked,
+								message: Liferay.Language.get('no-tags-found'),
+								name: data.name,
+								tags: data
+							},
+							popup.entriesNode
+						);
+
+						popup.searchField.resetValue();
+
+						popup.liveSearch.get('nodes').refresh();
+
+						popup.liveSearch.refreshIndex();
+					},
+
+					_setGroupIds: function(value) {
+						return value.split(',');
+					},
+
 					_showPopup: function(event) {
 						var instance = this;
 
+						event.domEvent.preventDefault();
+
 						var popup = instance._getPopup();
-
-						if (event && event.currentTarget) {
-							var toolItem = event.currentTarget.get('boundingBox');
-
-							popup.align(toolItem, ['bl', 'tl']);
-						}
 
 						popup.entriesNode.html(TPL_LOADING);
 
@@ -473,11 +521,11 @@ AUI().add(
 
 						instance._showPopup(event);
 
-						instance._popup.set('title', Liferay.Language.get('tags'));
+						instance._popup.titleNode.html(Liferay.Language.get('tags'));
 
 						instance._getEntries(
 							function(entries) {
-								instance._updateSelectList(entries, instance._entriesIterator);
+								instance._updateSelectList(entries);
 							}
 						);
 					},
@@ -487,15 +535,18 @@ AUI().add(
 
 						instance._showPopup(event);
 
-						instance._popup.set('title', Liferay.Language.get('suggestions'));
+						instance._popup.titleNode.html(Liferay.Language.get('suggestions'));
 
 						var contentCallback = instance.get('contentCallback');
 
-						var context = '';
+						var context = STR_BLANK;
+
 						var data = [];
 
 						if (contentCallback) {
 							context = contentCallback();
+
+							context = String(context);
 						}
 
 						var length = context.length;
@@ -515,8 +566,16 @@ AUI().add(
 									success: function(event, id, obj) {
 										var results = this.get('responseData');
 
-										if (results && results.ResultSet && results.ResultSet.Result) {
-											data = data.concat(results.ResultSet.Result);
+										var resultData = results && results.ResultSet && results.ResultSet.Result;
+
+										if (resultData) {
+											for (var i = 0; i < resultData.length; i++) {
+												data.push(
+													{
+														name: resultData[i]
+													}
+												);
+											}
 										}
 
 										queue.run();
@@ -549,7 +608,7 @@ AUI().add(
 
 									suggestionsIO.start();
 								},
-								until: function () {
+								until: function() {
 									return length <= start;
 								}
 							}
@@ -558,32 +617,11 @@ AUI().add(
 						queue.after(
 							'complete',
 							function(event) {
-								instance._updateSelectList(AArray.unique(data), instance._suggestionsIterator);
+								instance._updateSelectList(AArray.unique(data));
 							}
 						);
 
 						queue.run();
-					},
-
-					_suggestionsIterator: function(item, index, collection) {
-						var instance = this;
-
-						var checked = instance.entries.indexOfKey(item) > -1 ? TPL_CHECKED : '';
-
-						var tag = {
-							checked: checked,
-							name: item
-						};
-
-						instance._formatEntry(tag);
-					},
-
-					_entriesIterator: function(item, index, collection) {
-						var instance = this;
-
-						item.checked = instance.entries.indexOfKey(item.name) > -1 ? TPL_CHECKED : '';
-
-						instance._formatEntry(item);
 					},
 
 					_updateHiddenInput: function(event) {
@@ -610,31 +648,17 @@ AUI().add(
 						}
 					},
 
-					_updateSelectList: function(data, iterator) {
+					_updateSelectList: function(data) {
 						var instance = this;
 
-						var popup = instance._popup;
+						for (var i = 0; i < data.length; i++) {
+							var tag = data[i];
 
-						popup.searchField.resetValue();
+							tag.checked = instance.entries.indexOfKey(tag.name) > -1 ? TPL_CHECKED : STR_BLANK;
+						}
 
-						instance._buffer = ['<fieldset class="' + (!data || !data.length ? CSS_NO_MATCHES : '') + '">'];
-
-						A.each(data, iterator, instance);
-
-						var buffer = instance._buffer;
-
-						var message = A.substitute(TPL_MESSAGE, [Liferay.Language.get('no-tags-found')]);
-
-						buffer.push(message);
-						buffer.push('</fieldset>');
-
-						popup.entriesNode.html(buffer.join(''));
-
-						popup.liveSearch.get('nodes').refresh();
-						popup.liveSearch.refreshIndex();
-					},
-
-					_buffer: []
+						instance._renderTemplate(data);
+					}
 				}
 			}
 		);
@@ -643,6 +667,6 @@ AUI().add(
 	},
 	'',
 	{
-		requires: ['array-extras', 'async-queue', 'aui-autocomplete', 'aui-dialog', 'aui-io-request', 'aui-live-search', 'aui-textboxlist', 'aui-form-textfield', 'datasource-cache', 'liferay-service-datasource', 'substitute']
+		requires: ['array-extras', 'async-queue', 'aui-autocomplete-deprecated', 'aui-form-textfield-deprecated', 'aui-io-plugin-deprecated', 'aui-io-request', 'aui-live-search-deprecated', 'aui-template-deprecated', 'aui-textboxlist', 'datasource-cache', 'liferay-service-datasource', 'liferay-util-window']
 	}
 );

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -42,7 +42,7 @@ public class PipingServletResponse extends HttpServletResponseWrapper {
 			throw new NullPointerException("Output stream is null");
 		}
 
-		_servletOutputStream = new PipingServletOutputStream(outputStream);
+		_servletOutputStream = new ServletOutputStreamAdapter(outputStream);
 	}
 
 	public PipingServletResponse(
@@ -85,26 +85,6 @@ public class PipingServletResponse extends HttpServletResponseWrapper {
 			pageContext.getOut());
 	}
 
-	public PipingServletResponse(
-		PageContext pageContext, boolean trimNewLines) {
-
-		super((HttpServletResponse)pageContext.getResponse());
-
-		if (trimNewLines && (pageContext instanceof PageContextWrapper)) {
-			PageContextWrapper pageContextWrapper =
-				(PageContextWrapper)pageContext;
-
-			PageContext wrappedPageContext =
-				pageContextWrapper.getWrappedPageContext();
-
-			_printWriter = UnsyncPrintWriterPool.borrow(
-				new TrimNewLinesJspWriter(wrappedPageContext.getOut()));
-		}
-		else {
-			_printWriter = UnsyncPrintWriterPool.borrow(pageContext.getOut());
-		}
-	}
-
 	@Override
 	public ServletOutputStream getOutputStream() {
 		if (_servletOutputStream == null) {
@@ -114,12 +94,12 @@ public class PipingServletResponse extends HttpServletResponseWrapper {
 						"not recommended because it is slow");
 			}
 
-			_servletOutputStream = new PipingServletOutputStream(
+			_servletOutputStream = new ServletOutputStreamAdapter(
 				new WriterOutputStream(
 					_printWriter, getCharacterEncoding(), true));
 		}
 
-		return  _servletOutputStream;
+		return _servletOutputStream;
 	}
 
 	@Override
@@ -131,7 +111,8 @@ public class PipingServletResponse extends HttpServletResponseWrapper {
 						"not recommended because it is slow");
 			}
 
-			_printWriter = UnsyncPrintWriterPool.borrow(_servletOutputStream);
+			_printWriter = UnsyncPrintWriterPool.borrow(
+				_servletOutputStream, getCharacterEncoding());
 		}
 
 		return _printWriter;

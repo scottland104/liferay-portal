@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,8 +17,9 @@
 <%@ include file="/html/taglib/init.jsp" %>
 
 <%
-String param = (String)request.getAttribute("liferay-ui:section:param");
 String name = (String)request.getAttribute("liferay-ui:section:name");
+String param = (String)request.getAttribute("liferay-ui:section:param");
+boolean selected = (Boolean)request.getAttribute("liferay-ui:section:selected");
 %>
 
-<div class="aui-helper-hidden" id="<%= namespace %><%= param %><%= StringUtil.toCharCode(name) %>TabsSection">
+<div class='<%= selected ? StringPool.BLANK : "hide" %>' id="<%= namespace %><%= param %><%= StringUtil.toCharCode(name) %>TabsSection">

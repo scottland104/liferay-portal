@@ -1,4 +1,4 @@
-AUI().add(
+AUI.add(
 	'liferay-staging-version',
 	function(A) {
 		var Lang = A.Lang;
@@ -10,70 +10,96 @@ AUI().add(
 			undo: 'undo_layout_revision'
 		};
 
+		var MAP_TEXT_REVISION = {
+			redo: Liferay.Language.get('are-you-sure-you-want-to-redo-your-last-changes'),
+			undo: Liferay.Language.get('are-you-sure-you-want-to-undo-your-last-changes')
+		};
+
 		A.mix(
 			StagingBar,
 			{
-				_onInit: function(options) {
+				destructor: function() {
+					var instance = this;
+
+					instance._destroyToolbarContent();
+
+					A.Array.invoke(instance._eventHandles, 'detach');
+				},
+
+				_onInit: function(event) {
 					var instance = this;
 
 					var namespace = instance._namespace;
 
+					instance._destroyToolbarContent();
+
 					var layoutRevisionToolbar = new A.Toolbar(
 						{
-							activeState: false,
-							boundingBox: '#' + namespace + 'layoutRevisionToolbar',
-							children: [
-								{
-								type: 'ToolbarSpacer'
-								},
-								{
-									handler: A.bind(instance._onViewHistory, instance),
-									icon: 'clock',
-									label: Liferay.Language.get('history')
-								}
-							]
+							boundingBox: A.byIdNS(namespace, 'layoutRevisionToolbar')
 						}
 					).render();
+
+					if (!event.hideHistory) {
+						layoutRevisionToolbar.add(
+							{
+								icon: 'icon-time',
+								label: Liferay.Language.get('history'),
+								on: {
+									click: A.bind('_onViewHistory', instance)
+								}
+							}
+						);
+					}
 
 					StagingBar.layoutRevisionToolbar = layoutRevisionToolbar;
 
 					var redoText = Liferay.Language.get('redo');
 					var undoText = Liferay.Language.get('undo');
 
-					StagingBar.redoButton = new A.ButtonItem(
+					StagingBar.redoButton = new A.Button(
 						{
-							handler: A.bind(instance._onRevisionChange, instance, 'redo'),
-							icon: 'arrowreturnthick-1-r',
+							icon: 'icon-forward',
 							label: redoText,
+							on: {
+								click: A.bind('_onRevisionChange', instance, 'redo')
+							},
 							title: redoText
 						}
 					);
 
-					StagingBar.undoButton = new A.ButtonItem(
+					StagingBar.undoButton = new A.Button(
 						{
-							handler: A.bind(instance._onRevisionChange, instance, 'undo'),
-							icon: 'arrowreturnthick-1-b',
+							icon: 'icon-backward',
 							label: undoText,
+							on: {
+								click: A.bind('_onRevisionChange', instance, 'undo')
+							},
 							title: undoText
 						}
 					);
 
-					var layoutRevisionDetails = A.one('#' + namespace + 'layoutRevisionDetails');
+					var eventHandles = [];
+
+					var layoutRevisionDetails = A.byIdNS(namespace, 'layoutRevisionDetails');
 
 					if (layoutRevisionDetails) {
-						Liferay.publish(
-							'updatedLayout',
-							{
-								defaultFn: function(event) {
+						eventHandles.push(
+							Liferay.onceAfter(
+								'updatedLayout',
+								function(event) {
 									A.io.request(
 										themeDisplay.getPathMain() + '/staging_bar/view_layout_revision_details',
 										{
 											data: {
 												p_l_id: themeDisplay.getPlid()
 											},
-											method: 'GET',
 											on: {
+												failure: function(event, id, obj) {
+													layoutRevisionDetails.setContent(Liferay.Language.get('there-was-an-unexpected-error.-please-refresh-the-current-page'));
+												},
 												success: function(event, id, obj) {
+													instance._destroyToolbarContent();
+
 													var response = this.get('responseData');
 
 													layoutRevisionDetails.plug(A.Plugin.ParseContent);
@@ -84,8 +110,32 @@ AUI().add(
 										}
 									);
 								}
-							}
+							)
 						);
+					}
+
+					eventHandles.push(Liferay.on(event.portletId + ':portletRefreshed', A.bind('destructor', instance)));
+
+					instance._eventHandles = eventHandles;
+				},
+
+				_destroyToolbarContent: function() {
+					if (StagingBar.layoutRevisionToolbar) {
+						StagingBar.layoutRevisionToolbar.destroy();
+
+						StagingBar.layoutRevisionToolbar = null;
+					}
+
+					if (StagingBar.redoButton) {
+						StagingBar.redoButton.destroy();
+
+						StagingBar.redoButton = null;
+					}
+
+					if (StagingBar.undoButton) {
+						StagingBar.undoButton.destroy();
+
+						StagingBar.undoButton = null;
 					}
 				},
 
@@ -95,17 +145,13 @@ AUI().add(
 					var graphDialog = instance._graphDialog;
 
 					if (!graphDialog) {
-						graphDialog = new A.Dialog(
-							{
-								align: {
-									points: ['tc', 'tc']
-								},
-								draggable: true,
-								modal: true,
-								title: Liferay.Language.get('history'),
-								width: 600
-							}
-						).plug(
+						graphDialog = Liferay.Util.Window.getWindow(
+						    {
+								title: Liferay.Language.get('history')
+						    }
+						);
+
+						graphDialog.plug(
 							A.Plugin.IO,
 							{
 								autoLoad: false,
@@ -117,14 +163,12 @@ AUI().add(
 								},
 								uri: themeDisplay.getPathMain() + '/staging_bar/view_layout_revisions'
 							}
-						).render();
-
-						graphDialog.move(graphDialog.get('x'), graphDialog.get('y') + 100);
+						);
 
 						graphDialog.bodyNode.delegate(
 							'click',
 							function(event) {
-								instance._selectRevision(event.currentTarget);
+								instance._selectRevision(event.target);
 							},
 							'a.layout-revision.selection-handle'
 						);
@@ -157,7 +201,7 @@ AUI().add(
 
 					var namespace = instance._namespace;
 
-					var form = A.one('#' + namespace + 'fm');
+					var form = A.byIdNS(namespace, 'fm');
 
 					var layoutRevisionId = form.one('#' + namespace + 'layoutRevisionId').val();
 					var layoutSetBranchId = form.one('#' + namespace + 'layoutSetBranchId').val();
@@ -181,7 +225,7 @@ AUI().add(
 					var instance = this;
 
 					instance._updateRevision(
-						node,
+						'select_layout_revision',
 						node.attr('data-layoutRevisionId'),
 						node.attr('data-layoutSetBranchId')
 					);
@@ -196,7 +240,9 @@ AUI().add(
 								doAsUserId: themeDisplay.getDoAsUserIdEncoded(),
 								layoutRevisionId: layoutRevisionId,
 								layoutSetBranchId: layoutSetBranchId,
-								p_l_id: themeDisplay.getPlid()
+								p_auth: Liferay.authToken,
+								p_l_id: themeDisplay.getPlid(),
+								p_v_l_s_g_id: themeDisplay.getSiteGroupId()
 							},
 							on: {
 								success: function(event, id, obj) {
@@ -213,6 +259,6 @@ AUI().add(
 	},
 	'',
 	{
-		requires: ['aui-button-item', 'liferay-staging']
+		requires: ['aui-button', 'aui-toolbar', 'liferay-node', 'liferay-staging']
 	}
 );

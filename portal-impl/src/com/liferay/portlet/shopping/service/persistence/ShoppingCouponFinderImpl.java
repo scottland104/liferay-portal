@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,7 +20,6 @@ import com.liferay.portal.kernel.dao.orm.SQLQuery;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.dao.orm.Type;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.portlet.shopping.model.ShoppingCoupon;
 import com.liferay.portlet.shopping.model.impl.ShoppingCouponImpl;
@@ -36,18 +35,19 @@ public class ShoppingCouponFinderImpl
 	extends BasePersistenceImpl<ShoppingCoupon>
 	implements ShoppingCouponFinder {
 
-	public static String COUNT_BY_G_C_C_A_DT =
+	public static final String COUNT_BY_G_C_C_A_DT =
 		ShoppingCouponFinder.class.getName() + ".countByG_C_C_A_DT";
 
-	public static String FIND_BY_G_C_C_A_DT =
+	public static final String FIND_BY_G_C_C_A_DT =
 		ShoppingCouponFinder.class.getName() + ".findByG_C_C_A_DT";
 
+	@Override
 	public int countByG_C_C_A_DT(
 			long groupId, long companyId, String code, boolean active,
 			String discountType, boolean andOperator)
 		throws SystemException {
 
-		code = StringUtil.upperCase(code);
+		code = CustomSQLUtil.keywords(code)[0];
 
 		Session session = null;
 
@@ -72,7 +72,7 @@ public class ShoppingCouponFinderImpl
 			qPos.add(discountType);
 			qPos.add(discountType);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -92,12 +92,13 @@ public class ShoppingCouponFinderImpl
 		}
 	}
 
+	@Override
 	public List<ShoppingCoupon> findByG_C_C_A_DT(
 			long groupId, long companyId, String code, boolean active,
 			String discountType, boolean andOperator, int start, int end)
 		throws SystemException {
 
-		code = StringUtil.upperCase(code);
+		code = CustomSQLUtil.keywords(code)[0];
 
 		Session session = null;
 

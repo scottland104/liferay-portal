@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,6 +15,7 @@
 package com.liferay.taglib.theme;
 
 import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
+import com.liferay.portal.kernel.servlet.DirectRequestDispatcherFactoryUtil;
 import com.liferay.portal.kernel.servlet.PipingServletResponse;
 import com.liferay.portal.kernel.util.ThemeHelper;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -53,7 +54,8 @@ public class WrapPortletTag
 		// Portlet content
 
 		RequestDispatcher requestDispatcher =
-			servletContext.getRequestDispatcher(portletPage);
+			DirectRequestDispatcherFactoryUtil.getRequestDispatcher(
+				servletContext, portletPage);
 
 		UnsyncStringWriter unsyncStringWriter = new UnsyncStringWriter();
 
@@ -84,16 +86,8 @@ public class WrapPortletTag
 	}
 
 	@Override
-	public int doStartTag() {
-		return EVAL_BODY_BUFFERED;
-	}
-
-	@Override
 	public int doEndTag() throws JspException {
 		try {
-			ServletContext servletContext = getServletContext();
-			HttpServletRequest request = getServletRequest();
-
 			ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
@@ -121,18 +115,23 @@ public class WrapPortletTag
 		}
 	}
 
-	protected String getPage() {
-		return _page;
+	@Override
+	public int doStartTag() {
+		return EVAL_BODY_BUFFERED;
 	}
 
 	public void setPage(String page) {
 		_page = page;
 	}
 
-	private static final String _CONTENT_WRAPPER_PRE =
-		"<div class=\"column-1\" id=\"main-content\" role=\"main\">";
+	protected String getPage() {
+		return _page;
+	}
 
 	private static final String _CONTENT_WRAPPER_POST = "</div>";
+
+	private static final String _CONTENT_WRAPPER_PRE =
+		"<div class=\"column-1\" id=\"main-content\" role=\"main\">";
 
 	private String _page;
 

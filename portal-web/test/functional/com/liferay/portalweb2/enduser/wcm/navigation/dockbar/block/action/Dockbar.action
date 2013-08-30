@@ -1,0 +1,58 @@
+<definition>
+	<command name="assertClick">
+		<case locator-key1="ADD">
+			<execute function="AssertClick#assertTextClickAtClickSidebar" />
+		</case>
+		<case locator-key1="ADD_APPLICATION_LINK">
+			<execute function="AssertClick#assertTextClickAtAddApplication" />
+		</case>
+		<case locator-key1="ADD_CONTENT_LINK">
+			<execute function="AssertClick#assertTextClickAtAddApplication" />
+		</case>
+		<case locator-key1="ADD_PAGE_LINK">
+			<execute function="AssertClick#assertTextClickAtAddApplication" />
+		</case>
+		<case locator-key1="USER_MY_DASHBOARD">
+			<execute function="AssertClick#assertTextClickAtAndWait" />
+		</case>
+		<case locator-key1="USER_MY_ACCOUNT">
+			<execute function="AssertClick#assertTextClickAtAndWait" />
+		</case>
+		<case comparator="startsWith" locator-key1="ADMIN_SITE_ADMINISTRATION">
+			<execute function="AssertClick#assertTextClickAtAndWait" />
+		</case>
+		<case comparator="contains" locator1="//span[@data-title='">
+			<execute function="AssertClick#pauseMakeVisibleAssertTextEqualsClickAt" />
+		</case>
+	</command>
+
+	<command name="click">
+		<case locator-key1="ADD">
+			<execute function="Click#clickAtSidebarClickAt" />
+		</case>
+		<case locator-key1="ADMIN">
+			<execute function="Click#textClickAtClickDockbar" value1="Admin" />
+		</case>
+		<case locator-key1="ADMIN_CONTROL_PANEL">
+			<execute function="Click#textClickAtAndWait" value1="Control Panel" />
+		</case>
+		<case locator-key1="ADMIN_SITE_ADMINISTRATION">
+			<execute function="Click#textClickAtAndWait" value1="Site Administration" />
+		</case>
+		<case locator-key1="MY_SITES">
+			<execute function="Click#textClickAtClickDockbar" value1="My Sites" />
+		</case>
+		<case locator-key1="USER_SIGN_OUT">
+			<execute function="Click#textClickAtAndWait" value1="Sign Out" />
+		</case>
+		<case comparator="startsWith" locator1="//span[@data-title='">
+			<execute function="Click#pauseMakeVisibleClickAt" />
+		</case>
+	</command>
+
+	<command name="type">
+		<case locator-key1="ADD_APPLICATION_SEARCH_FIELD">
+			<execute function="Type#sendKeysApplicationSearch" />
+		</case>
+	</command>
+</definition>

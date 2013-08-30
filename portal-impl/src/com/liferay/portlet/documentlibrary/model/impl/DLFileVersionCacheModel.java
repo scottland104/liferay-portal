@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,11 @@ import com.liferay.portal.model.CacheModel;
 
 import com.liferay.portlet.documentlibrary.model.DLFileVersion;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -29,12 +34,15 @@ import java.util.Date;
  * @see DLFileVersion
  * @generated
  */
-public class DLFileVersionCacheModel implements CacheModel<DLFileVersion> {
+public class DLFileVersionCacheModel implements CacheModel<DLFileVersion>,
+	Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(43);
+		StringBundler sb = new StringBundler(51);
 
-		sb.append("{fileVersionId=");
+		sb.append("{uuid=");
+		sb.append(uuid);
+		sb.append(", fileVersionId=");
 		sb.append(fileVersionId);
 		sb.append(", groupId=");
 		sb.append(groupId);
@@ -46,8 +54,12 @@ public class DLFileVersionCacheModel implements CacheModel<DLFileVersion> {
 		sb.append(userName);
 		sb.append(", createDate=");
 		sb.append(createDate);
+		sb.append(", modifiedDate=");
+		sb.append(modifiedDate);
 		sb.append(", repositoryId=");
 		sb.append(repositoryId);
+		sb.append(", folderId=");
+		sb.append(folderId);
 		sb.append(", fileEntryId=");
 		sb.append(fileEntryId);
 		sb.append(", extension=");
@@ -68,6 +80,8 @@ public class DLFileVersionCacheModel implements CacheModel<DLFileVersion> {
 		sb.append(version);
 		sb.append(", size=");
 		sb.append(size);
+		sb.append(", checksum=");
+		sb.append(checksum);
 		sb.append(", status=");
 		sb.append(status);
 		sb.append(", statusByUserId=");
@@ -81,8 +95,16 @@ public class DLFileVersionCacheModel implements CacheModel<DLFileVersion> {
 		return sb.toString();
 	}
 
+	@Override
 	public DLFileVersion toEntityModel() {
 		DLFileVersionImpl dlFileVersionImpl = new DLFileVersionImpl();
+
+		if (uuid == null) {
+			dlFileVersionImpl.setUuid(StringPool.BLANK);
+		}
+		else {
+			dlFileVersionImpl.setUuid(uuid);
+		}
 
 		dlFileVersionImpl.setFileVersionId(fileVersionId);
 		dlFileVersionImpl.setGroupId(groupId);
@@ -103,7 +125,15 @@ public class DLFileVersionCacheModel implements CacheModel<DLFileVersion> {
 			dlFileVersionImpl.setCreateDate(new Date(createDate));
 		}
 
+		if (modifiedDate == Long.MIN_VALUE) {
+			dlFileVersionImpl.setModifiedDate(null);
+		}
+		else {
+			dlFileVersionImpl.setModifiedDate(new Date(modifiedDate));
+		}
+
 		dlFileVersionImpl.setRepositoryId(repositoryId);
+		dlFileVersionImpl.setFolderId(folderId);
 		dlFileVersionImpl.setFileEntryId(fileEntryId);
 
 		if (extension == null) {
@@ -158,6 +188,14 @@ public class DLFileVersionCacheModel implements CacheModel<DLFileVersion> {
 		}
 
 		dlFileVersionImpl.setSize(size);
+
+		if (checksum == null) {
+			dlFileVersionImpl.setChecksum(StringPool.BLANK);
+		}
+		else {
+			dlFileVersionImpl.setChecksum(checksum);
+		}
+
 		dlFileVersionImpl.setStatus(status);
 		dlFileVersionImpl.setStatusByUserId(statusByUserId);
 
@@ -180,13 +218,146 @@ public class DLFileVersionCacheModel implements CacheModel<DLFileVersion> {
 		return dlFileVersionImpl;
 	}
 
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		uuid = objectInput.readUTF();
+		fileVersionId = objectInput.readLong();
+		groupId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		userId = objectInput.readLong();
+		userName = objectInput.readUTF();
+		createDate = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
+		repositoryId = objectInput.readLong();
+		folderId = objectInput.readLong();
+		fileEntryId = objectInput.readLong();
+		extension = objectInput.readUTF();
+		mimeType = objectInput.readUTF();
+		title = objectInput.readUTF();
+		description = objectInput.readUTF();
+		changeLog = objectInput.readUTF();
+		extraSettings = objectInput.readUTF();
+		fileEntryTypeId = objectInput.readLong();
+		version = objectInput.readUTF();
+		size = objectInput.readLong();
+		checksum = objectInput.readUTF();
+		status = objectInput.readInt();
+		statusByUserId = objectInput.readLong();
+		statusByUserName = objectInput.readUTF();
+		statusDate = objectInput.readLong();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		if (uuid == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
+
+		objectOutput.writeLong(fileVersionId);
+		objectOutput.writeLong(groupId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(userId);
+
+		if (userName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(userName);
+		}
+
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(modifiedDate);
+		objectOutput.writeLong(repositoryId);
+		objectOutput.writeLong(folderId);
+		objectOutput.writeLong(fileEntryId);
+
+		if (extension == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(extension);
+		}
+
+		if (mimeType == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(mimeType);
+		}
+
+		if (title == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(title);
+		}
+
+		if (description == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(description);
+		}
+
+		if (changeLog == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(changeLog);
+		}
+
+		if (extraSettings == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(extraSettings);
+		}
+
+		objectOutput.writeLong(fileEntryTypeId);
+
+		if (version == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(version);
+		}
+
+		objectOutput.writeLong(size);
+
+		if (checksum == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(checksum);
+		}
+
+		objectOutput.writeInt(status);
+		objectOutput.writeLong(statusByUserId);
+
+		if (statusByUserName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(statusByUserName);
+		}
+
+		objectOutput.writeLong(statusDate);
+	}
+
+	public String uuid;
 	public long fileVersionId;
 	public long groupId;
 	public long companyId;
 	public long userId;
 	public String userName;
 	public long createDate;
+	public long modifiedDate;
 	public long repositoryId;
+	public long folderId;
 	public long fileEntryId;
 	public String extension;
 	public String mimeType;
@@ -197,6 +368,7 @@ public class DLFileVersionCacheModel implements CacheModel<DLFileVersion> {
 	public long fileEntryTypeId;
 	public String version;
 	public long size;
+	public String checksum;
 	public int status;
 	public long statusByUserId;
 	public String statusByUserName;

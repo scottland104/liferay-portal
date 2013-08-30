@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.util.Randomizer;
 import com.liferay.portal.kernel.util.UnmodifiableList;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -32,139 +33,6 @@ import java.util.List;
 public class QueryUtil {
 
 	public static final int ALL_POS = -1;
-
-	public static Iterator<?> iterate(
-		Query query, Dialect dialect, int start, int end) {
-
-		return iterate(query, dialect, start, end, true);
-	}
-
-	public static Iterator<?> iterate(
-		Query query, Dialect dialect, int start, int end,
-		boolean unmodifiable) {
-
-		return list(query, dialect, start, end).iterator();
-	}
-
-	public static List<?> list(
-		Query query, Dialect dialect, int start, int end) {
-
-		return list(query, dialect, start, end, true);
-	}
-
-	public static List<?> list(
-		Query query, Dialect dialect, int start, int end,
-		boolean unmodifiable) {
-
-		if ((start == ALL_POS) && (end == ALL_POS)) {
-			return query.list(unmodifiable);
-		}
-		else {
-			if (dialect.supportsLimit()) {
-				query.setMaxResults(end - start);
-				query.setFirstResult(start);
-
-				return query.list(unmodifiable);
-			}
-			else {
-				List<Object> list = new ArrayList<Object>();
-
-				DB db = DBFactoryUtil.getDB();
-
-				if (!db.isSupportsScrollableResults()) {
-					if (_log.isWarnEnabled()) {
-						_log.warn(
-							"Database does not support scrollable results");
-					}
-
-					return list;
-				}
-
-				ScrollableResults sr = query.scroll();
-
-				if (sr.first() && sr.scroll(start)) {
-					for (int i = start; i < end; i++) {
-						Object[] array = sr.get();
-
-						if (array.length == 1) {
-							list.add(array[0]);
-						}
-						else {
-							list.add(array);
-						}
-
-						if (!sr.next()) {
-							break;
-						}
-					}
-				}
-
-				if (unmodifiable) {
-					return new UnmodifiableList<Object>(list);
-				}
-				else {
-					return list;
-				}
-			}
-		}
-	}
-
-	public static List<?> randomList(
-		Query query, Dialect dialect, int total, int num) {
-
-		return randomList(query, dialect, total, num, true);
-	}
-
-	public static List<?> randomList(
-		Query query, Dialect dialect, int total, int num,
-		boolean unmodifiable) {
-
-		if ((total == 0) || (num == 0)) {
-			return new ArrayList<Object>();
-		}
-
-		if (num >= total) {
-			return list(query, dialect, ALL_POS, ALL_POS, true);
-		}
-
-		int[] scrollIds = Randomizer.getInstance().nextInt(total, num);
-
-		List<Object> list = new ArrayList<Object>();
-
-		DB db = DBFactoryUtil.getDB();
-
-		if (!db.isSupportsScrollableResults()) {
-			if (_log.isWarnEnabled()) {
-				_log.warn("Database does not support scrollable results");
-			}
-
-			return list;
-		}
-
-		ScrollableResults sr = query.scroll();
-
-		for (int i = 0; i < scrollIds.length; i++) {
-			if (sr.scroll(scrollIds[i])) {
-				Object[] array = sr.get();
-
-				if (array.length == 1) {
-					list.add(array[0]);
-				}
-				else {
-					list.add(array);
-				}
-
-				sr.first();
-			}
-		}
-
-		if (unmodifiable) {
-			return new UnmodifiableList<Object>(list);
-		}
-		else {
-			return list;
-		}
-	}
 
 	public static Comparable<?>[] getPrevAndNext(
 		Query query, int count, OrderByComparator obc,
@@ -273,6 +141,153 @@ public class QueryUtil {
 		}
 
 		return array;
+	}
+
+	public static Iterator<?> iterate(
+		Query query, Dialect dialect, int start, int end) {
+
+		return iterate(query, dialect, start, end, true);
+	}
+
+	public static Iterator<?> iterate(
+		Query query, Dialect dialect, int start, int end,
+		boolean unmodifiable) {
+
+		return list(query, dialect, start, end).iterator();
+	}
+
+	public static List<?> list(
+		Query query, Dialect dialect, int start, int end) {
+
+		return list(query, dialect, start, end, true);
+	}
+
+	public static List<?> list(
+		Query query, Dialect dialect, int start, int end,
+		boolean unmodifiable) {
+
+		if ((start == ALL_POS) && (end == ALL_POS)) {
+			return query.list(unmodifiable);
+		}
+
+		if (start < 0) {
+			start = 0;
+		}
+
+		if (end < start) {
+			end = start;
+		}
+
+		if (start == end) {
+			if (unmodifiable) {
+				return Collections.emptyList();
+			}
+			else {
+				return new ArrayList<Object>();
+			}
+		}
+
+		if (dialect.supportsLimit()) {
+			query.setMaxResults(end - start);
+			query.setFirstResult(start);
+
+			return query.list(unmodifiable);
+		}
+
+		List<Object> list = new ArrayList<Object>();
+
+		DB db = DBFactoryUtil.getDB();
+
+		if (!db.isSupportsScrollableResults()) {
+			if (_log.isWarnEnabled()) {
+				_log.warn("Database does not support scrollable results");
+			}
+
+			return list;
+		}
+
+		ScrollableResults sr = query.scroll();
+
+		if (sr.first() && sr.scroll(start)) {
+			for (int i = start; i < end; i++) {
+				Object[] array = sr.get();
+
+				if (array.length == 1) {
+					list.add(array[0]);
+				}
+				else {
+					list.add(array);
+				}
+
+				if (!sr.next()) {
+					break;
+				}
+			}
+		}
+
+		if (unmodifiable) {
+			return new UnmodifiableList<Object>(list);
+		}
+		else {
+			return list;
+		}
+	}
+
+	public static List<?> randomList(
+		Query query, Dialect dialect, int total, int num) {
+
+		return randomList(query, dialect, total, num, true);
+	}
+
+	public static List<?> randomList(
+		Query query, Dialect dialect, int total, int num,
+		boolean unmodifiable) {
+
+		if ((total == 0) || (num == 0)) {
+			return new ArrayList<Object>();
+		}
+
+		if (num >= total) {
+			return list(query, dialect, ALL_POS, ALL_POS, true);
+		}
+
+		int[] scrollIds = Randomizer.getInstance().nextInt(total, num);
+
+		List<Object> list = new ArrayList<Object>();
+
+		DB db = DBFactoryUtil.getDB();
+
+		if (!db.isSupportsScrollableResults()) {
+			if (_log.isWarnEnabled()) {
+				_log.warn("Database does not support scrollable results");
+			}
+
+			return list;
+		}
+
+		ScrollableResults sr = query.scroll();
+
+		for (int i = 0; i < scrollIds.length; i++) {
+			if (sr.scroll(scrollIds[i])) {
+				Object[] array = sr.get();
+
+				if (array.length == 1) {
+					list.add(array[0]);
+				}
+				else {
+					list.add(array);
+				}
+
+				sr.first();
+			}
+		}
+
+		if (unmodifiable) {
+			return new UnmodifiableList<Object>(list);
+		}
+		else {
+			return list;
+		}
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(QueryUtil.class);

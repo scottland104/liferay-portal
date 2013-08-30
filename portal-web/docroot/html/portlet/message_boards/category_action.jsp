@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -36,6 +36,18 @@ Set<Long> categorySubscriptionClassPKs = (Set<Long>)row.getParameter("categorySu
 			image="edit"
 			url="<%= editURL %>"
 		/>
+
+		<portlet:renderURL var="moveURL">
+			<portlet:param name="struts_action" value="/message_boards/move_category" />
+			<portlet:param name="redirect" value="<%= currentURL %>" />
+			<portlet:param name="mbCategoryId" value="<%= String.valueOf(category.getCategoryId()) %>" />
+		</portlet:renderURL>
+
+		<liferay-ui:icon
+			image="submit"
+			message="move"
+			url="<%= moveURL %>"
+		/>
 	</c:if>
 
 	<c:if test="<%= MBCategoryPermission.contains(permissionChecker, category, ActionKeys.PERMISSIONS) %>">
@@ -44,29 +56,39 @@ Set<Long> categorySubscriptionClassPKs = (Set<Long>)row.getParameter("categorySu
 			modelResourceDescription="<%= category.getName() %>"
 			resourcePrimKey="<%= String.valueOf(category.getCategoryId()) %>"
 			var="permissionsURL"
+			windowState="<%= LiferayWindowState.POP_UP.toString() %>"
 		/>
 
 		<liferay-ui:icon
 			image="permissions"
+			method="get"
 			url="<%= permissionsURL %>"
+			useDialog="<%= true %>"
 		/>
 	</c:if>
 
 	<c:if test="<%= portletName.equals(PortletKeys.MESSAGE_BOARDS) %>">
 
-		<%
-		rssURL.setParameter("p_l_id", String.valueOf(plid));
-		rssURL.setParameter("mbCategoryId", String.valueOf(category.getCategoryId()));
-		%>
+		<c:if test="<%= enableRSS %>">
 
-		<liferay-ui:icon
-			image="rss"
-			method="get"
-			target="_blank"
-			url="<%= rssURL.toString() %>"
-		/>
+			<%
+			if (category.getCategoryId() > 0) {
+				rssURL.setParameter("mbCategoryId", String.valueOf(category.getCategoryId()));
+			}
+			else {
+				rssURL.setParameter("groupId", String.valueOf(scopeGroupId));
+			}
+			%>
 
-		<c:if test="<%= MBCategoryPermission.contains(permissionChecker, category, ActionKeys.SUBSCRIBE) %>">
+			<liferay-ui:rss
+				delta="<%= rssDelta %>"
+				displayStyle="<%= rssDisplayStyle %>"
+				feedType="<%= rssFeedType %>"
+				resourceURL="<%= rssURL %>"
+			/>
+		</c:if>
+
+		<c:if test="<%= MBCategoryPermission.contains(permissionChecker, category, ActionKeys.SUBSCRIBE) && (MBUtil.getEmailMessageAddedEnabled(portletPreferences) || MBUtil.getEmailMessageUpdatedEnabled(portletPreferences)) %>">
 			<c:choose>
 				<c:when test="<%= (categorySubscriptionClassPKs != null) && categorySubscriptionClassPKs.contains(category.getCategoryId()) %>">
 					<portlet:actionURL var="unsubscribeURL">
@@ -101,12 +123,13 @@ Set<Long> categorySubscriptionClassPKs = (Set<Long>)row.getParameter("categorySu
 	<c:if test="<%= MBCategoryPermission.contains(permissionChecker, category, ActionKeys.DELETE) %>">
 		<portlet:actionURL var="deleteURL">
 			<portlet:param name="struts_action" value="/message_boards/edit_category" />
-			<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.DELETE %>" />
+			<portlet:param name="<%= Constants.CMD %>" value="<%= TrashUtil.isTrashEnabled(scopeGroupId) ? Constants.MOVE_TO_TRASH : Constants.DELETE %>" />
 			<portlet:param name="redirect" value="<%= currentURL %>" />
 			<portlet:param name="mbCategoryId" value="<%= String.valueOf(category.getCategoryId()) %>" />
 		</portlet:actionURL>
 
 		<liferay-ui:icon-delete
+			trash="<%= TrashUtil.isTrashEnabled(scopeGroupId) %>"
 			url="<%= deleteURL %>"
 		/>
 	</c:if>

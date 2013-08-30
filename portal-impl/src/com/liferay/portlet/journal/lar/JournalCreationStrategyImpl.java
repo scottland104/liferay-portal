@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -27,24 +27,12 @@ import com.liferay.portlet.journal.model.JournalArticle;
  * </p>
  *
  * @author Joel Kozikowski
- * @see    com.liferay.portlet.journal.lar.JournalContentPortletDataHandlerImpl
- * @see    com.liferay.portlet.journal.lar.JournalPortletDataHandlerImpl
+ * @see    com.liferay.portlet.journal.lar.JournalContentPortletDataHandler
+ * @see    com.liferay.portlet.journal.lar.JournalPortletDataHandler
  */
 public class JournalCreationStrategyImpl implements JournalCreationStrategy {
 
-	public long getAuthorUserId(PortletDataContext context, Object journalObj)
-		throws Exception {
-
-		return JournalCreationStrategy.USE_DEFAULT_USER_ID_STRATEGY;
-	}
-
-	public String getTransformedContent(
-			PortletDataContext context, JournalArticle newArticle)
-		throws Exception {
-
-		return JournalCreationStrategy.ARTICLE_CONTENT_UNCHANGED;
-	}
-
+	@Override
 	public boolean addGroupPermissions(
 			PortletDataContext context, Object journalObj)
 		throws Exception {
@@ -52,11 +40,27 @@ public class JournalCreationStrategyImpl implements JournalCreationStrategy {
 		return true;
 	}
 
+	@Override
 	public boolean addGuestPermissions(
 			PortletDataContext context, Object journalObj)
 		throws Exception {
 
 		return true;
+	}
+
+	@Override
+	public long getAuthorUserId(PortletDataContext context, Object journalObj)
+		throws Exception {
+
+		return JournalCreationStrategy.USE_DEFAULT_USER_ID_STRATEGY;
+	}
+
+	@Override
+	public String getTransformedContent(
+			PortletDataContext context, JournalArticle newArticle)
+		throws Exception {
+
+		return JournalCreationStrategy.ARTICLE_CONTENT_UNCHANGED;
 	}
 
 }

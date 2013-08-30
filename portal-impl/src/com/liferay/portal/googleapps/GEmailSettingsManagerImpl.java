@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,11 +32,11 @@ public class GEmailSettingsManagerImpl
 
 		GAuthenticator gAuthenticator = googleApps.getGAuthenticator();
 
-		emailSettingsURL =
-			APPS_URL.concat("/emailsettings/2.0/").concat(
-				gAuthenticator.getDomain());
+		emailSettingsURL = APPS_URL.concat(
+			"/emailsettings/2.0/").concat(gAuthenticator.getDomain());
 	}
 
+	@Override
 	public void addSendAs(long userId, String fullName, String emailAddress)
 		throws GoogleAppsException {
 

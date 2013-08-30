@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portal.model.impl;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -30,12 +31,12 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base model implementation for the PluginSetting service. Represents a row in the &quot;PluginSetting&quot; database table, with each column mapped to a property of this class.
@@ -69,6 +70,8 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 		};
 	public static final String TABLE_SQL_CREATE = "create table PluginSetting (pluginSettingId LONG not null primary key,companyId LONG,pluginId VARCHAR(75) null,pluginType VARCHAR(75) null,roles STRING null,active_ BOOLEAN)";
 	public static final String TABLE_SQL_DROP = "drop table PluginSetting";
+	public static final String ORDER_BY_JPQL = " ORDER BY pluginSetting.pluginSettingId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY PluginSetting.pluginSettingId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -78,6 +81,13 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.PluginSetting"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.PluginSetting"),
+			true);
+	public static long COMPANYID_COLUMN_BITMASK = 1L;
+	public static long PLUGINID_COLUMN_BITMASK = 2L;
+	public static long PLUGINTYPE_COLUMN_BITMASK = 4L;
+	public static long PLUGINSETTINGID_COLUMN_BITMASK = 8L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -86,6 +96,10 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 	 * @return the normal model instance
 	 */
 	public static PluginSetting toModel(PluginSettingSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		PluginSetting model = new PluginSettingImpl();
 
 		model.setPluginSettingId(soapModel.getPluginSettingId());
@@ -105,6 +119,10 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 	 * @return the normal model instances
 	 */
 	public static List<PluginSetting> toModels(PluginSettingSoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<PluginSetting> models = new ArrayList<PluginSetting>(soapModels.length);
 
 		for (PluginSettingSoap soapModel : soapModels) {
@@ -114,51 +132,116 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 		return models;
 	}
 
-	public Class<?> getModelClass() {
-		return PluginSetting.class;
-	}
-
-	public String getModelClassName() {
-		return PluginSetting.class.getName();
-	}
-
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.PluginSetting"));
 
 	public PluginSettingModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _pluginSettingId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setPluginSettingId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_pluginSettingId);
+		return _pluginSettingId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return PluginSetting.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return PluginSetting.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("pluginSettingId", getPluginSettingId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("pluginId", getPluginId());
+		attributes.put("pluginType", getPluginType());
+		attributes.put("roles", getRoles());
+		attributes.put("active", getActive());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long pluginSettingId = (Long)attributes.get("pluginSettingId");
+
+		if (pluginSettingId != null) {
+			setPluginSettingId(pluginSettingId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		String pluginId = (String)attributes.get("pluginId");
+
+		if (pluginId != null) {
+			setPluginId(pluginId);
+		}
+
+		String pluginType = (String)attributes.get("pluginType");
+
+		if (pluginType != null) {
+			setPluginType(pluginType);
+		}
+
+		String roles = (String)attributes.get("roles");
+
+		if (roles != null) {
+			setRoles(roles);
+		}
+
+		Boolean active = (Boolean)attributes.get("active");
+
+		if (active != null) {
+			setActive(active);
+		}
+	}
+
 	@JSON
+	@Override
 	public long getPluginSettingId() {
 		return _pluginSettingId;
 	}
 
+	@Override
 	public void setPluginSettingId(long pluginSettingId) {
 		_pluginSettingId = pluginSettingId;
 	}
 
 	@JSON
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
+		_columnBitmask |= COMPANYID_COLUMN_BITMASK;
+
 		if (!_setOriginalCompanyId) {
 			_setOriginalCompanyId = true;
 
@@ -173,6 +256,7 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 	}
 
 	@JSON
+	@Override
 	public String getPluginId() {
 		if (_pluginId == null) {
 			return StringPool.BLANK;
@@ -182,7 +266,10 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 		}
 	}
 
+	@Override
 	public void setPluginId(String pluginId) {
+		_columnBitmask |= PLUGINID_COLUMN_BITMASK;
+
 		if (_originalPluginId == null) {
 			_originalPluginId = _pluginId;
 		}
@@ -195,6 +282,7 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 	}
 
 	@JSON
+	@Override
 	public String getPluginType() {
 		if (_pluginType == null) {
 			return StringPool.BLANK;
@@ -204,7 +292,10 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 		}
 	}
 
+	@Override
 	public void setPluginType(String pluginType) {
+		_columnBitmask |= PLUGINTYPE_COLUMN_BITMASK;
+
 		if (_originalPluginType == null) {
 			_originalPluginType = _pluginType;
 		}
@@ -217,6 +308,7 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 	}
 
 	@JSON
+	@Override
 	public String getRoles() {
 		if (_roles == null) {
 			return StringPool.BLANK;
@@ -226,52 +318,52 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 		}
 	}
 
+	@Override
 	public void setRoles(String roles) {
 		_roles = roles;
 	}
 
 	@JSON
+	@Override
 	public boolean getActive() {
 		return _active;
 	}
 
+	@Override
 	public boolean isActive() {
 		return _active;
 	}
 
+	@Override
 	public void setActive(boolean active) {
 		_active = active;
 	}
 
-	@Override
-	public PluginSetting toEscapedModel() {
-		if (isEscapedModel()) {
-			return (PluginSetting)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (PluginSetting)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					PluginSetting.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			PluginSetting.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public PluginSetting toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (PluginSetting)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -290,6 +382,7 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 		return pluginSettingImpl;
 	}
 
+	@Override
 	public int compareTo(PluginSetting pluginSetting) {
 		long primaryKey = pluginSetting.getPrimaryKey();
 
@@ -306,18 +399,15 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof PluginSetting)) {
 			return false;
 		}
 
-		PluginSetting pluginSetting = null;
-
-		try {
-			pluginSetting = (PluginSetting)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		PluginSetting pluginSetting = (PluginSetting)obj;
 
 		long primaryKey = pluginSetting.getPrimaryKey();
 
@@ -345,6 +435,8 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 		pluginSettingModelImpl._originalPluginId = pluginSettingModelImpl._pluginId;
 
 		pluginSettingModelImpl._originalPluginType = pluginSettingModelImpl._pluginType;
+
+		pluginSettingModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -405,6 +497,7 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(22);
 
@@ -443,7 +536,7 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 	}
 
 	private static ClassLoader _classLoader = PluginSetting.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			PluginSetting.class
 		};
 	private long _pluginSettingId;
@@ -456,6 +549,6 @@ public class PluginSettingModelImpl extends BaseModelImpl<PluginSetting>
 	private String _originalPluginType;
 	private String _roles;
 	private boolean _active;
-	private transient ExpandoBridge _expandoBridge;
-	private PluginSetting _escapedModelProxy;
+	private long _columnBitmask;
+	private PluginSetting _escapedModel;
 }

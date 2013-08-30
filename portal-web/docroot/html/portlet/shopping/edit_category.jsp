@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -63,7 +63,7 @@ long parentCategoryId = BeanParamUtil.getLong(category, request, "parentCategory
 
 					parentCategoryName = parentCategory.getName();
 				}
-				catch (NoSuchCategoryException nscce) {
+				catch (NoSuchCategoryException nsce) {
 				}
 				%>
 
@@ -72,7 +72,7 @@ long parentCategoryId = BeanParamUtil.getLong(category, request, "parentCategory
 					<portlet:param name="categoryId" value="<%= String.valueOf(parentCategoryId) %>" />
 				</portlet:renderURL>
 
-				<aui:a href="<%= viewCategoryURL %>" id="parentCategoryName" label="<%= parentCategoryName %>" />
+				<aui:a href="<%= viewCategoryURL %>" id="parentCategoryName" label="<%= HtmlUtil.escape(parentCategoryName) %>" />
 
 				<portlet:renderURL var="selectCategoryURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
 					<portlet:param name="struts_action" value="/shopping/select_category" />
@@ -97,7 +97,7 @@ long parentCategoryId = BeanParamUtil.getLong(category, request, "parentCategory
 			</aui:field-wrapper>
 		</c:if>
 
-		<aui:input cssClass="lfr-input-text-container" name="name" />
+		<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" cssClass="lfr-input-text-container" name="name" />
 
 		<aui:input cssClass="lfr-textarea-container" name="description" />
 
@@ -120,6 +120,7 @@ long parentCategoryId = BeanParamUtil.getLong(category, request, "parentCategory
 <aui:script>
 	function <portlet:namespace />saveCategory() {
 		document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= (category == null) ? Constants.ADD : Constants.UPDATE %>";
+
 		submitForm(document.<portlet:namespace />fm);
 	}
 
@@ -173,8 +174,4 @@ long parentCategoryId = BeanParamUtil.getLong(category, request, "parentCategory
 		},
 		['aui-base']
 	);
-
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />name);
-	</c:if>
 </aui:script>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,187 +17,148 @@ package com.liferay.portlet.journal.service.impl;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.xml.Document;
-import com.liferay.portal.kernel.xml.Element;
-import com.liferay.portal.kernel.xml.SAXReaderUtil;
-import com.liferay.portal.model.ResourceConstants;
+import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
+import com.liferay.portal.model.Group;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.util.PortalUtil;
-import com.liferay.portlet.dynamicdatamapping.util.DDMXMLUtil;
-import com.liferay.portlet.expando.model.ExpandoBridge;
-import com.liferay.portlet.journal.DuplicateStructureElementException;
+import com.liferay.portal.util.PropsValues;
+import com.liferay.portlet.dynamicdatamapping.StructureXsdException;
+import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
+import com.liferay.portlet.dynamicdatamapping.model.DDMStructureConstants;
 import com.liferay.portlet.journal.DuplicateStructureIdException;
-import com.liferay.portlet.journal.NoSuchArticleException;
 import com.liferay.portlet.journal.NoSuchStructureException;
-import com.liferay.portlet.journal.RequiredStructureException;
 import com.liferay.portlet.journal.StructureIdException;
-import com.liferay.portlet.journal.StructureInheritanceException;
-import com.liferay.portlet.journal.StructureNameException;
-import com.liferay.portlet.journal.StructureXsdException;
 import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.model.JournalStructure;
-import com.liferay.portlet.journal.model.JournalStructureConstants;
+import com.liferay.portlet.journal.model.JournalStructureAdapter;
 import com.liferay.portlet.journal.service.base.JournalStructureLocalServiceBaseImpl;
-import com.liferay.portlet.journal.util.comparator.StructurePKComparator;
+import com.liferay.portlet.journal.util.JournalConverterUtil;
+import com.liferay.portlet.journal.util.JournalUtil;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Locale;
+import java.util.Map;
 
 /**
- * @author Brian Wing Shun Chan
- * @author Raymond Augé
+ * @author     Brian Wing Shun Chan
+ * @author     Raymond Augé
+ * @author     Marcellus Tavares
+ * @deprecated As of 6.2.0, since Web Content Administration now uses the
+ *             Dynamic Data Mapping framework to handle structures
  */
 public class JournalStructureLocalServiceImpl
 	extends JournalStructureLocalServiceBaseImpl {
 
+	@Override
+	public JournalStructure addJournalStructure(JournalStructure structure)
+		throws PortalException, SystemException {
+
+		structure.setNew(true);
+
+		return updateStructure(structure);
+	}
+
+	@Override
 	public JournalStructure addStructure(
 			long userId, long groupId, String structureId,
 			boolean autoStructureId, String parentStructureId,
-			String name, String description, String xsd,
-			ServiceContext serviceContext)
+			Map<Locale, String> nameMap, Map<Locale, String> descriptionMap,
+			String xsd, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
-		// Structure
-
-		User user = userPersistence.findByPrimaryKey(userId);
-		structureId = structureId.trim().toUpperCase();
-		Date now = new Date();
-
 		try {
-			xsd = DDMXMLUtil.formatXML(xsd);
+			xsd = JournalConverterUtil.getDDMXSD(xsd);
 		}
 		catch (Exception e) {
-			throw new StructureXsdException();
+			throw new StructureXsdException(e);
 		}
 
 		if (autoStructureId) {
-			structureId = String.valueOf(counterLocalService.increment());
+			structureId = null;
 		}
 
-		validate(
-			groupId, structureId, autoStructureId, parentStructureId, name,
-			xsd);
+		DDMStructure ddmStructure = ddmStructureLocalService.addStructure(
+			userId, groupId, parentStructureId,
+			PortalUtil.getClassNameId(JournalArticle.class), structureId,
+			nameMap, descriptionMap, xsd,
+			PropsValues.JOURNAL_ARTICLE_STORAGE_TYPE,
+			DDMStructureConstants.TYPE_DEFAULT, serviceContext);
 
-		long id = counterLocalService.increment();
-
-		JournalStructure structure = journalStructurePersistence.create(id);
-
-		structure.setUuid(serviceContext.getUuid());
-		structure.setGroupId(groupId);
-		structure.setCompanyId(user.getCompanyId());
-		structure.setUserId(user.getUserId());
-		structure.setUserName(user.getFullName());
-		structure.setCreateDate(serviceContext.getCreateDate(now));
-		structure.setModifiedDate(serviceContext.getModifiedDate(now));
-		structure.setStructureId(structureId);
-		structure.setParentStructureId(parentStructureId);
-		structure.setName(name);
-		structure.setDescription(description);
-		structure.setXsd(xsd);
-
-		journalStructurePersistence.update(structure, false);
-
-		// Resources
-
-		if (serviceContext.getAddGroupPermissions() ||
-			serviceContext.getAddGuestPermissions()) {
-
-			addStructureResources(
-				structure, serviceContext.getAddGroupPermissions(),
-				serviceContext.getAddGuestPermissions());
-		}
-		else {
-			addStructureResources(
-				structure, serviceContext.getGroupPermissions(),
-				serviceContext.getGuestPermissions());
-		}
-
-		// Expando
-
-		ExpandoBridge expandoBridge = structure.getExpandoBridge();
-
-		expandoBridge.setAttributes(serviceContext);
-
-		return structure;
+		return new JournalStructureAdapter(ddmStructure);
 	}
 
+	@Override
 	public void addStructureResources(
 			JournalStructure structure, boolean addGroupPermissions,
 			boolean addGuestPermissions)
 		throws PortalException, SystemException {
 
-		resourceLocalService.addResources(
-			structure.getCompanyId(), structure.getGroupId(),
-			structure.getUserId(), JournalStructure.class.getName(),
-			structure.getId(), false, addGroupPermissions,
-			addGuestPermissions);
+		DDMStructure dmmStructure = getDDMStructure(structure);
+
+		ddmStructureLocalService.addStructureResources(
+			dmmStructure, addGroupPermissions, addGuestPermissions);
 	}
 
+	@Override
 	public void addStructureResources(
 			JournalStructure structure, String[] groupPermissions,
 			String[] guestPermissions)
 		throws PortalException, SystemException {
 
-		resourceLocalService.addModelResources(
-			structure.getCompanyId(), structure.getGroupId(),
-			structure.getUserId(), JournalStructure.class.getName(),
-			structure.getId(), groupPermissions, guestPermissions);
+		DDMStructure dmmStructure = getDDMStructure(structure);
+
+		ddmStructureLocalService.addStructureResources(
+			dmmStructure, groupPermissions, guestPermissions);
 	}
 
+	@Override
 	public void addStructureResources(
 			long groupId, String structureId, boolean addGroupPermissions,
 			boolean addGuestPermissions)
 		throws PortalException, SystemException {
 
-		JournalStructure structure = journalStructurePersistence.findByG_S(
-			groupId, structureId);
+		JournalStructure structure = doGetStructure(groupId, structureId);
 
 		addStructureResources(
 			structure, addGroupPermissions, addGuestPermissions);
 	}
 
+	@Override
 	public void addStructureResources(
 			long groupId, String structureId, String[] groupPermissions,
 			String[] guestPermissions)
 		throws PortalException, SystemException {
 
-		JournalStructure structure = journalStructurePersistence.findByG_S(
-			groupId, structureId);
+		JournalStructure structure = doGetStructure(groupId, structureId);
 
 		addStructureResources(structure, groupPermissions, guestPermissions);
 	}
 
+	@Override
 	public void checkNewLine(long groupId, String structureId)
 		throws PortalException, SystemException {
 
-		JournalStructure structure = journalStructurePersistence.findByG_S(
-			groupId, structureId);
+		JournalStructure structure = doGetStructure(groupId, structureId);
 
 		String xsd = structure.getXsd();
 
-		if ((xsd != null) && (xsd.indexOf("\\n") != -1)) {
+		if ((xsd != null) && xsd.contains("\\n")) {
 			xsd = StringUtil.replace(
-				xsd,
-				new String[] {"\\n", "\\r"},
-				new String[] {"\n", "\r"});
+				xsd, new String[] {"\\n", "\\r"}, new String[] {"\n", "\r"});
 
 			structure.setXsd(xsd);
 
-			journalStructurePersistence.update(structure, false);
+			updateStructure(structure);
 		}
 	}
 
+	@Override
 	public JournalStructure copyStructure(
 			long userId, long groupId, String oldStructureId,
 			String newStructureId, boolean autoStructureId)
@@ -210,8 +171,7 @@ public class JournalStructureLocalServiceImpl
 		newStructureId = newStructureId.trim().toUpperCase();
 		Date now = new Date();
 
-		JournalStructure oldStructure = journalStructurePersistence.findByG_S(
-			groupId, oldStructureId);
+		JournalStructure oldStructure = doGetStructure(groupId, oldStructureId);
 
 		if (autoStructureId) {
 			newStructureId = String.valueOf(counterLocalService.increment());
@@ -219,8 +179,8 @@ public class JournalStructureLocalServiceImpl
 		else {
 			validateStructureId(newStructureId);
 
-			JournalStructure newStructure =
-				journalStructurePersistence.fetchByG_S(groupId, newStructureId);
+			JournalStructure newStructure = fetchStructure(
+				groupId, newStructureId);
 
 			if (newStructure != null) {
 				throw new DuplicateStructureIdException();
@@ -229,7 +189,7 @@ public class JournalStructureLocalServiceImpl
 
 		long id = counterLocalService.increment();
 
-		JournalStructure newStructure = journalStructurePersistence.create(id);
+		JournalStructure newStructure = createJournalStructure(id);
 
 		newStructure.setGroupId(groupId);
 		newStructure.setCompanyId(user.getCompanyId());
@@ -238,412 +198,349 @@ public class JournalStructureLocalServiceImpl
 		newStructure.setCreateDate(now);
 		newStructure.setModifiedDate(now);
 		newStructure.setStructureId(newStructureId);
-		newStructure.setName(oldStructure.getName());
-		newStructure.setDescription(oldStructure.getDescription());
+		newStructure.setNameMap(oldStructure.getNameMap());
+		newStructure.setDescriptionMap(oldStructure.getDescriptionMap());
 		newStructure.setXsd(oldStructure.getXsd());
+		newStructure.setExpandoBridgeAttributes(oldStructure);
 
-		journalStructurePersistence.update(newStructure, false);
-
-		// Resources
-
-		addStructureResources(newStructure, true, true);
-
-		return newStructure;
+		return updateStructure(newStructure);
 	}
 
+	@Override
+	public JournalStructure createJournalStructure(long id)
+		throws SystemException {
+
+		DDMStructure ddmStructure = ddmStructureLocalService.createDDMStructure(
+			id);
+
+		return new JournalStructureAdapter(ddmStructure);
+	}
+
+	@Override
 	public void deleteStructure(JournalStructure structure)
 		throws PortalException, SystemException {
 
-		if (journalArticlePersistence.countByG_C_S(
-				structure.getGroupId(), 0, structure.getStructureId()) > 0) {
+		DDMStructure ddmStructure = getDDMStructure(structure);
 
-			throw new RequiredStructureException();
-		}
-
-		if (journalStructurePersistence.countByG_P(
-				structure.getGroupId(), structure.getStructureId()) > 0) {
-
-			throw new RequiredStructureException();
-		}
-
-		if (journalTemplatePersistence.countByG_S(
-				structure.getGroupId(), structure.getStructureId()) > 0) {
-
-			throw new RequiredStructureException();
-		}
-
-		// WebDAVProps
-
-		webDAVPropsLocalService.deleteWebDAVProps(
-			JournalStructure.class.getName(), structure.getId());
-
-		// Expando
-
-		expandoValueLocalService.deleteValues(
-			JournalStructure.class.getName(), structure.getId());
-
-		// Resources
-
-		resourceLocalService.deleteResource(
-			structure.getCompanyId(), JournalStructure.class.getName(),
-			ResourceConstants.SCOPE_INDIVIDUAL, structure.getId());
-
-		// Article
-
-		try {
-			long classNameId = PortalUtil.getClassNameId(
-				JournalStructure.class.getName());
-
-			JournalArticle article = journalArticlePersistence.findByG_C_C(
-				structure.getGroupId(), classNameId, structure.getId());
-
-			journalArticleLocalService.deleteArticle(article, null, null);
-		}
-		catch (NoSuchArticleException nsae) {
-		}
-
-		// Structure
-
-		journalStructurePersistence.remove(structure);
+		ddmStructureLocalService.deleteDDMStructure(ddmStructure);
 	}
 
+	@Override
 	public void deleteStructure(long groupId, String structureId)
 		throws PortalException, SystemException {
 
-		structureId = structureId.trim().toUpperCase();
-
-		JournalStructure structure = journalStructurePersistence.findByG_S(
-			groupId, structureId);
+		JournalStructure structure = doGetStructure(groupId, structureId);
 
 		deleteStructure(structure);
 	}
 
+	@Override
 	public void deleteStructures(long groupId)
 		throws PortalException, SystemException {
 
-		List<JournalStructure> structures =
-			journalStructurePersistence.findByGroupId(
-				groupId, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
-				new StructurePKComparator());
+		List<JournalStructure> structures = doGetStructures(
+			groupId, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 
 		for (JournalStructure structure : structures) {
 			deleteStructure(structure);
 		}
 	}
 
-	public JournalStructure getStructure(long id)
-		throws PortalException, SystemException {
+	@Override
+	public JournalStructure fetchStructure(long groupId, String structureId)
+		throws SystemException {
 
-		return journalStructurePersistence.findByPrimaryKey(id);
+		DDMStructure ddmStructure = fetchDDMStructure(groupId, structureId);
+
+		if (ddmStructure != null) {
+			return new JournalStructureAdapter(ddmStructure);
+		}
+
+		return null;
 	}
 
+	@Override
+	public List<JournalStructure> findAll() throws SystemException {
+		List<DDMStructure> ddmStructures =
+			ddmStructureLocalService.getClassStructures(
+				PortalUtil.getClassNameId(JournalArticle.class));
+
+		return JournalUtil.toJournalStructures(ddmStructures);
+	}
+
+	@Override
 	public JournalStructure getStructure(long groupId, String structureId)
+		throws PortalException, SystemException {
+
+		return getStructure(groupId, structureId, false);
+	}
+
+	@Override
+	public JournalStructure getStructure(
+			long groupId, String structureId, boolean includeGlobalStructures)
 		throws PortalException, SystemException {
 
 		structureId = structureId.trim().toUpperCase();
 
-		if (groupId == 0) {
-			_log.error(
-				"No group id was passed for " + structureId + ". Group id is " +
-					"required since 4.2.0. Please update all custom code and " +
-						"data that references structures without a group id.");
+		JournalStructure structure = fetchStructure(groupId, structureId);
 
-			List<JournalStructure> structures =
-				journalStructurePersistence.findByStructureId(structureId);
+		if (structure != null) {
+			return structure;
+		}
 
-			if (structures.size() == 0) {
-				throw new NoSuchStructureException(
-					"No JournalStructure exists with the structure id " +
-						structureId);
-			}
-			else {
-				return structures.get(0);
-			}
+		if (!includeGlobalStructures) {
+			throw new NoSuchStructureException(
+				"No JournalStructure exists with the structure ID " +
+					structureId);
 		}
-		else {
-			return journalStructurePersistence.findByG_S(groupId, structureId);
-		}
+
+		Group group = groupPersistence.findByPrimaryKey(groupId);
+
+		Group companyGroup = groupLocalService.getCompanyGroup(
+			group.getCompanyId());
+
+		return doGetStructure(companyGroup.getGroupId(), structureId);
 	}
 
+	@Override
 	public List<JournalStructure> getStructures() throws SystemException {
-		return journalStructurePersistence.findAll();
+		return findAll();
 	}
 
+	@Override
 	public List<JournalStructure> getStructures(long groupId)
 		throws SystemException {
 
-		return journalStructurePersistence.findByGroupId(groupId);
+		return doGetStructures(groupId);
 	}
 
+	@Override
 	public List<JournalStructure> getStructures(
 			long groupId, int start, int end)
 		throws SystemException {
 
-		return journalStructurePersistence.findByGroupId(groupId, start, end);
+		return doGetStructures(groupId, start, end);
 	}
 
+	@Override
 	public int getStructuresCount(long groupId) throws SystemException {
-		return journalStructurePersistence.countByGroupId(groupId);
+		return doGetStructuresCount(groupId);
 	}
 
+	@Override
 	public List<JournalStructure> search(
 			long companyId, long[] groupIds, String keywords, int start,
 			int end, OrderByComparator obc)
 		throws SystemException {
 
-		return journalStructureFinder.findByKeywords(
-			companyId, groupIds, keywords, start, end, obc);
+		long[] classNameIds = {PortalUtil.getClassNameId(JournalArticle.class)};
+
+		List<DDMStructure> ddmStructures = ddmStructureFinder.findByKeywords(
+			companyId, groupIds, classNameIds, keywords, start, end, obc);
+
+		return JournalUtil.toJournalStructures(ddmStructures);
 	}
 
+	@Override
 	public List<JournalStructure> search(
 			long companyId, long[] groupIds, String structureId, String name,
 			String description, boolean andOperator, int start, int end,
 			OrderByComparator obc)
 		throws SystemException {
 
-		return journalStructureFinder.findByC_G_S_N_D(
-			companyId, groupIds, structureId, name, description, andOperator,
-			start, end, obc);
+		long[] classNameIds = {PortalUtil.getClassNameId(JournalArticle.class)};
+
+		List<DDMStructure> ddmStructures =
+			ddmStructureFinder.findByC_G_C_N_D_S_T(
+				companyId, groupIds, classNameIds, name, description, null,
+				DDMStructureConstants.TYPE_DEFAULT, andOperator, start, end,
+				obc);
+
+		return JournalUtil.toJournalStructures(ddmStructures);
 	}
 
+	@Override
 	public int searchCount(long companyId, long[] groupIds, String keywords)
 		throws SystemException {
 
-		return journalStructureFinder.countByKeywords(
-			companyId, groupIds, keywords);
+		long[] classNameIds = {PortalUtil.getClassNameId(JournalArticle.class)};
+
+		return ddmStructureFinder.countByKeywords(
+			companyId, groupIds, classNameIds, keywords);
 	}
 
+	@Override
 	public int searchCount(
 			long companyId, long[] groupIds, String structureId, String name,
 			String description, boolean andOperator)
 		throws SystemException {
 
-		return journalStructureFinder.countByC_G_S_N_D(
-			companyId, groupIds, structureId, name, description, andOperator);
+		long[] classNameIds = {PortalUtil.getClassNameId(JournalArticle.class)};
+
+		return ddmStructureFinder.countByC_G_C_N_D_S_T(
+			companyId, groupIds, classNameIds, name, description, null,
+			DDMStructureConstants.TYPE_DEFAULT, andOperator);
 	}
 
+	@Override
+	public JournalStructure updateJournalStructure(JournalStructure structure)
+			throws PortalException, SystemException {
+
+		return updateStructure(structure);
+	}
+
+	@Override
 	public JournalStructure updateStructure(
 			long groupId, String structureId, String parentStructureId,
-			String name, String description, String xsd,
-			ServiceContext serviceContext)
+			Map<Locale, String> nameMap, Map<Locale, String> descriptionMap,
+			String xsd, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
-		structureId = structureId.trim().toUpperCase();
+		DDMStructure ddmStructure = getDDMStructure(groupId, structureId);
+
+		long parentDDMStructureId = getParentDDMStructureId(
+			groupId, parentStructureId);
 
 		try {
-			xsd = DDMXMLUtil.formatXML(xsd);
+			xsd = JournalConverterUtil.getDDMXSD(xsd);
 		}
 		catch (Exception e) {
-			throw new StructureXsdException();
+			throw new StructureXsdException(e);
 		}
 
-		validateParentStructureId(groupId, structureId, parentStructureId);
-		validate(groupId, parentStructureId, name, xsd);
+		ddmStructure = ddmStructureLocalService.updateStructure(
+			ddmStructure.getStructureId(), parentDDMStructureId, nameMap,
+			descriptionMap, xsd, serviceContext);
 
-		JournalStructure structure = journalStructurePersistence.findByG_S(
-			groupId, structureId);
-
-		structure.setModifiedDate(serviceContext.getModifiedDate(null));
-		structure.setParentStructureId(parentStructureId);
-		structure.setName(name);
-		structure.setDescription(description);
-		structure.setXsd(xsd);
-
-		journalStructurePersistence.update(structure, false);
-
-		// Expando
-
-		ExpandoBridge expandoBridge = structure.getExpandoBridge();
-
-		expandoBridge.setAttributes(serviceContext);
-
-		return structure;
+		return new JournalStructureAdapter(ddmStructure);
 	}
 
-	protected void appendParentStructureElements(
-			long groupId, String parentStructureId, List<Element> elements)
-		throws Exception {
-
-		if (Validator.isNull(parentStructureId)) {
-			return;
-		}
-
-		JournalStructure parentStructure =
-			journalStructurePersistence.findByG_S(groupId, parentStructureId);
-
-		appendParentStructureElements(
-			groupId, parentStructure.getParentStructureId(), elements);
-
-		Document document = SAXReaderUtil.read(parentStructure.getXsd());
-
-		Element rootElement = document.getRootElement();
-
-		elements.addAll(rootElement.elements());
-	}
-
-	protected void validate(List<Element> elements, Set<String> elNames)
-		throws PortalException {
-
-		for (Element element : elements) {
-			if (element.getName().equals("meta-data")) {
-				continue;
-			}
-
-			String elName = element.attributeValue("name", StringPool.BLANK);
-			String elType = element.attributeValue("type", StringPool.BLANK);
-
-			if (Validator.isNull(elName) ||
-				elName.startsWith(JournalStructureConstants.RESERVED)) {
-
-				throw new StructureXsdException();
-			}
-			else {
-				char[] c = elType.toCharArray();
-
-				for (int i = 0; i < c.length; i++) {
-					if ((!Validator.isChar(c[i])) &&
-						(!Validator.isDigit(c[i])) && (c[i] != CharPool.DASH) &&
-						(c[i] != CharPool.UNDERLINE)) {
-
-						throw new StructureXsdException();
-					}
-				}
-
-				String completePath = elName;
-
-				Element parentElement = element.getParent();
-
-				while (!parentElement.isRootElement()) {
-					completePath =
-						parentElement.attributeValue("name", StringPool.BLANK) +
-							StringPool.SLASH + completePath;
-
-					parentElement = parentElement.getParent();
-				}
-
-				String elNameLowerCase = completePath.toLowerCase();
-
-				if (elNames.contains(elNameLowerCase)) {
-					throw new DuplicateStructureElementException();
-				}
-				else {
-					elNames.add(elNameLowerCase);
-				}
-			}
-
-			if (Validator.isNull(elType)) {
-				throw new StructureXsdException();
-			}
-
-			validate(element.elements(), elNames);
-		}
-	}
-
-	protected void validate(
-			long groupId, String structureId, boolean autoStructureId,
-			String parentStructureId, String name, String xsd)
+	protected JournalStructure doGetStructure(long groupId, String structureId)
 		throws PortalException, SystemException {
 
-		if (!autoStructureId) {
-			validateStructureId(structureId);
+		DDMStructure ddmStructure = getDDMStructure(groupId, structureId);
 
-			JournalStructure structure = journalStructurePersistence.fetchByG_S(
-				groupId, structureId);
-
-			if (structure != null) {
-				throw new DuplicateStructureIdException();
-			}
-		}
-
-		validateParentStructureId(groupId, structureId, parentStructureId);
-		validate(groupId, parentStructureId, name, xsd);
+		return new JournalStructureAdapter(ddmStructure);
 	}
 
-	protected void validate(
-			long groupId, String parentStructureId, String name, String xsd)
-		throws PortalException {
+	protected List<JournalStructure> doGetStructures(long groupId)
+		throws SystemException {
 
-		if (Validator.isNull(name)) {
-			throw new StructureNameException();
-		}
-
-		if (Validator.isNull(xsd)) {
-			throw new StructureXsdException();
-		}
-		else {
-			try {
-				List<Element> elements = new ArrayList<Element>();
-
-				appendParentStructureElements(
-					groupId, parentStructureId, elements);
-
-				Document document = SAXReaderUtil.read(xsd);
-
-				Element rootElement = document.getRootElement();
-
-				if (rootElement.elements().isEmpty()) {
-					throw new StructureXsdException();
-				}
-
-				elements.addAll(rootElement.elements());
-
-				Set<String> elNames = new HashSet<String>();
-
-				validate(elements, elNames);
-			}
-			catch (DuplicateStructureElementException dsee) {
-				throw dsee;
-			}
-			catch (StructureXsdException sxe) {
-				throw sxe;
-			}
-			catch (Exception e) {
-				throw new StructureXsdException();
-			}
-		}
+		return doGetStructures(groupId, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 	}
 
-	protected void validateParentStructureId(
-			long groupId, String structureId, String parentStructureId)
+	protected List<JournalStructure> doGetStructures(
+			long groupId, int start, int end)
+		throws SystemException {
+
+		List<DDMStructure> ddmStructures =
+			ddmStructureLocalService.getStructures(
+				groupId, PortalUtil.getClassNameId(JournalArticle.class), start,
+				end);
+
+		return JournalUtil.toJournalStructures(ddmStructures);
+	}
+
+	protected int doGetStructuresCount(long groupId) throws SystemException {
+		return ddmStructureLocalService.getStructuresCount(
+			groupId, PortalUtil.getClassNameId(JournalArticle.class));
+	}
+
+	protected DDMStructure fetchDDMStructure(JournalStructure structure)
+		throws SystemException {
+
+		return fetchDDMStructure(
+			structure.getGroupId(), structure.getStructureId());
+	}
+
+	protected DDMStructure fetchDDMStructure(long groupId, String structureId)
+		throws SystemException {
+
+		return ddmStructureLocalService.fetchStructure(
+			groupId, PortalUtil.getClassNameId(JournalArticle.class),
+			structureId);
+	}
+
+	protected DDMStructure getDDMStructure(JournalStructure structure)
 		throws PortalException, SystemException {
 
-		if (Validator.isNull(parentStructureId)) {
-			return;
+		return getDDMStructure(
+			structure.getGroupId(), structure.getStructureId());
+	}
+
+	protected DDMStructure getDDMStructure(long groupId, String structureId)
+		throws PortalException, SystemException {
+
+		try {
+			return ddmStructureLocalService.getStructure(
+				groupId, PortalUtil.getClassNameId(JournalArticle.class),
+				structureId);
+		}
+		catch (PortalException pe) {
+			throw new NoSuchStructureException(pe);
+		}
+	}
+
+	protected long getParentDDMStructureId(
+			long groupId, String parentStructureId)
+		throws SystemException {
+
+		DDMStructure parentDDMStructure = fetchDDMStructure(
+			groupId, parentStructureId);
+
+		if (parentDDMStructure != null) {
+			return parentDDMStructure.getStructureId();
 		}
 
-		if (parentStructureId.equals(structureId)) {
-			throw new StructureInheritanceException();
+		return 0;
+	}
+
+	protected String getUuid(JournalStructure structure) {
+		String uuid = structure.getUuid();
+
+		if (Validator.isNotNull(uuid)) {
+			return uuid;
 		}
 
-		JournalStructure parentStructure =
-			journalStructurePersistence.fetchByG_S(groupId, parentStructureId);
+		return PortalUUIDUtil.generate();
+	}
 
-		while (parentStructure != null) {
-			if ((parentStructure != null) &&
-				(parentStructure.getStructureId().equals(structureId)) ||
-				(parentStructure.getParentStructureId().equals(
-					structureId))) {
+	protected JournalStructure updateStructure(JournalStructure structure)
+		throws PortalException, SystemException {
 
-				throw new StructureInheritanceException();
-			}
+		ServiceContext serviceContext = new ServiceContext();
 
-			parentStructure = journalStructurePersistence.fetchByG_S(
-				groupId, parentStructure.getParentStructureId());
+		serviceContext.setAddGroupPermissions(true);
+		serviceContext.setAddGuestPermissions(true);
+
+		String uuid = getUuid(structure);
+
+		serviceContext.setUuid(uuid);
+
+		if (structure.isNew()) {
+			return addStructure(
+				structure.getUserId(), structure.getGroupId(),
+				structure.getStructureId(), false,
+				structure.getParentStructureId(), structure.getNameMap(),
+				structure.getDescriptionMap(), structure.getXsd(),
+				serviceContext);
 		}
+
+		return updateStructure(
+			structure.getGroupId(), structure.getStructureId(),
+			structure.getParentStructureId(), structure.getNameMap(),
+			structure.getDescriptionMap(), structure.getXsd(), serviceContext);
 	}
 
 	protected void validateStructureId(String structureId)
 		throws PortalException {
 
-		if ((Validator.isNull(structureId)) ||
-			(Validator.isNumber(structureId)) ||
+		if (Validator.isNull(structureId) ||
+			Validator.isNumber(structureId) ||
 			(structureId.indexOf(CharPool.SPACE) != -1)) {
 
 			throw new StructureIdException();
 		}
 	}
-
-	private static Log _log = LogFactoryUtil.getLog(
-		JournalStructureLocalServiceImpl.class);
 
 }

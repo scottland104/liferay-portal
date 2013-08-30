@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,26 +14,34 @@
 
 package com.liferay.portlet.usersadmin.util;
 
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.search.BaseIndexer;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.BooleanQuery;
 import com.liferay.portal.kernel.search.BooleanQueryFactoryUtil;
 import com.liferay.portal.kernel.search.Document;
-import com.liferay.portal.kernel.search.DocumentImpl;
 import com.liferay.portal.kernel.search.Field;
+import com.liferay.portal.kernel.search.Indexer;
+import com.liferay.portal.kernel.search.IndexerRegistryUtil;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchEngineUtil;
 import com.liferay.portal.kernel.search.Summary;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.model.Contact;
 import com.liferay.portal.model.Organization;
 import com.liferay.portal.model.User;
+import com.liferay.portal.model.impl.ContactImpl;
 import com.liferay.portal.security.auth.FullNameGenerator;
 import com.liferay.portal.security.auth.FullNameGeneratorFactory;
 import com.liferay.portal.service.OrganizationLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
+import com.liferay.portal.service.persistence.UserActionableDynamicQuery;
 import com.liferay.portal.util.PortletKeys;
+import com.liferay.portal.util.PropsValues;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,11 +65,19 @@ public class UserIndexer extends BaseIndexer {
 	public static final String PORTLET_ID = PortletKeys.USERS_ADMIN;
 
 	public UserIndexer() {
+		setIndexerEnabled(PropsValues.USERS_INDEXER_ENABLED);
+		setPermissionAware(true);
 		setStagingAware(false);
 	}
 
+	@Override
 	public String[] getClassNames() {
 		return CLASS_NAMES;
+	}
+
+	@Override
+	public String getPortletId() {
+		return PORTLET_ID;
 	}
 
 	@Override
@@ -71,7 +87,7 @@ public class UserIndexer extends BaseIndexer {
 
 		int status = GetterUtil.getInteger(
 			searchContext.getAttribute(Field.STATUS),
-			WorkflowConstants.STATUS_ANY);
+			WorkflowConstants.STATUS_APPROVED);
 
 		if (status != WorkflowConstants.STATUS_ANY) {
 			contextQuery.addRequiredTerm(Field.STATUS, status);
@@ -80,17 +96,29 @@ public class UserIndexer extends BaseIndexer {
 		LinkedHashMap<String, Object> params =
 			(LinkedHashMap<String, Object>)searchContext.getAttribute("params");
 
-		if (params != null) {
-			for (Map.Entry<String, Object> entry : params.entrySet()) {
-				String key = entry.getKey();
-				Object value = entry.getValue();
+		if (params == null) {
+			return;
+		}
 
-				if (value == null) {
+		for (Map.Entry<String, Object> entry : params.entrySet()) {
+			String key = entry.getKey();
+			Object value = entry.getValue();
+
+			if (value == null) {
+				continue;
+			}
+
+			Class<?> clazz = value.getClass();
+
+			if (clazz.isArray()) {
+				Object[] values = (Object[])value;
+
+				if (values.length == 0) {
 					continue;
 				}
-
-				addContextQueryParams(contextQuery, searchContext, key, value);
 			}
+
+			addContextQueryParams(contextQuery, searchContext, key, value);
 		}
 	}
 
@@ -99,17 +127,17 @@ public class UserIndexer extends BaseIndexer {
 			BooleanQuery searchQuery, SearchContext searchContext)
 		throws Exception {
 
-		addSearchTerm(searchQuery, searchContext, "city", true);
-		addSearchTerm(searchQuery, searchContext, "country", true);
-		addSearchTerm(searchQuery, searchContext, "emailAddress", true);
-		addSearchTerm(searchQuery, searchContext, "firstName", true);
-		addSearchTerm(searchQuery, searchContext, "fullName", true);
-		addSearchTerm(searchQuery, searchContext, "lastName", true);
-		addSearchTerm(searchQuery, searchContext, "middleName", true);
-		addSearchTerm(searchQuery, searchContext, "region", true);
-		addSearchTerm(searchQuery, searchContext, "screenName", true);
-		addSearchTerm(searchQuery, searchContext, "street", true);
-		addSearchTerm(searchQuery, searchContext, "zip", true);
+		addSearchTerm(searchQuery, searchContext, "city", false);
+		addSearchTerm(searchQuery, searchContext, "country", false);
+		addSearchTerm(searchQuery, searchContext, "emailAddress", false);
+		addSearchTerm(searchQuery, searchContext, "firstName", false);
+		addSearchTerm(searchQuery, searchContext, "fullName", false);
+		addSearchTerm(searchQuery, searchContext, "lastName", false);
+		addSearchTerm(searchQuery, searchContext, "middleName", false);
+		addSearchTerm(searchQuery, searchContext, "region", false);
+		addSearchTerm(searchQuery, searchContext, "screenName", false);
+		addSearchTerm(searchQuery, searchContext, "street", false);
+		addSearchTerm(searchQuery, searchContext, "zip", false);
 
 		LinkedHashMap<String, Object> params =
 			(LinkedHashMap<String, Object>)searchContext.getAttribute("params");
@@ -132,12 +160,11 @@ public class UserIndexer extends BaseIndexer {
 			if (value instanceof Long[]) {
 				Long[] values = (Long[])value;
 
-				BooleanQuery usersOrgsQuery =
-					BooleanQueryFactoryUtil.create(searchContext);
+				BooleanQuery usersOrgsQuery = BooleanQueryFactoryUtil.create(
+					searchContext);
 
 				for (long organizationId : values) {
-					usersOrgsQuery.addTerm(
-						"organizationIds", organizationId);
+					usersOrgsQuery.addTerm("organizationIds", organizationId);
 					usersOrgsQuery.addTerm(
 						"ancestorOrganizationIds", organizationId);
 				}
@@ -168,12 +195,16 @@ public class UserIndexer extends BaseIndexer {
 	protected void doDelete(Object obj) throws Exception {
 		User user = (User)obj;
 
-		Document document = new DocumentImpl();
+		deleteDocument(user.getCompanyId(), user.getUserId());
 
-		document.addUID(PORTLET_ID, user.getUserId());
+		Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(Contact.class);
 
-		SearchEngineUtil.deleteDocument(
-			user.getCompanyId(), document.get(Field.UID));
+		Contact contact = new ContactImpl();
+
+		contact.setContactId(user.getContactId());
+		contact.setCompanyId(user.getCompanyId());
+
+		indexer.delete(contact);
 	}
 
 	@Override
@@ -185,7 +216,9 @@ public class UserIndexer extends BaseIndexer {
 		long[] organizationIds = user.getOrganizationIds();
 
 		document.addKeyword(Field.COMPANY_ID, user.getCompanyId());
+		document.addKeyword(Field.GROUP_ID, user.getGroupIds());
 		document.addDate(Field.MODIFIED_DATE, user.getModifiedDate());
+		document.addKeyword(Field.SCOPE_GROUP_ID, user.getGroupIds());
 		document.addKeyword(Field.STATUS, user.getStatus());
 		document.addKeyword(Field.USER_ID, user.getUserId());
 		document.addKeyword(Field.USER_NAME, user.getFullName());
@@ -311,7 +344,8 @@ public class UserIndexer extends BaseIndexer {
 				long companyId = entry.getKey();
 				Collection<Document> documents = entry.getValue();
 
-				SearchEngineUtil.updateDocuments(companyId, documents);
+				SearchEngineUtil.updateDocuments(
+					getSearchEngineId(), companyId, documents);
 			}
 		}
 		else if (obj instanceof User) {
@@ -323,7 +357,13 @@ public class UserIndexer extends BaseIndexer {
 
 			Document document = getDocument(user);
 
-			SearchEngineUtil.updateDocument(user.getCompanyId(), document);
+			SearchEngineUtil.updateDocument(
+				getSearchEngineId(), user.getCompanyId(), document);
+
+			Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+				Contact.class);
+
+			indexer.reindex(user.getContact());
 		}
 	}
 
@@ -372,42 +412,33 @@ public class UserIndexer extends BaseIndexer {
 		return PORTLET_ID;
 	}
 
-	protected void reindexUsers(long companyId) throws Exception {
-		int count = UserLocalServiceUtil.getCompanyUsersCount(companyId);
+	protected void reindexUsers(long companyId)
+		throws PortalException, SystemException {
 
-		int pages = count / UserIndexer.DEFAULT_INTERVAL;
+		final Collection<Document> documents = new ArrayList<Document>();
 
-		for (int i = 0; i <= pages; i++) {
-			int start = (i * UserIndexer.DEFAULT_INTERVAL);
-			int end = start + UserIndexer.DEFAULT_INTERVAL;
+		ActionableDynamicQuery actionableDynamicQuery =
+			new UserActionableDynamicQuery() {
 
-			reindexUsers(companyId, start, end);
-		}
-	}
+			@Override
+			protected void performAction(Object object) throws PortalException {
+				User user = (User)object;
 
-	protected void reindexUsers(long companyId, int start, int end)
-		throws Exception {
+				if (!user.isDefaultUser()) {
+					Document document = getDocument(user);
 
-		List<User> users = UserLocalServiceUtil.getCompanyUsers(
-			companyId, start, end);
-
-		if (users.isEmpty()) {
-			return;
-		}
-
-		Collection<Document> documents = new ArrayList<Document>();
-
-		for (User user : users) {
-			if (user.isDefaultUser()) {
-				continue;
+					documents.add(document);
+				}
 			}
 
-			Document document = getDocument(user);
+		};
 
-			documents.add(document);
-		}
+		actionableDynamicQuery.setCompanyId(companyId);
 
-		SearchEngineUtil.updateDocuments(companyId, documents);
+		actionableDynamicQuery.performActions();
+
+		SearchEngineUtil.updateDocuments(
+			getSearchEngineId(), companyId, documents);
 	}
 
 }

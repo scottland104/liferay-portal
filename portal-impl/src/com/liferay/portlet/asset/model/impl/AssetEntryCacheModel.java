@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,11 @@ import com.liferay.portal.model.CacheModel;
 
 import com.liferay.portlet.asset.model.AssetEntry;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -29,10 +34,11 @@ import java.util.Date;
  * @see AssetEntry
  * @generated
  */
-public class AssetEntryCacheModel implements CacheModel<AssetEntry> {
+public class AssetEntryCacheModel implements CacheModel<AssetEntry>,
+	Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(51);
+		StringBundler sb = new StringBundler(53);
 
 		sb.append("{entryId=");
 		sb.append(entryId);
@@ -54,6 +60,8 @@ public class AssetEntryCacheModel implements CacheModel<AssetEntry> {
 		sb.append(classPK);
 		sb.append(", classUuid=");
 		sb.append(classUuid);
+		sb.append(", classTypeId=");
+		sb.append(classTypeId);
 		sb.append(", visible=");
 		sb.append(visible);
 		sb.append(", startDate=");
@@ -89,6 +97,7 @@ public class AssetEntryCacheModel implements CacheModel<AssetEntry> {
 		return sb.toString();
 	}
 
+	@Override
 	public AssetEntry toEntityModel() {
 		AssetEntryImpl assetEntryImpl = new AssetEntryImpl();
 
@@ -128,6 +137,7 @@ public class AssetEntryCacheModel implements CacheModel<AssetEntry> {
 			assetEntryImpl.setClassUuid(classUuid);
 		}
 
+		assetEntryImpl.setClassTypeId(classTypeId);
 		assetEntryImpl.setVisible(visible);
 
 		if (startDate == Long.MIN_VALUE) {
@@ -210,6 +220,118 @@ public class AssetEntryCacheModel implements CacheModel<AssetEntry> {
 		return assetEntryImpl;
 	}
 
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		entryId = objectInput.readLong();
+		groupId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		userId = objectInput.readLong();
+		userName = objectInput.readUTF();
+		createDate = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
+		classNameId = objectInput.readLong();
+		classPK = objectInput.readLong();
+		classUuid = objectInput.readUTF();
+		classTypeId = objectInput.readLong();
+		visible = objectInput.readBoolean();
+		startDate = objectInput.readLong();
+		endDate = objectInput.readLong();
+		publishDate = objectInput.readLong();
+		expirationDate = objectInput.readLong();
+		mimeType = objectInput.readUTF();
+		title = objectInput.readUTF();
+		description = objectInput.readUTF();
+		summary = objectInput.readUTF();
+		url = objectInput.readUTF();
+		layoutUuid = objectInput.readUTF();
+		height = objectInput.readInt();
+		width = objectInput.readInt();
+		priority = objectInput.readDouble();
+		viewCount = objectInput.readInt();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(entryId);
+		objectOutput.writeLong(groupId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(userId);
+
+		if (userName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(userName);
+		}
+
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(modifiedDate);
+		objectOutput.writeLong(classNameId);
+		objectOutput.writeLong(classPK);
+
+		if (classUuid == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(classUuid);
+		}
+
+		objectOutput.writeLong(classTypeId);
+		objectOutput.writeBoolean(visible);
+		objectOutput.writeLong(startDate);
+		objectOutput.writeLong(endDate);
+		objectOutput.writeLong(publishDate);
+		objectOutput.writeLong(expirationDate);
+
+		if (mimeType == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(mimeType);
+		}
+
+		if (title == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(title);
+		}
+
+		if (description == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(description);
+		}
+
+		if (summary == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(summary);
+		}
+
+		if (url == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(url);
+		}
+
+		if (layoutUuid == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(layoutUuid);
+		}
+
+		objectOutput.writeInt(height);
+		objectOutput.writeInt(width);
+		objectOutput.writeDouble(priority);
+		objectOutput.writeInt(viewCount);
+	}
+
 	public long entryId;
 	public long groupId;
 	public long companyId;
@@ -220,6 +342,7 @@ public class AssetEntryCacheModel implements CacheModel<AssetEntry> {
 	public long classNameId;
 	public long classPK;
 	public String classUuid;
+	public long classTypeId;
 	public boolean visible;
 	public long startDate;
 	public long endDate;

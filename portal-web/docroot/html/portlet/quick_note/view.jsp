@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -41,7 +41,7 @@
 </div>
 
 <c:if test="<%= portletDisplay.isShowConfigurationIcon() %>">
-	<aui:script use="aui-editable,aui-io-request">
+	<aui:script use="aui-editable-deprecated,aui-io-request">
 		var quickNotePad = A.one('#<portlet:namespace />pad');
 
 		if (quickNotePad) {
@@ -59,6 +59,7 @@
 						{
 							data: {
 								color: bgColor,
+								p_auth: Liferay.authToken,
 								p_l_id: '<%= plid %>',
 								portletId: '<%= portletDisplay.getId() %>'
 							}
@@ -86,6 +87,7 @@
 								{
 									data: {
 										data: newValue,
+										p_auth: '<%= AuthTokenUtil.getToken(request) %>',
 										p_l_id: '<%= plid %>',
 										portletId: '<%= portletDisplay.getId() %>'
 									}

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -339,12 +339,13 @@ public class PropertiesParamUtil {
 
 		UnicodeProperties properties = new UnicodeProperties(true);
 
-		Map<String, String> parameterMap = request.getParameterMap();
+		Map<String, String[]> parameterMap = request.getParameterMap();
 
 		for (String param : parameterMap.keySet()) {
 			if (param.startsWith(prefix) && !param.endsWith("--Checkbox")) {
 				String key = param.substring(
 					prefix.length(), param.length() - 2);
+
 				String value = request.getParameter(param);
 
 				properties.setProperty(key, value);
@@ -363,7 +364,10 @@ public class PropertiesParamUtil {
 			if (param.startsWith(prefix) && !param.endsWith("--Checkbox")) {
 				String key = param.substring(
 					prefix.length(), param.length() - 2);
-				String value = portletRequest.getParameter(param);
+
+				String[] values = portletRequest.getParameterValues(param);
+
+				String value = StringUtil.merge(values);
 
 				properties.setProperty(key, value);
 			}

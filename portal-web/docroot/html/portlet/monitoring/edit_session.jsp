@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -99,26 +99,18 @@ userTracker = userTracker.toEscapedModel();
 
 				<liferay-ui:panel-container extended="<%= true %>" id="monitoringSessionHistoryPanelContainer" persistState="<%= true %>">
 					<liferay-ui:panel collapsible="<%= true %>" extended="<%= false %>" id="sessionAccessedURLsPanels" persistState="<%= true %>" title="accessed-urls">
-						<table border="0" cellpadding="4" cellspacing="0" width="100%">
+						<table class="table table-bordered table-hover table-striped">
 
 							<%
 							for (int i = 0; i < paths.size(); i++) {
 								UserTrackerPath userTrackerPath = paths.get(i);
-
-								String className = "portlet-section-body results-row";
-								String classHoverName = "portlet-section-body-hover results-row hover";
-
-								if (MathUtil.isEven(i)) {
-									className = "portlet-section-alternate results-row alt";
-									classHoverName = "portlet-section-alternate-hover results-row alt hover";
-								}
 							%>
 
-								<tr class="<%= className %>" style="font-size: xx-small;" onMouseEnter="this.className = '<%= classHoverName %>';" onMouseLeave="this.className = '<%= className %>';">
-									<td class="lfr-top">
+								<tr>
+									<td class="table-cell">
 										<%= StringUtil.replace(userTrackerPath.getPath(), "&", "& ") %>
 									</td>
-									<td class="lfr-top" nowrap>
+									<td class="table-cell lfr-top" nowrap="nowrap">
 										<%= dateFormatDateTime.format(userTrackerPath.getPathDate()) %>
 									</td>
 								</tr>
@@ -131,7 +123,7 @@ userTracker = userTracker.toEscapedModel();
 					</liferay-ui:panel>
 
 					<liferay-ui:panel collapsible="<%= true %>" extended="<%= false %>" id="monitoringSessionAttributesPanel" persistState="<%= true %>" title="session-attributes">
-						<table border="0" cellpadding="4" cellspacing="0" width="100%">
+						<table class="table table-bordered table-hover table-striped">
 
 							<%
 							userSessionAlive = true;
@@ -140,34 +132,21 @@ userTracker = userTracker.toEscapedModel();
 
 							if (userSession != null) {
 								try {
-									int counter = 0;
+									Set<String> sortedAttrNames = new TreeSet<String>();
 
-									Set sortedAttrNames = new TreeSet();
-
-									Enumeration enu = userSession.getAttributeNames();
+									Enumeration<String> enu = userSession.getAttributeNames();
 
 									while (enu.hasMoreElements()) {
-										String attrName = (String)enu.nextElement();
+										String attrName = enu.nextElement();
 
 										sortedAttrNames.add(attrName);
 									}
 
-									Iterator itr = sortedAttrNames.iterator();
-
-									while (itr.hasNext()) {
-										String attrName = (String)itr.next();
-
-										String className = "portlet-section-body results-row";
-										String classHoverName = "portlet-section-body-hover results-row hover";
-
-										if (MathUtil.isEven(counter++)) {
-											className = "portlet-section-alternate results-row alt";
-											classHoverName = "portlet-section-alternate-hover results-row alt hover";
-										}
+									for (String attrName : sortedAttrNames) {
 							%>
 
-										<tr class="<%= className %>" style="font-size: xx-small;" onMouseEnter="this.className = '<%= classHoverName %>';" onMouseLeave="this.className = '<%= className %>';">
-											<td class="lfr-top">
+										<tr>
+											<td class="table-cell">
 												<%= attrName %>
 											</td>
 										</tr>

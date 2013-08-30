@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.PortletPreferences;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing PortletPreferences in entity cache.
  *
@@ -26,7 +31,8 @@ import com.liferay.portal.model.PortletPreferences;
  * @see PortletPreferences
  * @generated
  */
-public class PortletPreferencesCacheModel implements CacheModel<PortletPreferences> {
+public class PortletPreferencesCacheModel implements CacheModel<PortletPreferences>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(13);
@@ -48,6 +54,7 @@ public class PortletPreferencesCacheModel implements CacheModel<PortletPreferenc
 		return sb.toString();
 	}
 
+	@Override
 	public PortletPreferences toEntityModel() {
 		PortletPreferencesImpl portletPreferencesImpl = new PortletPreferencesImpl();
 
@@ -73,6 +80,39 @@ public class PortletPreferencesCacheModel implements CacheModel<PortletPreferenc
 		portletPreferencesImpl.resetOriginalValues();
 
 		return portletPreferencesImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		portletPreferencesId = objectInput.readLong();
+		ownerId = objectInput.readLong();
+		ownerType = objectInput.readInt();
+		plid = objectInput.readLong();
+		portletId = objectInput.readUTF();
+		preferences = objectInput.readUTF();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(portletPreferencesId);
+		objectOutput.writeLong(ownerId);
+		objectOutput.writeInt(ownerType);
+		objectOutput.writeLong(plid);
+
+		if (portletId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(portletId);
+		}
+
+		if (preferences == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(preferences);
+		}
 	}
 
 	public long portletPreferencesId;

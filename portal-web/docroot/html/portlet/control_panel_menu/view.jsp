@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,308 +16,152 @@
 
 <%@ include file="/html/portlet/control_panel_menu/init.jsp" %>
 
-<h1 class="user-greeting">
-	<liferay-ui:message key="control-panel" />
-</h1>
-
 <div class="portal-add-content">
 	<div class="control-panel-tools">
-		<aui:input cssClass="search-panels" inputCssClass="search-panels-input" label="" name="searchPanel" />
+		<div class="search-panels">
+			<div class="search-panels-bar">
+				<i class="icon-reorder search-panel-icon"></i>
+
+				<aui:input cssClass="search-panels-input search-query span12" label="" name="searchPanel" />
+			</div>
+		</div>
 	</div>
 
-	<liferay-ui:panel-container extended="<%= true %>" id="controlPanelMenuAddContentPanelContainer" persistState="<%= true %>">
+	<liferay-ui:panel-container accordion="<%= true %>" extended="<%= true %>" id="controlPanelMenuAddContentPanelContainer" persistState="<%= true %>">
 
 		<%
 		String ppid = GetterUtil.getString((String)request.getAttribute("control_panel.jsp-ppid"), layoutTypePortlet.getStateMaxPortletId());
 
-		String category = PortalUtil.getControlPanelCategory(ppid, themeDisplay);
+		String portletCategory = null;
 
-		String[] allCategories = PortletCategoryKeys.ALL;
+		if (Validator.isNotNull(ppid)) {
+			Portlet portlet = PortletLocalServiceUtil.getPortletById(themeDisplay.getCompanyId(), ppid);
 
-		String controlPanelCategory = HttpUtil.getParameter(PortalUtil.getCurrentURL(request), "controlPanelCategory", false);
-
-		if (Validator.isNotNull(controlPanelCategory)) {
-			allCategories = new String[] {controlPanelCategory};
+			portletCategory = portlet.getControlPanelEntryCategory();
 		}
 
-		for (String curCategory : allCategories) {
-			Collection<Portlet> categoryPortlets = PortalUtil.getControlPanelPortlets(themeDisplay.getCompanyId(), curCategory);
+		Map<String, List<Portlet>> siteAdministrationCategoriesMap = PortalUtil.getSiteAdministrationCategoriesMap(request);
 
-			List<Layout> scopeLayouts = new ArrayList<Layout>();
+		for (String siteAdministrationCategory : siteAdministrationCategoriesMap.keySet()) {
+			String title = LanguageUtil.get(pageContext, "category." + siteAdministrationCategory);
 
-			String curGroupLabel = null;
-			Group curGroup = null;
+			List<Portlet> portlets = siteAdministrationCategoriesMap.get(siteAdministrationCategory);
+		%>
 
-			String title = null;
+			<liferay-ui:panel collapsible="<%= true %>" cssClass="panel-page-category unstyled" extended="<%= true %>" id='<%= "panel-manage-" + siteAdministrationCategory %>' persistState="<%= true %>" state='<%= siteAdministrationCategory.equals(portletCategory) ? "open" : "closed" %>' title="<%= title %>">
+				<c:if test="<%= siteAdministrationCategory.equals(PortletCategoryKeys.SITE_ADMINISTRATION_CONTENT) %>">
 
-			if (curCategory.equals(PortletCategoryKeys.MY)) {
-				title = HtmlUtil.escape(StringUtil.shorten(user.getFullName(), 25));
-			}
-			else if (curCategory.equals(PortletCategoryKeys.CONTENT)) {
-				Layout scopeLayout = null;
+					<%
+					List<Layout> scopeLayouts = new ArrayList<Layout>();
 
-				curGroup = themeDisplay.getScopeGroup();
+					Group curSite = themeDisplay.getSiteGroup();
 
-				if (curGroup.isLayout()) {
-					scopeLayout = LayoutLocalServiceUtil.getLayout(curGroup.getClassPK());
+					scopeLayouts.addAll(LayoutLocalServiceUtil.getScopeGroupLayouts(curSite.getGroupId(), false));
+					scopeLayouts.addAll(LayoutLocalServiceUtil.getScopeGroupLayouts(curSite.getGroupId(), true));
 
-					curGroup = scopeLayout.getGroup();
-				}
+					String scopeLabel = null;
 
-				List<Group> manageableSites = null;
+					Group curScopeGroup = themeDisplay.getScopeGroup();
 
-				if (Validator.isNotNull(controlPanelCategory)) {
-					long groupId = GetterUtil.getLong(HttpUtil.getParameter(PortalUtil.getCurrentURL(request), "doAsGroupId", false));
+					if (curScopeGroup.isLayout()) {
+						Layout scopeLayout = LayoutLocalServiceUtil.getLayout(curScopeGroup.getClassPK());
 
-					Group group = GroupServiceUtil.getGroup(groupId);
-
-					manageableSites = new ArrayList<Group>();
-
-					manageableSites.add(group);
-				}
-				else {
-					manageableSites = GroupServiceUtil.getManageableSites(categoryPortlets, PropsValues.CONTROL_PANEL_NAVIGATION_MAX_SITES);
-
-					Group userGroup = user.getGroup();
-
-					if (userGroup.hasPrivateLayouts() || userGroup.hasPublicLayouts()) {
-						manageableSites.add(0, userGroup);
-					}
-
-					if (PortalUtil.isCompanyControlPanelVisible(themeDisplay)) {
-						Group companyGroup = GroupLocalServiceUtil.getCompanyGroup(themeDisplay.getCompanyId());
-
-						manageableSites.add(0, companyGroup);
-					}
-				}
-
-				Group curLiveGroup = curGroup;
-
-				if (curGroup.isStagingGroup()) {
-					curLiveGroup = curGroup.getLiveGroup();
-				}
-
-				if (!manageableSites.isEmpty() && !manageableSites.contains(curLiveGroup)) {
-					if (curLiveGroup.isSite() && PortletPermissionUtil.contains(permissionChecker, curLiveGroup.getGroupId(), 0, categoryPortlets, ActionKeys.ACCESS_IN_CONTROL_PANEL)) {
-						manageableSites.add(0, curLiveGroup);
+						scopeLabel = StringUtil.shorten(scopeLayout.getName(locale), 20);
 					}
 					else {
-						curGroup = manageableSites.get(0);
-
-						curLiveGroup = curGroup;
-
-						themeDisplay.setScopeGroupId(curGroup.getGroupId());
+						scopeLabel = LanguageUtil.get(pageContext, "default");
 					}
-				}
+					%>
 
-				String curGroupName = null;
-
-				if (curGroup.isCompany()) {
-					curGroupName = LanguageUtil.get(pageContext, "global");
-				}
-				else if (curGroup.isUser() && (curGroup.getClassPK() == user.getUserId())) {
-					curGroupName = LanguageUtil.format(pageContext, "x-personal-site", curLiveGroup.getDescriptiveName());
-				}
-				else {
-					curGroupName = curLiveGroup.getDescriptiveName();
-				}
-
-				if (category.equals(PortletCategoryKeys.CONTENT)) {
-					PortalUtil.addPortletBreadcrumbEntry(request, curGroupName, null);
-				}
-
-				if (scopeLayout == null) {
-					curGroupLabel = LanguageUtil.get(pageContext, "default");
-				}
-				else {
-					curGroupLabel = scopeLayout.getName(locale);
-
-					if (category.equals(PortletCategoryKeys.CONTENT)) {
-						PortalUtil.addPortletBreadcrumbEntry(request, curGroupLabel, null);
-					}
-				}
-				%>
-
-				<liferay-util:buffer var="groupSelectorIconMenu">
-					<c:choose>
-						<c:when test="<%= !manageableSites.isEmpty() %>">
-
-							<%
-							String icon = themeDisplay.getPathThemeImages() + "/common/site_icon.png";
-
-							if (curGroup.isCompany()) {
-								icon = themeDisplay.getPathThemeImages() + "/common/folder.png";
-							}
-							else if (curGroup.isOrganization()) {
-								icon = themeDisplay.getPathThemeImages() + "/common/organization_icon.png";
-							}
-							else if (curGroup.isUser()) {
-								icon = themeDisplay.getPathThemeImages() + "/common/user_icon.png";
-							}
-							%>
-
-							<liferay-ui:icon-menu align="left" direction="down" icon="<%= icon %>" id="groupSelector" message="<%= HtmlUtil.escape(StringUtil.shorten(curGroupName, 25)) %>">
+					<c:if test="<%= !scopeLayouts.isEmpty() && siteAdministrationCategory.equals(PortletCategoryKeys.SITE_ADMINISTRATION_CONTENT) %>">
+						<div class="nobr lfr-title-scope-selector">
+							<liferay-ui:message key="scope" />:
+							<liferay-ui:icon-menu direction="down" icon="" message="<%= scopeLabel %>">
+								<liferay-ui:icon
+									message="default"
+									src="<%= curSite.getIconURL(themeDisplay) %>"
+									url='<%= HttpUtil.setParameter(PortalUtil.getCurrentURL(request), "doAsGroupId", curSite.getGroupId()) %>'
+								/>
 
 								<%
-								for (int i = 0; i < manageableSites.size(); i++) {
-									Group group = manageableSites.get(i);
-
-									String image = "site_icon";
-									String message = HtmlUtil.escape(group.getDescriptiveName());
-
-									if (group.isCompany()) {
-										image = "folder";
-									}
-									else if (group.isOrganization()) {
-										image = "organization_icon";
-									}
-									else if (group.isUser()) {
-										image = "user_icon";
-										message = LanguageUtil.format(pageContext, "x-personal-site", group.getDescriptiveName());
-									}
-
-									String url = null;
-
-									if (manageableSites.size() > 1) {
-										url = HttpUtil.setParameter(PortalUtil.getCurrentURL(request), "doAsGroupId", group.getGroupId());
-									}
+								for (Layout curScopeLayout : scopeLayouts) {
+									Group scopeGroup = curScopeLayout.getScopeGroup();
 								%>
 
 									<liferay-ui:icon
-										image="<%= image %>"
-										message="<%= message %>"
-										url="<%= url %>"
-									/>
+										message="<%= HtmlUtil.escape(curScopeLayout.getName(locale)) %>"
+										src="<%= scopeGroup.getIconURL(themeDisplay) %>"
+										url='<%= HttpUtil.setParameter(PortalUtil.getCurrentURL(request), "doAsGroupId", scopeGroup.getGroupId()) %>'
+										/>
 
 								<%
 								}
 								%>
 
 							</liferay-ui:icon-menu>
-						</c:when>
-						<c:otherwise>
-
-							<%
-							String image = "site";
-
-							if (curGroup.isCompany()) {
-								image = "folder";
-							}
-							else if (curGroup.isOrganization()) {
-								image = "organization_icon";
-							}
-							else if (curGroup.isUser()) {
-								image = "user_icon";
-							}
-							%>
-
-							<liferay-ui:icon
-								cssClass="lfr-panel-title-single"
-								image="<%= image %>"
-								label="<%= true %>"
-								message="<%= HtmlUtil.escape(StringUtil.shorten(curGroupName, 25)) %>"
-							/>
-						</c:otherwise>
-					</c:choose>
-				</liferay-util:buffer>
-
-				<%
-				scopeLayouts.addAll(LayoutLocalServiceUtil.getScopeGroupLayouts(curGroup.getGroupId(), false));
-				scopeLayouts.addAll(LayoutLocalServiceUtil.getScopeGroupLayouts(curGroup.getGroupId(), true));
-
-				title = groupSelectorIconMenu;
-			}
-			else if (curCategory.equals(PortletCategoryKeys.PORTAL) && (CompanyLocalServiceUtil.getCompaniesCount(false) > 1)) {
-				title = HtmlUtil.escape(company.getName());
-			}
-			else {
-				title = LanguageUtil.get(pageContext, "category." + curCategory);
-			}
-
-			List<Portlet> portlets = PortalUtil.getControlPanelPortlets(curCategory, themeDisplay);
-		%>
-
-			<liferay-util:buffer var="categoryPortletsContent">
-				<c:if test="<%= !scopeLayouts.isEmpty() && curCategory.equals(PortletCategoryKeys.CONTENT) %>">
-					<div class="nobr lfr-title-scope-selector">
-						<liferay-ui:icon-menu align="left" direction="down" icon="" message='<%= LanguageUtil.get(pageContext, "scope") + StringPool.COLON + StringPool.SPACE + curGroupLabel %>'>
-							<liferay-ui:icon
-								image="folder"
-								message="default"
-								url='<%= HttpUtil.setParameter(PortalUtil.getCurrentURL(request), "doAsGroupId", curGroup.getGroupId()) %>'
-							/>
-
-							<%
-							for (Layout curScopeLayout : scopeLayouts) {
-							%>
-
-								<liferay-ui:icon
-									image="folder"
-									message="<%= HtmlUtil.escape(curScopeLayout.getName(locale)) %>"
-									url='<%= HttpUtil.setParameter(PortalUtil.getCurrentURL(request), "doAsGroupId", curScopeLayout.getScopeGroup().getGroupId()) %>'
-								/>
-
-							<%
-							}
-							%>
-
-						</liferay-ui:icon-menu>
-					</div>
+						</div>
+					</c:if>
 				</c:if>
 
 				<ul class="category-portlets">
 
 					<%
 					for (Portlet portlet : portlets) {
-						if (portlet.isActive() && !portlet.isInstanceable()) {
-							String portletId = portlet.getPortletId();
+						String portletId = portlet.getPortletId();
 					%>
 
-							<li class="<%= ppid.equals(portletId) ? "selected-portlet" : "" %>">
-								<a href="<liferay-portlet:renderURL windowState="<%= WindowState.MAXIMIZED.toString() %>" portletName="<%= portlet.getRootPortletId() %>" />">
-									<c:choose>
-										<c:when test="<%= Validator.isNull(portlet.getIcon()) %>">
-											<liferay-ui:icon src='<%= themeDisplay.getPathContext() + "/html/icons/default.png" %>' />
-										</c:when>
-										<c:otherwise>
-											<liferay-portlet:icon-portlet portlet="<%= portlet %>" />
-										</c:otherwise>
-									</c:choose>
+						<li class="<%= ppid.equals(portletId) ? "selected-portlet" : "" %>">
+							<liferay-portlet:renderURL
+								doAsGroupId="<%= themeDisplay.getScopeGroupId() %>"
+								portletName="<%= portlet.getRootPortletId() %>"
+								var="portletURL"
+								windowState="<%= WindowState.MAXIMIZED.toString() %>"
+								/>
 
-									<%= PortalUtil.getPortletTitle(portlet, application, locale) %>
-								</a>
-							</li>
+							<a href="<%= portletURL %>" id="<portlet:namespace />portlet_<%= portletId %>">
+								<c:choose>
+									<c:when test="<%= Validator.isNull(portlet.getIcon()) %>">
+										<liferay-ui:icon src='<%= themeDisplay.getPathContext() + "/html/icons/default.png" %>' />
+									</c:when>
+									<c:otherwise>
+										<liferay-portlet:icon-portlet portlet="<%= portlet %>" />
+									</c:otherwise>
+								</c:choose>
+
+								<%= PortalUtil.getPortletTitle(portlet, application, locale) %>
+							</a>
+						</li>
+
+						<c:if test="<%= !ppid.equals(portletId) %>">
+
+							<%
+							String portletClassName = portlet.getPortletClass();
+							%>
+
+							<%
+							if (portletClassName.equals(AlloyPortlet.class.getName())) {
+								PortletConfig alloyPortletConfig = PortletConfigFactoryUtil.create(portlet, application);
+
+								PortletContext alloyPortletContext = alloyPortletConfig.getPortletContext();
+
+								if (alloyPortletContext.getAttribute(BaseAlloyControllerImpl.TOUCH + portlet.getRootPortletId()) != Boolean.FALSE) {
+							%>
+
+								<iframe height="0" src="<%= portletURL %>" style="display: none; visibility: hidden;" width="0"></iframe>
+
+							<%
+								}
+							}
+							%>
+
+						</c:if>
 
 					<%
-						}
 					}
 					%>
 
 				</ul>
-			</liferay-util:buffer>
-
-			<c:choose>
-				<c:when test="<%= Validator.isNotNull(controlPanelCategory) %>">
-					<div class="lfr-panel-container" id="controlPanelMenuAddContentPanelContainer">
-						<div class="lfr-panel lfr-component panel-page-category lfr-extended" id="panel-manage-content">
-							<div class="lfr-panel-content">
-
-								<%= categoryPortletsContent %>
-
-							</div>
-						</div>
-					</div>
-				</c:when>
-				<c:otherwise>
-					<c:if test="<%= !portlets.isEmpty() %>">
-						<liferay-ui:panel collapsible="<%= true %>" cssClass="lfr-component panel-page-category" extended="<%= true %>" id='<%= "panel-manage-" + curCategory %>' persistState="<%= true %>" title="<%= title %>">
-
-							<%= categoryPortletsContent %>
-
-						</liferay-ui:panel>
-					</c:if>
-				</c:otherwise>
-			</c:choose>
+			</liferay-ui:panel>
 
 		<%
 		}
@@ -325,23 +169,3 @@
 
 	</liferay-ui:panel-container>
 </div>
-
-<aui:script use="liferay-panel">
-	var trigger = A.one('#<portlet:namespace />groupSelector a');
-
-	var panelContainer = Liferay.Panel.get('controlPanelMenuAddContentPanelContainer');
-
-	if (trigger && panelContainer) {
-		trigger.on(
-			'click',
-			function(event) {
-				panelContainer.once(
-					'collapse',
-					function(event) {
-						event.preventDefault();
-					}
-				);
-			}
-		);
-	}
-</aui:script>

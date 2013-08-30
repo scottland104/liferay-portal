@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,12 +14,20 @@
 
 package com.liferay.portal.kernel.servlet.filters.invoker;
 
-import com.liferay.portal.kernel.concurrent.ConcurrentLRUCache;
+import com.liferay.portal.kernel.cache.key.CacheKeyGenerator;
+import com.liferay.portal.kernel.cache.key.CacheKeyGeneratorUtil;
+import com.liferay.portal.kernel.concurrent.ConcurrentLFUCache;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.servlet.NonSerializableObjectRequestWrapper;
+import com.liferay.portal.kernel.servlet.SanitizedServletResponse;
 import com.liferay.portal.kernel.util.BasePortalLifecycle;
+import com.liferay.portal.kernel.util.ContextPathUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -34,24 +42,21 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Mika Koivisto
  * @author Brian Wing Shun Chan
+ * @author Shuyang Zhou
  */
 public class InvokerFilter extends BasePortalLifecycle implements Filter {
 
-	public InvokerFilter() {
-		if (_INVOKER_FILTER_CHAIN_SIZE > 0) {
-			_filterChains = new ConcurrentLRUCache<Integer, InvokerFilterChain>(
-				_INVOKER_FILTER_CHAIN_SIZE);
-		}
-	}
-
+	@Override
 	public void destroy() {
 		portalDestroy();
 	}
 
+	@Override
 	public void doFilter(
 			ServletRequest servletRequest, ServletResponse servletResponse,
 			FilterChain filterChain)
@@ -61,24 +66,56 @@ public class InvokerFilter extends BasePortalLifecycle implements Filter {
 
 		String uri = getURI(request);
 
+		request = handleNonSerializableRequest(request);
+
+		HttpServletResponse response = (HttpServletResponse)servletResponse;
+
+		response = secureResponseHeaders(request, response);
+
 		request.setAttribute(WebKeys.INVOKER_FILTER_URI, uri);
 
-		InvokerFilterChain invokerFilterChain = getInvokerFilterChain(
-			request, uri, filterChain);
+		try {
+			InvokerFilterChain invokerFilterChain = getInvokerFilterChain(
+				request, uri, filterChain);
 
-		Thread currentThread = Thread.currentThread();
+			Thread currentThread = Thread.currentThread();
 
-		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
+			ClassLoader contextClassLoader =
+				currentThread.getContextClassLoader();
 
-		invokerFilterChain.setContextClassLoader(contextClassLoader);
+			invokerFilterChain.setContextClassLoader(contextClassLoader);
 
-		invokerFilterChain.doFilter(servletRequest, servletResponse);
+			invokerFilterChain.doFilter(request, response);
+		}
+		finally {
+			request.removeAttribute(WebKeys.INVOKER_FILTER_URI);
+		}
 	}
 
-	public void init(FilterConfig filterConfig) {
+	@Override
+	public void init(FilterConfig filterConfig) throws ServletException {
 		_filterConfig = filterConfig;
 
-		registerPortalLifecycle();
+		ServletContext servletContext = _filterConfig.getServletContext();
+
+		_contextPath = ContextPathUtil.getContextPath(servletContext);
+
+		boolean registerPortalLifecycle = GetterUtil.getBoolean(
+			_filterConfig.getInitParameter("register-portal-lifecycle"), true);
+
+		if (registerPortalLifecycle) {
+			registerPortalLifecycle();
+		}
+		else {
+			try {
+				doPortalInit();
+			}
+			catch (Exception e) {
+				_log.error(e, e);
+
+				throw new ServletException(e);
+			}
+		}
 	}
 
 	protected void clearFilterChainsCache() {
@@ -98,12 +135,20 @@ public class InvokerFilter extends BasePortalLifecycle implements Filter {
 		if (invokerFilterHelper != null) {
 			servletContext.removeAttribute(InvokerFilterHelper.class.getName());
 
-			_invokerFilterHelper.destroy();
+			invokerFilterHelper.destroy();
 		}
 	}
 
 	@Override
 	protected void doPortalInit() throws Exception {
+		_invokerFilterChainSize = GetterUtil.getInteger(
+			PropsUtil.get(PropsKeys.INVOKER_FILTER_CHAIN_SIZE));
+
+		if (_invokerFilterChainSize > 0) {
+			_filterChains = new ConcurrentLFUCache<String, InvokerFilterChain>(
+				_invokerFilterChainSize);
+		}
+
 		ServletContext servletContext = _filterConfig.getServletContext();
 
 		InvokerFilterHelper invokerFilterHelper =
@@ -113,11 +158,11 @@ public class InvokerFilter extends BasePortalLifecycle implements Filter {
 		if (invokerFilterHelper == null) {
 			invokerFilterHelper = new InvokerFilterHelper();
 
-			invokerFilterHelper.readLiferayFilterWebXML(
-				servletContext, "/WEB-INF/liferay-web.xml");
-
 			servletContext.setAttribute(
 				InvokerFilterHelper.class.getName(), invokerFilterHelper);
+
+			invokerFilterHelper.readLiferayFilterWebXML(
+				servletContext, "/WEB-INF/liferay-web.xml");
 		}
 
 		_invokerFilterHelper = invokerFilterHelper;
@@ -153,7 +198,11 @@ public class InvokerFilter extends BasePortalLifecycle implements Filter {
 				request, _dispatcher, uri, filterChain);
 		}
 
-		Integer key = uri.hashCode();
+		CacheKeyGenerator cacheKeyGenerator =
+			CacheKeyGeneratorUtil.getCacheKeyGenerator(
+				InvokerFilter.class.getName());
+
+		String key = String.valueOf(cacheKeyGenerator.getCacheKey(uri));
 
 		InvokerFilterChain invokerFilterChain = _filterChains.get(key);
 
@@ -182,24 +231,53 @@ public class InvokerFilter extends BasePortalLifecycle implements Filter {
 			uri = request.getRequestURI();
 		}
 
-		String contextPath = request.getContextPath();
+		if (Validator.isNotNull(_contextPath) &&
+			!_contextPath.equals(StringPool.SLASH) &&
+			uri.startsWith(_contextPath)) {
 
-		if (Validator.isNotNull(contextPath) &&
-			!contextPath.equals(StringPool.SLASH) &&
-			uri.startsWith(contextPath)) {
-
-			uri = uri.substring(contextPath.length());
+			uri = uri.substring(_contextPath.length());
 		}
 
 		return uri;
 	}
 
-	private static final int _INVOKER_FILTER_CHAIN_SIZE = GetterUtil.getInteger(
-		PropsUtil.get(PropsKeys.INVOKER_FILTER_CHAIN_SIZE));
+	protected HttpServletRequest handleNonSerializableRequest(
+		HttpServletRequest request) {
 
+		if (ServerDetector.isWebLogic()) {
+			if (!NonSerializableObjectRequestWrapper.isWrapped(request)) {
+				request = new NonSerializableObjectRequestWrapper(request);
+			}
+		}
+
+		return request;
+	}
+
+	protected HttpServletResponse secureResponseHeaders(
+		HttpServletRequest request, HttpServletResponse response) {
+
+		if (!GetterUtil.getBoolean(
+				request.getAttribute(_SECURE_RESPONSE), true)) {
+
+			return response;
+		}
+
+		request.setAttribute(_SECURE_RESPONSE, Boolean.FALSE);
+
+		return SanitizedServletResponse.getSanitizedServletResponse(
+			request, response);
+	}
+
+	private static final String _SECURE_RESPONSE =
+		InvokerFilter.class.getName() + "SECURE_RESPONSE";
+
+	private static Log _log = LogFactoryUtil.getLog(InvokerFilter.class);
+
+	private String _contextPath;
 	private Dispatcher _dispatcher;
-	private ConcurrentLRUCache<Integer, InvokerFilterChain> _filterChains;
+	private ConcurrentLFUCache<String, InvokerFilterChain> _filterChains;
 	private FilterConfig _filterConfig;
+	private int _invokerFilterChainSize;
 	private InvokerFilterHelper _invokerFilterHelper;
 
 }

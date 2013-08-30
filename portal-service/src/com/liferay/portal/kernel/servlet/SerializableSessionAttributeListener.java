@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,44 +34,56 @@ import javax.servlet.http.HttpSessionBindingEvent;
 public class SerializableSessionAttributeListener
 	extends BasePortalLifecycle implements HttpSessionAttributeListener {
 
-	public void attributeAdded(HttpSessionBindingEvent event) {
+	@Override
+	public void attributeAdded(
+		HttpSessionBindingEvent httpSessionBindingEvent) {
+
 		if (!_sessionVerifySerializableAttribute) {
 			return;
 		}
 
-		String name = event.getName();
-		Object value = event.getValue();
+		String name = httpSessionBindingEvent.getName();
+		Object value = httpSessionBindingEvent.getValue();
 
-		if (!(value instanceof Serializable)) {
-			_log.error(
-				value.getClass().getName() +
-					" is not serializable and will prevent this session from " +
-						"being replicated");
+		if (value instanceof Serializable) {
+			return;
+		}
 
-			if (_requiresSerializable == null) {
-				HttpSession session = event.getSession();
+		Class<?> clazz = value.getClass();
 
-				ServletContext servletContext = session.getServletContext();
+		_log.error(
+			clazz.getName() +
+				" is not serializable and will prevent this session from " +
+					"being replicated");
 
-				_requiresSerializable = Boolean.valueOf(
-					GetterUtil.getBoolean(
-						servletContext.getInitParameter(
-							"session-attributes-requires-serializable")));
-			}
+		if (_requiresSerializable == null) {
+			HttpSession session = httpSessionBindingEvent.getSession();
 
-			if (_requiresSerializable) {
-				HttpSession session = event.getSession();
+			ServletContext servletContext = session.getServletContext();
 
-				session.removeAttribute(name);
-			}
+			_requiresSerializable = Boolean.valueOf(
+				GetterUtil.getBoolean(
+					servletContext.getInitParameter(
+						"session-attributes-requires-serializable")));
+		}
+
+		if (_requiresSerializable) {
+			HttpSession session = httpSessionBindingEvent.getSession();
+
+			session.removeAttribute(name);
 		}
 	}
 
-	public void attributeRemoved(HttpSessionBindingEvent event) {
+	@Override
+	public void attributeRemoved(
+		HttpSessionBindingEvent httpSessionBindingEvent) {
 	}
 
-	public void attributeReplaced(HttpSessionBindingEvent event) {
-		attributeAdded(event);
+	@Override
+	public void attributeReplaced(
+		HttpSessionBindingEvent httpSessionBindingEvent) {
+
+		attributeAdded(httpSessionBindingEvent);
 	}
 
 	@Override

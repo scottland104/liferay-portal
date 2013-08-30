@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,22 +25,18 @@ long productEntryId = BeanParamUtil.getLong(productEntry, request, "productEntry
 
 String type = BeanParamUtil.getString(productEntry, request, "type");
 
-Set licenseIds = new HashSet();
+Set<Long> licenseIds = new HashSet<Long>();
 
 if ((productEntry != null) && (request.getParameterValues("licenses") == null)) {
-	Iterator itr = productEntry.getLicenses().iterator();
-
-	while (itr.hasNext()) {
-		SCLicense license = (SCLicense)itr.next();
-
-		licenseIds.add(new Long(license.getLicenseId()));
+	for (SCLicense license : productEntry.getLicenses()) {
+		licenseIds.add(license.getLicenseId());
 	}
 }
 else {
 	long[] licenses = ParamUtil.getLongValues(request, "licenses");
 
 	for (int i = 0; i < licenses.length; i++) {
-		licenseIds.add(new Long(licenses[i]));
+		licenseIds.add(licenses[i]);
 	}
 }
 
@@ -49,7 +45,7 @@ List productScreenshots = SCProductScreenshotLocalServiceUtil.getProductScreensh
 int screenshotsCount = ParamUtil.getInteger(request, "screenshotsCount", productScreenshots.size());
 %>
 
-<form action="<portlet:actionURL><portlet:param name="struts_action" value="/software_catalog/edit_product_entry" /></portlet:actionURL>" method="post" name="<portlet:namespace />fm" enctype="multipart/form-data" onSubmit="<portlet:namespace />saveProductEntry(); return false;">
+<form action="<portlet:actionURL><portlet:param name="struts_action" value="/software_catalog/edit_product_entry" /></portlet:actionURL>" enctype="multipart/form-data" method="post" name="<portlet:namespace />fm" onSubmit="<portlet:namespace />saveProductEntry(); return false;">
 <input name="<portlet:namespace /><%= Constants.CMD %>" type="hidden" value="" />
 <input name="<portlet:namespace />redirect" type="hidden" value="<%= HtmlUtil.escapeAttribute(redirect) %>" />
 <input name="<portlet:namespace />productEntryId" type="hidden" value="<%= productEntryId %>" />
@@ -76,7 +72,7 @@ int screenshotsCount = ParamUtil.getInteger(request, "screenshotsCount", product
 		<liferay-ui:message key="name" />
 	</td>
 	<td>
-		<liferay-ui:input-field model="<%= SCProductEntry.class %>" bean="<%= productEntry %>" field="name" />
+		<liferay-ui:input-field autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" bean="<%= productEntry %>" field="name" model="<%= SCProductEntry.class %>" />
 	</td>
 </tr>
 <tr>
@@ -108,13 +104,10 @@ int screenshotsCount = ParamUtil.getInteger(request, "screenshotsCount", product
 			<optgroup label="<liferay-ui:message key="recommended-licenses" />">
 
 				<%
-				Iterator itr = SCLicenseLocalServiceUtil.getLicenses(true, true).iterator();
-
-				while (itr.hasNext()) {
-					SCLicense license = (SCLicense)itr.next();
+				for (SCLicense license : SCLicenseLocalServiceUtil.getLicenses(true, true)) {
 				%>
 
-					<option <%= licenseIds.contains(new Long(license.getLicenseId())) ? "selected" : "" %> value="<%= license.getLicenseId() %>"><%= license.getName() %></option>
+					<option <%= licenseIds.contains(license.getLicenseId()) ? "selected" : "" %> value="<%= license.getLicenseId() %>"><%= HtmlUtil.escape(license.getName()) %></option>
 
 				<%
 				}
@@ -125,13 +118,10 @@ int screenshotsCount = ParamUtil.getInteger(request, "screenshotsCount", product
 			<optgroup label="<liferay-ui:message key="other-licenses" />">
 
 				<%
-				itr = SCLicenseLocalServiceUtil.getLicenses(true, false).iterator();
-
-				while (itr.hasNext()) {
-					SCLicense license = (SCLicense)itr.next();
+				for (SCLicense license : SCLicenseLocalServiceUtil.getLicenses(true, false)) {
 				%>
 
-					<option <%= licenseIds.contains(new Long(license.getLicenseId())) ? "selected" : "" %> value="<%= license.getLicenseId() %>"><%= license.getName() %></option>
+					<option <%= licenseIds.contains(license.getLicenseId()) ? "selected" : "" %> value="<%= license.getLicenseId() %>"><%= HtmlUtil.escape(license.getName()) %></option>
 
 				<%
 				}
@@ -146,7 +136,7 @@ int screenshotsCount = ParamUtil.getInteger(request, "screenshotsCount", product
 		<liferay-ui:message key="author" />
 	</td>
 	<td>
-		<liferay-ui:input-field model="<%= SCProductEntry.class %>" bean="<%= productEntry %>" field="author" />
+		<liferay-ui:input-field bean="<%= productEntry %>" field="author" model="<%= SCProductEntry.class %>" />
 	</td>
 </tr>
 <tr>
@@ -154,7 +144,7 @@ int screenshotsCount = ParamUtil.getInteger(request, "screenshotsCount", product
 		<liferay-ui:message key="page-url" />
 	</td>
 	<td>
-		<liferay-ui:input-field model="<%= SCProductEntry.class %>" bean="<%= productEntry %>" field="pageURL" />
+		<liferay-ui:input-field bean="<%= productEntry %>" field="pageURL" model="<%= SCProductEntry.class %>" />
 	</td>
 </tr>
 <tr>
@@ -162,7 +152,7 @@ int screenshotsCount = ParamUtil.getInteger(request, "screenshotsCount", product
 		<liferay-ui:message key="tags" />
 	</td>
 	<td>
-		<liferay-ui:input-field model="<%= SCProductEntry.class %>" bean="<%= productEntry %>" field="tags" /> (<liferay-ui:message key="comma-delimited-list" />)
+		<liferay-ui:input-field bean="<%= productEntry %>" field="tags" model="<%= SCProductEntry.class %>" /> (<liferay-ui:message key="comma-delimited-list" />)
 	</td>
 </tr>
 <tr>
@@ -170,7 +160,7 @@ int screenshotsCount = ParamUtil.getInteger(request, "screenshotsCount", product
 		<liferay-ui:message key="short-description" />
 	</td>
 	<td>
-		<liferay-ui:input-field model="<%= SCProductEntry.class %>" bean="<%= productEntry %>" field="shortDescription" />
+		<liferay-ui:input-field bean="<%= productEntry %>" field="shortDescription" model="<%= SCProductEntry.class %>" />
 	</td>
 </tr>
 <tr>
@@ -178,7 +168,7 @@ int screenshotsCount = ParamUtil.getInteger(request, "screenshotsCount", product
 		<liferay-ui:message key="long-description" />
 	</td>
 	<td>
-		<liferay-ui:input-field model="<%= SCProductEntry.class %>" bean="<%= productEntry %>" field="longDescription" />
+		<liferay-ui:input-field bean="<%= productEntry %>" field="longDescription" model="<%= SCProductEntry.class %>" />
 	</td>
 </tr>
 
@@ -202,128 +192,122 @@ int screenshotsCount = ParamUtil.getInteger(request, "screenshotsCount", product
 
 </table>
 
-<br />
+<div class="lfr-asset-panels">
+	<liferay-ui:panel-container extended="<%= false %>" id="productEntryPanelContainer" persistState="<%= true %>">
+		<liferay-ui:panel extended="<%= false %>" id="pluginRepositoryPanel" persistState="<%= true %>" title="plugin-repository">
+			<table class="lfr-table">
+			<tr>
+				<td>
+					<liferay-ui:message key="site-id" />
+				</td>
+				<td>
+					<liferay-ui:input-field bean="<%= productEntry %>" field="repoGroupId" model="<%= SCProductEntry.class %>" />
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<liferay-ui:message key="artifact-id" />
+				</td>
+				<td>
+					<liferay-ui:input-field bean="<%= productEntry %>" field="repoArtifactId" model="<%= SCProductEntry.class %>" />
+				</td>
+			</tr>
+			</table>
+		</liferay-ui:panel>
 
-<input type="submit" value="<liferay-ui:message key="save" />" />
+		<liferay-ui:panel extended="<%= false %>" id="screenshotsPanel" persistState="<%= true %>" title="screenshots">
+			<table class="lfr-table">
 
-<input type="button" value="<liferay-ui:message key="cancel" />" onClick="location.href = '<%= HtmlUtil.escape(PortalUtil.escapeRedirect(redirect)) %>';" />
+			<%
+			for (int i = 0; i < screenshotsCount; i++) {
+				SCProductScreenshot productScreenshot = null;
 
-<br /><br />
+				if (i < productScreenshots.size()) {
+					productScreenshot = (SCProductScreenshot)productScreenshots.get(i);
+				}
+			%>
 
-<liferay-ui:header
-	title="plugin-repository"
-/>
-
-<table class="lfr-table">
-<tr>
-	<td>
-		<liferay-ui:message key="site-id" />
-	</td>
-	<td>
-		<liferay-ui:input-field model="<%= SCProductEntry.class %>" bean="<%= productEntry %>" field="repoGroupId" />
-	</td>
-</tr>
-<tr>
-	<td>
-		<liferay-ui:message key="artifact-id" />
-	</td>
-	<td>
-		<liferay-ui:input-field model="<%= SCProductEntry.class %>" bean="<%= productEntry %>" field="repoArtifactId" />
-	</td>
-</tr>
-</table>
-
-<br />
-
-<liferay-ui:header
-	title="screenshots"
-/>
-
-<table class="lfr-table">
-
-<%
-for (int i = 0; i < screenshotsCount; i++) {
-	SCProductScreenshot productScreenshot = null;
-
-	if (i < productScreenshots.size()) {
-		productScreenshot = (SCProductScreenshot)productScreenshots.get(i);
-	}
-%>
-
-	<tr>
-		<td>
-			<liferay-ui:message key="thumbnail" />
-		</td>
-		<td>
-			<input class="lfr-input-text" name="<portlet:namespace />thumbnail<%= i %>" type="file" />
-		</td>
-
-		<c:if test="<%= productScreenshot != null %>">
-			<td class="lfr-top" rowspan="3">
-				<table class="lfr-table">
 				<tr>
 					<td>
-						<aui:a href='<%= themeDisplay.getPathImage() + "/software_catalog?img_id=" + productScreenshot.getThumbnailId() + "&t=" + ImageServletTokenUtil.getToken(productScreenshot.getThumbnailId()) %>' target="_blank"><liferay-ui:message key="see-thumbnail" /></aui:a>
+						<liferay-ui:message key="thumbnail" />
 					</td>
 					<td>
-						<aui:a href='<%= themeDisplay.getPathImage() + "/software_catalog?img_id=" + productScreenshot.getFullImageId() + "&t=" + ImageServletTokenUtil.getToken(productScreenshot.getFullImageId()) %>' target="_blank"><liferay-ui:message key="see-full-image" /></aui:a>
+						<input class="lfr-input-text" name="<portlet:namespace />thumbnail<%= i %>" type="file" />
+					</td>
+
+					<c:if test="<%= productScreenshot != null %>">
+						<td class="lfr-top" rowspan="3">
+							<table class="lfr-table">
+							<tr>
+								<td>
+									<aui:a href='<%= themeDisplay.getPathImage() + "/software_catalog?img_id=" + productScreenshot.getThumbnailId() + "&t=" + WebServerServletTokenUtil.getToken(productScreenshot.getThumbnailId()) %>' target="_blank"><liferay-ui:message key="see-thumbnail" /></aui:a>
+								</td>
+								<td>
+									<aui:a href='<%= themeDisplay.getPathImage() + "/software_catalog?img_id=" + productScreenshot.getFullImageId() + "&t=" + WebServerServletTokenUtil.getToken(productScreenshot.getFullImageId()) %>' target="_blank"><liferay-ui:message key="see-full-image" /></aui:a>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="2">
+									<liferay-ui:message key="use-existing-images" /> <liferay-ui:input-checkbox param='<%= "preserveScreenshot" + i %>' defaultValue="<%= true %>" />
+								</td>
+							</tr>
+						</table>
+						</td>
+					</c:if>
+				</tr>
+				<tr>
+					<td>
+						<liferay-ui:message key="full-image" />
+					</td>
+					<td>
+						<input class="lfr-input-text" name="<portlet:namespace />fullImage<%= i %>" type="file" />
 					</td>
 				</tr>
 				<tr>
 					<td colspan="2">
-						<liferay-ui:message key="use-existing-images" /> <liferay-ui:input-checkbox param='<%= "preserveScreenshot" + i %>' defaultValue="<%= true %>" />
+						<br />
 					</td>
 				</tr>
-				</table>
-			</td>
-		</c:if>
-	</tr>
-	<tr>
-		<td>
-			<liferay-ui:message key="full-image" />
-		</td>
-		<td>
-			<input class="lfr-input-text" name="<portlet:namespace />fullImage<%= i %>" type="file" />
-		</td>
-	</tr>
-	<tr>
-		<td colspan="2">
-			<br />
-		</td>
-	</tr>
 
-<%
-}
-%>
-</table>
+			<%
+			}
+			%>
 
-<input type="button" value="<liferay-ui:message key="add-screenshot" />" onClick="<portlet:namespace />addScreenShot();" />
+			</table>
 
-<c:if test="<%= screenshotsCount > 0 %>">
-	<input type="button" value="<liferay-ui:message key="remove-screenshot" />" onClick="<portlet:namespace />removeScreenShot();" />
-</c:if>
+			<input onClick="<portlet:namespace />addScreenShot();" type="button" value="<liferay-ui:message key="add-screenshot" />" />
+
+			<c:if test="<%= screenshotsCount > 0 %>">
+				<input onClick="<portlet:namespace />removeScreenShot();" type="button" value="<liferay-ui:message key="remove-screenshot" />" />
+			</c:if>
+		</liferay-ui:panel>
+	</liferay-ui:panel-container>
+</div>
+
+<input type="submit" value="<liferay-ui:message key="save" />" />
+
+<input onClick="location.href = '<%= HtmlUtil.escape(PortalUtil.escapeRedirect(redirect)) %>';" type="button" value="<liferay-ui:message key="cancel" />" />
 
 </form>
 
 <aui:script>
 	function <portlet:namespace />addScreenShot() {
 		document.<portlet:namespace />fm.<portlet:namespace />screenshotsCount.value = "<%= screenshotsCount + 1 %>";
+
 		submitForm(document.<portlet:namespace />fm);
 	}
 
 	function <portlet:namespace />removeScreenShot() {
 		document.<portlet:namespace />fm.<portlet:namespace />screenshotsCount.value = "<%= screenshotsCount - 1 %>";
+
 		submitForm(document.<portlet:namespace />fm);
 	}
 
 	function <portlet:namespace />saveProductEntry() {
 		document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= (productEntry == null) ? Constants.ADD : Constants.UPDATE %>";
+
 		submitForm(document.<portlet:namespace />fm);
 	}
-
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />name);
-	</c:if>
 </aui:script>
 
 <%

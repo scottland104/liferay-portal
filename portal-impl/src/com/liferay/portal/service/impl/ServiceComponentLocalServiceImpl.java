@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,7 +26,9 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upgrade.util.UpgradeTable;
 import com.liferay.portal.kernel.upgrade.util.UpgradeTableFactoryUtil;
+import com.liferay.portal.kernel.upgrade.util.UpgradeTableListener;
 import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.InstanceFactory;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.xml.Document;
@@ -43,6 +45,11 @@ import java.io.InputStream;
 
 import java.lang.reflect.Field;
 
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedExceptionAction;
+import java.security.ProtectionDomain;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,6 +61,7 @@ import javax.servlet.ServletContext;
 public class ServiceComponentLocalServiceImpl
 	extends ServiceComponentLocalServiceBaseImpl {
 
+	@Override
 	public void destroyServiceComponent(
 			ServletContext servletContext, ClassLoader classLoader)
 		throws SystemException {
@@ -66,6 +74,7 @@ public class ServiceComponentLocalServiceImpl
 		}
 	}
 
+	@Override
 	public ServiceComponent initServiceComponent(
 			ServletContext servletContext, ClassLoader classLoader,
 			String buildNamespace, long buildNumber, long buildDate,
@@ -95,7 +104,7 @@ public class ServiceComponentLocalServiceImpl
 			serviceComponentPersistence.findByBuildNamespace(
 				buildNamespace, 0, 1);
 
-		if (serviceComponents.size() == 0) {
+		if (serviceComponents.isEmpty()) {
 			long serviceComponentId = counterLocalService.increment();
 
 			serviceComponent = serviceComponentPersistence.create(
@@ -136,26 +145,33 @@ public class ServiceComponentLocalServiceImpl
 
 			Element dataElement = document.addElement("data");
 
-			String tablesSQL = HttpUtil.URLtoString(servletContext.getResource(
-				"/WEB-INF/sql/tables.sql"));
+			Element tablesSQLElement = dataElement.addElement("tables-sql");
 
-			dataElement.addElement("tables-sql").addCDATA(tablesSQL);
+			String tablesSQL = HttpUtil.URLtoString(
+				servletContext.getResource("/WEB-INF/sql/tables.sql"));
+
+			tablesSQLElement.addCDATA(tablesSQL);
+
+			Element sequencesSQLElement = dataElement.addElement(
+				"sequences-sql");
 
 			String sequencesSQL = HttpUtil.URLtoString(
 				servletContext.getResource("/WEB-INF/sql/sequences.sql"));
 
-			dataElement.addElement("sequences-sql").addCDATA(sequencesSQL);
+			sequencesSQLElement.addCDATA(sequencesSQL);
 
-			String indexesSQL = HttpUtil.URLtoString(servletContext.getResource(
-				"/WEB-INF/sql/indexes.sql"));
+			Element indexesSQLElement = dataElement.addElement("indexes-sql");
 
-			dataElement.addElement("indexes-sql").addCDATA(indexesSQL);
+			String indexesSQL = HttpUtil.URLtoString(
+				servletContext.getResource("/WEB-INF/sql/indexes.sql"));
+
+			indexesSQLElement.addCDATA(indexesSQL);
 
 			String dataXML = document.formattedString();
 
 			serviceComponent.setData(dataXML);
 
-			serviceComponentPersistence.update(serviceComponent, false);
+			serviceComponentPersistence.update(serviceComponent);
 
 			serviceComponentLocalService.upgradeDB(
 				classLoader, buildNamespace, buildNumber, buildAutoUpgrade,
@@ -170,64 +186,40 @@ public class ServiceComponentLocalServiceImpl
 		}
 	}
 
+	@Override
 	public void upgradeDB(
-			ClassLoader classLoader, String buildNamespace, long buildNumber,
-			boolean buildAutoUpgrade, ServiceComponent previousServiceComponent,
-			String tablesSQL, String sequencesSQL, String indexesSQL)
+			final ClassLoader classLoader, final String buildNamespace,
+			final long buildNumber, final boolean buildAutoUpgrade,
+			final ServiceComponent previousServiceComponent,
+			final String tablesSQL, final String sequencesSQL,
+			final String indexesSQL)
 		throws Exception {
 
-		DB db = DBFactoryUtil.getDB();
+		ProtectionDomain protectionDomain = new ProtectionDomain(
+			null, null, classLoader, null);
 
-		if (previousServiceComponent == null) {
-			if (_log.isInfoEnabled()) {
-				_log.info("Running " + buildNamespace + " SQL scripts");
-			}
+		AccessControlContext accessControlContext = new AccessControlContext(
+			new ProtectionDomain[] {protectionDomain});
 
-			db.runSQLTemplateString(tablesSQL, true, false);
-			db.runSQLTemplateString(sequencesSQL, true, false);
-			db.runSQLTemplateString(indexesSQL, true, false);
-		}
-		else if (buildAutoUpgrade) {
-			if (_log.isInfoEnabled()) {
-				_log.info(
-					"Upgrading " + buildNamespace +
-						" database to build number " + buildNumber);
-			}
+		AccessController.doPrivileged(
+			new PrivilegedExceptionAction<Void>() {
 
-			if (!tablesSQL.equals(
-					previousServiceComponent.getTablesSQL())) {
+				@Override
+				public Void run() throws Exception {
+					doUpgradeDB(
+						classLoader, buildNamespace, buildNumber,
+						buildAutoUpgrade, previousServiceComponent, tablesSQL,
+						sequencesSQL, indexesSQL);
 
-				if (_log.isInfoEnabled()) {
-					_log.info("Upgrading database with tables.sql");
+					return null;
 				}
 
-				db.runSQLTemplateString(tablesSQL, true, false);
-
-				upgradeModels(classLoader);
-			}
-
-			if (!sequencesSQL.equals(
-					previousServiceComponent.getSequencesSQL())) {
-
-				if (_log.isInfoEnabled()) {
-					_log.info("Upgrading database with sequences.sql");
-				}
-
-				db.runSQLTemplateString(sequencesSQL, true, false);
-			}
-
-			if (!indexesSQL.equals(
-					previousServiceComponent.getIndexesSQL())) {
-
-				if (_log.isInfoEnabled()) {
-					_log.info("Upgrading database with indexes.sql");
-				}
-
-				db.runSQLTemplateString(indexesSQL, true, false);
-			}
-		}
+			},
+			accessControlContext
+		);
 	}
 
+	@Override
 	public void verifyDB() throws SystemException {
 		List<ServiceComponent> serviceComponents =
 			serviceComponentPersistence.findAll();
@@ -277,6 +269,60 @@ public class ServiceComponentLocalServiceImpl
 		FinderCacheUtil.clearCache();
 	}
 
+	protected void doUpgradeDB(
+			ClassLoader classLoader, String buildNamespace, long buildNumber,
+			boolean buildAutoUpgrade, ServiceComponent previousServiceComponent,
+			String tablesSQL, String sequencesSQL, String indexesSQL)
+		throws Exception {
+
+		DB db = DBFactoryUtil.getDB();
+
+		if (previousServiceComponent == null) {
+			if (_log.isInfoEnabled()) {
+				_log.info("Running " + buildNamespace + " SQL scripts");
+			}
+
+			db.runSQLTemplateString(tablesSQL, true, false);
+			db.runSQLTemplateString(sequencesSQL, true, false);
+			db.runSQLTemplateString(indexesSQL, true, false);
+		}
+		else if (buildAutoUpgrade) {
+			if (_log.isInfoEnabled()) {
+				_log.info(
+					"Upgrading " + buildNamespace +
+						" database to build number " + buildNumber);
+			}
+
+			if (!tablesSQL.equals(previousServiceComponent.getTablesSQL())) {
+				if (_log.isInfoEnabled()) {
+					_log.info("Upgrading database with tables.sql");
+				}
+
+				db.runSQLTemplateString(tablesSQL, true, false);
+
+				upgradeModels(classLoader, previousServiceComponent);
+			}
+
+			if (!sequencesSQL.equals(
+					previousServiceComponent.getSequencesSQL())) {
+
+				if (_log.isInfoEnabled()) {
+					_log.info("Upgrading database with sequences.sql");
+				}
+
+				db.runSQLTemplateString(sequencesSQL, true, false);
+			}
+
+			if (!indexesSQL.equals(previousServiceComponent.getIndexesSQL())) {
+				if (_log.isInfoEnabled()) {
+					_log.info("Upgrading database with indexes.sql");
+				}
+
+				db.runSQLTemplateString(indexesSQL, true, false);
+			}
+		}
+	}
+
 	protected List<String> getModels(ClassLoader classLoader)
 		throws DocumentException, IOException {
 
@@ -322,7 +368,65 @@ public class ServiceComponentLocalServiceImpl
 		return models;
 	}
 
-	protected void upgradeModels(ClassLoader classLoader) throws Exception {
+	protected UpgradeTableListener getUpgradeTableListener(
+		ClassLoader classLoader, Class<?> modelClass) {
+
+		String modelClassName = modelClass.getName();
+
+		String upgradeTableListenerClassName = modelClassName;
+
+		upgradeTableListenerClassName = StringUtil.replaceLast(
+			upgradeTableListenerClassName, ".model.impl.", ".model.upgrade.");
+		upgradeTableListenerClassName = StringUtil.replaceLast(
+			upgradeTableListenerClassName, "ModelImpl", "UpgradeTableListener");
+
+		try {
+			UpgradeTableListener upgradeTableListener =
+				(UpgradeTableListener)InstanceFactory.newInstance(
+					classLoader, upgradeTableListenerClassName);
+
+			if (_log.isInfoEnabled()) {
+				_log.info("Instantiated " + upgradeTableListenerClassName);
+			}
+
+			return upgradeTableListener;
+		}
+		catch (Exception e) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Unable to instantiate " + upgradeTableListenerClassName);
+			}
+
+			return null;
+		}
+	}
+
+	protected void removeOldServiceComponents(String buildNamespace)
+		throws SystemException {
+
+		int serviceComponentsCount =
+			serviceComponentPersistence.countByBuildNamespace(buildNamespace);
+
+		if (serviceComponentsCount < _MAX_SERVICE_COMPONENTS) {
+			return;
+		}
+
+		List<ServiceComponent> serviceComponents =
+			serviceComponentPersistence.findByBuildNamespace(
+				buildNamespace, _MAX_SERVICE_COMPONENTS,
+				serviceComponentsCount);
+
+		for (int i = 0; i < serviceComponents.size(); i++) {
+			ServiceComponent serviceComponent = serviceComponents.get(i);
+
+			serviceComponentPersistence.remove(serviceComponent);
+		}
+	}
+
+	protected void upgradeModels(
+			ClassLoader classLoader, ServiceComponent previousServiceComponent)
+		throws Exception {
+
 		List<String> models = getModels(classLoader);
 
 		for (String name : models) {
@@ -351,31 +455,22 @@ public class ServiceComponentLocalServiceImpl
 			UpgradeTable upgradeTable = UpgradeTableFactoryUtil.getUpgradeTable(
 				tableName, tableColumns);
 
+			UpgradeTableListener upgradeTableListener = getUpgradeTableListener(
+				classLoader, modelClass);
+
 			upgradeTable.setCreateSQL(tableSQLCreate);
 
+			if (upgradeTableListener != null) {
+				upgradeTableListener.onBeforeUpdateTable(
+					previousServiceComponent, upgradeTable);
+			}
+
 			upgradeTable.updateTable();
-		}
-	}
 
-	protected void removeOldServiceComponents(String buildNamespace)
-		throws SystemException {
-
-		int serviceComponentsCount =
-			serviceComponentPersistence.countByBuildNamespace(buildNamespace);
-
-		if (serviceComponentsCount < _MAX_SERVICE_COMPONENTS) {
-			return;
-		}
-
-		List<ServiceComponent> serviceComponents =
-			serviceComponentPersistence.findByBuildNamespace(
-				buildNamespace, _MAX_SERVICE_COMPONENTS,
-				serviceComponentsCount);
-
-		for (int i = 0; i < serviceComponents.size(); i++) {
-			ServiceComponent serviceComponent = serviceComponents.get(i);
-
-			serviceComponentPersistence.remove(serviceComponent);
+			if (upgradeTableListener != null) {
+				upgradeTableListener.onAfterUpdateTable(
+					previousServiceComponent, upgradeTable);
+			}
 		}
 	}
 

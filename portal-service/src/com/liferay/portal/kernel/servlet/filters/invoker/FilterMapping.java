@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -57,6 +57,10 @@ public class FilterMapping {
 			return false;
 		}
 
+		Matcher matcher = _uriJSessionIdPattern.matcher(uri);
+
+		uri = matcher.replaceFirst(StringPool.BLANK);
+
 		boolean matchURLPattern = false;
 
 		for (String urlPattern : _urlPatterns) {
@@ -88,6 +92,46 @@ public class FilterMapping {
 		}
 
 		return false;
+	}
+
+	public boolean isMatchURLRegexPattern(
+		HttpServletRequest request, String uri) {
+
+		String url = uri;
+
+		String queryString = request.getQueryString();
+
+		if (Validator.isNotNull(queryString)) {
+			url = url.concat(StringPool.QUESTION).concat(queryString);
+		}
+
+		boolean matchURLRegexPattern = true;
+
+		if (_urlRegexPattern != null) {
+			Matcher matcher = _urlRegexPattern.matcher(url);
+
+			matchURLRegexPattern = matcher.find();
+		}
+
+		if (matchURLRegexPattern && (_urlRegexIgnorePattern != null)) {
+			Matcher matcher = _urlRegexIgnorePattern.matcher(url);
+
+			matchURLRegexPattern = !matcher.find();
+		}
+
+		if (_log.isDebugEnabled()) {
+			if (matchURLRegexPattern) {
+				_log.debug(
+					_filter.getClass() + " has a regex match with " + url);
+			}
+			else {
+				_log.debug(
+					_filter.getClass() + " does not have a regex match with " +
+						url);
+			}
+		}
+
+		return matchURLRegexPattern;
 	}
 
 	public void setFilter(Filter filter) {
@@ -190,46 +234,6 @@ public class FilterMapping {
 		return false;
 	}
 
-	protected boolean isMatchURLRegexPattern(
-		HttpServletRequest request, String uri) {
-
-		String url = uri;
-
-		String queryString = request.getQueryString();
-
-		if (Validator.isNotNull(queryString)) {
-			url = url.concat(StringPool.QUESTION).concat(queryString);
-		}
-
-		boolean matchURLRegexPattern = true;
-
-		if (_urlRegexPattern != null) {
-			Matcher matcher = _urlRegexPattern.matcher(url);
-
-			matchURLRegexPattern = matcher.find();
-		}
-
-		if (matchURLRegexPattern && (_urlRegexIgnorePattern != null)) {
-			Matcher matcher = _urlRegexIgnorePattern.matcher(url);
-
-			matchURLRegexPattern = !matcher.find();
-		}
-
-		if (_log.isDebugEnabled()) {
-			if (matchURLRegexPattern) {
-				_log.debug(
-					_filter.getClass() + " has a regex match with " + url);
-			}
-			else {
-				_log.debug(
-					_filter.getClass() + " does not have a regex match with " +
-						url);
-			}
-		}
-
-		return matchURLRegexPattern;
-	}
-
 	private static final String _SLASH_STAR = "/*";
 
 	private static final String _STAR_PERIOD = "*.";
@@ -241,6 +245,7 @@ public class FilterMapping {
 	private boolean _dispatcherInclude;
 	private boolean _dispatcherRequest;
 	private Filter _filter;
+	private Pattern _uriJSessionIdPattern = Pattern.compile(";jsessionid=.*");
 	private List<String> _urlPatterns;
 	private Pattern _urlRegexIgnorePattern;
 	private Pattern _urlRegexPattern;

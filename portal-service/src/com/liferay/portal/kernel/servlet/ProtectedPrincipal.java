@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -33,33 +33,29 @@ public class ProtectedPrincipal implements Principal, Serializable {
 		_name = name;
 	}
 
-	public String getName() {
-		return _name;
-	}
-
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
-		}
-
 		if (this == obj) {
 			return true;
 		}
 
-		if (obj instanceof ProtectedPrincipal) {
-			ProtectedPrincipal protectedPrincipal = (ProtectedPrincipal)obj;
+		if (!(obj instanceof ProtectedPrincipal)) {
+			return false;
+		}
 
-			if (protectedPrincipal.getName().equals(_name)) {
-				return true;
-			}
-			else {
-				return false;
-			}
+		ProtectedPrincipal protectedPrincipal = (ProtectedPrincipal)obj;
+
+		if (protectedPrincipal.getName().equals(_name)) {
+			return true;
 		}
 		else {
 			return false;
 		}
+	}
+
+	@Override
+	public String getName() {
+		return _name;
 	}
 
 	@Override

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,8 +16,11 @@ package com.liferay.util;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.SecureRandomUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+
+import java.util.Random;
 
 /**
  * @author Brian Wing Shun Chan
@@ -25,35 +28,35 @@ import com.liferay.portal.kernel.util.Validator;
  */
 public class PwdGenerator {
 
-	public static String KEY1 = "0123456789";
+	public static final String KEY1 = "0123456789";
 
-	public static String KEY2 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	public static final String KEY2 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-	public static String KEY3 = "abcdefghijklmnopqrstuvwxyz";
-
-	public static String getPinNumber() {
-		return _getPassword(KEY1, 4, true);
-	}
+	public static final String KEY3 = "abcdefghijklmnopqrstuvwxyz";
 
 	public static String getPassword() {
-		return getPassword(8);
+		return _generate(KEY1 + KEY2 + KEY3, 8, true);
 	}
 
 	public static String getPassword(int length) {
-		return _getPassword(KEY1 + KEY2 + KEY3, length, true);
+		return _generate(KEY1 + KEY2 + KEY3, length, true);
 	}
 
 	public static String getPassword(String key, int length) {
-		return getPassword(key, length, true);
+		return _generate(key, length, true);
 	}
 
 	public static String getPassword(
 		String key, int length, boolean useAllKeys) {
 
-		return _getPassword(key, length, useAllKeys);
+		return _generate(key, length, useAllKeys);
 	}
 
-	private static String _getPassword(
+	public static String getPinNumber() {
+		return _generate(KEY1, 4, false);
+	}
+
+	private static String _generate(
 		String key, int length, boolean useAllKeys) {
 
 		int keysCount = 0;
@@ -80,8 +83,13 @@ public class PwdGenerator {
 
 		StringBuilder sb = new StringBuilder(length);
 
+		// It is safe to use the regular Random class because each generated
+		// password only consumes one secure random long
+
+		Random random = new Random(SecureRandomUtil.nextLong());
+
 		for (int i = 0; i < length; i++) {
-			sb.append(key.charAt((int)(Math.random() * key.length())));
+			sb.append(key.charAt(random.nextInt(key.length())));
 		}
 
 		String password = sb.toString();
@@ -111,7 +119,7 @@ public class PwdGenerator {
 		}
 
 		if (invalidPassword) {
-			return _getPassword(key, length, useAllKeys);
+			return _generate(key, length, useAllKeys);
 		}
 
 		return password;

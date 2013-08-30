@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,8 +32,6 @@ public interface ShoppingItemField extends ShoppingItemFieldModel, PersistedMode
 	 * Never modify this interface directly. Add methods to {@link com.liferay.portlet.shopping.model.impl.ShoppingItemFieldImpl} and rerun ServiceBuilder to automatically copy the method declarations to this interface.
 	 */
 	public java.lang.String[] getValuesArray();
-
-	public void setValues(java.lang.String values);
 
 	public void setValuesArray(java.lang.String[] valuesArray);
 }

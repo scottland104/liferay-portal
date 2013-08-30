@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -31,6 +31,26 @@ import java.util.regex.Pattern;
 public class StringParser {
 
 	/**
+	 * Escapes the special characters in the string so that they will have no
+	 * special meaning in a regular expression.
+	 *
+	 * <p>
+	 * This method differs from {@link Pattern#quote(String)} by escaping each
+	 * special character with a backslash, rather than enclosing the entire
+	 * string in special quote tags. This allows the escaped string to be
+	 * manipulated or have sections replaced with non-literal sequences.
+	 * </p>
+	 *
+	 * @param  s the string to escape
+	 * @return the escaped string
+	 */
+	public static String escapeRegex(String s) {
+		Matcher matcher = _escapeRegexPattern.matcher(s);
+
+		return matcher.replaceAll("\\\\$0");
+	}
+
+	/**
 	 * Constructs a new string parser from the pattern.
 	 *
 	 * <p>
@@ -38,11 +58,13 @@ public class StringParser {
 	 * following is a valid pattern for greeting:
 	 * </p>
 	 *
+	 * <p>
 	 * <pre>
 	 * <code>
 	 * Hi {name}! How are you?
 	 * </code>
 	 * </pre>
+	 * </p>
 	 *
 	 * <p>
 	 * This pattern would match the string &quot;Hi Tom! How are you?&quot;. The
@@ -52,11 +74,13 @@ public class StringParser {
 	 * following:
 	 * </p>
 	 *
+	 * <p>
 	 * <pre>
 	 * <code>
 	 * Hi {name:[a-z]+}! How are you?
 	 * </code>
 	 * </pre>
+	 * </p>
 	 *
 	 * <p>
 	 * By default, a fragment will match anything except a forward slash or a
@@ -69,11 +93,13 @@ public class StringParser {
 	 * prefixing its name with a percent sign, as shown below:
 	 * </p>
 	 *
+	 * <p>
 	 * <pre>
 	 * <code>
 	 * /view_page/{%path:.*}
 	 * </code>
 	 * </pre>
+	 * </p>
 	 *
 	 * <p>
 	 * The format of the path fragment has also been specified to match anything
@@ -81,11 +107,13 @@ public class StringParser {
 	 * string:
 	 * </p>
 	 *
+	 * <p>
 	 * <pre>
 	 * <code>
 	 * /view_page/root/home/mysite/pages/index.htm
 	 * </code>
 	 * </pre>
+	 * </p>
 	 *
 	 * <p>
 	 * <code>path</code> would be set to
@@ -96,7 +124,6 @@ public class StringParser {
 	 * <p>
 	 * <b>Do not include capturing subgroups in the pattern.</b>
 	 * </p>
-	 *
 	 *
 	 * @param pattern the pattern string
 	 */
@@ -178,26 +205,6 @@ public class StringParser {
 	}
 
 	/**
-	 * Escapes the special characters in the string so that they will have no
-	 * special meaning in a regular expression.
-	 *
-	 * <p>
-	 * This method differs from {@link Pattern#quote(String)} by escaping each
-	 * special character with a backslash, rather than enclosing the entire
-	 * string in special quote tags. This allows the escaped string to be
-	 * manipulated or have sections replaced with non-literal sequences.
-	 * </p>
-	 *
-	 * @param  s the string to escape
-	 * @return the escaped string
-	 */
-	public static String escapeRegex(String s) {
-		Matcher matcher = _escapeRegexPattern.matcher(s);
-
-		return matcher.replaceAll("\\\\$0");
-	}
-
-	/**
 	 * Populates the parameter map with values parsed from the string if this
 	 * parser matches.
 	 *
@@ -251,9 +258,9 @@ public class StringParser {
 	private static Pattern _fragmentPattern = Pattern.compile("\\{.+?\\}");
 
 	private String _builder;
+	private Pattern _pattern;
 	private StringEncoder _stringEncoder;
 	private List<StringParserFragment> _stringParserFragments =
 		new ArrayList<StringParserFragment>();
-	private Pattern _pattern;
 
 }

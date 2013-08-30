@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,52 +17,35 @@
 <%@ include file="/html/portlet/sites_admin/init.jsp" %>
 
 <%
+String toolbarItem = ParamUtil.getString(request, "toolbarItem", "browse");
+
+String sitesListView = ParamUtil.get(request, "sitesListView", SiteConstants.LIST_VIEW_TREE);
+
 PortletURL portletURL = renderResponse.createRenderURL();
 
 portletURL.setParameter("struts_action", "/sites_admin/view");
+portletURL.setParameter("sitesListView", sitesListView);
 
-pageContext.setAttribute("portletURL", portletURL);
+String portletURLString = portletURL.toString();
+
+PortletURL searchURL = renderResponse.createRenderURL();
+
+searchURL.setParameter("struts_action", "/sites_admin/view");
+searchURL.setParameter("sitesListView", SiteConstants.LIST_VIEW_FLAT_SITES);
+searchURL.setParameter("toolbarItem", "view-all-sites");
+
+pageContext.setAttribute("searchURL", searchURL);
+
+String searchURLString = searchURL.toString();
 %>
 
-<liferay-ui:success key="membership_request_sent" message="your-request-was-sent-you-will-receive-a-reply-by-email" />
+<liferay-ui:success key="membershipRequestSent" message="your-request-was-sent-you-will-receive-a-reply-by-email" />
 
-<aui:form action="<%= portletURL.toString() %>" method="get" name="fm">
-	<liferay-portlet:renderURLParams varImpl="portletURL" />
-
-	<liferay-util:include page="/html/portlet/sites_admin/toolbar.jsp">
-		<liferay-util:param name="toolbarItem" value="view-all" />
-	</liferay-util:include>
-
-	<%
-	GroupSearch searchContainer = new GroupSearch(renderRequest, portletURL);
-	%>
-
-	<liferay-ui:search-form
-		page="/html/portlet/users_admin/group_search.jsp"
-		searchContainer="<%= searchContainer %>"
-		showAddButton="<%= false %>"
-	/>
-
-	<%
-	GroupSearchTerms searchTerms = (GroupSearchTerms)searchContainer.getSearchTerms();
-
-	LinkedHashMap groupParams = new LinkedHashMap();
-
-	groupParams.put("site", Boolean.TRUE);
-
-	if (!permissionChecker.isCompanyAdmin()) {
-		groupParams.put("usersGroups", new Long(user.getUserId()));
-		//groupParams.put("active", Boolean.TRUE);
-	}
-
-	int total = GroupLocalServiceUtil.searchCount(company.getCompanyId(), classNameIds, searchTerms.getName(), searchTerms.getDescription(), groupParams);
-
-	searchContainer.setTotal(total);
-
-	List results = GroupLocalServiceUtil.search(company.getCompanyId(), classNameIds, searchTerms.getName(), searchTerms.getDescription(), groupParams, searchContainer.getStart(), searchContainer.getEnd(), searchContainer.getOrderByComparator());
-
-	searchContainer.setResults(results);
-	%>
+<aui:form action="<%= searchURLString %>" method="get" name="fm">
+	<liferay-portlet:renderURLParams varImpl="searchURL" />
+	<aui:input name="<%= Constants.CMD %>" type="hidden" />
+	<aui:input name="redirect" type="hidden" value="<%= portletURLString %>" />
+	<aui:input name="toolbarItem" type="hidden" value="<%= toolbarItem %>" />
 
 	<liferay-ui:error exception="<%= NoSuchLayoutSetException.class %>">
 
@@ -76,121 +59,54 @@ pageContext.setAttribute("portletURL", portletURL);
 		Group group = GroupLocalServiceUtil.getGroup(groupId);
 		%>
 
-		<liferay-ui:message arguments="<%= group.getDescriptiveName() %>" key="site-x-does-not-have-any-private-pages" />
+		<liferay-ui:message arguments="<%= HtmlUtil.escape(group.getDescriptiveName(locale)) %>" key="site-x-does-not-have-any-private-pages" />
 	</liferay-ui:error>
 
 	<liferay-ui:error exception="<%= RequiredGroupException.class %>">
 
 		<%
 		RequiredGroupException rge = (RequiredGroupException)errorException;
-
-		long groupId = GetterUtil.getLong(rge.getMessage());
-
-		Group group = GroupLocalServiceUtil.getGroup(groupId);
 		%>
 
-		<c:choose>
-			<c:when test="<%= PortalUtil.isSystemGroup(group.getName()) %>">
-				<liferay-ui:message key="the-site-cannot-be-deleted-or-deactivated-because-it-is-a-required-system-site" />
-			</c:when>
-			<c:otherwise>
-				<liferay-ui:message key="the-site-cannot-be-deleted-or-deactivated-because-you-are-accessing-the-site" />
-			</c:otherwise>
-		</c:choose>
+		<c:if test="<%= rge.getType() == RequiredGroupException.CURRENT_GROUP %>">
+			<liferay-ui:message key="you-cannot-delete-this-site-because-you-are-currently-accessing-this-site" />
+		</c:if>
+
+		<c:if test="<%= rge.getType() == RequiredGroupException.PARENT_GROUP %>">
+			<liferay-ui:message key="you-cannot-delete-sites-that-have-subsites" />
+		</c:if>
+
+		<c:if test="<%= rge.getType() == RequiredGroupException.SYSTEM_GROUP %>">
+			<liferay-ui:message key="the-site-cannot-be-deleted-or-deactivated-because-it-is-a-required-system-site" />
+		</c:if>
 	</liferay-ui:error>
 
-	<%
-	List<String> headerNames = new ArrayList<String>();
-
-	headerNames.add("name");
-	headerNames.add("type");
-	headerNames.add("members");
-	headerNames.add("online-now");
-	headerNames.add("active");
-	headerNames.add("pending-requests");
-
-	headerNames.add(StringPool.BLANK);
-
-	searchContainer.setHeaderNames(headerNames);
-
-	List resultRows = searchContainer.getResultRows();
-
-	for (int i = 0; i < results.size(); i++) {
-		Group group = (Group)results.get(i);
-
-		group = group.toEscapedModel();
-
-		ResultRow row = new ResultRow(group, group.getGroupId(), i);
-
-		LiferayPortletURL rowURL = ((LiferayPortletResponse)renderResponse).createRenderURL(PortletKeys.SITE_SETTINGS);
-
-		rowURL.setDoAsGroupId(group.getGroupId());
-
-		rowURL.setParameter("redirect", currentURL);
-
-		// Name
-
-		StringBundler sb = new StringBundler();
-
-		sb.append("<a href=\"");
-		sb.append(rowURL.toString());
-		sb.append("\">");
-		sb.append(HtmlUtil.escape(group.getDescriptiveName()));
-		sb.append("</a>");
-
-		if (group.isOrganization()) {
-			Organization organization = OrganizationLocalServiceUtil.getOrganization(group.getOrganizationId());
-
-			sb.append("<br />");
-			sb.append(LanguageUtil.format(pageContext, "belongs-to-an-organization-of-type-x", LanguageUtil.get(pageContext, organization.getType())));
-		}
-
-		row.addText(sb.toString());
-
-		// Type
-
-		row.addText(LanguageUtil.get(pageContext, group.getTypeLabel()), rowURL);
-
-		// Members
-
-		LinkedHashMap userParams = new LinkedHashMap();
-
-		userParams.put("usersGroups", new Long(group.getGroupId()));
-
-		int membersCount = UserLocalServiceUtil.searchCount(company.getCompanyId(), null, WorkflowConstants.STATUS_APPROVED, userParams);
-
-		row.addText(String.valueOf(membersCount));
-
-		// Online Now
-
-		int onlineCount = LiveUsers.getGroupUsersCount(company.getCompanyId(), group.getGroupId());
-
-		row.addText(String.valueOf(onlineCount));
-
-		// Active
-
-		row.addText(LanguageUtil.get(pageContext, (group.isActive() ? "yes" : "no")));
-
-		// Restricted number of petitions
-
-		if ((group.getType() == GroupConstants.TYPE_SITE_RESTRICTED) && permissionChecker.isGroupAdmin(group.getGroupId())) {
-			int pendingRequests = MembershipRequestLocalServiceUtil.searchCount(group.getGroupId(), MembershipRequestConstants.STATUS_PENDING);
-
-			row.addText(String.valueOf(pendingRequests));
-		}
-		else {
-			row.addText(StringPool.BLANK);
-		}
-
-		// Action
-
-		row.addJSP("right", SearchEntry.DEFAULT_VALIGN, "/html/portlet/sites_admin/site_action.jsp");
-
-		// Add result row
-
-		resultRows.add(row);
-	}
-	%>
-
-	<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
+	<c:choose>
+		<c:when test="<%= sitesListView.equals(SiteConstants.LIST_VIEW_FLAT_SITES) %>">
+			<%@ include file="/html/portlet/sites_admin/view_flat_sites.jspf" %>
+		</c:when>
+		<c:otherwise>
+			<%@ include file="/html/portlet/sites_admin/view_tree.jspf" %>
+		</c:otherwise>
+	</c:choose>
 </aui:form>
+
+<aui:script>
+	Liferay.Util.toggleSearchContainerButton('#<portlet:namespace />delete', '#<portlet:namespace /><%= searchContainerReference.getId() %>SearchContainer', document.<portlet:namespace />fm, '<portlet:namespace />allRowIds');
+
+	Liferay.provide(
+		window,
+		'<portlet:namespace />deleteSites',
+		function() {
+			if (confirm('<%= UnicodeLanguageUtil.get(pageContext, "are-you-sure-you-want-to-delete-this") %>')) {
+				document.<portlet:namespace />fm.method = "post";
+				document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= Constants.DELETE %>";
+				document.<portlet:namespace />fm.<portlet:namespace />redirect.value = document.<portlet:namespace />fm.<portlet:namespace />sitesRedirect.value;
+				document.<portlet:namespace />fm.<portlet:namespace />deleteGroupIds.value = Liferay.Util.listCheckedExcept(document.<portlet:namespace />fm, '<portlet:namespace />allRowIds');
+
+				submitForm(document.<portlet:namespace />fm, '<portlet:actionURL><portlet:param name="struts_action" value="/sites_admin/edit_site" /></portlet:actionURL>');
+			}
+		},
+		['liferay-util-list-fields']
+	);
+</aui:script>

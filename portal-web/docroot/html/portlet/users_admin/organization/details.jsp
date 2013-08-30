@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -35,8 +35,6 @@ String type = BeanParamUtil.getString(organization, request, "type", PropsValues
 long regionId = BeanParamUtil.getLong(organization, request, "regionId");
 long countryId = BeanParamUtil.getLong(organization, request, "countryId");
 
-boolean deleteLogo = ParamUtil.getBoolean(request, "deleteLogo");
-
 long groupId = 0;
 
 if (organization != null) {
@@ -44,6 +42,8 @@ if (organization != null) {
 
 	groupId = group.getGroupId();
 }
+
+User selUser = (User)request.getAttribute("user.selUser");
 %>
 
 <liferay-util:buffer var="removeOrganizationIcon">
@@ -60,17 +60,17 @@ if (organization != null) {
 
 <h3><liferay-ui:message key="details" /></h3>
 
-<aui:fieldset column="<%= true %>" cssClass="aui-w50">
+<aui:fieldset cssClass="span6">
 	<liferay-ui:error exception="<%= DuplicateOrganizationException.class %>" message="the-organization-name-is-already-taken" />
 	<liferay-ui:error exception="<%= OrganizationNameException.class %>" message="please-enter-a-valid-name" />
 
-	<aui:input name="name" />
+	<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" name="name" />
 
 	<c:choose>
 		<c:when test="<%= PropsValues.FIELD_ENABLE_COM_LIFERAY_PORTAL_MODEL_ORGANIZATION_STATUS %>">
 			<liferay-ui:error key="<%= NoSuchListTypeException.class.getName() + Organization.class.getName() + ListTypeConstants.ORGANIZATION_STATUS %>" message="please-select-a-type" />
 
-			<aui:select label="status" name="statusId" listType="<%= ListTypeConstants.ORGANIZATION_STATUS %>" listTypeFieldName="statusId" showEmptyOption="<%= true %>" />
+			<aui:select label="status" listType="<%= ListTypeConstants.ORGANIZATION_STATUS %>" listTypeFieldName="statusId" name="statusId" showEmptyOption="<%= true %>" />
 		</c:when>
 		<c:otherwise>
 			<aui:input name="statusId" type="hidden" value="<%= (organization != null) ? organization.getStatusId() : ListTypeConstants.ORGANIZATION_STATUS_DEFAULT %>" />
@@ -104,7 +104,7 @@ if (organization != null) {
 
 	<liferay-ui:error exception="<%= NoSuchCountryException.class %>" message="please-select-a-country" />
 
-	<div class='<%= GetterUtil.getBoolean(PropsUtil.get(PropsKeys.ORGANIZATIONS_COUNTRY_ENABLED, new Filter(String.valueOf(type)))) ? StringPool.BLANK : "aui-helper-hidden" %>' id="<portlet:namespace />countryDiv">
+	<div class='<%= GetterUtil.getBoolean(PropsUtil.get(PropsKeys.ORGANIZATIONS_COUNTRY_ENABLED, new Filter(String.valueOf(type)))) ? StringPool.BLANK : "hide" %>' id="<portlet:namespace />countryDiv">
 		<aui:select label="country" name="countryId" />
 
 		<aui:select label="region" name="regionId" />
@@ -117,14 +117,14 @@ if (organization != null) {
 	</c:if>
 </aui:fieldset>
 
-<aui:fieldset column="<%= true %>" cssClass="aui-w50">
+<aui:fieldset cssClass="span6">
 	<div>
 		<c:if test="<%= organization != null %>">
 
 			<%
 			long logoId = 0;
 
-			LayoutSet publicLayoutSet =	LayoutSetLocalServiceUtil.getLayoutSet(groupId, false);
+			LayoutSet publicLayoutSet = LayoutSetLocalServiceUtil.getLayoutSet(groupId, false);
 			LayoutSet privateLayoutSet = LayoutSetLocalServiceUtil.getLayoutSet(groupId, true);
 
 			if (publicLayoutSet.getLogoId() > 0) {
@@ -135,7 +135,7 @@ if (organization != null) {
 			}
 			%>
 
-			<portlet:renderURL windowState="<%= LiferayWindowState.POP_UP.toString() %>" var="editOrganizationLogoURL">
+			<portlet:renderURL var="editOrganizationLogoURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
 				<portlet:param name="struts_action" value="/users_admin/edit_organization_logo" />
 				<portlet:param name="redirect" value="<%= currentURL %>" />
 				<portlet:param name="groupId" value="<%= String.valueOf(groupId) %>" />
@@ -147,7 +147,6 @@ if (organization != null) {
 				editLogoURL="<%= editOrganizationLogoURL %>"
 				imageId="<%= logoId %>"
 				logoDisplaySelector=".organization-logo"
-				showBackground="<%= false %>"
 			/>
 		</c:if>
 	</div>
@@ -193,7 +192,7 @@ if (parentOrganization != null) {
 
 <liferay-ui:search-container
 	headerNames="name,type,null"
-	id='<%= renderResponse.getNamespace() + "parentOrganizationSearchContainer" %>'
+	id="parentOrganizationSearchContainer"
 >
 	<liferay-ui:search-container-results
 		results="<%= parentOrganizations %>"
@@ -236,53 +235,13 @@ if (parentOrganization != null) {
 
 <liferay-ui:icon
 	cssClass="modify-link"
+	id="selectOrganizationLink"
 	image="add"
 	label="<%= true %>"
 	message="select"
-	url='<%= "javascript:" + renderResponse.getNamespace() + "openOrganizationSelector();" %>'
+	method="get"
+	url="javascript:;"
 />
-
-<aui:script>
-	function <portlet:namespace />openOrganizationSelector() {
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.POP_UP.toString() %>"><portlet:param name="struts_action" value="/users_admin/select_organization" /></portlet:renderURL>';
-
-		<c:choose>
-			<c:when test="<%= organization == null %>">
-				var type = document.<portlet:namespace />fm.<portlet:namespace />type.value;
-			</c:when>
-			<c:otherwise>
-				var type = '<%= HtmlUtil.escape(type) %>';
-			</c:otherwise>
-		</c:choose>
-
-		var organizationWindow = window.open(url, 'organization', 'directories=no,height=640,location=no,menubar=no,resizable=yes,scrollbars=yes,status=no,toolbar=no,width=680');
-
-		organizationWindow.focus();
-	}
-
-	Liferay.provide(
-		window,
-		'<portlet:namespace />selectOrganization',
-		function(organizationId, groupId, name, type) {
-			var A = AUI();
-
-			var searchContainer = Liferay.SearchContainer.get('<portlet:namespace />parentOrganizationSearchContainer');
-
-			var rowColumns = [];
-
-			var href = "<portlet:renderURL><portlet:param name="struts_action" value="/users_admin/edit_organization" /><portlet:param name="redirect" value="<%= currentURL %>" /></portlet:renderURL>&<portlet:namespace />organizationId=" + organizationId;
-
-			rowColumns.push(<portlet:namespace />createURL(href, name));
-			rowColumns.push(<portlet:namespace />createURL(href, type));
-			rowColumns.push('<a class="modify-link" data-rowId="' + organizationId + '" href="javascript:;"><%= UnicodeFormatter.toString(removeOrganizationIcon) %></a>');
-
-			searchContainer.deleteRow(1, searchContainer.getData());
-			searchContainer.addRow(rowColumns, organizationId);
-			searchContainer.updateDataStore(organizationId);
-		},
-		['liferay-search-container']
-	);
-</aui:script>
 
 <aui:script use="liferay-dynamic-select,liferay-search-container">
 	new Liferay.DynamicSelect(
@@ -290,7 +249,8 @@ if (parentOrganization != null) {
 			{
 				select: '<portlet:namespace />countryId',
 				selectData: Liferay.Address.getCountries,
-				selectDesc: 'name',
+				selectDesc: 'nameCurrentValue',
+				selectSort: '<%= true %>',
 				selectId: 'countryId',
 				selectVal: '<%= countryId %>'
 			},
@@ -316,6 +276,40 @@ if (parentOrganization != null) {
 		},
 		'.modify-link'
 	);
+
+	var selectOrganizationLink = A.one('#<portlet:namespace />selectOrganizationLink');
+
+	if (selectOrganizationLink) {
+		selectOrganizationLink.on(
+			'click',
+			function(event) {
+				Liferay.Util.selectEntity(
+					{
+						dialog: {
+							constrain: true,
+							modal: true
+						},
+						id: '<portlet:namespace />selectOrganization',
+						title: '<liferay-ui:message arguments="organization" key="select-x" />',
+						uri: '<portlet:renderURL windowState="<%= LiferayWindowState.POP_UP.toString() %>"><portlet:param name="struts_action" value="/users_admin/select_organization" /><portlet:param name="p_u_i_d" value='<%= (selUser == null) ? "0" : String.valueOf(selUser.getUserId()) %>' /></portlet:renderURL>'
+					},
+					function(event) {
+						var rowColumns = [];
+
+						var href = "<portlet:renderURL><portlet:param name="struts_action" value="/users_admin/edit_organization" /><portlet:param name="redirect" value="<%= currentURL %>" /></portlet:renderURL>&<portlet:namespace />organizationId=" + event.organizationid;
+
+						rowColumns.push(<portlet:namespace />createURL(href, event.name));
+						rowColumns.push(<portlet:namespace />createURL(href, event.type));
+						rowColumns.push('<a class="modify-link" data-rowId="' + event.organizationid + '" href="javascript:;"><%= UnicodeFormatter.toString(removeOrganizationIcon) %></a>');
+
+						searchContainer.deleteRow(1, searchContainer.getData());
+						searchContainer.addRow(rowColumns, event.organizationid);
+						searchContainer.updateDataStore(event.organizationid);
+					}
+				);
+			}
+		);
+	}
 </aui:script>
 
 <c:if test="<%= organization == null %>">

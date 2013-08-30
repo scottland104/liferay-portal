@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,7 +18,8 @@ import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.model.BaseModel;
 import com.liferay.portal.model.CacheModel;
-import com.liferay.portal.model.GroupedModel;
+import com.liferay.portal.model.StagedGroupedModel;
+import com.liferay.portal.model.WorkflowedModel;
 import com.liferay.portal.service.ServiceContext;
 
 import com.liferay.portlet.expando.model.ExpandoBridge;
@@ -41,7 +42,7 @@ import java.util.Date;
  * @generated
  */
 public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
-	GroupedModel {
+	StagedGroupedModel, WorkflowedModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -68,6 +69,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 * @return the uuid of this bookmarks entry
 	 */
 	@AutoEscape
+	@Override
 	public String getUuid();
 
 	/**
@@ -75,6 +77,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 *
 	 * @param uuid the uuid of this bookmarks entry
 	 */
+	@Override
 	public void setUuid(String uuid);
 
 	/**
@@ -96,6 +99,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 *
 	 * @return the group ID of this bookmarks entry
 	 */
+	@Override
 	public long getGroupId();
 
 	/**
@@ -103,6 +107,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 *
 	 * @param groupId the group ID of this bookmarks entry
 	 */
+	@Override
 	public void setGroupId(long groupId);
 
 	/**
@@ -110,6 +115,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 *
 	 * @return the company ID of this bookmarks entry
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -117,6 +123,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 *
 	 * @param companyId the company ID of this bookmarks entry
 	 */
+	@Override
 	public void setCompanyId(long companyId);
 
 	/**
@@ -124,6 +131,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 *
 	 * @return the user ID of this bookmarks entry
 	 */
+	@Override
 	public long getUserId();
 
 	/**
@@ -131,6 +139,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 *
 	 * @param userId the user ID of this bookmarks entry
 	 */
+	@Override
 	public void setUserId(long userId);
 
 	/**
@@ -139,6 +148,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 * @return the user uuid of this bookmarks entry
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getUserUuid() throws SystemException;
 
 	/**
@@ -146,6 +156,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 *
 	 * @param userUuid the user uuid of this bookmarks entry
 	 */
+	@Override
 	public void setUserUuid(String userUuid);
 
 	/**
@@ -154,6 +165,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 * @return the user name of this bookmarks entry
 	 */
 	@AutoEscape
+	@Override
 	public String getUserName();
 
 	/**
@@ -161,6 +173,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 *
 	 * @param userName the user name of this bookmarks entry
 	 */
+	@Override
 	public void setUserName(String userName);
 
 	/**
@@ -168,6 +181,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 *
 	 * @return the create date of this bookmarks entry
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -175,6 +189,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 *
 	 * @param createDate the create date of this bookmarks entry
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -182,6 +197,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 *
 	 * @return the modified date of this bookmarks entry
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -189,6 +205,7 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 *
 	 * @param modifiedDate the modified date of this bookmarks entry
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
@@ -292,37 +309,220 @@ public interface BookmarksEntryModel extends BaseModel<BookmarksEntry>,
 	 */
 	public void setPriority(int priority);
 
+	/**
+	 * Returns the status of this bookmarks entry.
+	 *
+	 * @return the status of this bookmarks entry
+	 */
+	@Override
+	public int getStatus();
+
+	/**
+	 * Sets the status of this bookmarks entry.
+	 *
+	 * @param status the status of this bookmarks entry
+	 */
+	@Override
+	public void setStatus(int status);
+
+	/**
+	 * Returns the status by user ID of this bookmarks entry.
+	 *
+	 * @return the status by user ID of this bookmarks entry
+	 */
+	@Override
+	public long getStatusByUserId();
+
+	/**
+	 * Sets the status by user ID of this bookmarks entry.
+	 *
+	 * @param statusByUserId the status by user ID of this bookmarks entry
+	 */
+	@Override
+	public void setStatusByUserId(long statusByUserId);
+
+	/**
+	 * Returns the status by user uuid of this bookmarks entry.
+	 *
+	 * @return the status by user uuid of this bookmarks entry
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public String getStatusByUserUuid() throws SystemException;
+
+	/**
+	 * Sets the status by user uuid of this bookmarks entry.
+	 *
+	 * @param statusByUserUuid the status by user uuid of this bookmarks entry
+	 */
+	@Override
+	public void setStatusByUserUuid(String statusByUserUuid);
+
+	/**
+	 * Returns the status by user name of this bookmarks entry.
+	 *
+	 * @return the status by user name of this bookmarks entry
+	 */
+	@AutoEscape
+	@Override
+	public String getStatusByUserName();
+
+	/**
+	 * Sets the status by user name of this bookmarks entry.
+	 *
+	 * @param statusByUserName the status by user name of this bookmarks entry
+	 */
+	@Override
+	public void setStatusByUserName(String statusByUserName);
+
+	/**
+	 * Returns the status date of this bookmarks entry.
+	 *
+	 * @return the status date of this bookmarks entry
+	 */
+	@Override
+	public Date getStatusDate();
+
+	/**
+	 * Sets the status date of this bookmarks entry.
+	 *
+	 * @param statusDate the status date of this bookmarks entry
+	 */
+	@Override
+	public void setStatusDate(Date statusDate);
+
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #isApproved()}
+	 */
+	@Override
+	public boolean getApproved();
+
+	/**
+	 * Returns <code>true</code> if this bookmarks entry is approved.
+	 *
+	 * @return <code>true</code> if this bookmarks entry is approved; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isApproved();
+
+	/**
+	 * Returns <code>true</code> if this bookmarks entry is denied.
+	 *
+	 * @return <code>true</code> if this bookmarks entry is denied; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isDenied();
+
+	/**
+	 * Returns <code>true</code> if this bookmarks entry is a draft.
+	 *
+	 * @return <code>true</code> if this bookmarks entry is a draft; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isDraft();
+
+	/**
+	 * Returns <code>true</code> if this bookmarks entry is expired.
+	 *
+	 * @return <code>true</code> if this bookmarks entry is expired; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isExpired();
+
+	/**
+	 * Returns <code>true</code> if this bookmarks entry is inactive.
+	 *
+	 * @return <code>true</code> if this bookmarks entry is inactive; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isInactive();
+
+	/**
+	 * Returns <code>true</code> if this bookmarks entry is incomplete.
+	 *
+	 * @return <code>true</code> if this bookmarks entry is incomplete; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isIncomplete();
+
+	/**
+	 * Returns <code>true</code> if this bookmarks entry is in the Recycle Bin.
+	 *
+	 * @return <code>true</code> if this bookmarks entry is in the Recycle Bin; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isInTrash();
+
+	/**
+	 * Returns <code>true</code> if this bookmarks entry is pending.
+	 *
+	 * @return <code>true</code> if this bookmarks entry is pending; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isPending();
+
+	/**
+	 * Returns <code>true</code> if this bookmarks entry is scheduled.
+	 *
+	 * @return <code>true</code> if this bookmarks entry is scheduled; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isScheduled();
+
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(BookmarksEntry bookmarksEntry);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<BookmarksEntry> toCacheModel();
 
+	@Override
 	public BookmarksEntry toEscapedModel();
 
+	@Override
+	public BookmarksEntry toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

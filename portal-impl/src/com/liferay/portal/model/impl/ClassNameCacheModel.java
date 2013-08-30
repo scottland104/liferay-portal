@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.ClassName;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing ClassName in entity cache.
  *
@@ -26,7 +31,8 @@ import com.liferay.portal.model.ClassName;
  * @see ClassName
  * @generated
  */
-public class ClassNameCacheModel implements CacheModel<ClassName> {
+public class ClassNameCacheModel implements CacheModel<ClassName>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(5);
@@ -40,6 +46,7 @@ public class ClassNameCacheModel implements CacheModel<ClassName> {
 		return sb.toString();
 	}
 
+	@Override
 	public ClassName toEntityModel() {
 		ClassNameImpl classNameImpl = new ClassNameImpl();
 
@@ -55,6 +62,25 @@ public class ClassNameCacheModel implements CacheModel<ClassName> {
 		classNameImpl.resetOriginalValues();
 
 		return classNameImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		classNameId = objectInput.readLong();
+		value = objectInput.readUTF();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(classNameId);
+
+		if (value == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(value);
+		}
 	}
 
 	public long classNameId;

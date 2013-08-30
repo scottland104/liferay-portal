@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,6 +15,7 @@
 package com.liferay.portal.util;
 
 import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
 import com.liferay.portal.kernel.util.DiffHtml;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringPool;
@@ -40,22 +41,25 @@ import org.xml.sax.InputSource;
 import org.xml.sax.helpers.AttributesImpl;
 
 /**
- * <p>
  * This class can compare two different versions of HTML code. It detects
  * changes to an entire HTML page such as removal or addition of characters or
  * images.
- * </p>
  *
  * @author Julio Camarero
  */
+@DoPrivileged
 public class DiffHtmlImpl implements DiffHtml {
 
 	/**
 	 * This is a diff method with default values.
 	 *
+	 * @param  source the source text
+	 * @param  target the modified version of the source text
 	 * @return a string containing the HTML code of the source text showing the
 	 *         differences with the target text
+	 * @throws Exception if an exception occurred
 	 */
+	@Override
 	public String diff(Reader source, Reader target) throws Exception {
 		InputSource oldSource = new InputSource(source);
 		InputSource newSource = new InputSource(target);

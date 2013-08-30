@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,8 +34,8 @@ import org.springframework.orm.jpa.vendor.TopLinkJpaVendorAdapter;
  * @author Prashant Dighe
  * @author Brian Wing Shun Chan
  */
-public class LocalContainerEntityManagerFactoryBean extends
-	 org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean {
+public class LocalContainerEntityManagerFactoryBean
+	extends org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean {
 
 	public LocalContainerEntityManagerFactoryBean() {
 		try {

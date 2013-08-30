@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,13 +17,14 @@ package com.liferay.portal.model;
 import java.io.Serializable;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
  * This class is used by SOAP remote services, specifically {@link com.liferay.portal.service.http.LayoutSetPrototypeServiceSoap}.
  *
- * @author    Brian Wing Shun Chan
- * @see       com.liferay.portal.service.http.LayoutSetPrototypeServiceSoap
+ * @author Brian Wing Shun Chan
+ * @see com.liferay.portal.service.http.LayoutSetPrototypeServiceSoap
  * @generated
  */
 public class LayoutSetPrototypeSoap implements Serializable {
@@ -33,6 +34,10 @@ public class LayoutSetPrototypeSoap implements Serializable {
 		soapModel.setUuid(model.getUuid());
 		soapModel.setLayoutSetPrototypeId(model.getLayoutSetPrototypeId());
 		soapModel.setCompanyId(model.getCompanyId());
+		soapModel.setUserId(model.getUserId());
+		soapModel.setUserName(model.getUserName());
+		soapModel.setCreateDate(model.getCreateDate());
+		soapModel.setModifiedDate(model.getModifiedDate());
 		soapModel.setName(model.getName());
 		soapModel.setDescription(model.getDescription());
 		soapModel.setSettings(model.getSettings());
@@ -116,6 +121,38 @@ public class LayoutSetPrototypeSoap implements Serializable {
 		_companyId = companyId;
 	}
 
+	public long getUserId() {
+		return _userId;
+	}
+
+	public void setUserId(long userId) {
+		_userId = userId;
+	}
+
+	public String getUserName() {
+		return _userName;
+	}
+
+	public void setUserName(String userName) {
+		_userName = userName;
+	}
+
+	public Date getCreateDate() {
+		return _createDate;
+	}
+
+	public void setCreateDate(Date createDate) {
+		_createDate = createDate;
+	}
+
+	public Date getModifiedDate() {
+		return _modifiedDate;
+	}
+
+	public void setModifiedDate(Date modifiedDate) {
+		_modifiedDate = modifiedDate;
+	}
+
 	public String getName() {
 		return _name;
 	}
@@ -155,6 +192,10 @@ public class LayoutSetPrototypeSoap implements Serializable {
 	private String _uuid;
 	private long _layoutSetPrototypeId;
 	private long _companyId;
+	private long _userId;
+	private String _userName;
+	private Date _createDate;
+	private Date _modifiedDate;
 	private String _name;
 	private String _description;
 	private String _settings;

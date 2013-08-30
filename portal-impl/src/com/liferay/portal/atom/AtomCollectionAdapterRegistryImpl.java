@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,7 +16,9 @@ package com.liferay.portal.atom;
 
 import com.liferay.portal.kernel.atom.AtomCollectionAdapter;
 import com.liferay.portal.kernel.atom.AtomCollectionAdapterRegistry;
-import com.liferay.portal.kernel.atom.AtomException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
 import com.liferay.portal.kernel.util.ListUtil;
 
 import java.util.List;
@@ -26,38 +28,48 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Igor Spasic
  */
+@DoPrivileged
 public class AtomCollectionAdapterRegistryImpl
 	implements AtomCollectionAdapterRegistry {
 
+	@Override
 	public AtomCollectionAdapter<?> getAtomCollectionAdapter(
 		String collectionName) {
 
 		return _atomCollectionAdapters.get(collectionName);
 	}
 
+	@Override
 	public List<AtomCollectionAdapter<?>> getAtomCollectionAdapters() {
 		return ListUtil.fromMapValues(_atomCollectionAdapters);
 	}
 
-	public void register(AtomCollectionAdapter<?> atomCollectionAdapter)
-		throws AtomException {
-
+	@Override
+	public void register(AtomCollectionAdapter<?> atomCollectionAdapter) {
 		if (_atomCollectionAdapters.containsKey(
 				atomCollectionAdapter.getCollectionName())) {
 
-			throw new AtomException(
-				"Duplicate collection name " +
-					atomCollectionAdapter.getCollectionName());
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Duplicate collection name " +
+						atomCollectionAdapter.getCollectionName());
+			}
+
+			return;
 		}
 
 		_atomCollectionAdapters.put(
 			atomCollectionAdapter.getCollectionName(), atomCollectionAdapter);
 	}
 
+	@Override
 	public void unregister(AtomCollectionAdapter<?> atomCollectionAdapter) {
 		_atomCollectionAdapters.remove(
 			atomCollectionAdapter.getCollectionName());
 	}
+
+	private static Log _log = LogFactoryUtil.getLog(
+		AtomCollectionAdapterRegistryImpl.class);
 
 	private Map<String, AtomCollectionAdapter<?>> _atomCollectionAdapters =
 		new ConcurrentHashMap<String, AtomCollectionAdapter<?>>();

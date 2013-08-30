@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,10 +14,23 @@
 
 package com.liferay.portal.kernel.json;
 
+import java.util.List;
+
 /**
  * @author Brian Wing Shun Chan
  */
 public interface JSONFactory {
+
+	public String convertJSONMLArrayToXML(String jsonml);
+
+	public String convertJSONMLObjectToXML(String jsonml);
+
+	public String convertXMLtoJSONMLArray(String xml);
+
+	public String convertXMLtoJSONMLObject(String xml);
+
+	public JSONTransformer createJavaScriptNormalizerJSONTransformer(
+		List<String> javaScriptAttributes);
 
 	public JSONArray createJSONArray();
 
@@ -37,9 +50,15 @@ public interface JSONFactory {
 
 	public String getNullJSON();
 
+	public JSONObject getUnmodifiableJSONObject();
+
 	public Object looseDeserialize(String json);
 
 	public <T> T looseDeserialize(String json, Class<T> clazz);
+
+	public Object looseDeserializeSafe(String json);
+
+	public <T> T looseDeserializeSafe(String json, Class<T> clazz);
 
 	public String looseSerialize(Object object);
 
@@ -50,8 +69,13 @@ public interface JSONFactory {
 
 	public String looseSerializeDeep(Object object);
 
+	public String looseSerializeDeep(
+		Object object, JSONTransformer jsonTransformer, Class<?> clazz);
+
 	public String serialize(Object object);
 
 	public String serializeException(Exception exception);
+
+	public String serializeThrowable(Throwable throwable);
 
 }

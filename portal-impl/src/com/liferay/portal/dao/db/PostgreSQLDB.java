@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -54,16 +54,13 @@ public class PostgreSQLDB extends BaseDB {
 	}
 
 	@Override
-	public List<Index> getIndexes() throws SQLException {
+	public List<Index> getIndexes(Connection con) throws SQLException {
 		List<Index> indexes = new ArrayList<Index>();
 
-		Connection con = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 
 		try {
-			con = DataAccess.getConnection();
-
 			StringBundler sb = new StringBundler(3);
 
 			sb.append("select indexname, tablename, indexdef from pg_indexes ");
@@ -91,10 +88,15 @@ public class PostgreSQLDB extends BaseDB {
 			}
 		}
 		finally {
-			DataAccess.cleanUp(con, ps, rs);
+			DataAccess.cleanUp(null, ps, rs);
 		}
 
 		return indexes;
+	}
+
+	@Override
+	public boolean isSupportsQueryingAfterException() {
+		return _SUPPORTS_QUERYING_AFTER_EXCEPTION;
 	}
 
 	protected PostgreSQLDB() {
@@ -119,10 +121,7 @@ public class PostgreSQLDB extends BaseDB {
 		sb.append("\\c ");
 		sb.append(databaseName);
 		sb.append(";\n\n");
-		sb.append(
-			readFile(
-				sqlDir + "/portal" + suffix + "/portal" + suffix +
-					"-postgresql.sql"));
+		sb.append(getCreateTablesContent(sqlDir, suffix));
 		sb.append("\n\n");
 		sb.append(readFile(sqlDir + "/indexes/indexes-postgresql.sql"));
 		sb.append("\n\n");
@@ -166,18 +165,28 @@ public class PostgreSQLDB extends BaseDB {
 						"using @old-column@::@type@;",
 					REWORD_TEMPLATE, template);
 			}
-			else if (line.indexOf(DROP_INDEX) != -1) {
+			else if (line.startsWith(ALTER_TABLE_NAME)) {
+				String[] template = buildTableNameTokens(line);
+
+				line = StringUtil.replace(
+					"alter table @old-table@ rename to @new-table@;",
+					RENAME_TABLE_TEMPLATE, template);
+			}
+			else if (line.contains(DROP_INDEX)) {
 				String[] tokens = StringUtil.split(line, ' ');
 
 				line = StringUtil.replace(
 					"drop index @index@;", "@index@", tokens[2]);
 			}
-			else if (line.indexOf(DROP_PRIMARY_KEY) != -1) {
+			else if (line.contains(DROP_PRIMARY_KEY)) {
 				String[] tokens = StringUtil.split(line, ' ');
 
 				line = StringUtil.replace(
 					"alter table @table@ drop constraint @table@_pkey;",
 					"@table@", tokens[2]);
+			}
+			else if (line.contains("\\\'")) {
+				line = StringUtil.replace(line, "\\\'", "\'\'");
 			}
 
 			sb.append(line);
@@ -189,14 +198,13 @@ public class PostgreSQLDB extends BaseDB {
 		return sb.toString();
 	}
 
-	private static String[] _POSTGRESQL = {
-		"--", "true", "false",
-		"'01/01/1970'", "current_timestamp",
-		" oid", " bool", " timestamp",
-		" double precision", " integer", " bigint",
-		" text", " text", " varchar",
-		"", "commit"
+	private static final String[] _POSTGRESQL = {
+		"--", "true", "false", "'01/01/1970'", "current_timestamp", " oid",
+		" bytea", " bool", " timestamp", " double precision", " integer",
+		" bigint", " text", " text", " varchar", "", "commit"
 	};
+
+	private static final boolean _SUPPORTS_QUERYING_AFTER_EXCEPTION = false;
 
 	private static PostgreSQLDB _instance = new PostgreSQLDB();
 

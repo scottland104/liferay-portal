@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -74,10 +74,11 @@ public class ClassUtil {
 					st.ordinaryChar(' ');
 					st.wordChars('=', '=');
 
-					String[] las = _processAnnotation(st.sval, st);
+					String[] annotationClasses = _processAnnotation(
+						st.sval, st);
 
-					for (int i = 0; i < las.length; i++) {
-						classes.add(las[i]);
+					for (String annotationClass : annotationClasses) {
+						classes.add(annotationClass);
 					}
 
 					_setupParseTableForAnnotationProcessing(st);
@@ -96,8 +97,8 @@ public class ClassUtil {
 					classes.add(st.sval);
 				}
 			}
-			else if (st.ttype != StreamTokenizer.TT_NUMBER &&
-					 st.ttype != StreamTokenizer.TT_EOL) {
+			else if ((st.ttype != StreamTokenizer.TT_NUMBER) &&
+					 (st.ttype != StreamTokenizer.TT_EOL)) {
 
 				if (Character.isUpperCase((char)st.ttype)) {
 					classes.add(String.valueOf((char)st.ttype));
@@ -108,6 +109,16 @@ public class ClassUtil {
 		classes.remove(className);
 
 		return classes;
+	}
+
+	public static String getClassName(Object object) {
+		if (object == null) {
+			return null;
+		}
+
+		Class<?> clazz = object.getClass();
+
+		return clazz.getName();
 	}
 
 	public static String getParentPath(
@@ -146,10 +157,24 @@ public class ClassUtil {
 			}
 			else {
 				path = uri.getPath();
+
+				if (path == null) {
+					path = url.getFile();
+				}
 			}
 		}
 		catch (URISyntaxException urise) {
 			path = url.getFile();
+		}
+
+		if (ServerDetector.isJBoss()) {
+			if (path.startsWith("file:") && !path.startsWith("file:/")) {
+				path = path.substring(5);
+
+				path = "file:/".concat(path);
+
+				path = StringUtil.replace(path, "%5C", StringPool.SLASH);
+			}
 		}
 
 		if (_log.isDebugEnabled()) {
@@ -161,11 +186,11 @@ public class ClassUtil {
 		String parentPath = path.substring(0, pos);
 
 		if (parentPath.startsWith("jar:")) {
-			parentPath = parentPath.substring(4, parentPath.length());
+			parentPath = parentPath.substring(4);
 		}
 
 		if (parentPath.startsWith("file:/")) {
-			parentPath = parentPath.substring(6, parentPath.length());
+			parentPath = parentPath.substring(6);
 		}
 
 		if (_log.isDebugEnabled()) {
@@ -180,7 +205,7 @@ public class ClassUtil {
 			return true;
 		}
 
-		if (a == null || b == null) {
+		if ((a == null) || (b == null)) {
 			return false;
 		}
 
@@ -190,10 +215,10 @@ public class ClassUtil {
 			}
 
 			if (b.isInterface()) {
-				Class<?>[] interfaces = x.getInterfaces();
+				Class<?>[] interfaceClasses = x.getInterfaces();
 
-				for (int i = 0; i < interfaces.length; i++) {
-					if (isSubclass(interfaces[i], b)) {
+				for (Class<?> interfaceClass : interfaceClasses) {
+					if (isSubclass(interfaceClass, b)) {
 						return true;
 					}
 				}
@@ -204,7 +229,7 @@ public class ClassUtil {
 	}
 
 	public static boolean isSubclass(Class<?> a, String s) {
-		if (a == null || s == null) {
+		if ((a == null) || (s == null)) {
 			return false;
 		}
 
@@ -217,10 +242,10 @@ public class ClassUtil {
 				return true;
 			}
 
-			Class<?>[] interfaces = x.getInterfaces();
+			Class<?>[] interfaceClasses = x.getInterfaces();
 
-			for (int i = 0; i < interfaces.length; i++) {
-				if (isSubclass(interfaces[i], s)) {
+			for (Class<?> interfaceClass : interfaceClasses) {
+				if (isSubclass(interfaceClass, s)) {
 					return true;
 				}
 			}
@@ -246,31 +271,32 @@ public class ClassUtil {
 			tokens.add(annotationName.replace("@", ""));
 		}
 		else if (annotationParametersMatcher.matches()) {
-			if (!s.trim().endsWith(")")) {
+			String annotationName = annotationParametersMatcher.group(1);
+
+			tokens.add(annotationName);
+
+			String annotationParameters = null;
+
+			if (s.trim().endsWith(")")) {
+				annotationParameters = annotationParametersMatcher.group(2);
+			}
+			else {
+				StringBundler sb = new StringBundler();
+
 				while (st.nextToken() != StreamTokenizer.TT_EOF) {
 					if (st.ttype == StreamTokenizer.TT_WORD) {
-						s += st.sval;
-						if (s.trim().endsWith(")")) {
+						sb.append(st.sval);
+
+						if (st.sval.trim().endsWith(")")) {
 							break;
 						}
 					}
 				}
+
+				annotationParameters = sb.toString();
 			}
 
-			annotationParametersMatcher =
-				_ANNOTATION_PARAMETERS_REGEXP.matcher(s);
-
-			if (annotationParametersMatcher.matches()) {
-				String annotationName =
-					annotationParametersMatcher.group(1);
-				String annotationParameters =
-					annotationParametersMatcher.group(2);
-
-				tokens.add(annotationName.replace("@", ""));
-
-				tokens = _processAnnotationParameters(
-					annotationParameters,tokens);
-			}
+			tokens = _processAnnotationParameters(annotationParameters, tokens);
 		}
 
 		return tokens.toArray(new String[tokens.size()]);
@@ -334,8 +360,8 @@ public class ClassUtil {
 		st.wordChars(',',',');
 	}
 
-	private static final Pattern _ANNOTATION_NAME_REGEXP =
-		Pattern.compile("@(\\w+)$");
+	private static final Pattern _ANNOTATION_NAME_REGEXP = Pattern.compile(
+		"@(\\w+)$");
 
 	private static final Pattern _ANNOTATION_PARAMETERS_REGEXP =
 		Pattern.compile("@(\\w+)\\({0,1}\\{{0,1}([^)}]+)\\}{0,1}\\){0,1}");

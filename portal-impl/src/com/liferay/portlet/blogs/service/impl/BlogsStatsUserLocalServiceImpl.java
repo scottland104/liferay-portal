@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -31,18 +31,21 @@ import java.util.List;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Mate Thurzo
  */
 public class BlogsStatsUserLocalServiceImpl
 	extends BlogsStatsUserLocalServiceBaseImpl {
 
+	@Override
 	public void deleteStatsUser(BlogsStatsUser statsUsers)
 		throws SystemException {
 
 		blogsStatsUserPersistence.remove(statsUsers);
 	}
 
+	@Override
 	public void deleteStatsUser(long statsUserId)
-		throws PortalException,	SystemException {
+		throws PortalException, SystemException {
 
 		BlogsStatsUser statsUsers = blogsStatsUserPersistence.findByPrimaryKey(
 			statsUserId);
@@ -50,9 +53,8 @@ public class BlogsStatsUserLocalServiceImpl
 		deleteStatsUser(statsUsers);
 	}
 
-	public void deleteStatsUserByGroupId(long groupId)
-		throws SystemException {
-
+	@Override
+	public void deleteStatsUserByGroupId(long groupId) throws SystemException {
 		List<BlogsStatsUser> statsUsers =
 			blogsStatsUserPersistence.findByGroupId(groupId);
 
@@ -61,6 +63,7 @@ public class BlogsStatsUserLocalServiceImpl
 		}
 	}
 
+	@Override
 	public void deleteStatsUserByUserId(long userId) throws SystemException {
 		List<BlogsStatsUser> statsUsers =
 			blogsStatsUserPersistence.findByUserId(userId);
@@ -70,6 +73,7 @@ public class BlogsStatsUserLocalServiceImpl
 		}
 	}
 
+	@Override
 	public List<BlogsStatsUser> getCompanyStatsUsers(
 			long companyId, int start, int end)
 		throws SystemException {
@@ -78,6 +82,7 @@ public class BlogsStatsUserLocalServiceImpl
 			companyId, 0, start, end, new StatsUserLastPostDateComparator());
 	}
 
+	@Override
 	public List<BlogsStatsUser> getCompanyStatsUsers(
 			long companyId, int start, int end, OrderByComparator obc)
 		throws SystemException {
@@ -86,12 +91,14 @@ public class BlogsStatsUserLocalServiceImpl
 			companyId, 0, start, end, obc);
 	}
 
+	@Override
 	public int getCompanyStatsUsersCount(long companyId)
 		throws SystemException {
 
 		return blogsStatsUserPersistence.countByC_NotE(companyId, 0);
 	}
 
+	@Override
 	public List<BlogsStatsUser> getGroupsStatsUsers(
 			long companyId, long groupId, int start, int end)
 		throws SystemException {
@@ -100,6 +107,7 @@ public class BlogsStatsUserLocalServiceImpl
 			companyId, groupId, start, end);
 	}
 
+	@Override
 	public List<BlogsStatsUser> getGroupStatsUsers(
 			long groupId, int start, int end)
 		throws SystemException {
@@ -108,6 +116,7 @@ public class BlogsStatsUserLocalServiceImpl
 			groupId, 0, start, end, new StatsUserLastPostDateComparator());
 	}
 
+	@Override
 	public List<BlogsStatsUser> getGroupStatsUsers(
 			long groupId, int start, int end, OrderByComparator obc)
 		throws SystemException {
@@ -116,10 +125,12 @@ public class BlogsStatsUserLocalServiceImpl
 			groupId, 0, start, end, obc);
 	}
 
+	@Override
 	public int getGroupStatsUsersCount(long groupId) throws SystemException {
 		return blogsStatsUserPersistence.countByG_NotE(groupId, 0);
 	}
 
+	@Override
 	public List<BlogsStatsUser> getOrganizationStatsUsers(
 			long organizationId, int start, int end)
 		throws SystemException {
@@ -128,6 +139,7 @@ public class BlogsStatsUserLocalServiceImpl
 			organizationId, start, end, new StatsUserLastPostDateComparator());
 	}
 
+	@Override
 	public List<BlogsStatsUser> getOrganizationStatsUsers(
 			long organizationId, int start, int end, OrderByComparator obc)
 		throws SystemException {
@@ -136,12 +148,14 @@ public class BlogsStatsUserLocalServiceImpl
 			organizationId, start, end, obc);
 	}
 
+	@Override
 	public int getOrganizationStatsUsersCount(long organizationId)
 		throws SystemException {
 
 		return blogsStatsUserFinder.countByOrganizationId(organizationId);
 	}
 
+	@Override
 	public BlogsStatsUser getStatsUser(long groupId, long userId)
 		throws PortalException, SystemException {
 
@@ -159,23 +173,27 @@ public class BlogsStatsUserLocalServiceImpl
 			statsUser.setGroupId(groupId);
 			statsUser.setUserId(userId);
 
-			blogsStatsUserPersistence.update(statsUser, false);
+			blogsStatsUserPersistence.update(statsUser);
 		}
 
 		return statsUser;
 	}
 
+	@Override
 	public void updateStatsUser(long groupId, long userId)
 		throws PortalException, SystemException {
 
 		updateStatsUser(groupId, userId, null);
 	}
 
+	@Override
 	public void updateStatsUser(long groupId, long userId, Date displayDate)
 		throws PortalException, SystemException {
 
-		int entryCount = blogsEntryPersistence.countByG_U_S(
-			groupId, userId, WorkflowConstants.STATUS_APPROVED);
+		Date now = new Date();
+
+		int entryCount = blogsEntryPersistence.countByG_U_LtD_S(
+			groupId, userId, now, WorkflowConstants.STATUS_APPROVED);
 
 		if (entryCount == 0) {
 			try {
@@ -191,15 +209,15 @@ public class BlogsStatsUserLocalServiceImpl
 
 		statsUser.setEntryCount(entryCount);
 
-		BlogsEntry blogsEntry = blogsEntryPersistence.findByG_U_S_First(
-			groupId, userId, WorkflowConstants.STATUS_APPROVED,
+		BlogsEntry blogsEntry = blogsEntryPersistence.findByG_U_LtD_S_First(
+			groupId, userId, now, WorkflowConstants.STATUS_APPROVED,
 			new EntryDisplayDateComparator());
 
 		Date lastDisplayDate = blogsEntry.getDisplayDate();
 
 		Date lastPostDate = statsUser.getLastPostDate();
 
-		if (displayDate != null) {
+		if ((displayDate != null) && displayDate.before(now)) {
 			if (lastPostDate == null) {
 				statsUser.setLastPostDate(displayDate);
 			}
@@ -210,11 +228,13 @@ public class BlogsStatsUserLocalServiceImpl
 				statsUser.setLastPostDate(lastDisplayDate);
 			}
 		}
-		else if (lastDisplayDate.before(lastPostDate)) {
+		else if ((lastPostDate == null) ||
+				 lastPostDate.before(lastDisplayDate)) {
+
 			statsUser.setLastPostDate(lastDisplayDate);
 		}
 
-		blogsStatsUserPersistence.update(statsUser, false);
+		blogsStatsUserPersistence.update(statsUser);
 	}
 
 }

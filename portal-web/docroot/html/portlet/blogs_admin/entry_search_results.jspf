@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,8 +16,11 @@
 
 <%
 if (Validator.isNull(searchTerms.getKeywords())) {
-	results = BlogsEntryLocalServiceUtil.getGroupEntries(scopeGroupId, WorkflowConstants.STATUS_ANY, searchContainer.getStart(), searchContainer.getEnd());
 	total = BlogsEntryLocalServiceUtil.getGroupEntriesCount(scopeGroupId, WorkflowConstants.STATUS_ANY);
+
+	searchContainer.setTotal(total);
+
+	results = BlogsEntryLocalServiceUtil.getGroupEntries(scopeGroupId, WorkflowConstants.STATUS_ANY, searchContainer.getStart(), searchContainer.getEnd());
 }
 else {
 	Indexer indexer = IndexerRegistryUtil.getIndexer(BlogsEntry.class);
@@ -30,7 +33,7 @@ else {
 
 	Hits hits = indexer.search(searchContext);
 
-	total = hits.getLength();
+	searchContainer.setTotal(hits.getLength());
 
 	for (int i = 0; i < hits.getDocs().length; i++) {
 		Document doc = hits.doc(i);
@@ -56,8 +59,7 @@ else {
 	}
 }
 
-pageContext.setAttribute("results", results);
-pageContext.setAttribute("total", total);
+searchContainer.setResults(results);
 %>
 
 <%!

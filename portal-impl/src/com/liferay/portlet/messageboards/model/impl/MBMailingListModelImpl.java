@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,7 +16,9 @@ package com.liferay.portlet.messageboards.model.impl;
 
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.lar.StagedModelType;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -31,11 +33,11 @@ import com.liferay.portlet.messageboards.model.MBMailingListModel;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the MBMailingList service. Represents a row in the &quot;MBMailingList&quot; database table, with each column mapped to a property of this class.
@@ -88,6 +90,8 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		};
 	public static final String TABLE_SQL_CREATE = "create table MBMailingList (uuid_ VARCHAR(75) null,mailingListId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,categoryId LONG,emailAddress VARCHAR(75) null,inProtocol VARCHAR(75) null,inServerName VARCHAR(75) null,inServerPort INTEGER,inUseSSL BOOLEAN,inUserName VARCHAR(75) null,inPassword VARCHAR(75) null,inReadInterval INTEGER,outEmailAddress VARCHAR(75) null,outCustom BOOLEAN,outServerName VARCHAR(75) null,outServerPort INTEGER,outUseSSL BOOLEAN,outUserName VARCHAR(75) null,outPassword VARCHAR(75) null,allowAnonymous BOOLEAN,active_ BOOLEAN)";
 	public static final String TABLE_SQL_DROP = "drop table MBMailingList";
+	public static final String ORDER_BY_JPQL = " ORDER BY mbMailingList.mailingListId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY MBMailingList.mailingListId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -97,37 +101,245 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portlet.messageboards.model.MBMailingList"),
 			true);
-
-	public Class<?> getModelClass() {
-		return MBMailingList.class;
-	}
-
-	public String getModelClassName() {
-		return MBMailingList.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portlet.messageboards.model.MBMailingList"),
+			true);
+	public static long ACTIVE_COLUMN_BITMASK = 1L;
+	public static long CATEGORYID_COLUMN_BITMASK = 2L;
+	public static long COMPANYID_COLUMN_BITMASK = 4L;
+	public static long GROUPID_COLUMN_BITMASK = 8L;
+	public static long UUID_COLUMN_BITMASK = 16L;
+	public static long MAILINGLISTID_COLUMN_BITMASK = 32L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portlet.messageboards.model.MBMailingList"));
 
 	public MBMailingListModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _mailingListId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setMailingListId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_mailingListId);
+		return _mailingListId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return MBMailingList.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return MBMailingList.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("uuid", getUuid());
+		attributes.put("mailingListId", getMailingListId());
+		attributes.put("groupId", getGroupId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("userId", getUserId());
+		attributes.put("userName", getUserName());
+		attributes.put("createDate", getCreateDate());
+		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("categoryId", getCategoryId());
+		attributes.put("emailAddress", getEmailAddress());
+		attributes.put("inProtocol", getInProtocol());
+		attributes.put("inServerName", getInServerName());
+		attributes.put("inServerPort", getInServerPort());
+		attributes.put("inUseSSL", getInUseSSL());
+		attributes.put("inUserName", getInUserName());
+		attributes.put("inPassword", getInPassword());
+		attributes.put("inReadInterval", getInReadInterval());
+		attributes.put("outEmailAddress", getOutEmailAddress());
+		attributes.put("outCustom", getOutCustom());
+		attributes.put("outServerName", getOutServerName());
+		attributes.put("outServerPort", getOutServerPort());
+		attributes.put("outUseSSL", getOutUseSSL());
+		attributes.put("outUserName", getOutUserName());
+		attributes.put("outPassword", getOutPassword());
+		attributes.put("allowAnonymous", getAllowAnonymous());
+		attributes.put("active", getActive());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		String uuid = (String)attributes.get("uuid");
+
+		if (uuid != null) {
+			setUuid(uuid);
+		}
+
+		Long mailingListId = (Long)attributes.get("mailingListId");
+
+		if (mailingListId != null) {
+			setMailingListId(mailingListId);
+		}
+
+		Long groupId = (Long)attributes.get("groupId");
+
+		if (groupId != null) {
+			setGroupId(groupId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long userId = (Long)attributes.get("userId");
+
+		if (userId != null) {
+			setUserId(userId);
+		}
+
+		String userName = (String)attributes.get("userName");
+
+		if (userName != null) {
+			setUserName(userName);
+		}
+
+		Date createDate = (Date)attributes.get("createDate");
+
+		if (createDate != null) {
+			setCreateDate(createDate);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
+		}
+
+		Long categoryId = (Long)attributes.get("categoryId");
+
+		if (categoryId != null) {
+			setCategoryId(categoryId);
+		}
+
+		String emailAddress = (String)attributes.get("emailAddress");
+
+		if (emailAddress != null) {
+			setEmailAddress(emailAddress);
+		}
+
+		String inProtocol = (String)attributes.get("inProtocol");
+
+		if (inProtocol != null) {
+			setInProtocol(inProtocol);
+		}
+
+		String inServerName = (String)attributes.get("inServerName");
+
+		if (inServerName != null) {
+			setInServerName(inServerName);
+		}
+
+		Integer inServerPort = (Integer)attributes.get("inServerPort");
+
+		if (inServerPort != null) {
+			setInServerPort(inServerPort);
+		}
+
+		Boolean inUseSSL = (Boolean)attributes.get("inUseSSL");
+
+		if (inUseSSL != null) {
+			setInUseSSL(inUseSSL);
+		}
+
+		String inUserName = (String)attributes.get("inUserName");
+
+		if (inUserName != null) {
+			setInUserName(inUserName);
+		}
+
+		String inPassword = (String)attributes.get("inPassword");
+
+		if (inPassword != null) {
+			setInPassword(inPassword);
+		}
+
+		Integer inReadInterval = (Integer)attributes.get("inReadInterval");
+
+		if (inReadInterval != null) {
+			setInReadInterval(inReadInterval);
+		}
+
+		String outEmailAddress = (String)attributes.get("outEmailAddress");
+
+		if (outEmailAddress != null) {
+			setOutEmailAddress(outEmailAddress);
+		}
+
+		Boolean outCustom = (Boolean)attributes.get("outCustom");
+
+		if (outCustom != null) {
+			setOutCustom(outCustom);
+		}
+
+		String outServerName = (String)attributes.get("outServerName");
+
+		if (outServerName != null) {
+			setOutServerName(outServerName);
+		}
+
+		Integer outServerPort = (Integer)attributes.get("outServerPort");
+
+		if (outServerPort != null) {
+			setOutServerPort(outServerPort);
+		}
+
+		Boolean outUseSSL = (Boolean)attributes.get("outUseSSL");
+
+		if (outUseSSL != null) {
+			setOutUseSSL(outUseSSL);
+		}
+
+		String outUserName = (String)attributes.get("outUserName");
+
+		if (outUserName != null) {
+			setOutUserName(outUserName);
+		}
+
+		String outPassword = (String)attributes.get("outPassword");
+
+		if (outPassword != null) {
+			setOutPassword(outPassword);
+		}
+
+		Boolean allowAnonymous = (Boolean)attributes.get("allowAnonymous");
+
+		if (allowAnonymous != null) {
+			setAllowAnonymous(allowAnonymous);
+		}
+
+		Boolean active = (Boolean)attributes.get("active");
+
+		if (active != null) {
+			setActive(active);
+		}
+	}
+
+	@Override
 	public String getUuid() {
 		if (_uuid == null) {
 			return StringPool.BLANK;
@@ -137,6 +349,7 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		}
 	}
 
+	@Override
 	public void setUuid(String uuid) {
 		if (_originalUuid == null) {
 			_originalUuid = _uuid;
@@ -149,19 +362,25 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		return GetterUtil.getString(_originalUuid);
 	}
 
+	@Override
 	public long getMailingListId() {
 		return _mailingListId;
 	}
 
+	@Override
 	public void setMailingListId(long mailingListId) {
 		_mailingListId = mailingListId;
 	}
 
+	@Override
 	public long getGroupId() {
 		return _groupId;
 	}
 
+	@Override
 	public void setGroupId(long groupId) {
+		_columnBitmask |= GROUPID_COLUMN_BITMASK;
+
 		if (!_setOriginalGroupId) {
 			_setOriginalGroupId = true;
 
@@ -175,30 +394,49 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		return _originalGroupId;
 	}
 
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
+		_columnBitmask |= COMPANYID_COLUMN_BITMASK;
+
+		if (!_setOriginalCompanyId) {
+			_setOriginalCompanyId = true;
+
+			_originalCompanyId = _companyId;
+		}
+
 		_companyId = companyId;
 	}
 
+	public long getOriginalCompanyId() {
+		return _originalCompanyId;
+	}
+
+	@Override
 	public long getUserId() {
 		return _userId;
 	}
 
+	@Override
 	public void setUserId(long userId) {
 		_userId = userId;
 	}
 
+	@Override
 	public String getUserUuid() throws SystemException {
 		return PortalUtil.getUserValue(getUserId(), "uuid", _userUuid);
 	}
 
+	@Override
 	public void setUserUuid(String userUuid) {
 		_userUuid = userUuid;
 	}
 
+	@Override
 	public String getUserName() {
 		if (_userName == null) {
 			return StringPool.BLANK;
@@ -208,31 +446,40 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		}
 	}
 
+	@Override
 	public void setUserName(String userName) {
 		_userName = userName;
 	}
 
+	@Override
 	public Date getCreateDate() {
 		return _createDate;
 	}
 
+	@Override
 	public void setCreateDate(Date createDate) {
 		_createDate = createDate;
 	}
 
+	@Override
 	public Date getModifiedDate() {
 		return _modifiedDate;
 	}
 
+	@Override
 	public void setModifiedDate(Date modifiedDate) {
 		_modifiedDate = modifiedDate;
 	}
 
+	@Override
 	public long getCategoryId() {
 		return _categoryId;
 	}
 
+	@Override
 	public void setCategoryId(long categoryId) {
+		_columnBitmask |= CATEGORYID_COLUMN_BITMASK;
+
 		if (!_setOriginalCategoryId) {
 			_setOriginalCategoryId = true;
 
@@ -246,6 +493,7 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		return _originalCategoryId;
 	}
 
+	@Override
 	public String getEmailAddress() {
 		if (_emailAddress == null) {
 			return StringPool.BLANK;
@@ -255,10 +503,12 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		}
 	}
 
+	@Override
 	public void setEmailAddress(String emailAddress) {
 		_emailAddress = emailAddress;
 	}
 
+	@Override
 	public String getInProtocol() {
 		if (_inProtocol == null) {
 			return StringPool.BLANK;
@@ -268,10 +518,12 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		}
 	}
 
+	@Override
 	public void setInProtocol(String inProtocol) {
 		_inProtocol = inProtocol;
 	}
 
+	@Override
 	public String getInServerName() {
 		if (_inServerName == null) {
 			return StringPool.BLANK;
@@ -281,30 +533,37 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		}
 	}
 
+	@Override
 	public void setInServerName(String inServerName) {
 		_inServerName = inServerName;
 	}
 
+	@Override
 	public int getInServerPort() {
 		return _inServerPort;
 	}
 
+	@Override
 	public void setInServerPort(int inServerPort) {
 		_inServerPort = inServerPort;
 	}
 
+	@Override
 	public boolean getInUseSSL() {
 		return _inUseSSL;
 	}
 
+	@Override
 	public boolean isInUseSSL() {
 		return _inUseSSL;
 	}
 
+	@Override
 	public void setInUseSSL(boolean inUseSSL) {
 		_inUseSSL = inUseSSL;
 	}
 
+	@Override
 	public String getInUserName() {
 		if (_inUserName == null) {
 			return StringPool.BLANK;
@@ -314,10 +573,12 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		}
 	}
 
+	@Override
 	public void setInUserName(String inUserName) {
 		_inUserName = inUserName;
 	}
 
+	@Override
 	public String getInPassword() {
 		if (_inPassword == null) {
 			return StringPool.BLANK;
@@ -327,18 +588,22 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		}
 	}
 
+	@Override
 	public void setInPassword(String inPassword) {
 		_inPassword = inPassword;
 	}
 
+	@Override
 	public int getInReadInterval() {
 		return _inReadInterval;
 	}
 
+	@Override
 	public void setInReadInterval(int inReadInterval) {
 		_inReadInterval = inReadInterval;
 	}
 
+	@Override
 	public String getOutEmailAddress() {
 		if (_outEmailAddress == null) {
 			return StringPool.BLANK;
@@ -348,22 +613,27 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		}
 	}
 
+	@Override
 	public void setOutEmailAddress(String outEmailAddress) {
 		_outEmailAddress = outEmailAddress;
 	}
 
+	@Override
 	public boolean getOutCustom() {
 		return _outCustom;
 	}
 
+	@Override
 	public boolean isOutCustom() {
 		return _outCustom;
 	}
 
+	@Override
 	public void setOutCustom(boolean outCustom) {
 		_outCustom = outCustom;
 	}
 
+	@Override
 	public String getOutServerName() {
 		if (_outServerName == null) {
 			return StringPool.BLANK;
@@ -373,30 +643,37 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		}
 	}
 
+	@Override
 	public void setOutServerName(String outServerName) {
 		_outServerName = outServerName;
 	}
 
+	@Override
 	public int getOutServerPort() {
 		return _outServerPort;
 	}
 
+	@Override
 	public void setOutServerPort(int outServerPort) {
 		_outServerPort = outServerPort;
 	}
 
+	@Override
 	public boolean getOutUseSSL() {
 		return _outUseSSL;
 	}
 
+	@Override
 	public boolean isOutUseSSL() {
 		return _outUseSSL;
 	}
 
+	@Override
 	public void setOutUseSSL(boolean outUseSSL) {
 		_outUseSSL = outUseSSL;
 	}
 
+	@Override
 	public String getOutUserName() {
 		if (_outUserName == null) {
 			return StringPool.BLANK;
@@ -406,10 +683,12 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		}
 	}
 
+	@Override
 	public void setOutUserName(String outUserName) {
 		_outUserName = outUserName;
 	}
 
+	@Override
 	public String getOutPassword() {
 		if (_outPassword == null) {
 			return StringPool.BLANK;
@@ -419,63 +698,84 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		}
 	}
 
+	@Override
 	public void setOutPassword(String outPassword) {
 		_outPassword = outPassword;
 	}
 
+	@Override
 	public boolean getAllowAnonymous() {
 		return _allowAnonymous;
 	}
 
+	@Override
 	public boolean isAllowAnonymous() {
 		return _allowAnonymous;
 	}
 
+	@Override
 	public void setAllowAnonymous(boolean allowAnonymous) {
 		_allowAnonymous = allowAnonymous;
 	}
 
+	@Override
 	public boolean getActive() {
 		return _active;
 	}
 
+	@Override
 	public boolean isActive() {
 		return _active;
 	}
 
+	@Override
 	public void setActive(boolean active) {
+		_columnBitmask |= ACTIVE_COLUMN_BITMASK;
+
+		if (!_setOriginalActive) {
+			_setOriginalActive = true;
+
+			_originalActive = _active;
+		}
+
 		_active = active;
 	}
 
-	@Override
-	public MBMailingList toEscapedModel() {
-		if (isEscapedModel()) {
-			return (MBMailingList)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (MBMailingList)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
+	public boolean getOriginalActive() {
+		return _originalActive;
+	}
 
-			return _escapedModelProxy;
-		}
+	@Override
+	public StagedModelType getStagedModelType() {
+		return new StagedModelType(PortalUtil.getClassNameId(
+				MBMailingList.class.getName()));
+	}
+
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					MBMailingList.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			MBMailingList.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public MBMailingList toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (MBMailingList)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -514,6 +814,7 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		return mbMailingListImpl;
 	}
 
+	@Override
 	public int compareTo(MBMailingList mbMailingList) {
 		long primaryKey = mbMailingList.getPrimaryKey();
 
@@ -530,18 +831,15 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof MBMailingList)) {
 			return false;
 		}
 
-		MBMailingList mbMailingList = null;
-
-		try {
-			mbMailingList = (MBMailingList)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		MBMailingList mbMailingList = (MBMailingList)obj;
 
 		long primaryKey = mbMailingList.getPrimaryKey();
 
@@ -568,9 +866,19 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 
 		mbMailingListModelImpl._setOriginalGroupId = false;
 
+		mbMailingListModelImpl._originalCompanyId = mbMailingListModelImpl._companyId;
+
+		mbMailingListModelImpl._setOriginalCompanyId = false;
+
 		mbMailingListModelImpl._originalCategoryId = mbMailingListModelImpl._categoryId;
 
 		mbMailingListModelImpl._setOriginalCategoryId = false;
+
+		mbMailingListModelImpl._originalActive = mbMailingListModelImpl._active;
+
+		mbMailingListModelImpl._setOriginalActive = false;
+
+		mbMailingListModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -773,6 +1081,7 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(82);
 
@@ -891,7 +1200,7 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 	}
 
 	private static ClassLoader _classLoader = MBMailingList.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			MBMailingList.class
 		};
 	private String _uuid;
@@ -901,6 +1210,8 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 	private long _originalGroupId;
 	private boolean _setOriginalGroupId;
 	private long _companyId;
+	private long _originalCompanyId;
+	private boolean _setOriginalCompanyId;
 	private long _userId;
 	private String _userUuid;
 	private String _userName;
@@ -926,6 +1237,8 @@ public class MBMailingListModelImpl extends BaseModelImpl<MBMailingList>
 	private String _outPassword;
 	private boolean _allowAnonymous;
 	private boolean _active;
-	private transient ExpandoBridge _expandoBridge;
-	private MBMailingList _escapedModelProxy;
+	private boolean _originalActive;
+	private boolean _setOriginalActive;
+	private long _columnBitmask;
+	private MBMailingList _escapedModel;
 }

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,11 +22,9 @@ PortletURL portletURL = renderResponse.createRenderURL();
 portletURL.setParameter("struts_action", "/document_library/view_file_entry_type");
 %>
 
-<aui:form action="<%= portletURL.toString() %>" method="post" name="fm">
-	<liferay-ui:search-form
-		page="/html/portlet/document_library/file_entry_type_search.jsp"
-	/>
-</aui:form>
+<liferay-util:include page="/html/portlet/document_library/file_entry_type_toolbar.jsp" />
+
+<liferay-ui:error exception="<%= RequiredStructureException.class %>" message="cannot-delete-a-document-type-that-is-presently-used-by-one-or-more-documents" />
 
 <div class="separator"></div>
 
@@ -39,29 +37,28 @@ portletURL.setParameter("struts_action", "/document_library/view_file_entry_type
 
 	<liferay-ui:search-container-row
 		className="com.liferay.portlet.documentlibrary.model.DLFileEntryType"
+		escapedModel="<%= true %>"
 		keyProperty="fileEntryTypeId"
 		modelVar="fileEntryType"
 	>
 		<liferay-ui:search-container-column-text
-			name="id"
-			property="fileEntryTypeId"
-		/>
-
-		<liferay-ui:search-container-column-text
 			name="name"
-			property="name"
+			value="<%= HtmlUtil.escape(fileEntryType.getName(locale)) %>"
 		/>
 
+		<%
+		Group group = GroupLocalServiceUtil.getGroup(fileEntryType.getGroupId());
+		%>
+
 		<liferay-ui:search-container-column-text
-			buffer="buffer"
+			name="scope"
+			value="<%= LanguageUtil.get(pageContext, group.getScopeLabel(themeDisplay)) %>"
+		/>
+
+		<liferay-ui:search-container-column-date
 			name="modified-date"
-		>
-
-			<%
-			buffer.append(dateFormatDateTime.format(fileEntryType.getModifiedDate()));
-			%>
-
-		</liferay-ui:search-container-column-text>
+			value="<%= fileEntryType.getModifiedDate() %>"
+		/>
 
 		<liferay-ui:search-container-column-jsp
 			align="right"

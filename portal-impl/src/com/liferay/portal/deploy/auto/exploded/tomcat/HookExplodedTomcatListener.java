@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,8 +15,10 @@
 package com.liferay.portal.deploy.auto.exploded.tomcat;
 
 import com.liferay.portal.kernel.deploy.auto.AutoDeployException;
+import com.liferay.portal.kernel.deploy.auto.AutoDeployer;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.util.Portal;
 
 import java.io.File;
 
@@ -29,15 +31,23 @@ public class HookExplodedTomcatListener extends BaseExplodedTomcatListener {
 		_deployer = new HookExplodedTomcatDeployer();
 	}
 
-	public void deploy(File file) throws AutoDeployException {
+	@Override
+	protected int deploy(File file) throws AutoDeployException {
 		if (_log.isDebugEnabled()) {
 			_log.debug("Invoking deploy for " + file.getPath());
 		}
 
-		File docBaseDir = getDocBaseDir(file, "WEB-INF/liferay-hook.xml");
+		File docBaseDir = getDocBaseDir(
+			file, "WEB-INF/" + Portal.PORTLET_XML_FILE_NAME_STANDARD);
+
+		if (docBaseDir != null) {
+			return AutoDeployer.CODE_NOT_APPLICABLE;
+		}
+
+		docBaseDir = getDocBaseDir(file, "WEB-INF/liferay-hook.xml");
 
 		if (docBaseDir == null) {
-			return;
+			return AutoDeployer.CODE_NOT_APPLICABLE;
 		}
 
 		if (_log.isInfoEnabled()) {
@@ -51,6 +61,8 @@ public class HookExplodedTomcatListener extends BaseExplodedTomcatListener {
 		}
 
 		copyContextFile(file);
+
+		return AutoDeployer.CODE_DEFAULT;
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(

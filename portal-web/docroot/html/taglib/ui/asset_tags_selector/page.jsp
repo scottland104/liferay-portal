@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,13 +17,12 @@
 <%@ include file="/html/taglib/ui/asset_tags_selector/init.jsp" %>
 
 <%
-themeDisplay.setIncludeServiceJs(true);
-
+boolean autoFocus = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:asset-tags-selector:autoFocus"));
 String className = (String)request.getAttribute("liferay-ui:asset-tags-selector:className");
 long classPK = GetterUtil.getLong((String)request.getAttribute("liferay-ui:asset-tags-selector:classPK"));
 String hiddenInput = (String)request.getAttribute("liferay-ui:asset-tags-selector:hiddenInput");
 String curTags = GetterUtil.getString((String)request.getAttribute("liferay-ui:asset-tags-selector:curTags"));
-boolean focus = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:asset-tags-selector:focus"));
+long[] groupIds = (long[])request.getAttribute("liferay-ui:asset-tags-selector:groupIds");
 String id = GetterUtil.getString((String)request.getAttribute("liferay-ui:asset-tags-selector:id"));
 String contentCallback = GetterUtil.getString((String)request.getAttribute("liferay-ui:asset-tags-selector:contentCallback"));
 
@@ -61,11 +60,19 @@ if (curTagsParam != null) {
 			</c:if>
 
 			curEntries: '<%= HtmlUtil.escapeJS(curTags) %>',
-			focused: <%= focus %>,
+
+			<c:if test="<%= groupIds != null %>">
+				groupIds: '<%= StringUtil.merge(groupIds) %>',
+			</c:if>
+
 			hiddenInput: '#<%= namespace + hiddenInput %>',
 			input: '#<%= id %>assetTagNames',
 			instanceVar: '<%= namespace + id %>',
 			portalModelResource: <%= Validator.isNotNull(className) && (ResourceActionsUtil.isPortalModelResource(className) || className.equals(Group.class.getName())) %>
 		}
 	).render();
+
+	<c:if test="<%= autoFocus %>">
+		Liferay.Util.focusFormField('#<%= id %>assetTagNames');
+	</c:if>
 </aui:script>

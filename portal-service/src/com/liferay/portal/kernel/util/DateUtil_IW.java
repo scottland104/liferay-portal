@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -61,9 +61,17 @@ public class DateUtil_IW {
 		return DateUtil.getDate(date, pattern, locale, timeZone);
 	}
 
-	public int getDaysBetween(java.util.Date startDate, java.util.Date endDate,
+	public int getDaysBetween(java.util.Date date1, java.util.Date date2) {
+		return DateUtil.getDaysBetween(date1, date2);
+	}
+
+	public int getDaysBetween(java.util.Date date1, java.util.Date date2,
 		java.util.TimeZone timeZone) {
-		return DateUtil.getDaysBetween(startDate, endDate, timeZone);
+		return DateUtil.getDaysBetween(date1, date2, timeZone);
+	}
+
+	public java.text.DateFormat getISO8601Format() {
+		return DateUtil.getISO8601Format();
 	}
 
 	public java.text.DateFormat getISOFormat() {
@@ -74,10 +82,6 @@ public class DateUtil_IW {
 		return DateUtil.getISOFormat(text);
 	}
 
-	public java.text.DateFormat getISO8601Format() {
-		return DateUtil.getISO8601Format();
-	}
-
 	public java.text.DateFormat getUTCFormat() {
 		return DateUtil.getUTCFormat();
 	}
@@ -86,12 +90,25 @@ public class DateUtil_IW {
 		return DateUtil.getUTCFormat(text);
 	}
 
+	public boolean isFormatAmPm(java.util.Locale locale) {
+		return DateUtil.isFormatAmPm(locale);
+	}
+
 	public java.util.Date newDate() {
 		return DateUtil.newDate();
 	}
 
 	public java.util.Date newDate(long date) {
 		return DateUtil.newDate(date);
+	}
+
+	public long newTime() {
+		return DateUtil.newTime();
+	}
+
+	public java.util.Date parseDate(java.lang.String dateString,
+		java.util.Locale locale) throws java.text.ParseException {
+		return DateUtil.parseDate(dateString, locale);
 	}
 
 	private DateUtil_IW() {

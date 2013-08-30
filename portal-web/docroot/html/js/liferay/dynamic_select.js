@@ -1,6 +1,25 @@
-AUI().add(
+AUI.add(
 	'liferay-dynamic-select',
 	function(A) {
+		var sortByValue = function(a, b) {
+			var pos = a.indexOf('">');
+
+			var nameA = a.substring(pos);
+
+			pos = b.indexOf('">');
+
+			var nameB = b.substring(pos);
+
+			if (nameA < nameB) {
+				return -1;
+			}
+			else if (nameA > nameB) {
+				return 1;
+			}
+			else {
+				return 0;
+			}
+		};
 
 		/**
 		 * OPTIONS
@@ -44,7 +63,9 @@ AUI().add(
 							prevSelectVal
 						);
 
-						select.attr('name', id);
+						if (!select.attr('name')) {
+							select.attr('name', id);
+						}
 
 						select.on(
 							'change',
@@ -84,6 +105,7 @@ AUI().add(
 				var select = A.one('#' + options.select);
 				var selectId = options.selectId;
 				var selectDesc = options.selectDesc;
+				var selectSort = options.selectSort;
 				var selectVal = options.selectVal;
 				var selectNullable = options.selectNullable || true;
 
@@ -102,6 +124,10 @@ AUI().add(
 						selectOptions.push('<option value="' + key + '">' + value + '</option>');
 					}
 				);
+
+				if (selectSort) {
+					selectOptions = selectOptions.sort(sortByValue);
+				}
 
 				selectOptions = selectOptions.join('');
 

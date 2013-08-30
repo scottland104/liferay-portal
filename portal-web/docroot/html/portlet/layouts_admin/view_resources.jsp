@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,6 +21,8 @@
 <%
 boolean viewTree = ParamUtil.getBoolean(request, "viewTree");
 boolean viewLayout = ParamUtil.getBoolean(request, "viewLayout");
+
+SitesUtil.addPortletBreadcrumbEntries(group, pagesName, redirectURL, request, renderResponse);
 %>
 
 <c:if test="<%= viewTree %>">
@@ -34,12 +36,12 @@ boolean viewLayout = ParamUtil.getBoolean(request, "viewLayout");
 <c:if test="<%= viewLayout %>">
 	<div id="<portlet:namespace />viewLayout">
 		<c:choose>
-			<c:when test="<%= selPlid > 0 %>">
+			<c:when test="<%= (selPlid > 0) && LayoutPermissionUtil.contains(permissionChecker, selPlid, ActionKeys.VIEW) %>">
 				<liferay-util:include page="/html/portlet/layouts_admin/edit_layout.jsp" />
 			</c:when>
-			<c:otherwise>
+			<c:when test="<%= (liveGroupId > 0) && GroupPermissionUtil.contains(permissionChecker, liveGroupId, ActionKeys.VIEW) %>">
 				<liferay-util:include page="/html/portlet/layouts_admin/edit_layout_set.jsp" />
-			</c:otherwise>
+			</c:when>
 		</c:choose>
 	</div>
 </c:if>

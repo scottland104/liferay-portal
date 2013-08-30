@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,8 @@
 
 package com.liferay.portlet.calendar.util;
 
+import com.liferay.portal.kernel.cal.TZSRecurrence;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -22,7 +24,9 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PropsUtil;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.calendar.model.CalEvent;
 import com.liferay.util.ContentUtil;
 
@@ -38,33 +42,31 @@ import javax.portlet.PortletPreferences;
  */
 public class CalUtil {
 
-	public static String getEmailFromAddress(PortletPreferences preferences) {
-		String emailFromAddress = PropsUtil.get(
-			PropsKeys.CALENDAR_EMAIL_FROM_ADDRESS);
+	public static Date getDaylightSavingTimeOffsetDate(
+		CalEvent event, TimeZone userTimeZone, Calendar cal, Date date) {
 
-		return preferences.getValue("emailFromAddress", emailFromAddress);
-	}
+		TZSRecurrence recurrence = event.getRecurrenceObj();
 
-	public static String getEmailFromName(PortletPreferences preferences) {
-		String emailFromName = PropsUtil.get(
-			PropsKeys.CALENDAR_EMAIL_FROM_NAME);
+		TimeZone eventTimeZone = recurrence.getTimeZone();
 
-		return preferences.getValue("emailFromName", emailFromName);
-	}
+		if (eventTimeZone.inDaylightTime(cal.getTime()) ==
+				userTimeZone.inDaylightTime(cal.getTime())) {
 
-	public static boolean getEmailEventReminderEnabled(
-		PortletPreferences preferences) {
+			return date;
+		}
 
-		String emailEventReminderEnabled = preferences.getValue(
-			"emailEventReminderEnabled", StringPool.BLANK);
+		Calendar calendar = Calendar.getInstance();
 
-		if (Validator.isNotNull(emailEventReminderEnabled)) {
-			return GetterUtil.getBoolean(emailEventReminderEnabled);
+		calendar.setTime(date);
+
+		if (eventTimeZone.inDaylightTime(cal.getTime())) {
+			calendar.add(Calendar.HOUR_OF_DAY, -1);
 		}
 		else {
-			return GetterUtil.getBoolean(PropsUtil.get(
-				PropsKeys.CALENDAR_EMAIL_EVENT_REMINDER_ENABLED));
+			calendar.add(Calendar.HOUR_OF_DAY, 1);
 		}
+
+		return calendar.getTime();
 	}
 
 	public static String getEmailEventReminderBody(
@@ -77,8 +79,23 @@ public class CalUtil {
 			return emailEventReminderBody;
 		}
 		else {
-			return ContentUtil.get(PropsUtil.get(
-				PropsKeys.CALENDAR_EMAIL_EVENT_REMINDER_BODY));
+			return ContentUtil.get(
+				PropsUtil.get(PropsKeys.CALENDAR_EMAIL_EVENT_REMINDER_BODY));
+		}
+	}
+
+	public static boolean getEmailEventReminderEnabled(
+		PortletPreferences preferences) {
+
+		String emailEventReminderEnabled = preferences.getValue(
+			"emailEventReminderEnabled", StringPool.BLANK);
+
+		if (Validator.isNotNull(emailEventReminderEnabled)) {
+			return GetterUtil.getBoolean(emailEventReminderEnabled);
+		}
+		else {
+			return GetterUtil.getBoolean(
+				PropsUtil.get(PropsKeys.CALENDAR_EMAIL_EVENT_REMINDER_ENABLED));
 		}
 	}
 
@@ -92,9 +109,25 @@ public class CalUtil {
 			return emailEventReminderSubject;
 		}
 		else {
-			return ContentUtil.get(PropsUtil.get(
-				PropsKeys.CALENDAR_EMAIL_EVENT_REMINDER_SUBJECT));
+			return ContentUtil.get(
+				PropsUtil.get(PropsKeys.CALENDAR_EMAIL_EVENT_REMINDER_SUBJECT));
 		}
+	}
+
+	public static String getEmailFromAddress(
+			PortletPreferences preferences, long companyId)
+		throws SystemException {
+
+		return PortalUtil.getEmailFromAddress(
+			preferences, companyId, PropsValues.CALENDAR_EMAIL_FROM_ADDRESS);
+	}
+
+	public static String getEmailFromName(
+			PortletPreferences preferences, long companyId)
+		throws SystemException {
+
+		return PortalUtil.getEmailFromName(
+			preferences, companyId, PropsValues.CALENDAR_EMAIL_FROM_NAME);
 	}
 
 	public static Date getEndTime(CalEvent event) {
@@ -109,6 +142,10 @@ public class CalUtil {
 
 	public static boolean isAllDay(
 		CalEvent event, TimeZone timeZone, Locale locale) {
+
+		if (event.isAllDay()) {
+			return true;
+		}
 
 		Calendar cal = null;
 
@@ -139,7 +176,6 @@ public class CalUtil {
 	}
 
 	public static String toString(Calendar cal, String[] types) {
-
 		StringBundler sb = new StringBundler(9);
 
 		if (cal != null) {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portlet.softwarecatalog.model.impl;
 
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.impl.BaseModelImpl;
@@ -28,9 +29,10 @@ import com.liferay.portlet.softwarecatalog.model.SCProductScreenshotModel;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the SCProductScreenshot service. Represents a row in the &quot;SCProductScreenshot&quot; database table, with each column mapped to a property of this class.
@@ -75,66 +77,148 @@ public class SCProductScreenshotModelImpl extends BaseModelImpl<SCProductScreens
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portlet.softwarecatalog.model.SCProductScreenshot"),
 			true);
-
-	public Class<?> getModelClass() {
-		return SCProductScreenshot.class;
-	}
-
-	public String getModelClassName() {
-		return SCProductScreenshot.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portlet.softwarecatalog.model.SCProductScreenshot"),
+			true);
+	public static long FULLIMAGEID_COLUMN_BITMASK = 1L;
+	public static long PRIORITY_COLUMN_BITMASK = 2L;
+	public static long PRODUCTENTRYID_COLUMN_BITMASK = 4L;
+	public static long THUMBNAILID_COLUMN_BITMASK = 8L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portlet.softwarecatalog.model.SCProductScreenshot"));
 
 	public SCProductScreenshotModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _productScreenshotId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setProductScreenshotId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_productScreenshotId);
+		return _productScreenshotId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return SCProductScreenshot.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return SCProductScreenshot.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("productScreenshotId", getProductScreenshotId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("groupId", getGroupId());
+		attributes.put("productEntryId", getProductEntryId());
+		attributes.put("thumbnailId", getThumbnailId());
+		attributes.put("fullImageId", getFullImageId());
+		attributes.put("priority", getPriority());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long productScreenshotId = (Long)attributes.get("productScreenshotId");
+
+		if (productScreenshotId != null) {
+			setProductScreenshotId(productScreenshotId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long groupId = (Long)attributes.get("groupId");
+
+		if (groupId != null) {
+			setGroupId(groupId);
+		}
+
+		Long productEntryId = (Long)attributes.get("productEntryId");
+
+		if (productEntryId != null) {
+			setProductEntryId(productEntryId);
+		}
+
+		Long thumbnailId = (Long)attributes.get("thumbnailId");
+
+		if (thumbnailId != null) {
+			setThumbnailId(thumbnailId);
+		}
+
+		Long fullImageId = (Long)attributes.get("fullImageId");
+
+		if (fullImageId != null) {
+			setFullImageId(fullImageId);
+		}
+
+		Integer priority = (Integer)attributes.get("priority");
+
+		if (priority != null) {
+			setPriority(priority);
+		}
+	}
+
+	@Override
 	public long getProductScreenshotId() {
 		return _productScreenshotId;
 	}
 
+	@Override
 	public void setProductScreenshotId(long productScreenshotId) {
 		_productScreenshotId = productScreenshotId;
 	}
 
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
 		_companyId = companyId;
 	}
 
+	@Override
 	public long getGroupId() {
 		return _groupId;
 	}
 
+	@Override
 	public void setGroupId(long groupId) {
 		_groupId = groupId;
 	}
 
+	@Override
 	public long getProductEntryId() {
 		return _productEntryId;
 	}
 
+	@Override
 	public void setProductEntryId(long productEntryId) {
+		_columnBitmask = -1L;
+
 		if (!_setOriginalProductEntryId) {
 			_setOriginalProductEntryId = true;
 
@@ -148,11 +232,15 @@ public class SCProductScreenshotModelImpl extends BaseModelImpl<SCProductScreens
 		return _originalProductEntryId;
 	}
 
+	@Override
 	public long getThumbnailId() {
 		return _thumbnailId;
 	}
 
+	@Override
 	public void setThumbnailId(long thumbnailId) {
+		_columnBitmask |= THUMBNAILID_COLUMN_BITMASK;
+
 		if (!_setOriginalThumbnailId) {
 			_setOriginalThumbnailId = true;
 
@@ -166,11 +254,15 @@ public class SCProductScreenshotModelImpl extends BaseModelImpl<SCProductScreens
 		return _originalThumbnailId;
 	}
 
+	@Override
 	public long getFullImageId() {
 		return _fullImageId;
 	}
 
+	@Override
 	public void setFullImageId(long fullImageId) {
+		_columnBitmask |= FULLIMAGEID_COLUMN_BITMASK;
+
 		if (!_setOriginalFullImageId) {
 			_setOriginalFullImageId = true;
 
@@ -184,11 +276,15 @@ public class SCProductScreenshotModelImpl extends BaseModelImpl<SCProductScreens
 		return _originalFullImageId;
 	}
 
+	@Override
 	public int getPriority() {
 		return _priority;
 	}
 
+	@Override
 	public void setPriority(int priority) {
+		_columnBitmask = -1L;
+
 		if (!_setOriginalPriority) {
 			_setOriginalPriority = true;
 
@@ -202,35 +298,31 @@ public class SCProductScreenshotModelImpl extends BaseModelImpl<SCProductScreens
 		return _originalPriority;
 	}
 
-	@Override
-	public SCProductScreenshot toEscapedModel() {
-		if (isEscapedModel()) {
-			return (SCProductScreenshot)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (SCProductScreenshot)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					SCProductScreenshot.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			SCProductScreenshot.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public SCProductScreenshot toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (SCProductScreenshot)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -250,6 +342,7 @@ public class SCProductScreenshotModelImpl extends BaseModelImpl<SCProductScreens
 		return scProductScreenshotImpl;
 	}
 
+	@Override
 	public int compareTo(SCProductScreenshot scProductScreenshot) {
 		int value = 0;
 
@@ -286,18 +379,15 @@ public class SCProductScreenshotModelImpl extends BaseModelImpl<SCProductScreens
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof SCProductScreenshot)) {
 			return false;
 		}
 
-		SCProductScreenshot scProductScreenshot = null;
-
-		try {
-			scProductScreenshot = (SCProductScreenshot)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		SCProductScreenshot scProductScreenshot = (SCProductScreenshot)obj;
 
 		long primaryKey = scProductScreenshot.getPrimaryKey();
 
@@ -333,6 +423,8 @@ public class SCProductScreenshotModelImpl extends BaseModelImpl<SCProductScreens
 		scProductScreenshotModelImpl._originalPriority = scProductScreenshotModelImpl._priority;
 
 		scProductScreenshotModelImpl._setOriginalPriority = false;
+
+		scProductScreenshotModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -379,6 +471,7 @@ public class SCProductScreenshotModelImpl extends BaseModelImpl<SCProductScreens
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(25);
 
@@ -422,7 +515,7 @@ public class SCProductScreenshotModelImpl extends BaseModelImpl<SCProductScreens
 	}
 
 	private static ClassLoader _classLoader = SCProductScreenshot.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			SCProductScreenshot.class
 		};
 	private long _productScreenshotId;
@@ -440,6 +533,6 @@ public class SCProductScreenshotModelImpl extends BaseModelImpl<SCProductScreens
 	private int _priority;
 	private int _originalPriority;
 	private boolean _setOriginalPriority;
-	private transient ExpandoBridge _expandoBridge;
-	private SCProductScreenshot _escapedModelProxy;
+	private long _columnBitmask;
+	private SCProductScreenshot _escapedModel;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,8 +15,14 @@
 package com.liferay.portal.verify;
 
 import com.liferay.portal.NoSuchRoleException;
+import com.liferay.portal.model.Group;
+import com.liferay.portal.model.GroupConstants;
+import com.liferay.portal.model.ResourceConstants;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.RoleConstants;
+import com.liferay.portal.security.permission.ActionKeys;
+import com.liferay.portal.service.GroupLocalServiceUtil;
+import com.liferay.portal.service.ResourcePermissionLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
 import com.liferay.portal.util.PortalInstances;
 
@@ -24,6 +30,39 @@ import com.liferay.portal.util.PortalInstances;
  * @author Brian Wing Shun Chan
  */
 public class VerifyRole extends VerifyProcess {
+
+	protected void addViewSiteAdministrationPermission(Role role)
+		throws Exception {
+
+		String name = Group.class.getName();
+
+		Group group = GroupLocalServiceUtil.getGroup(
+			role.getCompanyId(), GroupConstants.USER_PERSONAL_SITE);
+
+		String primKey = String.valueOf(group.getGroupId());
+
+		if (!ResourcePermissionLocalServiceUtil.hasResourcePermission(
+				role.getCompanyId(), name, ResourceConstants.SCOPE_GROUP,
+				primKey, role.getRoleId(), ActionKeys.MANAGE_LAYOUTS) ||
+			ResourcePermissionLocalServiceUtil.hasResourcePermission(
+				role.getCompanyId(), name, ResourceConstants.SCOPE_GROUP,
+				primKey, role.getRoleId(),
+				ActionKeys.VIEW_SITE_ADMINISTRATION)) {
+
+			return;
+		}
+
+		ResourcePermissionLocalServiceUtil.addResourcePermission(
+			role.getCompanyId(), name, ResourceConstants.SCOPE_GROUP, primKey,
+			role.getRoleId(), ActionKeys.VIEW_SITE_ADMINISTRATION);
+	}
+
+	protected void deleteImplicitAssociations(Role role) throws Exception {
+		runSQL(
+			"delete from UserGroupGroupRole where roleId = " +
+				role.getRoleId());
+		runSQL("delete from UserGroupRole where roleId = " + role.getRoleId());
+	}
 
 	@Override
 	protected void doVerify() throws Exception {
@@ -42,6 +81,15 @@ public class VerifyRole extends VerifyProcess {
 			}
 
 			try {
+				Role powerUserRole = RoleLocalServiceUtil.getRole(
+					companyId, RoleConstants.POWER_USER);
+
+				addViewSiteAdministrationPermission(powerUserRole);
+			}
+			catch (NoSuchRoleException nsre) {
+			}
+
+			try {
 				Role siteMemberRole = RoleLocalServiceUtil.getRole(
 					companyId, RoleConstants.SITE_MEMBER);
 
@@ -50,14 +98,6 @@ public class VerifyRole extends VerifyProcess {
 			catch (NoSuchRoleException nsre) {
 			}
 		}
-	}
-
-	protected void deleteImplicitAssociations(Role role) throws Exception {
-		runSQL(
-			"delete from UserGroupGroupRole where roleId = " +
-				role.getRoleId());
-		runSQL(
-			"delete from UserGroupRole where roleId = " + role.getRoleId());
 	}
 
 }

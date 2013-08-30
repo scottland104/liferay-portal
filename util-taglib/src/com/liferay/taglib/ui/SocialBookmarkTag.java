@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,6 +34,10 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class SocialBookmarkTag extends IncludeTag {
 
+	public void setContentId(String contentId) {
+		_contentId = contentId;
+	}
+
 	public void setTarget(String target) {
 		_target = target;
 	}
@@ -52,6 +56,7 @@ public class SocialBookmarkTag extends IncludeTag {
 
 	@Override
 	protected void cleanUp() {
+		_contentId = null;
 		_target = null;
 		_title = null;
 		_type = null;
@@ -76,6 +81,18 @@ public class SocialBookmarkTag extends IncludeTag {
 		}
 	}
 
+	protected String getPostUrl() {
+		Map<String, String> vars = new HashMap<String, String>();
+
+		vars.put("liferay:social-bookmark:title", HttpUtil.encodeURL(_title));
+		vars.put("liferay:social-bookmark:url", _url);
+
+		String postUrl = PropsUtil.get(
+			PropsKeys.SOCIAL_BOOKMARK_POST_URL, new Filter(_type, vars));
+
+		return postUrl;
+	}
+
 	@Override
 	protected void setAttributes(HttpServletRequest request) {
 		String jspPath = _jspPaths.get(_type);
@@ -94,22 +111,12 @@ public class SocialBookmarkTag extends IncludeTag {
 				"liferay-ui:social-bookmark:postUrl", getPostUrl());
 		}
 
+		request.setAttribute(
+			"liferay-ui:social-bookmark:contentId", _contentId);
 		request.setAttribute("liferay-ui:social-bookmark:target", _target);
 		request.setAttribute("liferay-ui:social-bookmark:title", _title);
 		request.setAttribute("liferay-ui:social-bookmark:type", _type);
 		request.setAttribute("liferay-ui:social-bookmark:url", _url);
-	}
-
-	private String getPostUrl() {
-		Map<String, String> vars = new HashMap<String, String>();
-
-		vars.put("liferay:social-bookmark:title", HttpUtil.encodeURL(_title));
-		vars.put("liferay:social-bookmark:url", _url);
-
-		String postUrl = PropsUtil.get(
-			PropsKeys.SOCIAL_BOOKMARK_POST_URL, new Filter(_type, vars));
-
-		return postUrl;
 	}
 
 	private static final String _PAGE =
@@ -118,6 +125,7 @@ public class SocialBookmarkTag extends IncludeTag {
 	private static Map<String, String> _jspPaths =
 		new HashMap<String, String>();
 
+	private String _contentId;
 	private String _jspPath;
 	private String _target;
 	private String _title;

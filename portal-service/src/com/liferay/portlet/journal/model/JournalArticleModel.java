@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,13 +14,14 @@
 
 package com.liferay.portlet.journal.model;
 
+import com.liferay.portal.LocaleException;
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.model.AttachedModel;
 import com.liferay.portal.model.BaseModel;
 import com.liferay.portal.model.CacheModel;
-import com.liferay.portal.model.GroupedModel;
 import com.liferay.portal.model.ResourcedModel;
+import com.liferay.portal.model.StagedGroupedModel;
 import com.liferay.portal.model.WorkflowedModel;
 import com.liferay.portal.service.ServiceContext;
 
@@ -46,7 +47,8 @@ import java.util.Map;
  * @generated
  */
 public interface JournalArticleModel extends AttachedModel,
-	BaseModel<JournalArticle>, GroupedModel, ResourcedModel, WorkflowedModel {
+	BaseModel<JournalArticle>, ResourcedModel, StagedGroupedModel,
+	WorkflowedModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -73,6 +75,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 * @return the uuid of this journal article
 	 */
 	@AutoEscape
+	@Override
 	public String getUuid();
 
 	/**
@@ -80,6 +83,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param uuid the uuid of this journal article
 	 */
+	@Override
 	public void setUuid(String uuid);
 
 	/**
@@ -101,6 +105,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @return the resource prim key of this journal article
 	 */
+	@Override
 	public long getResourcePrimKey();
 
 	/**
@@ -108,8 +113,10 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param resourcePrimKey the resource prim key of this journal article
 	 */
+	@Override
 	public void setResourcePrimKey(long resourcePrimKey);
 
+	@Override
 	public boolean isResourceMain();
 
 	/**
@@ -117,6 +124,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @return the group ID of this journal article
 	 */
+	@Override
 	public long getGroupId();
 
 	/**
@@ -124,6 +132,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param groupId the group ID of this journal article
 	 */
+	@Override
 	public void setGroupId(long groupId);
 
 	/**
@@ -131,6 +140,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @return the company ID of this journal article
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -138,6 +148,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param companyId the company ID of this journal article
 	 */
+	@Override
 	public void setCompanyId(long companyId);
 
 	/**
@@ -145,6 +156,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @return the user ID of this journal article
 	 */
+	@Override
 	public long getUserId();
 
 	/**
@@ -152,6 +164,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param userId the user ID of this journal article
 	 */
+	@Override
 	public void setUserId(long userId);
 
 	/**
@@ -160,6 +173,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 * @return the user uuid of this journal article
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getUserUuid() throws SystemException;
 
 	/**
@@ -167,6 +181,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param userUuid the user uuid of this journal article
 	 */
+	@Override
 	public void setUserUuid(String userUuid);
 
 	/**
@@ -175,6 +190,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 * @return the user name of this journal article
 	 */
 	@AutoEscape
+	@Override
 	public String getUserName();
 
 	/**
@@ -182,6 +198,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param userName the user name of this journal article
 	 */
+	@Override
 	public void setUserName(String userName);
 
 	/**
@@ -189,6 +206,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @return the create date of this journal article
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -196,6 +214,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param createDate the create date of this journal article
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -203,6 +222,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @return the modified date of this journal article
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -210,20 +230,39 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param modifiedDate the modified date of this journal article
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
+
+	/**
+	 * Returns the folder ID of this journal article.
+	 *
+	 * @return the folder ID of this journal article
+	 */
+	public long getFolderId();
+
+	/**
+	 * Sets the folder ID of this journal article.
+	 *
+	 * @param folderId the folder ID of this journal article
+	 */
+	public void setFolderId(long folderId);
 
 	/**
 	 * Returns the fully qualified class name of this journal article.
 	 *
 	 * @return the fully qualified class name of this journal article
 	 */
+	@Override
 	public String getClassName();
+
+	public void setClassName(String className);
 
 	/**
 	 * Returns the class name ID of this journal article.
 	 *
 	 * @return the class name ID of this journal article
 	 */
+	@Override
 	public long getClassNameId();
 
 	/**
@@ -231,6 +270,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param classNameId the class name ID of this journal article
 	 */
+	@Override
 	public void setClassNameId(long classNameId);
 
 	/**
@@ -238,6 +278,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @return the class p k of this journal article
 	 */
+	@Override
 	public long getClassPK();
 
 	/**
@@ -245,6 +286,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param classPK the class p k of this journal article
 	 */
+	@Override
 	public void setClassPK(long classPK);
 
 	/**
@@ -288,6 +330,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 * @param locale the locale of the language
 	 * @return the localized title of this journal article
 	 */
+	@AutoEscape
 	public String getTitle(Locale locale);
 
 	/**
@@ -297,6 +340,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized title of this journal article. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getTitle(Locale locale, boolean useDefault);
 
 	/**
@@ -305,6 +349,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 * @param languageId the ID of the language
 	 * @return the localized title of this journal article
 	 */
+	@AutoEscape
 	public String getTitle(String languageId);
 
 	/**
@@ -314,7 +359,14 @@ public interface JournalArticleModel extends AttachedModel,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized title of this journal article
 	 */
+	@AutoEscape
 	public String getTitle(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getTitleCurrentLanguageId();
+
+	@AutoEscape
+	public String getTitleCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized titles of this journal article.
@@ -346,6 +398,8 @@ public interface JournalArticleModel extends AttachedModel,
 	 * @param defaultLocale the default locale
 	 */
 	public void setTitle(String title, Locale locale, Locale defaultLocale);
+
+	public void setTitleCurrentLanguageId(String languageId);
 
 	/**
 	 * Sets the localized titles of this journal article from the map of locales and localized titles.
@@ -390,6 +444,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 * @param locale the locale of the language
 	 * @return the localized description of this journal article
 	 */
+	@AutoEscape
 	public String getDescription(Locale locale);
 
 	/**
@@ -399,6 +454,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized description of this journal article. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getDescription(Locale locale, boolean useDefault);
 
 	/**
@@ -407,6 +463,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 * @param languageId the ID of the language
 	 * @return the localized description of this journal article
 	 */
+	@AutoEscape
 	public String getDescription(String languageId);
 
 	/**
@@ -416,7 +473,14 @@ public interface JournalArticleModel extends AttachedModel,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized description of this journal article
 	 */
+	@AutoEscape
 	public String getDescription(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getDescriptionCurrentLanguageId();
+
+	@AutoEscape
+	public String getDescriptionCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized descriptions of this journal article.
@@ -449,6 +513,8 @@ public interface JournalArticleModel extends AttachedModel,
 	 */
 	public void setDescription(String description, Locale locale,
 		Locale defaultLocale);
+
+	public void setDescriptionCurrentLanguageId(String languageId);
 
 	/**
 	 * Sets the localized descriptions of this journal article from the map of locales and localized descriptions.
@@ -657,6 +723,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @return the status of this journal article
 	 */
+	@Override
 	public int getStatus();
 
 	/**
@@ -664,6 +731,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param status the status of this journal article
 	 */
+	@Override
 	public void setStatus(int status);
 
 	/**
@@ -671,6 +739,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @return the status by user ID of this journal article
 	 */
+	@Override
 	public long getStatusByUserId();
 
 	/**
@@ -678,6 +747,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param statusByUserId the status by user ID of this journal article
 	 */
+	@Override
 	public void setStatusByUserId(long statusByUserId);
 
 	/**
@@ -686,6 +756,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 * @return the status by user uuid of this journal article
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getStatusByUserUuid() throws SystemException;
 
 	/**
@@ -693,6 +764,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param statusByUserUuid the status by user uuid of this journal article
 	 */
+	@Override
 	public void setStatusByUserUuid(String statusByUserUuid);
 
 	/**
@@ -701,6 +773,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 * @return the status by user name of this journal article
 	 */
 	@AutoEscape
+	@Override
 	public String getStatusByUserName();
 
 	/**
@@ -708,6 +781,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param statusByUserName the status by user name of this journal article
 	 */
+	@Override
 	public void setStatusByUserName(String statusByUserName);
 
 	/**
@@ -715,6 +789,7 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @return the status date of this journal article
 	 */
+	@Override
 	public Date getStatusDate();
 
 	/**
@@ -722,11 +797,13 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @param statusDate the status date of this journal article
 	 */
+	@Override
 	public void setStatusDate(Date statusDate);
 
 	/**
-	 * @deprecated Renamed to {@link #isApproved()}
+	 * @deprecated As of 6.1.0, replaced by {@link #isApproved()}
 	 */
+	@Override
 	public boolean getApproved();
 
 	/**
@@ -734,13 +811,23 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @return <code>true</code> if this journal article is approved; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isApproved();
+
+	/**
+	 * Returns <code>true</code> if this journal article is denied.
+	 *
+	 * @return <code>true</code> if this journal article is denied; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isDenied();
 
 	/**
 	 * Returns <code>true</code> if this journal article is a draft.
 	 *
 	 * @return <code>true</code> if this journal article is a draft; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isDraft();
 
 	/**
@@ -748,46 +835,112 @@ public interface JournalArticleModel extends AttachedModel,
 	 *
 	 * @return <code>true</code> if this journal article is expired; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isExpired();
+
+	/**
+	 * Returns <code>true</code> if this journal article is inactive.
+	 *
+	 * @return <code>true</code> if this journal article is inactive; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isInactive();
+
+	/**
+	 * Returns <code>true</code> if this journal article is incomplete.
+	 *
+	 * @return <code>true</code> if this journal article is incomplete; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isIncomplete();
+
+	/**
+	 * Returns <code>true</code> if this journal article is in the Recycle Bin.
+	 *
+	 * @return <code>true</code> if this journal article is in the Recycle Bin; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isInTrash();
 
 	/**
 	 * Returns <code>true</code> if this journal article is pending.
 	 *
 	 * @return <code>true</code> if this journal article is pending; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isPending();
 
+	/**
+	 * Returns <code>true</code> if this journal article is scheduled.
+	 *
+	 * @return <code>true</code> if this journal article is scheduled; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isScheduled();
+
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	public String[] getAvailableLanguageIds();
+
+	public String getDefaultLanguageId();
+
+	public void prepareLocalizedFieldsForImport() throws LocaleException;
+
+	public void prepareLocalizedFieldsForImport(Locale defaultImportLocale)
+		throws LocaleException;
+
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(JournalArticle journalArticle);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<JournalArticle> toCacheModel();
 
+	@Override
 	public JournalArticle toEscapedModel();
 
+	@Override
+	public JournalArticle toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

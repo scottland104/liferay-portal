@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -57,6 +57,15 @@ if (Validator.isNull(ParamUtil.getString(request, "userMappingScreenName")) ||
 
 String userFilter = ParamUtil.getString(request, "importUserSearchFilter");
 
+if (!LDAPUtil.isValidFilter(userFilter)) {
+%>
+
+	<liferay-ui:message key="please-enter-a-valid-ldap-search-filter" />
+
+<%
+	return;
+}
+
 String userMappingsParams =
 	"screenName=" + ParamUtil.getString(request, "userMappingScreenName") +
 	"\npassword=" + ParamUtil.getString(request, "userMappingPassword") +
@@ -73,7 +82,9 @@ String[] attributeIds = StringUtil.split(StringUtil.merge(userMappings.values())
 
 List<SearchResult> searchResults = new ArrayList<SearchResult>();
 
-PortalLDAPUtil.getUsers(themeDisplay.getCompanyId(), ldapContext, new byte[0], 20, baseDN, userFilter, attributeIds, searchResults);
+if (Validator.isNotNull(userFilter) && !userFilter.equals(StringPool.STAR)) {
+	PortalLDAPUtil.getUsers(themeDisplay.getCompanyId(), ldapContext, new byte[0], 20, baseDN, userFilter, attributeIds, searchResults);
+}
 %>
 
 <liferay-ui:message key="test-ldap-users" />
@@ -94,12 +105,12 @@ int counter = 0;
 for (SearchResult searchResult : searchResults) {
 	Attributes attributes = searchResult.getAttributes();
 
-	String screenName = LDAPUtil.getAttributeValue(attributes, userMappings.getProperty("screenName")).toLowerCase();
-	String password = LDAPUtil.getAttributeValue(attributes, userMappings.getProperty("password")).toLowerCase();
-	String emailAddress = LDAPUtil.getAttributeValue(attributes, userMappings.getProperty("emailAddress"));
-	String firstName = LDAPUtil.getAttributeValue(attributes, userMappings.getProperty("firstName"));
-	String lastName = LDAPUtil.getAttributeValue(attributes, userMappings.getProperty("lastName"));
-	String jobTitle = LDAPUtil.getAttributeValue(attributes, userMappings.getProperty("jobTitle"));
+	String screenName = LDAPUtil.getAttributeString(attributes, userMappings.getProperty("screenName")).toLowerCase();
+	String password = LDAPUtil.getAttributeString(attributes, userMappings.getProperty("password")).toLowerCase();
+	String emailAddress = LDAPUtil.getAttributeString(attributes, userMappings.getProperty("emailAddress"));
+	String firstName = LDAPUtil.getAttributeString(attributes, userMappings.getProperty("firstName"));
+	String lastName = LDAPUtil.getAttributeString(attributes, userMappings.getProperty("lastName"));
+	String jobTitle = LDAPUtil.getAttributeString(attributes, userMappings.getProperty("jobTitle"));
 	Attribute attribute = attributes.get(userMappings.getProperty("group"));
 
 	if (Validator.isNull(screenName) || Validator.isNull(password) || Validator.isNull(emailAddress) || Validator.isNull(firstName) || Validator.isNull(lastName)) {
@@ -193,7 +204,7 @@ if (counter == 0) {
 if (showMissingAttributeMessage) {
 %>
 
-	<div class="portlet-msg-info">
+	<div class="alert alert-info">
 		<liferay-ui:message key="the-above-results-include-users-which-are-missing-the-required-attributes-(screen-name,-password,-email-address,-first-name,-and-last-name).-these-users-will-not-be-imported-until-these-attributes-are-filled-in" />
 	</div>
 

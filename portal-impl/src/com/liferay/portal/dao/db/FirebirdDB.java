@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -68,11 +68,21 @@ public class FirebirdDB extends BaseDB {
 		sb.append("connect '");
 		sb.append(databaseName);
 		sb.append(".gdb' user 'sysdba' password 'masterkey';\n");
-		sb.append(
-			readSQL(
-				sqlDir + "/portal" + suffix + "/portal" + suffix +
-					"-firebird.sql",
-				_FIREBIRD[0], ";\n"));
+
+		if (!sqlDir.endsWith("/WEB-INF/sql")) {
+			sb.append(
+				readSQL(
+					sqlDir + "/portal" + suffix + "/portal" + suffix +
+						"-firebird.sql",
+					_FIREBIRD[0], ";\n"));
+		}
+		else {
+			sb.append(
+				readSQL(
+					sqlDir + "/tables" + suffix + "/tables" + suffix +
+						"-firebird.sql",
+					_FIREBIRD[0], ";\n"));
+		}
 
 		return sb.toString();
 	}
@@ -113,7 +123,7 @@ public class FirebirdDB extends BaseDB {
 						"type @type@;",
 					REWORD_TEMPLATE, template);
 			}
-			else if (line.indexOf(DROP_INDEX) != -1) {
+			else if (line.contains(DROP_INDEX)) {
 				String[] tokens = StringUtil.split(line, ' ');
 
 				line = StringUtil.replace(
@@ -129,13 +139,10 @@ public class FirebirdDB extends BaseDB {
 		return sb.toString();
 	}
 
-	private static String[] _FIREBIRD = {
-		"--", "1", "0",
-		"'01/01/1970'", "current_timestamp",
-		" blob", " smallint", " timestamp",
-		" double precision", " integer", " int64",
-		" varchar(4000)", " blob", " varchar",
-		"", "commit"
+	private static final String[] _FIREBIRD = {
+		"--", "1", "0", "'01/01/1970'", "current_timestamp", " blob", " blob",
+		" smallint", " timestamp", " double precision", " integer", " int64",
+		" varchar(4000)", " blob", " varchar", "", "commit"
 	};
 
 	private static FirebirdDB _instance = new FirebirdDB();

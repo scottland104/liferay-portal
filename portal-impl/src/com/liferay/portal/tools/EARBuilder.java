@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,8 +15,6 @@
 package com.liferay.portal.tools;
 
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.xml.Document;
@@ -35,15 +33,18 @@ public class EARBuilder {
 	public static void main(String[] args) {
 		InitUtil.initWithSpring();
 
-		if (args.length == 2) {
-			new EARBuilder(args[0], StringUtil.split(args[1]));
+		if (args.length == 3) {
+			new EARBuilder(args[0], StringUtil.split(args[1]), args[2]);
 		}
 		else {
 			throw new IllegalArgumentException();
 		}
 	}
 
-	public EARBuilder(String originalApplicationXML, String[] pluginFileNames) {
+	public EARBuilder(
+		String originalApplicationXML, String[] pluginFileNames,
+		String portalContextPath) {
+
 		try {
 			Document document = SAXReaderUtil.read(
 				new File(originalApplicationXML));
@@ -62,7 +63,8 @@ public class EARBuilder {
 				Element contextRootElement = webElement.addElement(
 					"context-root");
 
-				String contextRoot = _getContextRoot(pluginFileName);
+				String contextRoot = _getContextRoot(
+					pluginFileName, portalContextPath);
 
 				contextRootElement.addText(contextRoot);
 			}
@@ -75,7 +77,9 @@ public class EARBuilder {
 		}
 	}
 
-	private String _getContextRoot(String pluginFileName) {
+	private String _getContextRoot(
+		String pluginFileName, String portalContextPath) {
+
 		String contextRoot = pluginFileName;
 
 		int pos = contextRoot.lastIndexOf(".war");
@@ -85,7 +89,7 @@ public class EARBuilder {
 		}
 
 		if (contextRoot.equals("liferay-portal")) {
-			contextRoot = PropsUtil.get(PropsKeys.PORTAL_CTX);
+			contextRoot = portalContextPath;
 
 			if (contextRoot.equals(StringPool.SLASH)) {
 				contextRoot = StringPool.BLANK;

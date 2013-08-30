@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,8 +14,11 @@
 
 package com.liferay.portal.events;
 
+import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.upgrade.UpgradeException;
 import com.liferay.portal.verify.VerifyException;
+
+import java.sql.Connection;
 
 /**
  * @author Brian Wing Shun Chan
@@ -28,6 +31,14 @@ public class StartupHelperUtil {
 		return _startupHelper;
 	}
 
+	public static boolean isUpgraded() {
+		return getStartupHelper().isUpgraded();
+	}
+
+	public static boolean isVerified() {
+		return getStartupHelper().isVerified();
+	}
+
 	public static void setDropIndexes(boolean dropIndexes) {
 		getStartupHelper().setDropIndexes(dropIndexes);
 	}
@@ -36,20 +47,22 @@ public class StartupHelperUtil {
 		getStartupHelper().updateIndexes();
 	}
 
+	public static void updateIndexes(boolean dropIndexes) {
+		getStartupHelper().updateIndexes(dropIndexes);
+	}
+
+	public static void updateIndexes(
+		DB db, Connection connection, boolean dropIndexes) {
+
+		getStartupHelper().updateIndexes(db, connection, dropIndexes);
+	}
+
 	public static void upgradeProcess(int buildNumber) throws UpgradeException {
 		getStartupHelper().upgradeProcess(buildNumber);
 	}
 
 	public static void verifyProcess(boolean verified) throws VerifyException {
 		getStartupHelper().verifyProcess(verified);
-	}
-
-	public static boolean isUpgraded() {
-		return getStartupHelper().isUpgraded();
-	}
-
-	public static boolean isVerified() {
-		return getStartupHelper().isVerified();
 	}
 
 	public void setStartupHelper(StartupHelper startupHelper) {

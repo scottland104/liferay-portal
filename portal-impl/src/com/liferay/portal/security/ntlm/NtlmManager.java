@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -45,8 +45,7 @@ public class NtlmManager {
 			servicePassword);
 	}
 
-	public NtlmUserAccount authenticate(
-			byte[] material, byte[] serverChallenge)
+	public NtlmUserAccount authenticate(byte[] material, byte[] serverChallenge)
 		throws IOException, NoSuchAlgorithmException, NtlmLogonException {
 
 		Type3Message type3Message = new Type3Message(material);
@@ -68,9 +67,9 @@ public class NtlmManager {
 		}
 
 		return _netlogon.logon(
-			 type3Message.getDomain(), type3Message.getUser(),
-			 type3Message.getWorkstation(), serverChallenge,
-			 type3Message.getNTResponse(), type3Message.getLMResponse());
+			type3Message.getDomain(), type3Message.getUser(),
+			type3Message.getWorkstation(), serverChallenge,
+			type3Message.getNTResponse(), type3Message.getLMResponse());
 	}
 
 	public String getDomain() {
@@ -129,7 +128,7 @@ public class NtlmManager {
 	}
 
 	protected byte[] getAVPairBytes(int avId, String value)
-		throws UnsupportedEncodingException{
+		throws UnsupportedEncodingException {
 
 		byte[] valueBytes = value.getBytes("UTF-16LE");
 		byte[] avPairBytes = new byte[4 + valueBytes.length];
@@ -142,10 +141,12 @@ public class NtlmManager {
 		return avPairBytes;
 	}
 
-	protected byte[] getTargetInformation() throws UnsupportedEncodingException{
+	protected byte[] getTargetInformation()
+		throws UnsupportedEncodingException {
+
 		byte[] computerName = getAVPairBytes(
 			1, _ntlmServiceAccount.getComputerName());
-		byte[] domainName =  getAVPairBytes(2, _domain);
+		byte[] domainName = getAVPairBytes(2, _domain);
 
 		byte[] targetInformation = ArrayUtil.append(computerName, domainName);
 

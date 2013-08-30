@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -38,7 +38,7 @@ portletURL.setParameter("mbCategoryId", String.valueOf(categoryId));
 <liferay-ui:panel-container cssClass="message-boards-panels" extended="<%= false %>" id="messageBoardsPanelContainer" persistState="<%= true %>">
 
 	<%
-	int categoriesCount = MBCategoryServiceUtil.getCategoriesCount(scopeGroupId, categoryId);
+	int categoriesCount = MBCategoryServiceUtil.getCategoriesCount(scopeGroupId, categoryId, WorkflowConstants.STATUS_APPROVED);
 	%>
 
 	<c:if test="<%= categoriesCount > 0 %>">
@@ -48,10 +48,10 @@ portletURL.setParameter("mbCategoryId", String.valueOf(categoryId));
 				deltaConfigurable="<%= false %>"
 				headerNames="category,categories,threads,posts"
 				iteratorURL="<%= portletURL %>"
+				total="<%= categoriesCount %>"
 			>
 				<liferay-ui:search-container-results
-					results="<%= MBCategoryServiceUtil.getCategories(scopeGroupId, categoryId, searchContainer.getStart(), searchContainer.getEnd()) %>"
-					total="<%= categoriesCount %>"
+					results="<%= MBCategoryServiceUtil.getCategories(scopeGroupId, categoryId, WorkflowConstants.STATUS_APPROVED, searchContainer.getStart(), searchContainer.getEnd()) %>"
 				/>
 
 				<liferay-ui:search-container-row
@@ -81,10 +81,10 @@ portletURL.setParameter("mbCategoryId", String.valueOf(categoryId));
 	emptyResultsMessage="there-are-no-questions-in-this-category"
 	headerNames="stats,question,last-post"
 	iteratorURL="<%= portletURL %>"
+	total="<%= MBThreadServiceUtil.getThreadsCount(scopeGroupId, categoryId, WorkflowConstants.STATUS_APPROVED) %>"
 >
 	<liferay-ui:search-container-results
 		results="<%= MBThreadServiceUtil.getThreads(scopeGroupId, categoryId, WorkflowConstants.STATUS_APPROVED, searchContainer.getStart(), searchContainer.getEnd()) %>"
-		total="<%= MBThreadServiceUtil.getThreadsCount(scopeGroupId, categoryId, WorkflowConstants.STATUS_APPROVED) %>"
 	/>
 
 	<liferay-ui:search-container-row
@@ -107,11 +107,7 @@ portletURL.setParameter("mbCategoryId", String.valueOf(categoryId));
 			row.setSkip(true);
 		}
 
-		message = message.toEscapedModel();
-
-		boolean readThread = MBMessageFlagLocalServiceUtil.hasReadFlag(themeDisplay.getUserId(), thread);
-
-		row.setBold(!readThread);
+		row.setBold(!MBThreadFlagLocalServiceUtil.hasThreadFlag(themeDisplay.getUserId(), thread));
 		row.setObject(new Object[] {message, threadSubscriptionClassPKs});
 		row.setRestricted(!MBMessagePermission.contains(permissionChecker, message, ActionKeys.VIEW));
 		%>
@@ -123,12 +119,12 @@ portletURL.setParameter("mbCategoryId", String.valueOf(categoryId));
 
 		<liferay-ui:search-container-column-text
 			cssClass="stats"
-			name="statistics"
 			href="<%= rowURL %>"
+			name="statistics"
 		>
 
 			<%
-			int replies = MBMessageServiceUtil.getThreadMessagesCount(scopeGroupId, categoryId, thread.getThreadId(), WorkflowConstants.STATUS_ANY) - 1;
+			int answers = MBMessageServiceUtil.getThreadAnswersCount(scopeGroupId, categoryId, thread.getThreadId());
 
 			RatingsStats ratingsStats = RatingsStatsLocalServiceUtil.getStats(MBMessage.class.getName(), message.getMessageId());
 
@@ -136,12 +132,12 @@ portletURL.setParameter("mbCategoryId", String.valueOf(categoryId));
 			%>
 
 			<span class="question-details">
-				<span class= "votes">
+				<span class="votes">
 					<span class="count"><%= String.valueOf(ratingScore) %></span> <span><%= LanguageUtil.get(pageContext, "votes") %></span>
 				</span>
 
-				<span class="status <%= (replies != 0) ? "answered" : " unanswered" %> ">
-					<span class="count"><%= replies %></span> <span><%= LanguageUtil.get(pageContext, (replies != 1) ? "answers" : "answer") %></span>
+				<span class="status <%= (answers != 0) ? "answered" : " unanswered" %> ">
+					<span class="count"><%= answers %></span> <span><%= LanguageUtil.get(pageContext, (answers != 1) ? "answers" : "answer") %></span>
 				</span>
 
 				<span class="views">

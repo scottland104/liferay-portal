@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -110,40 +110,80 @@ public class ArrayUtil_IW {
 		return ArrayUtil.clone(array);
 	}
 
+	public boolean[] clone(boolean[] array, int from, int to) {
+		return ArrayUtil.clone(array, from, to);
+	}
+
 	public byte[] clone(byte[] array) {
 		return ArrayUtil.clone(array);
+	}
+
+	public byte[] clone(byte[] array, int from, int to) {
+		return ArrayUtil.clone(array, from, to);
 	}
 
 	public char[] clone(char[] array) {
 		return ArrayUtil.clone(array);
 	}
 
+	public char[] clone(char[] array, int from, int to) {
+		return ArrayUtil.clone(array, from, to);
+	}
+
 	public double[] clone(double[] array) {
 		return ArrayUtil.clone(array);
+	}
+
+	public double[] clone(double[] array, int from, int to) {
+		return ArrayUtil.clone(array, from, to);
 	}
 
 	public float[] clone(float[] array) {
 		return ArrayUtil.clone(array);
 	}
 
+	public float[] clone(float[] array, int from, int to) {
+		return ArrayUtil.clone(array, from, to);
+	}
+
 	public int[] clone(int[] array) {
 		return ArrayUtil.clone(array);
+	}
+
+	public int[] clone(int[] array, int from, int to) {
+		return ArrayUtil.clone(array, from, to);
 	}
 
 	public long[] clone(long[] array) {
 		return ArrayUtil.clone(array);
 	}
 
+	public long[] clone(long[] array, int from, int to) {
+		return ArrayUtil.clone(array, from, to);
+	}
+
 	public short[] clone(short[] array) {
 		return ArrayUtil.clone(array);
+	}
+
+	public short[] clone(short[] array, int from, int to) {
+		return ArrayUtil.clone(array, from, to);
 	}
 
 	public <T> T[] clone(T[] array) {
 		return ArrayUtil.clone(array);
 	}
 
+	public <T> T[] clone(T[] array, int from, int to) {
+		return ArrayUtil.clone(array, from, to);
+	}
+
 	public <T> T[][] clone(T[][] array) {
 		return ArrayUtil.clone(array);
+	}
+
+	public <T> T[][] clone(T[][] array, int from, int to) {
+		return ArrayUtil.clone(array, from, to);
 	}
 
 	public void combine(java.lang.Object[] array1, java.lang.Object[] array2,
@@ -187,6 +227,43 @@ public class ArrayUtil_IW {
 		return ArrayUtil.contains(array, value);
 	}
 
+	public boolean containsAll(boolean[] array1, boolean[] array2) {
+		return ArrayUtil.containsAll(array1, array2);
+	}
+
+	public boolean containsAll(byte[] array1, byte[] array2) {
+		return ArrayUtil.containsAll(array1, array2);
+	}
+
+	public boolean containsAll(char[] array1, char[] array2) {
+		return ArrayUtil.containsAll(array1, array2);
+	}
+
+	public boolean containsAll(double[] array1, double[] array2) {
+		return ArrayUtil.containsAll(array1, array2);
+	}
+
+	public boolean containsAll(float[] array1, float[] array2) {
+		return ArrayUtil.containsAll(array1, array2);
+	}
+
+	public boolean containsAll(int[] array1, int[] array2) {
+		return ArrayUtil.containsAll(array1, array2);
+	}
+
+	public boolean containsAll(long[] array1, long[] array2) {
+		return ArrayUtil.containsAll(array1, array2);
+	}
+
+	public boolean containsAll(java.lang.Object[] array1,
+		java.lang.Object[] array2) {
+		return ArrayUtil.containsAll(array1, array2);
+	}
+
+	public boolean containsAll(short[] array1, short[] array2) {
+		return ArrayUtil.containsAll(array1, array2);
+	}
+
 	public java.lang.String[] distinct(java.lang.String[] array) {
 		return ArrayUtil.distinct(array);
 	}
@@ -196,12 +273,129 @@ public class ArrayUtil_IW {
 		return ArrayUtil.distinct(array, comparator);
 	}
 
+	public boolean[] filter(boolean[] array,
+		com.liferay.portal.kernel.util.PredicateFilter<java.lang.Boolean> predicateFilter) {
+		return ArrayUtil.filter(array, predicateFilter);
+	}
+
+	public byte[] filter(byte[] array,
+		com.liferay.portal.kernel.util.PredicateFilter<java.lang.Byte> predicateFilter) {
+		return ArrayUtil.filter(array, predicateFilter);
+	}
+
+	public char[] filter(char[] array,
+		com.liferay.portal.kernel.util.PredicateFilter<java.lang.Character> predicateFilter) {
+		return ArrayUtil.filter(array, predicateFilter);
+	}
+
+	public double[] filter(double[] array,
+		com.liferay.portal.kernel.util.PredicateFilter<java.lang.Double> predicateFilter) {
+		return ArrayUtil.filter(array, predicateFilter);
+	}
+
+	public float[] filter(float[] array,
+		com.liferay.portal.kernel.util.PredicateFilter<java.lang.Float> predicateFilter) {
+		return ArrayUtil.filter(array, predicateFilter);
+	}
+
+	public int[] filter(int[] array,
+		com.liferay.portal.kernel.util.PredicateFilter<java.lang.Integer> predicateFilter) {
+		return ArrayUtil.filter(array, predicateFilter);
+	}
+
+	public long[] filter(long[] array,
+		com.liferay.portal.kernel.util.PredicateFilter<java.lang.Long> predicateFilter) {
+		return ArrayUtil.filter(array, predicateFilter);
+	}
+
+	public short[] filter(short[] array,
+		com.liferay.portal.kernel.util.PredicateFilter<java.lang.Short> predicateFilter) {
+		return ArrayUtil.filter(array, predicateFilter);
+	}
+
+	public <T> T[] filter(T[] array,
+		com.liferay.portal.kernel.util.PredicateFilter<T> filterPredicate) {
+		return ArrayUtil.filter(array, filterPredicate);
+	}
+
 	public int getLength(java.lang.Object[] array) {
 		return ArrayUtil.getLength(array);
 	}
 
 	public java.lang.Object getValue(java.lang.Object[] array, int pos) {
 		return ArrayUtil.getValue(array, pos);
+	}
+
+	public boolean isEmpty(boolean[] array) {
+		return ArrayUtil.isEmpty(array);
+	}
+
+	public boolean isEmpty(byte[] array) {
+		return ArrayUtil.isEmpty(array);
+	}
+
+	public boolean isEmpty(char[] array) {
+		return ArrayUtil.isEmpty(array);
+	}
+
+	public boolean isEmpty(double[] array) {
+		return ArrayUtil.isEmpty(array);
+	}
+
+	public boolean isEmpty(float[] array) {
+		return ArrayUtil.isEmpty(array);
+	}
+
+	public boolean isEmpty(int[] array) {
+		return ArrayUtil.isEmpty(array);
+	}
+
+	public boolean isEmpty(long[] array) {
+		return ArrayUtil.isEmpty(array);
+	}
+
+	public boolean isEmpty(java.lang.Object[] array) {
+		return ArrayUtil.isEmpty(array);
+	}
+
+	public boolean isEmpty(short[] array) {
+		return ArrayUtil.isEmpty(array);
+	}
+
+	public boolean isNotEmpty(boolean[] array) {
+		return ArrayUtil.isNotEmpty(array);
+	}
+
+	public boolean isNotEmpty(byte[] array) {
+		return ArrayUtil.isNotEmpty(array);
+	}
+
+	public boolean isNotEmpty(char[] array) {
+		return ArrayUtil.isNotEmpty(array);
+	}
+
+	public boolean isNotEmpty(double[] array) {
+		return ArrayUtil.isNotEmpty(array);
+	}
+
+	public boolean isNotEmpty(float[] array) {
+		return ArrayUtil.isNotEmpty(array);
+	}
+
+	public boolean isNotEmpty(int[] array) {
+		return ArrayUtil.isNotEmpty(array);
+	}
+
+	public boolean isNotEmpty(long[] array) {
+		return ArrayUtil.isNotEmpty(array);
+	}
+
+	public boolean isNotEmpty(java.lang.Object[] array) {
+		return ArrayUtil.isNotEmpty(array);
+	}
+
+	public boolean isNotEmpty(short[] array) {
+		return ArrayUtil.isNotEmpty(array);
 	}
 
 	public boolean[] remove(boolean[] array, boolean value) {
@@ -240,6 +434,30 @@ public class ArrayUtil_IW {
 	public java.lang.String[] removeByPrefix(java.lang.String[] array,
 		java.lang.String prefix) {
 		return ArrayUtil.removeByPrefix(array, prefix);
+	}
+
+	public void reverse(boolean[] array) {
+		ArrayUtil.reverse(array);
+	}
+
+	public void reverse(char[] array) {
+		ArrayUtil.reverse(array);
+	}
+
+	public void reverse(double[] array) {
+		ArrayUtil.reverse(array);
+	}
+
+	public void reverse(int[] array) {
+		ArrayUtil.reverse(array);
+	}
+
+	public void reverse(long[] array) {
+		ArrayUtil.reverse(array);
+	}
+
+	public void reverse(short[] array) {
+		ArrayUtil.reverse(array);
 	}
 
 	public void reverse(java.lang.String[] array) {
@@ -346,6 +564,66 @@ public class ArrayUtil_IW {
 		return ArrayUtil.toArray(array);
 	}
 
+	public double[] toDoubleArray(
+		java.util.Collection<java.lang.Double> collection) {
+		return ArrayUtil.toDoubleArray(collection);
+	}
+
+	public float[] toFloatArray(
+		java.util.Collection<java.lang.Float> collection) {
+		return ArrayUtil.toFloatArray(collection);
+	}
+
+	public int[] toIntArray(java.util.Collection<java.lang.Integer> collection) {
+		return ArrayUtil.toIntArray(collection);
+	}
+
+	public long[] toLongArray(java.util.Collection<java.lang.Long> collection) {
+		return ArrayUtil.toLongArray(collection);
+	}
+
+	public java.lang.Long[] toLongArray(java.lang.Object[] array) {
+		return ArrayUtil.toLongArray(array);
+	}
+
+	public short[] toShortArray(
+		java.util.Collection<java.lang.Short> collection) {
+		return ArrayUtil.toShortArray(collection);
+	}
+
+	public java.lang.String toString(java.lang.Object[] array,
+		java.lang.String param) {
+		return ArrayUtil.toString(array, param);
+	}
+
+	public java.lang.String toString(java.lang.Object[] array,
+		java.lang.String param, java.lang.String delimiter) {
+		return ArrayUtil.toString(array, param, delimiter);
+	}
+
+	public java.lang.String toString(java.lang.Object[] array,
+		java.lang.String param, java.lang.String delimiter,
+		java.util.Locale locale) {
+		return ArrayUtil.toString(array, param, delimiter, locale);
+	}
+
+	public <T, V> java.lang.String toString(T[] list,
+		com.liferay.portal.kernel.util.Accessor<T, V> accessor) {
+		return ArrayUtil.toString(list, accessor);
+	}
+
+	public <T, V> java.lang.String toString(T[] list,
+		com.liferay.portal.kernel.util.Accessor<T, V> accessor,
+		java.lang.String delimiter) {
+		return ArrayUtil.toString(list, accessor, delimiter);
+	}
+
+	public <T, V> java.lang.String toString(T[] list,
+		com.liferay.portal.kernel.util.Accessor<T, V> accessor,
+		java.lang.String delimiter, java.util.Locale locale) {
+		return ArrayUtil.toString(list, accessor, delimiter, locale);
+	}
+
 	public java.lang.String[] toStringArray(boolean[] array) {
 		return ArrayUtil.toStringArray(array);
 	}
@@ -359,8 +637,8 @@ public class ArrayUtil_IW {
 	}
 
 	public java.lang.String[] toStringArray(java.util.Date[] array,
-		java.text.DateFormat df) {
-		return ArrayUtil.toStringArray(array, df);
+		java.text.DateFormat dateFormat) {
+		return ArrayUtil.toStringArray(array, dateFormat);
 	}
 
 	public java.lang.String[] toStringArray(double[] array) {
@@ -390,6 +668,30 @@ public class ArrayUtil_IW {
 
 	public java.lang.String[] toStringArray(short[] array) {
 		return ArrayUtil.toStringArray(array);
+	}
+
+	public byte[] unique(byte[] array) {
+		return ArrayUtil.unique(array);
+	}
+
+	public double[] unique(double[] array) {
+		return ArrayUtil.unique(array);
+	}
+
+	public float[] unique(float[] array) {
+		return ArrayUtil.unique(array);
+	}
+
+	public int[] unique(int[] array) {
+		return ArrayUtil.unique(array);
+	}
+
+	public long[] unique(long[] array) {
+		return ArrayUtil.unique(array);
+	}
+
+	public short[] unique(short[] array) {
+		return ArrayUtil.unique(array);
 	}
 
 	private ArrayUtil_IW() {

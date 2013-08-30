@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portal.model.impl;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -30,12 +31,12 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base model implementation for the Company service. Represents a row in the &quot;Company&quot; database table, with each column mapped to a property of this class.
@@ -73,6 +74,8 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 		};
 	public static final String TABLE_SQL_CREATE = "create table Company (companyId LONG not null primary key,accountId LONG,webId VARCHAR(75) null,key_ TEXT null,mx VARCHAR(75) null,homeURL STRING null,logoId LONG,system BOOLEAN,maxUsers INTEGER,active_ BOOLEAN)";
 	public static final String TABLE_SQL_DROP = "drop table Company";
+	public static final String ORDER_BY_JPQL = " ORDER BY company.companyId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY Company.companyId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -82,6 +85,14 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.Company"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.Company"),
+			true);
+	public static long LOGOID_COLUMN_BITMASK = 1L;
+	public static long MX_COLUMN_BITMASK = 2L;
+	public static long SYSTEM_COLUMN_BITMASK = 4L;
+	public static long WEBID_COLUMN_BITMASK = 8L;
+	public static long COMPANYID_COLUMN_BITMASK = 16L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -90,6 +101,10 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 	 * @return the normal model instance
 	 */
 	public static Company toModel(CompanySoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		Company model = new CompanyImpl();
 
 		model.setCompanyId(soapModel.getCompanyId());
@@ -113,6 +128,10 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 	 * @return the normal model instances
 	 */
 	public static List<Company> toModels(CompanySoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<Company> models = new ArrayList<Company>(soapModels.length);
 
 		for (CompanySoap soapModel : soapModels) {
@@ -122,55 +141,147 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 		return models;
 	}
 
-	public Class<?> getModelClass() {
-		return Company.class;
-	}
-
-	public String getModelClassName() {
-		return Company.class.getName();
-	}
-
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.Company"));
 
 	public CompanyModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _companyId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setCompanyId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_companyId);
+		return _companyId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return Company.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return Company.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("companyId", getCompanyId());
+		attributes.put("accountId", getAccountId());
+		attributes.put("webId", getWebId());
+		attributes.put("key", getKey());
+		attributes.put("mx", getMx());
+		attributes.put("homeURL", getHomeURL());
+		attributes.put("logoId", getLogoId());
+		attributes.put("system", getSystem());
+		attributes.put("maxUsers", getMaxUsers());
+		attributes.put("active", getActive());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long accountId = (Long)attributes.get("accountId");
+
+		if (accountId != null) {
+			setAccountId(accountId);
+		}
+
+		String webId = (String)attributes.get("webId");
+
+		if (webId != null) {
+			setWebId(webId);
+		}
+
+		String key = (String)attributes.get("key");
+
+		if (key != null) {
+			setKey(key);
+		}
+
+		String mx = (String)attributes.get("mx");
+
+		if (mx != null) {
+			setMx(mx);
+		}
+
+		String homeURL = (String)attributes.get("homeURL");
+
+		if (homeURL != null) {
+			setHomeURL(homeURL);
+		}
+
+		Long logoId = (Long)attributes.get("logoId");
+
+		if (logoId != null) {
+			setLogoId(logoId);
+		}
+
+		Boolean system = (Boolean)attributes.get("system");
+
+		if (system != null) {
+			setSystem(system);
+		}
+
+		Integer maxUsers = (Integer)attributes.get("maxUsers");
+
+		if (maxUsers != null) {
+			setMaxUsers(maxUsers);
+		}
+
+		Boolean active = (Boolean)attributes.get("active");
+
+		if (active != null) {
+			setActive(active);
+		}
+	}
+
 	@JSON
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
 		_companyId = companyId;
 	}
 
 	@JSON
+	@Override
 	public long getAccountId() {
 		return _accountId;
 	}
 
+	@Override
 	public void setAccountId(long accountId) {
 		_accountId = accountId;
 	}
 
 	@JSON
+	@Override
 	public String getWebId() {
 		if (_webId == null) {
 			return StringPool.BLANK;
@@ -180,7 +291,10 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 		}
 	}
 
+	@Override
 	public void setWebId(String webId) {
+		_columnBitmask |= WEBID_COLUMN_BITMASK;
+
 		if (_originalWebId == null) {
 			_originalWebId = _webId;
 		}
@@ -193,6 +307,7 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 	}
 
 	@JSON
+	@Override
 	public String getKey() {
 		if (_key == null) {
 			return StringPool.BLANK;
@@ -202,11 +317,13 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 		}
 	}
 
+	@Override
 	public void setKey(String key) {
 		_key = key;
 	}
 
 	@JSON
+	@Override
 	public String getMx() {
 		if (_mx == null) {
 			return StringPool.BLANK;
@@ -216,7 +333,10 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 		}
 	}
 
+	@Override
 	public void setMx(String mx) {
+		_columnBitmask |= MX_COLUMN_BITMASK;
+
 		if (_originalMx == null) {
 			_originalMx = _mx;
 		}
@@ -229,6 +349,7 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 	}
 
 	@JSON
+	@Override
 	public String getHomeURL() {
 		if (_homeURL == null) {
 			return StringPool.BLANK;
@@ -238,16 +359,21 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 		}
 	}
 
+	@Override
 	public void setHomeURL(String homeURL) {
 		_homeURL = homeURL;
 	}
 
 	@JSON
+	@Override
 	public long getLogoId() {
 		return _logoId;
 	}
 
+	@Override
 	public void setLogoId(long logoId) {
+		_columnBitmask |= LOGOID_COLUMN_BITMASK;
+
 		if (!_setOriginalLogoId) {
 			_setOriginalLogoId = true;
 
@@ -262,69 +388,99 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 	}
 
 	@JSON
+	@Override
 	public boolean getSystem() {
 		return _system;
 	}
 
+	@Override
 	public boolean isSystem() {
 		return _system;
 	}
 
+	@Override
 	public void setSystem(boolean system) {
+		_columnBitmask |= SYSTEM_COLUMN_BITMASK;
+
+		if (!_setOriginalSystem) {
+			_setOriginalSystem = true;
+
+			_originalSystem = _system;
+		}
+
 		_system = system;
 	}
 
+	public boolean getOriginalSystem() {
+		return _originalSystem;
+	}
+
 	@JSON
+	@Override
 	public int getMaxUsers() {
 		return _maxUsers;
 	}
 
+	@Override
 	public void setMaxUsers(int maxUsers) {
 		_maxUsers = maxUsers;
 	}
 
 	@JSON
+	@Override
 	public boolean getActive() {
 		return _active;
 	}
 
+	@Override
 	public boolean isActive() {
 		return _active;
 	}
 
+	@Override
 	public void setActive(boolean active) {
 		_active = active;
 	}
 
-	@Override
-	public Company toEscapedModel() {
-		if (isEscapedModel()) {
-			return (Company)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (Company)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
+	public java.security.Key getKeyObj() {
+		return null;
+	}
 
-			return _escapedModelProxy;
-		}
+	public void setKeyObj(java.security.Key keyObj) {
+	}
+
+	public java.lang.String getVirtualHostname() {
+		return null;
+	}
+
+	public void setVirtualHostname(java.lang.String virtualHostname) {
+	}
+
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					Company.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			Company.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public Company toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (Company)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -347,6 +503,7 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 		return companyImpl;
 	}
 
+	@Override
 	public int compareTo(Company company) {
 		long primaryKey = company.getPrimaryKey();
 
@@ -363,18 +520,15 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof Company)) {
 			return false;
 		}
 
-		Company company = null;
-
-		try {
-			company = (Company)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		Company company = (Company)obj;
 
 		long primaryKey = company.getPrimaryKey();
 
@@ -402,6 +556,12 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 		companyModelImpl._originalLogoId = companyModelImpl._logoId;
 
 		companyModelImpl._setOriginalLogoId = false;
+
+		companyModelImpl._originalSystem = companyModelImpl._system;
+
+		companyModelImpl._setOriginalSystem = false;
+
+		companyModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -452,6 +612,10 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 
 		companyCacheModel.active = getActive();
 
+		companyCacheModel._keyObj = getKeyObj();
+
+		companyCacheModel._virtualHostname = getVirtualHostname();
+
 		return companyCacheModel;
 	}
 
@@ -484,6 +648,7 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(34);
 
@@ -538,7 +703,7 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 	}
 
 	private static ClassLoader _classLoader = Company.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			Company.class
 		};
 	private long _companyId;
@@ -553,8 +718,10 @@ public class CompanyModelImpl extends BaseModelImpl<Company>
 	private long _originalLogoId;
 	private boolean _setOriginalLogoId;
 	private boolean _system;
+	private boolean _originalSystem;
+	private boolean _setOriginalSystem;
 	private int _maxUsers;
 	private boolean _active;
-	private transient ExpandoBridge _expandoBridge;
-	private Company _escapedModelProxy;
+	private long _columnBitmask;
+	private Company _escapedModel;
 }

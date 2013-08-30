@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,163 +17,46 @@
 <%@ include file="/html/portlet/document_library/init.jsp" %>
 
 <%
+String navigation = ParamUtil.getString(request, "navigation", "home");
+
 long folderId = GetterUtil.getLong((String)request.getAttribute("view.jsp-folderId"));
 
-long fileEntryTypeId = ParamUtil.getLong(request, "fileEntryTypeId");
+long fileEntryTypeId = ParamUtil.getLong(request, "fileEntryTypeId", -1);
 
 String displayStyle = ParamUtil.getString(request, "displayStyle");
 
 if (Validator.isNull(displayStyle)) {
-	displayStyle = portalPreferences.getValue(PortletKeys.DOCUMENT_LIBRARY, "display-style", "icon");
+	displayStyle = portalPreferences.getValue(PortletKeys.DOCUMENT_LIBRARY, "display-style", PropsValues.DL_DEFAULT_DISPLAY_VIEW);
 }
 
 String keywords = ParamUtil.getString(request, "keywords");
+
+Map<String, String> requestParams = new HashMap<String, String>();
+
+requestParams.put("struts_action", Validator.isNull(keywords) ? "/document_library/view" : "/document_library/search");
+requestParams.put("navigation", HtmlUtil.escapeJS(navigation));
+requestParams.put("folderId", String.valueOf(folderId));
+requestParams.put("saveDisplayStyle", Boolean.TRUE.toString());
+requestParams.put("searchType", String.valueOf(DLSearchConstants.FRAGMENT));
+requestParams.put("viewEntriesPage", Boolean.FALSE.toString());
+requestParams.put("viewFolders", Boolean.FALSE.toString());
+
+if (Validator.isNull(keywords)) {
+	requestParams.put("viewEntries", Boolean.TRUE.toString());
+}
+else {
+	requestParams.put("keywords", HtmlUtil.escapeJS(keywords));
+	requestParams.put("searchFolderId", String.valueOf(folderId));
+	requestParams.put("viewEntries", Boolean.FALSE.toString());
+}
+
+if (fileEntryTypeId != -1) {
+	requestParams.put("fileEntryTypeId", String.valueOf(fileEntryTypeId));
+}
 %>
 
-<aui:script use="aui-dialog,aui-dialog-iframe">
-	var buttonRow = A.one('#<portlet:namespace />displayStyleToolbar');
-
-	var displayStyleToolbar = new A.Toolbar(
-		{
-			activeState: true,
-			boundingBox: buttonRow,
-			children: [
-				{
-
-					<portlet:resourceURL var="iconDisplayStyle">
-						<c:choose>
-							<c:when test="<%= Validator.isNull(keywords) %>">
-								<portlet:param name="struts_action" value="/document_library/view" />
-								<portlet:param name="viewDisplayStyleButtons" value="<%= Boolean.TRUE.toString() %>" />
-								<portlet:param name="viewEntries" value="<%= Boolean.TRUE.toString() %>" />
-							</c:when>
-							<c:otherwise>
-								<portlet:param name="struts_action" value="/document_library/search" />
-								<portlet:param name="keywords" value="<%= keywords %>" />
-							</c:otherwise>
-						</c:choose>
-
-						<portlet:param name="folderId" value="<%= String.valueOf(folderId) %>" />
-						<portlet:param name="fileEntryTypeId" value="<%= String.valueOf(fileEntryTypeId) %>" />
-						<portlet:param name="displayStyle" value="icon" />
-						<portlet:param name="saveDisplayStyle" value="<%= Boolean.TRUE.toString() %>" />
-					</portlet:resourceURL>
-
-					handler: function(event) {
-						updateDisplayStyle('<%= iconDisplayStyle.toString() %>', 0);
-					},
-					icon: 'display-icon'
-				},
-				{
-
-					<portlet:resourceURL var="descriptiveDisplayStyle">
-						<c:choose>
-							<c:when test="<%= Validator.isNull(keywords) %>">
-								<portlet:param name="struts_action" value="/document_library/view" />
-								<portlet:param name="viewDisplayStyleButtons" value="<%= Boolean.TRUE.toString() %>" />
-								<portlet:param name="viewEntries" value="<%= Boolean.TRUE.toString() %>" />
-						</c:when>
-						<c:otherwise>
-								<portlet:param name="struts_action" value="/document_library/search" />
-								<portlet:param name="keywords" value="<%= keywords %>" />
-							</c:otherwise>
-						</c:choose>
-
-						<portlet:param name="folderId" value="<%= String.valueOf(folderId) %>" />
-						<portlet:param name="fileEntryTypeId" value="<%= String.valueOf(fileEntryTypeId) %>" />
-						<portlet:param name="displayStyle" value="descriptive" />
-						<portlet:param name="saveDisplayStyle" value="<%= Boolean.TRUE.toString() %>" />
-					</portlet:resourceURL>
-
-					handler: function(event) {
-						updateDisplayStyle('<%= descriptiveDisplayStyle.toString() %>', 1);
-					},
-					icon: 'display-descriptive'
-				},
-				{
-
-					<portlet:resourceURL var="listDisplayStyle">
-						<c:choose>
-							<c:when test="<%= Validator.isNull(keywords) %>">
-								<portlet:param name="struts_action" value="/document_library/view" />
-								<portlet:param name="viewDisplayStyleButtons" value="<%= Boolean.TRUE.toString() %>" />
-								<portlet:param name="viewEntries" value="<%= Boolean.TRUE.toString() %>" />
-							</c:when>
-							<c:otherwise>
-								<portlet:param name="struts_action" value="/document_library/search" />
-								<portlet:param name="keywords" value="<%= keywords %>" />
-							</c:otherwise>
-						</c:choose>
-
-						<portlet:param name="folderId" value="<%= String.valueOf(folderId) %>" />
-						<portlet:param name="fileEntryTypeId" value="<%= String.valueOf(fileEntryTypeId) %>" />
-						<portlet:param name="displayStyle" value="list" />
-						<portlet:param name="saveDisplayStyle" value="<%= Boolean.TRUE.toString() %>" />
-					</portlet:resourceURL>
-
-					handler: function(event) {
-						updateDisplayStyle('<%= listDisplayStyle.toString() %>', 2);
-					},
-					icon: 'display-list'
-				}
-			]
-		}
-	).render();
-
-	<c:choose>
-		<c:when test='<%= displayStyle.equals("icon") %>'>
-			var index = 0;
-		</c:when>
-		<c:when test='<%= displayStyle.equals("descriptive") %>'>
-			var index = 1;
-		</c:when>
-		<c:when test='<%= displayStyle.equals("list") %>'>
-			var index = 2;
-		</c:when>
-	</c:choose>
-
-	displayStyleToolbar.item(index).StateInteraction.set('active', true);
-
-	buttonRow.setData('displayStyleToolbar', displayStyleToolbar);
-
-	var entriesContainer = A.one('#<portlet:namespace />documentContainer');
-
-	var updateDisplayStyle = function(url, index) {
-		entriesContainer.plug(A.LoadingMask);
-
-		entriesContainer.loadingmask.toggle();
-
-		A.io.request(
-			url,
-			{
-				after: {
-					success: function(event, id, obj) {
-						entriesContainer.unplug(A.LoadingMask);
-
-						A.one('#<portlet:namespace />displayStyleToolbar').empty();
-
-						displayStyleToolbar.item(0).StateInteraction.set('active', false);
-						displayStyleToolbar.item(1).StateInteraction.set('active', false);
-						displayStyleToolbar.item(2).StateInteraction.set('active', false);
-
-						displayStyleToolbar.item(index).StateInteraction.set('active', true);
-
-						var responseData = this.get('responseData');
-
-						var content = A.Node.create(responseData);
-
-						var displayStyleButtonsContainer = A.one('#<portlet:namespace />displayStyleButtonsContainer');
-						var displayStyleButtons = content.one('#<portlet:namespace />displayStyleButtons');
-
-						displayStyleButtonsContainer.plug(A.Plugin.ParseContent);
-						displayStyleButtonsContainer.setContent(displayStyleButtons);
-
-						var entries = content.one('#<portlet:namespace />entries');
-
-						entriesContainer.setContent(entries);
-					}
-				}
-			}
-		);
-	}
-</aui:script>
+<liferay-ui:app-view-display-style
+	displayStyle="<%= displayStyle %>"
+	displayStyles="<%= displayViews %>"
+	requestParams="<%= requestParams %>"
+/>

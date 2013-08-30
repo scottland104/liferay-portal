@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -27,11 +27,15 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
+ * Provides the remote service for accessing, adding, deleting, and updating
+ * dynamic data list (DDL) record sets. Its methods include permission checks.
+ *
  * @author Brian Wing Shun Chan
  * @author Marcellus Tavares
  */
 public class DDLRecordSetServiceImpl extends DDLRecordSetServiceBaseImpl {
 
+	@Override
 	public DDLRecordSet addRecordSet(
 			long groupId, long ddmStructureId, String recordSetKey,
 			Map<Locale, String> nameMap, Map<Locale, String> descriptionMap,
@@ -46,6 +50,7 @@ public class DDLRecordSetServiceImpl extends DDLRecordSetServiceBaseImpl {
 			descriptionMap, minDisplayRows, scope, serviceContext);
 	}
 
+	@Override
 	public void deleteRecordSet(long recordSetId)
 		throws PortalException, SystemException {
 
@@ -55,6 +60,7 @@ public class DDLRecordSetServiceImpl extends DDLRecordSetServiceBaseImpl {
 		ddlRecordSetLocalService.deleteRecordSet(recordSetId);
 	}
 
+	@Override
 	public DDLRecordSet getRecordSet(long recordSetId)
 		throws PortalException, SystemException {
 
@@ -64,9 +70,9 @@ public class DDLRecordSetServiceImpl extends DDLRecordSetServiceBaseImpl {
 		return ddlRecordSetLocalService.getRecordSet(recordSetId);
 	}
 
+	@Override
 	public DDLRecordSet updateMinDisplayRows(
-			long recordSetId, int minDisplayRows,
-			ServiceContext serviceContext)
+			long recordSetId, int minDisplayRows, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		DDLRecordSetPermission.check(
@@ -76,6 +82,7 @@ public class DDLRecordSetServiceImpl extends DDLRecordSetServiceBaseImpl {
 			recordSetId, minDisplayRows, serviceContext);
 	}
 
+	@Override
 	public DDLRecordSet updateRecordSet(
 			long recordSetId, long ddmStructureId, Map<Locale, String> nameMap,
 			Map<Locale, String> descriptionMap, int minDisplayRows,
@@ -90,6 +97,7 @@ public class DDLRecordSetServiceImpl extends DDLRecordSetServiceBaseImpl {
 			minDisplayRows, serviceContext);
 	}
 
+	@Override
 	public DDLRecordSet updateRecordSet(
 			long groupId, long ddmStructureId, String recordSetKey,
 			Map<Locale, String> nameMap, Map<Locale, String> descriptionMap,

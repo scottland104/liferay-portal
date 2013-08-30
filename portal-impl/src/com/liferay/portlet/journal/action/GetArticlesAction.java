@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,6 @@
 
 package com.liferay.portlet.journal.action;
 
-import com.liferay.portal.kernel.dao.search.DAOParamUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -36,13 +35,14 @@ import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.dynamicdatamapping.util.DDMXMLUtil;
 import com.liferay.portlet.journal.model.JournalArticle;
-import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
+import com.liferay.portlet.journal.service.JournalArticleServiceUtil;
 import com.liferay.portlet.journal.util.JournalUtil;
 import com.liferay.portlet.journal.util.comparator.ArticleDisplayDateComparator;
 import com.liferay.portlet.journal.util.comparator.ArticleModifiedDateComparator;
 
 import java.text.DateFormat;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -63,8 +63,8 @@ public class GetArticlesAction extends Action {
 
 	@Override
 	public ActionForward execute(
-			ActionMapping mapping, ActionForm form, HttpServletRequest request,
-			HttpServletResponse response)
+			ActionMapping actionMapping, ActionForm actionForm,
+			HttpServletRequest request, HttpServletResponse response)
 		throws Exception {
 
 		try {
@@ -89,17 +89,24 @@ public class GetArticlesAction extends Action {
 		throws Exception {
 
 		long companyId = PortalUtil.getCompanyId(request);
-		long groupId = DAOParamUtil.getLong(request, "groupId");
+		long groupId = ParamUtil.getLong(request, "groupId");
+
+		long folderId = ParamUtil.getLong(request, "folderId");
+
+		List<Long> folderIds = new ArrayList<Long>(1);
+
+		folderIds.add(folderId);
+
 		String articleId = null;
 		Double version = null;
 		String title = null;
 		String description = null;
 		String content = null;
-		String type = DAOParamUtil.getString(request, "type");
+		String type = ParamUtil.getString(request, "type");
 		String[] structureIds = StringUtil.split(
-			DAOParamUtil.getString(request, "structureId"));
+			ParamUtil.getString(request, "structureId"));
 		String[] templateIds = StringUtil.split(
-			DAOParamUtil.getString(request, "templateId"));
+			ParamUtil.getString(request, "templateId"));
 
 		Date displayDateGT = null;
 
@@ -155,10 +162,11 @@ public class GetArticlesAction extends Action {
 			obc = new ArticleDisplayDateComparator(orderByAsc);
 		}
 
-		return JournalArticleLocalServiceUtil.search(
-			companyId, groupId, 0, articleId, version, title, description,
-			content, type, structureIds, templateIds, displayDateGT,
-			displayDateLT, status, reviewDate, andOperator, start, end, obc);
+		return JournalArticleServiceUtil.search(
+			companyId, groupId, folderIds, 0, articleId, version, title,
+			description, content, type, structureIds, templateIds,
+			displayDateGT, displayDateLT, status, reviewDate, andOperator,
+			start, end, obc);
 	}
 
 	protected byte[] getContent(
@@ -185,12 +193,12 @@ public class GetArticlesAction extends Action {
 			Document articleDoc = SAXReaderUtil.read(
 				article.getContentByLocale(languageId));
 
-			resultEl.content().add(
-				articleDoc.getRootElement().createCopy());
+			resultEl.content().add(articleDoc.getRootElement().createCopy());
 
 			resultEl = resultEl.element("root");
 
-			JournalUtil.addAllReservedEls(resultEl, tokens, article);
+			JournalUtil.addAllReservedEls(
+				resultEl, tokens, article, languageId, themeDisplay);
 		}
 
 		return DDMXMLUtil.formatXML(resultsDoc).getBytes(StringPool.UTF8);

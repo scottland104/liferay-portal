@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,27 +15,29 @@
 package com.liferay.portlet.dynamicdatamapping.storage;
 
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.xml.Document;
-import com.liferay.portal.kernel.xml.Element;
-import com.liferay.portal.kernel.xml.Node;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.kernel.xml.XPath;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portlet.dynamicdatamapping.model.DDMContent;
 import com.liferay.portlet.dynamicdatamapping.model.DDMStorageLink;
+import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
 import com.liferay.portlet.dynamicdatamapping.service.DDMContentLocalServiceUtil;
 import com.liferay.portlet.dynamicdatamapping.service.DDMStorageLinkLocalServiceUtil;
+import com.liferay.portlet.dynamicdatamapping.service.DDMStructureLocalServiceUtil;
 import com.liferay.portlet.dynamicdatamapping.storage.query.ComparisonOperator;
 import com.liferay.portlet.dynamicdatamapping.storage.query.Condition;
 import com.liferay.portlet.dynamicdatamapping.storage.query.FieldCondition;
 import com.liferay.portlet.dynamicdatamapping.storage.query.FieldConditionImpl;
 import com.liferay.portlet.dynamicdatamapping.storage.query.Junction;
 import com.liferay.portlet.dynamicdatamapping.storage.query.LogicalOperator;
+import com.liferay.portlet.dynamicdatamapping.util.DDMUtil;
+import com.liferay.portlet.dynamicdatamapping.util.DDMXMLUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,22 +61,9 @@ public class XMLStorageAdapter extends BaseStorageAdapter {
 		long classNameId = PortalUtil.getClassNameId(
 			DDMContent.class.getName());
 
-		Document document = SAXReaderUtil.createDocument();
-
-		Element rootElement = document.addElement("root");
-
-		Iterator<Field> itr = fields.iterator();
-
-		while (itr.hasNext()) {
-			Field field = itr.next();
-
-			_appendField(
-				rootElement, field.getName(), String.valueOf(field.getValue()));
-		}
-
 		DDMContent ddmContent = DDMContentLocalServiceUtil.addContent(
 			serviceContext.getUserId(), serviceContext.getScopeGroupId(),
-			DDMStorageLink.class.getName(), null, document.formattedString(),
+			DDMStorageLink.class.getName(), null, DDMXMLUtil.getXML(fields),
 			serviceContext);
 
 		DDMStorageLinkLocalServiceUtil.addStorageLink(
@@ -167,7 +156,7 @@ public class XMLStorageAdapter extends BaseStorageAdapter {
 
 			if ((conditionXPath == null) ||
 				((conditionXPath != null) &&
-				  conditionXPath.booleanValueOf(document))) {
+				 conditionXPath.booleanValueOf(document))) {
 
 				count++;
 			}
@@ -184,59 +173,17 @@ public class XMLStorageAdapter extends BaseStorageAdapter {
 
 		DDMContent ddmContent = DDMContentLocalServiceUtil.getContent(classPK);
 
-		Document document = null;
-
-		Element rootElement = null;
+		ddmContent.setModifiedDate(serviceContext.getModifiedDate(null));
 
 		if (mergeFields) {
-			document = SAXReaderUtil.read(ddmContent.getXml());
-
-			rootElement = document.getRootElement();
-		}
-		else {
-			document = SAXReaderUtil.createDocument();
-
-			rootElement = document.addElement("root");
+			fields = DDMUtil.mergeFields(fields, getFields(classPK));
 		}
 
-		Iterator<Field> itr = fields.iterator();
-
-		while (itr.hasNext()) {
-			Field field = itr.next();
-
-			String fieldName = field.getName();
-			String fieldValue = String.valueOf(field.getValue());
-
-			Element dynamicElementElement = _getElementByName(
-				document, fieldName);
-
-			if (dynamicElementElement == null) {
-				_appendField(rootElement, fieldName, fieldValue);
-			}
-			else {
-				_updateField(dynamicElementElement, fieldName, fieldValue);
-			}
-		}
-
-		ddmContent.setModifiedDate(serviceContext.getModifiedDate(null));
-		ddmContent.setXml(document.formattedString());
+		ddmContent.setXml(DDMXMLUtil.getXML(fields));
 
 		DDMContentLocalServiceUtil.updateContent(
 			ddmContent.getPrimaryKey(), ddmContent.getName(),
 			ddmContent.getDescription(), ddmContent.getXml(), serviceContext);
-	}
-
-	private Element _appendField(
-		Element rootElement, String fieldName, String fieldValue) {
-
-		Element dynamicElementElement = rootElement.addElement(
-			"dynamic-element");
-
-		dynamicElementElement.addElement("dynamic-content");
-
-		_updateField(dynamicElementElement, fieldName, fieldValue);
-
-		return dynamicElementElement;
 	}
 
 	private List<Fields> _doQuery(
@@ -280,39 +227,17 @@ public class XMLStorageAdapter extends BaseStorageAdapter {
 			conditionXPath = _parseCondition(condition);
 		}
 
+		DDMStructure ddmStructure =
+			DDMStructureLocalServiceUtil.getDDMStructure(ddmStructureId);
+
 		for (long classPK : classPKs) {
 			DDMContent ddmContent = DDMContentLocalServiceUtil.getContent(
 				classPK);
 
-			Document document = SAXReaderUtil.read(ddmContent.getXml());
+			Fields fields = DDMXMLUtil.getFields(
+				ddmStructure, conditionXPath, ddmContent.getXml(), fieldNames);
 
-			if ((conditionXPath == null) ||
-				((conditionXPath != null) &&
-				  conditionXPath.booleanValueOf(document))) {
-
-				Fields fields = new Fields();
-
-				Element rootElement = document.getRootElement();
-
-				List<Element> dynamicElementElements = rootElement.elements(
-					"dynamic-element");
-
-				for (Element dynamicElementElement : dynamicElementElements) {
-					String fieldName = dynamicElementElement.attributeValue(
-						"name");
-					String fieldValue = dynamicElementElement.elementText(
-						"dynamic-content");
-
-					if ((fieldNames == null) ||
-						((fieldNames != null) &&
-						 fieldNames.contains(fieldName))) {
-
-						fields.put(new Field(fieldName, fieldValue));
-					}
-				}
-
-				fieldsList.add(fields);
-			}
+			fieldsList.add(fields);
 		}
 
 		if (orderByComparator != null) {
@@ -322,23 +247,7 @@ public class XMLStorageAdapter extends BaseStorageAdapter {
 		return fieldsList;
 	}
 
-	private Element _getElementByName(Document document, String name) {
-		XPath xPathSelector = SAXReaderUtil.createXPath(
-			"//dynamic-element[@name='".concat(name).concat("']"));
-
-		List<Node> nodes = xPathSelector.selectNodes(document);
-
-		if (nodes.size() == 1) {
-			return (Element)nodes.get(0);
-		}
-		else {
-			return null;
-		}
-	}
-
-	private long[] _getStructureClassPKs(long ddmStructureId)
-		throws Exception {
-
+	private long[] _getStructureClassPKs(long ddmStructureId) throws Exception {
 		List<Long> classPKs = new ArrayList<Long>();
 
 		List<DDMStorageLink> ddmStorageLinks =
@@ -383,7 +292,7 @@ public class XMLStorageAdapter extends BaseStorageAdapter {
 
 		sb.append("(@name=");
 
-		String name = StringUtil.quote(
+		String name = HtmlUtil.escapeXPathAttribute(
 			String.valueOf(fieldCondition.getName()));
 
 		sb.append(name);
@@ -398,7 +307,7 @@ public class XMLStorageAdapter extends BaseStorageAdapter {
 			sb.append(" and dynamic-content= ");
 		}
 
-		String value = StringUtil.quote(
+		String value = HtmlUtil.escapeXPathAttribute(
 			String.valueOf(fieldCondition.getValue()));
 
 		sb.append(value);
@@ -434,19 +343,6 @@ public class XMLStorageAdapter extends BaseStorageAdapter {
 		}
 
 		return sb.toString();
-	}
-
-	private void _updateField(
-		Element dynamicElementElement, String fieldName, String value) {
-
-		Element dynamicContentElement = dynamicElementElement.element(
-			"dynamic-content");
-
-		dynamicElementElement.addAttribute("name", fieldName);
-
-		dynamicContentElement.clearContent();
-
-		dynamicContentElement.addCDATA(value);
 	}
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,18 +16,22 @@ package com.liferay.portlet.blogs.asset;
 
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.trash.TrashRenderer;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.util.WebKeys;
+import com.liferay.portlet.asset.model.AssetRendererFactory;
 import com.liferay.portlet.asset.model.BaseAssetRenderer;
 import com.liferay.portlet.blogs.model.BlogsEntry;
 import com.liferay.portlet.blogs.service.permission.BlogsEntryPermission;
 
+import java.util.Date;
 import java.util.Locale;
 
 import javax.portlet.PortletRequest;
@@ -40,13 +44,21 @@ import javax.portlet.WindowState;
  * @author Jorge Ferrer
  * @author Juan Fernández
  * @author Sergio González
+ * @author Zsolt Berentey
  */
-public class BlogsEntryAssetRenderer extends BaseAssetRenderer {
+public class BlogsEntryAssetRenderer
+	extends BaseAssetRenderer implements TrashRenderer {
 
 	public BlogsEntryAssetRenderer(BlogsEntry entry) {
 		_entry = entry;
 	}
 
+	@Override
+	public String getClassName() {
+		return BlogsEntry.class.getName();
+	}
+
+	@Override
 	public long getClassPK() {
 		return _entry.getEntryId();
 	}
@@ -61,16 +73,59 @@ public class BlogsEntryAssetRenderer extends BaseAssetRenderer {
 		}
 	}
 
+	@Override
+	public Date getDisplayDate() {
+		return _entry.getDisplayDate();
+	}
+
+	@Override
 	public long getGroupId() {
 		return _entry.getGroupId();
 	}
 
-	public String getSummary(Locale locale) {
-		return HtmlUtil.stripHtml(_entry.getDescription());
+	@Override
+	public String getIconPath(ThemeDisplay themeDisplay) {
+		return themeDisplay.getPathThemeImages() + "/blogs/blogs.png";
 	}
 
+	@Override
+	public String getPortletId() {
+		AssetRendererFactory assetRendererFactory = getAssetRendererFactory();
+
+		return assetRendererFactory.getPortletId();
+	}
+
+	@Override
+	public String getSummary(Locale locale) {
+		String summary = _entry.getDescription();
+
+		if (Validator.isNull(summary)) {
+			summary = StringUtil.shorten(
+				HtmlUtil.stripHtml(_entry.getContent()), 200);
+		}
+
+		return summary;
+	}
+
+	@Override
+	public String getThumbnailPath(PortletRequest portletRequest)
+		throws Exception {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		return themeDisplay.getPathThemeImages() +
+			"/file_system/large/blog.png";
+	}
+
+	@Override
 	public String getTitle(Locale locale) {
 		return _entry.getTitle();
+	}
+
+	@Override
+	public String getType() {
+		return BlogsEntryAssetRendererFactory.TYPE;
 	}
 
 	@Override
@@ -103,10 +158,9 @@ public class BlogsEntryAssetRenderer extends BaseAssetRenderer {
 		PortletURL portletURL = liferayPortletResponse.createLiferayPortletURL(
 			PortletKeys.BLOGS, PortletRequest.RENDER_PHASE);
 
-		portletURL.setWindowState(windowState);
-
 		portletURL.setParameter("struts_action", "/blogs/view_entry");
 		portletURL.setParameter("entryId", String.valueOf(_entry.getEntryId()));
+		portletURL.setWindowState(windowState);
 
 		return portletURL;
 	}
@@ -117,22 +171,29 @@ public class BlogsEntryAssetRenderer extends BaseAssetRenderer {
 		LiferayPortletResponse liferayPortletResponse,
 		String noSuchEntryRedirect) {
 
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)liferayPortletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		return themeDisplay.getPortalURL() + themeDisplay.getPathMain() +
-			"/blogs/find_entry?noSuchEntryRedirect=" +
-				HttpUtil.encodeURL(noSuchEntryRedirect) + "&entryId=" +
-					_entry.getEntryId();
+		return getURLViewInContext(
+			liferayPortletRequest, noSuchEntryRedirect, "/blogs/find_entry",
+			"entryId", _entry.getEntryId());
 	}
 
+	@Override
 	public long getUserId() {
 		return _entry.getUserId();
 	}
 
+	@Override
+	public String getUserName() {
+		return _entry.getUserName();
+	}
+
+	@Override
 	public String getUuid() {
 		return _entry.getUuid();
+	}
+
+	public boolean hasDeletePermission(PermissionChecker permissionChecker) {
+		return BlogsEntryPermission.contains(
+			permissionChecker, _entry, ActionKeys.DELETE);
 	}
 
 	@Override
@@ -152,6 +213,7 @@ public class BlogsEntryAssetRenderer extends BaseAssetRenderer {
 		return true;
 	}
 
+	@Override
 	public String render(
 			RenderRequest renderRequest, RenderResponse renderResponse,
 			String template)
@@ -167,11 +229,6 @@ public class BlogsEntryAssetRenderer extends BaseAssetRenderer {
 		else {
 			return null;
 		}
-	}
-
-	@Override
-	protected String getIconPath(ThemeDisplay themeDisplay) {
-		return themeDisplay.getPathThemeImages() + "/blogs/blogs.png";
 	}
 
 	private BlogsEntry _entry;

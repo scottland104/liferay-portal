@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,10 +16,10 @@ package com.liferay.util.bridges.mvc;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.InstanceFactory;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +38,7 @@ public class ActionCommandCache {
 
 	public static final ActionCommand EMPTY = new ActionCommand() {
 
+		@Override
 		public boolean processCommand(
 			PortletRequest portletRequest, PortletResponse portletResponse) {
 
@@ -69,8 +70,7 @@ public class ActionCommandCache {
 
 			sb.append(_packagePrefix);
 			sb.append(Character.toUpperCase(actionCommandName.charAt(0)));
-			sb.append(
-				actionCommandName.substring(1, actionCommandName.length()));
+			sb.append(actionCommandName.substring(1));
 			sb.append(_ACTION_COMMAND_POSTFIX);
 
 			className = sb.toString();
@@ -105,14 +105,9 @@ public class ActionCommandCache {
 
 		actionCommands = new ArrayList<ActionCommand>();
 
-		int nextSeparator = actionCommandChain.indexOf(CharPool.COMMA);
+		String[] actionCommandNames = StringUtil.split(actionCommandChain);
 
-		int currentIndex = 0;
-
-		while (currentIndex < actionCommandChain.length()) {
-			String actionCommandName = actionCommandChain.substring(
-				currentIndex, nextSeparator);
-
+		for (String actionCommandName : actionCommandNames) {
 			ActionCommand actionCommand = getActionCommand(actionCommandName);
 
 			if (actionCommand != EMPTY) {
@@ -123,15 +118,6 @@ public class ActionCommandCache {
 					_log.warn(
 						"Unable to find ActionCommand " + actionCommandChain);
 				}
-			}
-
-			currentIndex = nextSeparator + 1;
-
-			nextSeparator = actionCommandChain.indexOf(
-				CharPool.COMMA, currentIndex);
-
-			if (nextSeparator == -1) {
-				break;
 			}
 		}
 

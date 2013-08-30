@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,41 +15,37 @@
 package com.liferay.portlet.layoutsadmin.action;
 
 import com.liferay.portal.NoSuchGroupException;
-import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.lar.ExportImportHelperUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
-import com.liferay.portal.kernel.util.ContentTypes;
+import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.DateRange;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.Time;
-import com.liferay.portal.kernel.util.UnicodeProperties;
-import com.liferay.portal.model.LayoutSet;
+import com.liferay.portal.kernel.util.UniqueList;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.model.Layout;
 import com.liferay.portal.security.auth.PrincipalException;
+import com.liferay.portal.service.LayoutLocalServiceUtil;
 import com.liferay.portal.service.LayoutServiceUtil;
-import com.liferay.portal.service.LayoutSetLocalServiceUtil;
-import com.liferay.portal.struts.ActionConstants;
 import com.liferay.portal.struts.PortletAction;
-import com.liferay.portal.theme.ThemeDisplay;
-import com.liferay.portal.util.PortalUtil;
-import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.sites.action.ActionUtil;
 
-import java.io.File;
-import java.io.FileInputStream;
-
-import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
+import javax.portlet.PortletContext;
+import javax.portlet.PortletRequest;
+import javax.portlet.PortletRequestDispatcher;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.portlet.ResourceRequest;
+import javax.portlet.ResourceResponse;
 
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -63,121 +59,53 @@ public class ExportLayoutsAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
-		try {
-			ThemeDisplay themeDisplay =
-				(ThemeDisplay)actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
+		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
 
+		try {
+			String fileName = ParamUtil.getString(
+				actionRequest, "exportFileName");
 			long groupId = ParamUtil.getLong(actionRequest, "groupId");
 			boolean privateLayout = ParamUtil.getBoolean(
 				actionRequest, "privateLayout");
-			long[] layoutIds = ParamUtil.getLongValues(
-				actionRequest, "layoutIds");
-			String fileName = ParamUtil.getString(
-				actionRequest, "exportFileName");
-			String range = ParamUtil.getString(actionRequest, "range");
+			long[] layoutIds = getLayoutIds(actionRequest);
+			DateRange dateRange = ExportImportHelperUtil.getDateRange(
+				actionRequest, groupId, privateLayout, 0, null);
 
-			Date startDate = null;
-			Date endDate = null;
+			Date startDate = dateRange.getStartDate();
+			Date endDate = dateRange.getEndDate();
 
-			if (range.equals("dateRange")) {
-				int startDateMonth = ParamUtil.getInteger(
-					actionRequest, "startDateMonth");
-				int startDateDay = ParamUtil.getInteger(
-					actionRequest, "startDateDay");
-				int startDateYear = ParamUtil.getInteger(
-					actionRequest, "startDateYear");
-				int startDateHour = ParamUtil.getInteger(
-					actionRequest, "startDateHour");
-				int startDateMinute = ParamUtil.getInteger(
-					actionRequest, "startDateMinute");
-				int startDateAmPm = ParamUtil.getInteger(
-					actionRequest, "startDateAmPm");
+			if (Validator.isNotNull(cmd)) {
+				LayoutServiceUtil.exportLayoutsAsFileInBackground(
+					fileName, groupId, privateLayout, layoutIds,
+					actionRequest.getParameterMap(), startDate, endDate,
+					fileName);
 
-				if (startDateAmPm == Calendar.PM) {
-					startDateHour += 12;
+				String redirect = ParamUtil.getString(
+					actionRequest, "redirect");
+
+				sendRedirect(actionRequest, actionResponse, redirect);
+			}
+			else {
+				if (startDate != null) {
+					actionResponse.setRenderParameter(
+						"startDate", String.valueOf(startDate.getTime()));
 				}
 
-				startDate = PortalUtil.getDate(
-					startDateMonth, startDateDay, startDateYear, startDateHour,
-					startDateMinute, themeDisplay.getTimeZone(),
-					new PortalException());
-
-				int endDateMonth = ParamUtil.getInteger(
-					actionRequest, "endDateMonth");
-				int endDateDay = ParamUtil.getInteger(
-					actionRequest, "endDateDay");
-				int endDateYear = ParamUtil.getInteger(
-					actionRequest, "endDateYear");
-				int endDateHour = ParamUtil.getInteger(
-					actionRequest, "endDateHour");
-				int endDateMinute = ParamUtil.getInteger(
-					actionRequest, "endDateMinute");
-				int endDateAmPm = ParamUtil.getInteger(
-					actionRequest, "endDateAmPm");
-
-				if (endDateAmPm == Calendar.PM) {
-					endDateHour += 12;
-				}
-
-				endDate = PortalUtil.getDate(
-					endDateMonth, endDateDay, endDateYear, endDateHour,
-					endDateMinute, themeDisplay.getTimeZone(),
-					new PortalException());
-			}
-			else if (range.equals("fromLastPublishDate")) {
-				LayoutSet layoutSet = LayoutSetLocalServiceUtil.getLayoutSet(
-					groupId, privateLayout);
-
-				UnicodeProperties settingsProperties =
-					layoutSet.getSettingsProperties();
-
-				long lastPublishDate = GetterUtil.getLong(
-					settingsProperties.getProperty("last-publish-date"));
-
-				if (lastPublishDate > 0) {
-					Calendar cal = Calendar.getInstance(
-						themeDisplay.getTimeZone(), themeDisplay.getLocale());
-
-					endDate = cal.getTime();
-
-					cal.setTimeInMillis(lastPublishDate);
-
-					startDate = cal.getTime();
+				if (endDate != null) {
+					actionResponse.setRenderParameter(
+						"endDate", String.valueOf(endDate.getTime()));
 				}
 			}
-			else if (range.equals("last")) {
-				int rangeLast = ParamUtil.getInteger(actionRequest, "last");
-
-				Date now = new Date();
-
-				startDate = new Date(now.getTime() - (rangeLast * Time.HOUR));
-
-				endDate = now;
-			}
-
-			File file = LayoutServiceUtil.exportLayoutsAsFile(
-				groupId, privateLayout, layoutIds,
-				actionRequest.getParameterMap(), startDate, endDate);
-
-			HttpServletRequest request = PortalUtil.getHttpServletRequest(
-				actionRequest);
-			HttpServletResponse response = PortalUtil.getHttpServletResponse(
-				actionResponse);
-
-			ServletResponseUtil.sendFile(
-				request, response, fileName, new FileInputStream(file),
-				ContentTypes.APPLICATION_ZIP);
-
-			setForward(actionRequest, ActionConstants.COMMON_NULL);
 		}
 		catch (Exception e) {
 			_log.error(e, e);
 
-			SessionErrors.add(actionRequest, e.getClass().getName());
+			SessionErrors.add(actionRequest, e.getClass());
 
 			String pagesRedirect = ParamUtil.getString(
 				actionRequest, "pagesRedirect");
@@ -188,8 +116,9 @@ public class ExportLayoutsAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -199,17 +128,59 @@ public class ExportLayoutsAction extends PortletAction {
 			if (e instanceof NoSuchGroupException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(renderRequest, e.getClass().getName());
+				SessionErrors.add(renderRequest, e.getClass());
 
-				return mapping.findForward("portlet.layouts_admin.error");
+				return actionMapping.findForward("portlet.layouts_admin.error");
 			}
 			else {
 				throw e;
 			}
 		}
 
-		return mapping.findForward(
+		return actionMapping.findForward(
 			getForward(renderRequest, "portlet.layouts_admin.export_layouts"));
+	}
+
+	@Override
+	public void serveResource(
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ResourceRequest resourceRequest,
+			ResourceResponse resourceResponse)
+		throws Exception {
+
+		PortletContext portletContext = portletConfig.getPortletContext();
+
+		PortletRequestDispatcher portletRequestDispatcher =
+			portletContext.getRequestDispatcher(
+				"/html/portlet/layouts_admin/export_layouts_processes.jsp");
+
+		portletRequestDispatcher.include(resourceRequest, resourceResponse);
+	}
+
+	protected long[] getLayoutIds(PortletRequest portletRequest)
+		throws Exception {
+
+		List<Layout> layouts = new UniqueList<Layout>();
+
+		Map<Long, Boolean> layoutIdMap = ExportImportHelperUtil.getLayoutIdMap(
+			portletRequest);
+
+		for (Map.Entry<Long, Boolean> entry : layoutIdMap.entrySet()) {
+			long plid = GetterUtil.getLong(String.valueOf(entry.getKey()));
+			boolean includeChildren = entry.getValue();
+
+			Layout layout = LayoutLocalServiceUtil.getLayout(plid);
+
+			if (!layouts.contains(layout)) {
+				layouts.add(layout);
+			}
+
+			if (includeChildren) {
+				layouts.addAll(layout.getAllChildren());
+			}
+		}
+
+		return ExportImportHelperUtil.getLayoutIds(layouts);
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(ExportLayoutsAction.class);

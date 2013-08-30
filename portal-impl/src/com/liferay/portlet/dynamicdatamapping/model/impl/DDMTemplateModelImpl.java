@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,14 +14,15 @@
 
 package com.liferay.portlet.dynamicdatamapping.model.impl;
 
+import com.liferay.portal.LocaleException;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSON;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.lar.StagedModelType;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
@@ -38,15 +39,16 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * The base model implementation for the DDMTemplate service. Represents a row in the &quot;DDMTemplate&quot; database table, with each column mapped to a property of this class.
@@ -79,15 +81,24 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 			{ "userName", Types.VARCHAR },
 			{ "createDate", Types.TIMESTAMP },
 			{ "modifiedDate", Types.TIMESTAMP },
-			{ "structureId", Types.BIGINT },
+			{ "classNameId", Types.BIGINT },
+			{ "classPK", Types.BIGINT },
+			{ "templateKey", Types.VARCHAR },
 			{ "name", Types.VARCHAR },
 			{ "description", Types.VARCHAR },
 			{ "type_", Types.VARCHAR },
+			{ "mode_", Types.VARCHAR },
 			{ "language", Types.VARCHAR },
-			{ "script", Types.CLOB }
+			{ "script", Types.CLOB },
+			{ "cacheable", Types.BOOLEAN },
+			{ "smallImage", Types.BOOLEAN },
+			{ "smallImageId", Types.BIGINT },
+			{ "smallImageURL", Types.VARCHAR }
 		};
-	public static final String TABLE_SQL_CREATE = "create table DDMTemplate (uuid_ VARCHAR(75) null,templateId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,structureId LONG,name STRING null,description STRING null,type_ VARCHAR(75) null,language VARCHAR(75) null,script TEXT null)";
+	public static final String TABLE_SQL_CREATE = "create table DDMTemplate (uuid_ VARCHAR(75) null,templateId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,classNameId LONG,classPK LONG,templateKey VARCHAR(75) null,name STRING null,description STRING null,type_ VARCHAR(75) null,mode_ VARCHAR(75) null,language VARCHAR(75) null,script TEXT null,cacheable BOOLEAN,smallImage BOOLEAN,smallImageId LONG,smallImageURL VARCHAR(75) null)";
 	public static final String TABLE_SQL_DROP = "drop table DDMTemplate";
+	public static final String ORDER_BY_JPQL = " ORDER BY ddmTemplate.templateId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY DDMTemplate.templateId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -97,6 +108,20 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portlet.dynamicdatamapping.model.DDMTemplate"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portlet.dynamicdatamapping.model.DDMTemplate"),
+			true);
+	public static long CLASSNAMEID_COLUMN_BITMASK = 1L;
+	public static long CLASSPK_COLUMN_BITMASK = 2L;
+	public static long COMPANYID_COLUMN_BITMASK = 4L;
+	public static long GROUPID_COLUMN_BITMASK = 8L;
+	public static long LANGUAGE_COLUMN_BITMASK = 16L;
+	public static long MODE_COLUMN_BITMASK = 32L;
+	public static long SMALLIMAGEID_COLUMN_BITMASK = 64L;
+	public static long TEMPLATEKEY_COLUMN_BITMASK = 128L;
+	public static long TYPE_COLUMN_BITMASK = 256L;
+	public static long UUID_COLUMN_BITMASK = 512L;
+	public static long TEMPLATEID_COLUMN_BITMASK = 1024L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -105,6 +130,10 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 	 * @return the normal model instance
 	 */
 	public static DDMTemplate toModel(DDMTemplateSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		DDMTemplate model = new DDMTemplateImpl();
 
 		model.setUuid(soapModel.getUuid());
@@ -115,12 +144,19 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		model.setUserName(soapModel.getUserName());
 		model.setCreateDate(soapModel.getCreateDate());
 		model.setModifiedDate(soapModel.getModifiedDate());
-		model.setStructureId(soapModel.getStructureId());
+		model.setClassNameId(soapModel.getClassNameId());
+		model.setClassPK(soapModel.getClassPK());
+		model.setTemplateKey(soapModel.getTemplateKey());
 		model.setName(soapModel.getName());
 		model.setDescription(soapModel.getDescription());
 		model.setType(soapModel.getType());
+		model.setMode(soapModel.getMode());
 		model.setLanguage(soapModel.getLanguage());
 		model.setScript(soapModel.getScript());
+		model.setCacheable(soapModel.getCacheable());
+		model.setSmallImage(soapModel.getSmallImage());
+		model.setSmallImageId(soapModel.getSmallImageId());
+		model.setSmallImageURL(soapModel.getSmallImageURL());
 
 		return model;
 	}
@@ -132,6 +168,10 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 	 * @return the normal model instances
 	 */
 	public static List<DDMTemplate> toModels(DDMTemplateSoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<DDMTemplate> models = new ArrayList<DDMTemplate>(soapModels.length);
 
 		for (DDMTemplateSoap soapModel : soapModels) {
@@ -141,37 +181,202 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		return models;
 	}
 
-	public Class<?> getModelClass() {
-		return DDMTemplate.class;
-	}
-
-	public String getModelClassName() {
-		return DDMTemplate.class.getName();
-	}
-
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portlet.dynamicdatamapping.model.DDMTemplate"));
 
 	public DDMTemplateModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _templateId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setTemplateId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_templateId);
+		return _templateId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return DDMTemplate.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return DDMTemplate.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("uuid", getUuid());
+		attributes.put("templateId", getTemplateId());
+		attributes.put("groupId", getGroupId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("userId", getUserId());
+		attributes.put("userName", getUserName());
+		attributes.put("createDate", getCreateDate());
+		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("classNameId", getClassNameId());
+		attributes.put("classPK", getClassPK());
+		attributes.put("templateKey", getTemplateKey());
+		attributes.put("name", getName());
+		attributes.put("description", getDescription());
+		attributes.put("type", getType());
+		attributes.put("mode", getMode());
+		attributes.put("language", getLanguage());
+		attributes.put("script", getScript());
+		attributes.put("cacheable", getCacheable());
+		attributes.put("smallImage", getSmallImage());
+		attributes.put("smallImageId", getSmallImageId());
+		attributes.put("smallImageURL", getSmallImageURL());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		String uuid = (String)attributes.get("uuid");
+
+		if (uuid != null) {
+			setUuid(uuid);
+		}
+
+		Long templateId = (Long)attributes.get("templateId");
+
+		if (templateId != null) {
+			setTemplateId(templateId);
+		}
+
+		Long groupId = (Long)attributes.get("groupId");
+
+		if (groupId != null) {
+			setGroupId(groupId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long userId = (Long)attributes.get("userId");
+
+		if (userId != null) {
+			setUserId(userId);
+		}
+
+		String userName = (String)attributes.get("userName");
+
+		if (userName != null) {
+			setUserName(userName);
+		}
+
+		Date createDate = (Date)attributes.get("createDate");
+
+		if (createDate != null) {
+			setCreateDate(createDate);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
+		}
+
+		Long classNameId = (Long)attributes.get("classNameId");
+
+		if (classNameId != null) {
+			setClassNameId(classNameId);
+		}
+
+		Long classPK = (Long)attributes.get("classPK");
+
+		if (classPK != null) {
+			setClassPK(classPK);
+		}
+
+		String templateKey = (String)attributes.get("templateKey");
+
+		if (templateKey != null) {
+			setTemplateKey(templateKey);
+		}
+
+		String name = (String)attributes.get("name");
+
+		if (name != null) {
+			setName(name);
+		}
+
+		String description = (String)attributes.get("description");
+
+		if (description != null) {
+			setDescription(description);
+		}
+
+		String type = (String)attributes.get("type");
+
+		if (type != null) {
+			setType(type);
+		}
+
+		String mode = (String)attributes.get("mode");
+
+		if (mode != null) {
+			setMode(mode);
+		}
+
+		String language = (String)attributes.get("language");
+
+		if (language != null) {
+			setLanguage(language);
+		}
+
+		String script = (String)attributes.get("script");
+
+		if (script != null) {
+			setScript(script);
+		}
+
+		Boolean cacheable = (Boolean)attributes.get("cacheable");
+
+		if (cacheable != null) {
+			setCacheable(cacheable);
+		}
+
+		Boolean smallImage = (Boolean)attributes.get("smallImage");
+
+		if (smallImage != null) {
+			setSmallImage(smallImage);
+		}
+
+		Long smallImageId = (Long)attributes.get("smallImageId");
+
+		if (smallImageId != null) {
+			setSmallImageId(smallImageId);
+		}
+
+		String smallImageURL = (String)attributes.get("smallImageURL");
+
+		if (smallImageURL != null) {
+			setSmallImageURL(smallImageURL);
+		}
+	}
+
 	@JSON
+	@Override
 	public String getUuid() {
 		if (_uuid == null) {
 			return StringPool.BLANK;
@@ -181,6 +386,7 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		}
 	}
 
+	@Override
 	public void setUuid(String uuid) {
 		if (_originalUuid == null) {
 			_originalUuid = _uuid;
@@ -194,20 +400,26 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 	}
 
 	@JSON
+	@Override
 	public long getTemplateId() {
 		return _templateId;
 	}
 
+	@Override
 	public void setTemplateId(long templateId) {
 		_templateId = templateId;
 	}
 
 	@JSON
+	@Override
 	public long getGroupId() {
 		return _groupId;
 	}
 
+	@Override
 	public void setGroupId(long groupId) {
+		_columnBitmask |= GROUPID_COLUMN_BITMASK;
+
 		if (!_setOriginalGroupId) {
 			_setOriginalGroupId = true;
 
@@ -222,32 +434,51 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 	}
 
 	@JSON
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
+		_columnBitmask |= COMPANYID_COLUMN_BITMASK;
+
+		if (!_setOriginalCompanyId) {
+			_setOriginalCompanyId = true;
+
+			_originalCompanyId = _companyId;
+		}
+
 		_companyId = companyId;
 	}
 
+	public long getOriginalCompanyId() {
+		return _originalCompanyId;
+	}
+
 	@JSON
+	@Override
 	public long getUserId() {
 		return _userId;
 	}
 
+	@Override
 	public void setUserId(long userId) {
 		_userId = userId;
 	}
 
+	@Override
 	public String getUserUuid() throws SystemException {
 		return PortalUtil.getUserValue(getUserId(), "uuid", _userUuid);
 	}
 
+	@Override
 	public void setUserUuid(String userUuid) {
 		_userUuid = userUuid;
 	}
 
 	@JSON
+	@Override
 	public String getUserName() {
 		if (_userName == null) {
 			return StringPool.BLANK;
@@ -257,38 +488,127 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		}
 	}
 
+	@Override
 	public void setUserName(String userName) {
 		_userName = userName;
 	}
 
 	@JSON
+	@Override
 	public Date getCreateDate() {
 		return _createDate;
 	}
 
+	@Override
 	public void setCreateDate(Date createDate) {
 		_createDate = createDate;
 	}
 
 	@JSON
+	@Override
 	public Date getModifiedDate() {
 		return _modifiedDate;
 	}
 
+	@Override
 	public void setModifiedDate(Date modifiedDate) {
 		_modifiedDate = modifiedDate;
 	}
 
-	@JSON
-	public long getStructureId() {
-		return _structureId;
+	@Override
+	public String getClassName() {
+		if (getClassNameId() <= 0) {
+			return StringPool.BLANK;
+		}
+
+		return PortalUtil.getClassName(getClassNameId());
 	}
 
-	public void setStructureId(long structureId) {
-		_structureId = structureId;
+	@Override
+	public void setClassName(String className) {
+		long classNameId = 0;
+
+		if (Validator.isNotNull(className)) {
+			classNameId = PortalUtil.getClassNameId(className);
+		}
+
+		setClassNameId(classNameId);
 	}
 
 	@JSON
+	@Override
+	public long getClassNameId() {
+		return _classNameId;
+	}
+
+	@Override
+	public void setClassNameId(long classNameId) {
+		_columnBitmask |= CLASSNAMEID_COLUMN_BITMASK;
+
+		if (!_setOriginalClassNameId) {
+			_setOriginalClassNameId = true;
+
+			_originalClassNameId = _classNameId;
+		}
+
+		_classNameId = classNameId;
+	}
+
+	public long getOriginalClassNameId() {
+		return _originalClassNameId;
+	}
+
+	@JSON
+	@Override
+	public long getClassPK() {
+		return _classPK;
+	}
+
+	@Override
+	public void setClassPK(long classPK) {
+		_columnBitmask |= CLASSPK_COLUMN_BITMASK;
+
+		if (!_setOriginalClassPK) {
+			_setOriginalClassPK = true;
+
+			_originalClassPK = _classPK;
+		}
+
+		_classPK = classPK;
+	}
+
+	public long getOriginalClassPK() {
+		return _originalClassPK;
+	}
+
+	@JSON
+	@Override
+	public String getTemplateKey() {
+		if (_templateKey == null) {
+			return StringPool.BLANK;
+		}
+		else {
+			return _templateKey;
+		}
+	}
+
+	@Override
+	public void setTemplateKey(String templateKey) {
+		_columnBitmask |= TEMPLATEKEY_COLUMN_BITMASK;
+
+		if (_originalTemplateKey == null) {
+			_originalTemplateKey = _templateKey;
+		}
+
+		_templateKey = templateKey;
+	}
+
+	public String getOriginalTemplateKey() {
+		return GetterUtil.getString(_originalTemplateKey);
+	}
+
+	@JSON
+	@Override
 	public String getName() {
 		if (_name == null) {
 			return StringPool.BLANK;
@@ -298,53 +618,60 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		}
 	}
 
+	@Override
 	public String getName(Locale locale) {
 		String languageId = LocaleUtil.toLanguageId(locale);
 
 		return getName(languageId);
 	}
 
+	@Override
 	public String getName(Locale locale, boolean useDefault) {
 		String languageId = LocaleUtil.toLanguageId(locale);
 
 		return getName(languageId, useDefault);
 	}
 
+	@Override
 	public String getName(String languageId) {
-		String value = LocalizationUtil.getLocalization(getName(), languageId);
-
-		if (isEscapedModel()) {
-			return HtmlUtil.escape(value);
-		}
-		else {
-			return value;
-		}
+		return LocalizationUtil.getLocalization(getName(), languageId);
 	}
 
+	@Override
 	public String getName(String languageId, boolean useDefault) {
-		String value = LocalizationUtil.getLocalization(getName(), languageId,
-				useDefault);
-
-		if (isEscapedModel()) {
-			return HtmlUtil.escape(value);
-		}
-		else {
-			return value;
-		}
+		return LocalizationUtil.getLocalization(getName(), languageId,
+			useDefault);
 	}
 
+	@Override
+	public String getNameCurrentLanguageId() {
+		return _nameCurrentLanguageId;
+	}
+
+	@JSON
+	@Override
+	public String getNameCurrentValue() {
+		Locale locale = getLocale(_nameCurrentLanguageId);
+
+		return getName(locale);
+	}
+
+	@Override
 	public Map<Locale, String> getNameMap() {
 		return LocalizationUtil.getLocalizationMap(getName());
 	}
 
+	@Override
 	public void setName(String name) {
 		_name = name;
 	}
 
+	@Override
 	public void setName(String name, Locale locale) {
-		setName(name, locale, LocaleUtil.getDefault());
+		setName(name, locale, LocaleUtil.getSiteDefault());
 	}
 
+	@Override
 	public void setName(String name, Locale locale, Locale defaultLocale) {
 		String languageId = LocaleUtil.toLanguageId(locale);
 		String defaultLanguageId = LocaleUtil.toLanguageId(defaultLocale);
@@ -359,25 +686,28 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		}
 	}
 
-	public void setNameMap(Map<Locale, String> nameMap) {
-		setNameMap(nameMap, LocaleUtil.getDefault());
+	@Override
+	public void setNameCurrentLanguageId(String languageId) {
+		_nameCurrentLanguageId = languageId;
 	}
 
+	@Override
+	public void setNameMap(Map<Locale, String> nameMap) {
+		setNameMap(nameMap, LocaleUtil.getSiteDefault());
+	}
+
+	@Override
 	public void setNameMap(Map<Locale, String> nameMap, Locale defaultLocale) {
 		if (nameMap == null) {
 			return;
 		}
 
-		Locale[] locales = LanguageUtil.getAvailableLocales();
-
-		for (Locale locale : locales) {
-			String name = nameMap.get(locale);
-
-			setName(name, locale, defaultLocale);
-		}
+		setName(LocalizationUtil.updateLocalization(nameMap, getName(), "Name",
+				LocaleUtil.toLanguageId(defaultLocale)));
 	}
 
 	@JSON
+	@Override
 	public String getDescription() {
 		if (_description == null) {
 			return StringPool.BLANK;
@@ -387,54 +717,60 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		}
 	}
 
+	@Override
 	public String getDescription(Locale locale) {
 		String languageId = LocaleUtil.toLanguageId(locale);
 
 		return getDescription(languageId);
 	}
 
+	@Override
 	public String getDescription(Locale locale, boolean useDefault) {
 		String languageId = LocaleUtil.toLanguageId(locale);
 
 		return getDescription(languageId, useDefault);
 	}
 
+	@Override
 	public String getDescription(String languageId) {
-		String value = LocalizationUtil.getLocalization(getDescription(),
-				languageId);
-
-		if (isEscapedModel()) {
-			return HtmlUtil.escape(value);
-		}
-		else {
-			return value;
-		}
+		return LocalizationUtil.getLocalization(getDescription(), languageId);
 	}
 
+	@Override
 	public String getDescription(String languageId, boolean useDefault) {
-		String value = LocalizationUtil.getLocalization(getDescription(),
-				languageId, useDefault);
-
-		if (isEscapedModel()) {
-			return HtmlUtil.escape(value);
-		}
-		else {
-			return value;
-		}
+		return LocalizationUtil.getLocalization(getDescription(), languageId,
+			useDefault);
 	}
 
+	@Override
+	public String getDescriptionCurrentLanguageId() {
+		return _descriptionCurrentLanguageId;
+	}
+
+	@JSON
+	@Override
+	public String getDescriptionCurrentValue() {
+		Locale locale = getLocale(_descriptionCurrentLanguageId);
+
+		return getDescription(locale);
+	}
+
+	@Override
 	public Map<Locale, String> getDescriptionMap() {
 		return LocalizationUtil.getLocalizationMap(getDescription());
 	}
 
+	@Override
 	public void setDescription(String description) {
 		_description = description;
 	}
 
+	@Override
 	public void setDescription(String description, Locale locale) {
-		setDescription(description, locale, LocaleUtil.getDefault());
+		setDescription(description, locale, LocaleUtil.getSiteDefault());
 	}
 
+	@Override
 	public void setDescription(String description, Locale locale,
 		Locale defaultLocale) {
 		String languageId = LocaleUtil.toLanguageId(locale);
@@ -451,26 +787,30 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		}
 	}
 
-	public void setDescriptionMap(Map<Locale, String> descriptionMap) {
-		setDescriptionMap(descriptionMap, LocaleUtil.getDefault());
+	@Override
+	public void setDescriptionCurrentLanguageId(String languageId) {
+		_descriptionCurrentLanguageId = languageId;
 	}
 
+	@Override
+	public void setDescriptionMap(Map<Locale, String> descriptionMap) {
+		setDescriptionMap(descriptionMap, LocaleUtil.getSiteDefault());
+	}
+
+	@Override
 	public void setDescriptionMap(Map<Locale, String> descriptionMap,
 		Locale defaultLocale) {
 		if (descriptionMap == null) {
 			return;
 		}
 
-		Locale[] locales = LanguageUtil.getAvailableLocales();
-
-		for (Locale locale : locales) {
-			String description = descriptionMap.get(locale);
-
-			setDescription(description, locale, defaultLocale);
-		}
+		setDescription(LocalizationUtil.updateLocalization(descriptionMap,
+				getDescription(), "Description",
+				LocaleUtil.toLanguageId(defaultLocale)));
 	}
 
 	@JSON
+	@Override
 	public String getType() {
 		if (_type == null) {
 			return StringPool.BLANK;
@@ -480,11 +820,49 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		}
 	}
 
+	@Override
 	public void setType(String type) {
+		_columnBitmask |= TYPE_COLUMN_BITMASK;
+
+		if (_originalType == null) {
+			_originalType = _type;
+		}
+
 		_type = type;
 	}
 
+	public String getOriginalType() {
+		return GetterUtil.getString(_originalType);
+	}
+
 	@JSON
+	@Override
+	public String getMode() {
+		if (_mode == null) {
+			return StringPool.BLANK;
+		}
+		else {
+			return _mode;
+		}
+	}
+
+	@Override
+	public void setMode(String mode) {
+		_columnBitmask |= MODE_COLUMN_BITMASK;
+
+		if (_originalMode == null) {
+			_originalMode = _mode;
+		}
+
+		_mode = mode;
+	}
+
+	public String getOriginalMode() {
+		return GetterUtil.getString(_originalMode);
+	}
+
+	@JSON
+	@Override
 	public String getLanguage() {
 		if (_language == null) {
 			return StringPool.BLANK;
@@ -494,11 +872,23 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		}
 	}
 
+	@Override
 	public void setLanguage(String language) {
+		_columnBitmask |= LANGUAGE_COLUMN_BITMASK;
+
+		if (_originalLanguage == null) {
+			_originalLanguage = _language;
+		}
+
 		_language = language;
 	}
 
+	public String getOriginalLanguage() {
+		return GetterUtil.getString(_originalLanguage);
+	}
+
 	@JSON
+	@Override
 	public String getScript() {
 		if (_script == null) {
 			return StringPool.BLANK;
@@ -508,39 +898,186 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		}
 	}
 
+	@Override
 	public void setScript(String script) {
 		_script = script;
 	}
 
+	@JSON
 	@Override
-	public DDMTemplate toEscapedModel() {
-		if (isEscapedModel()) {
-			return (DDMTemplate)this;
+	public boolean getCacheable() {
+		return _cacheable;
+	}
+
+	@Override
+	public boolean isCacheable() {
+		return _cacheable;
+	}
+
+	@Override
+	public void setCacheable(boolean cacheable) {
+		_cacheable = cacheable;
+	}
+
+	@JSON
+	@Override
+	public boolean getSmallImage() {
+		return _smallImage;
+	}
+
+	@Override
+	public boolean isSmallImage() {
+		return _smallImage;
+	}
+
+	@Override
+	public void setSmallImage(boolean smallImage) {
+		_smallImage = smallImage;
+	}
+
+	@JSON
+	@Override
+	public long getSmallImageId() {
+		return _smallImageId;
+	}
+
+	@Override
+	public void setSmallImageId(long smallImageId) {
+		_columnBitmask |= SMALLIMAGEID_COLUMN_BITMASK;
+
+		if (!_setOriginalSmallImageId) {
+			_setOriginalSmallImageId = true;
+
+			_originalSmallImageId = _smallImageId;
+		}
+
+		_smallImageId = smallImageId;
+	}
+
+	public long getOriginalSmallImageId() {
+		return _originalSmallImageId;
+	}
+
+	@JSON
+	@Override
+	public String getSmallImageURL() {
+		if (_smallImageURL == null) {
+			return StringPool.BLANK;
 		}
 		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (DDMTemplate)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
+			return _smallImageURL;
 		}
+	}
+
+	@Override
+	public void setSmallImageURL(String smallImageURL) {
+		_smallImageURL = smallImageURL;
+	}
+
+	@Override
+	public StagedModelType getStagedModelType() {
+		return new StagedModelType(PortalUtil.getClassNameId(
+				DDMTemplate.class.getName()), getClassNameId());
+	}
+
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					DDMTemplate.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			DDMTemplate.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public String[] getAvailableLanguageIds() {
+		Set<String> availableLanguageIds = new TreeSet<String>();
+
+		Map<Locale, String> nameMap = getNameMap();
+
+		for (Map.Entry<Locale, String> entry : nameMap.entrySet()) {
+			Locale locale = entry.getKey();
+			String value = entry.getValue();
+
+			if (Validator.isNotNull(value)) {
+				availableLanguageIds.add(LocaleUtil.toLanguageId(locale));
+			}
+		}
+
+		Map<Locale, String> descriptionMap = getDescriptionMap();
+
+		for (Map.Entry<Locale, String> entry : descriptionMap.entrySet()) {
+			Locale locale = entry.getKey();
+			String value = entry.getValue();
+
+			if (Validator.isNotNull(value)) {
+				availableLanguageIds.add(LocaleUtil.toLanguageId(locale));
+			}
+		}
+
+		return availableLanguageIds.toArray(new String[availableLanguageIds.size()]);
+	}
+
+	@Override
+	public String getDefaultLanguageId() {
+		String xml = getName();
+
+		if (xml == null) {
+			return StringPool.BLANK;
+		}
+
+		return LocalizationUtil.getDefaultLanguageId(xml);
+	}
+
+	@Override
+	public void prepareLocalizedFieldsForImport() throws LocaleException {
+		prepareLocalizedFieldsForImport(null);
+	}
+
+	@Override
+	@SuppressWarnings("unused")
+	public void prepareLocalizedFieldsForImport(Locale defaultImportLocale)
+		throws LocaleException {
+		Locale defaultLocale = LocaleUtil.getDefault();
+
+		String modelDefaultLanguageId = getDefaultLanguageId();
+
+		String name = getName(defaultLocale);
+
+		if (Validator.isNull(name)) {
+			setName(getName(modelDefaultLanguageId), defaultLocale);
+		}
+		else {
+			setName(getName(defaultLocale), defaultLocale, defaultLocale);
+		}
+
+		String description = getDescription(defaultLocale);
+
+		if (Validator.isNull(description)) {
+			setDescription(getDescription(modelDefaultLanguageId), defaultLocale);
+		}
+		else {
+			setDescription(getDescription(defaultLocale), defaultLocale,
+				defaultLocale);
+		}
+	}
+
+	@Override
+	public DDMTemplate toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (DDMTemplate)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -555,18 +1092,26 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		ddmTemplateImpl.setUserName(getUserName());
 		ddmTemplateImpl.setCreateDate(getCreateDate());
 		ddmTemplateImpl.setModifiedDate(getModifiedDate());
-		ddmTemplateImpl.setStructureId(getStructureId());
+		ddmTemplateImpl.setClassNameId(getClassNameId());
+		ddmTemplateImpl.setClassPK(getClassPK());
+		ddmTemplateImpl.setTemplateKey(getTemplateKey());
 		ddmTemplateImpl.setName(getName());
 		ddmTemplateImpl.setDescription(getDescription());
 		ddmTemplateImpl.setType(getType());
+		ddmTemplateImpl.setMode(getMode());
 		ddmTemplateImpl.setLanguage(getLanguage());
 		ddmTemplateImpl.setScript(getScript());
+		ddmTemplateImpl.setCacheable(getCacheable());
+		ddmTemplateImpl.setSmallImage(getSmallImage());
+		ddmTemplateImpl.setSmallImageId(getSmallImageId());
+		ddmTemplateImpl.setSmallImageURL(getSmallImageURL());
 
 		ddmTemplateImpl.resetOriginalValues();
 
 		return ddmTemplateImpl;
 	}
 
+	@Override
 	public int compareTo(DDMTemplate ddmTemplate) {
 		long primaryKey = ddmTemplate.getPrimaryKey();
 
@@ -583,18 +1128,15 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof DDMTemplate)) {
 			return false;
 		}
 
-		DDMTemplate ddmTemplate = null;
-
-		try {
-			ddmTemplate = (DDMTemplate)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		DDMTemplate ddmTemplate = (DDMTemplate)obj;
 
 		long primaryKey = ddmTemplate.getPrimaryKey();
 
@@ -620,6 +1162,32 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		ddmTemplateModelImpl._originalGroupId = ddmTemplateModelImpl._groupId;
 
 		ddmTemplateModelImpl._setOriginalGroupId = false;
+
+		ddmTemplateModelImpl._originalCompanyId = ddmTemplateModelImpl._companyId;
+
+		ddmTemplateModelImpl._setOriginalCompanyId = false;
+
+		ddmTemplateModelImpl._originalClassNameId = ddmTemplateModelImpl._classNameId;
+
+		ddmTemplateModelImpl._setOriginalClassNameId = false;
+
+		ddmTemplateModelImpl._originalClassPK = ddmTemplateModelImpl._classPK;
+
+		ddmTemplateModelImpl._setOriginalClassPK = false;
+
+		ddmTemplateModelImpl._originalTemplateKey = ddmTemplateModelImpl._templateKey;
+
+		ddmTemplateModelImpl._originalType = ddmTemplateModelImpl._type;
+
+		ddmTemplateModelImpl._originalMode = ddmTemplateModelImpl._mode;
+
+		ddmTemplateModelImpl._originalLanguage = ddmTemplateModelImpl._language;
+
+		ddmTemplateModelImpl._originalSmallImageId = ddmTemplateModelImpl._smallImageId;
+
+		ddmTemplateModelImpl._setOriginalSmallImageId = false;
+
+		ddmTemplateModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -668,7 +1236,17 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 			ddmTemplateCacheModel.modifiedDate = Long.MIN_VALUE;
 		}
 
-		ddmTemplateCacheModel.structureId = getStructureId();
+		ddmTemplateCacheModel.classNameId = getClassNameId();
+
+		ddmTemplateCacheModel.classPK = getClassPK();
+
+		ddmTemplateCacheModel.templateKey = getTemplateKey();
+
+		String templateKey = ddmTemplateCacheModel.templateKey;
+
+		if ((templateKey != null) && (templateKey.length() == 0)) {
+			ddmTemplateCacheModel.templateKey = null;
+		}
 
 		ddmTemplateCacheModel.name = getName();
 
@@ -694,6 +1272,14 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 			ddmTemplateCacheModel.type = null;
 		}
 
+		ddmTemplateCacheModel.mode = getMode();
+
+		String mode = ddmTemplateCacheModel.mode;
+
+		if ((mode != null) && (mode.length() == 0)) {
+			ddmTemplateCacheModel.mode = null;
+		}
+
 		ddmTemplateCacheModel.language = getLanguage();
 
 		String language = ddmTemplateCacheModel.language;
@@ -710,12 +1296,26 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 			ddmTemplateCacheModel.script = null;
 		}
 
+		ddmTemplateCacheModel.cacheable = getCacheable();
+
+		ddmTemplateCacheModel.smallImage = getSmallImage();
+
+		ddmTemplateCacheModel.smallImageId = getSmallImageId();
+
+		ddmTemplateCacheModel.smallImageURL = getSmallImageURL();
+
+		String smallImageURL = ddmTemplateCacheModel.smallImageURL;
+
+		if ((smallImageURL != null) && (smallImageURL.length() == 0)) {
+			ddmTemplateCacheModel.smallImageURL = null;
+		}
+
 		return ddmTemplateCacheModel;
 	}
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(29);
+		StringBundler sb = new StringBundler(43);
 
 		sb.append("{uuid=");
 		sb.append(getUuid());
@@ -733,25 +1333,40 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		sb.append(getCreateDate());
 		sb.append(", modifiedDate=");
 		sb.append(getModifiedDate());
-		sb.append(", structureId=");
-		sb.append(getStructureId());
+		sb.append(", classNameId=");
+		sb.append(getClassNameId());
+		sb.append(", classPK=");
+		sb.append(getClassPK());
+		sb.append(", templateKey=");
+		sb.append(getTemplateKey());
 		sb.append(", name=");
 		sb.append(getName());
 		sb.append(", description=");
 		sb.append(getDescription());
 		sb.append(", type=");
 		sb.append(getType());
+		sb.append(", mode=");
+		sb.append(getMode());
 		sb.append(", language=");
 		sb.append(getLanguage());
 		sb.append(", script=");
 		sb.append(getScript());
+		sb.append(", cacheable=");
+		sb.append(getCacheable());
+		sb.append(", smallImage=");
+		sb.append(getSmallImage());
+		sb.append(", smallImageId=");
+		sb.append(getSmallImageId());
+		sb.append(", smallImageURL=");
+		sb.append(getSmallImageURL());
 		sb.append("}");
 
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
-		StringBundler sb = new StringBundler(46);
+		StringBundler sb = new StringBundler(67);
 
 		sb.append("<model><model-name>");
 		sb.append("com.liferay.portlet.dynamicdatamapping.model.DDMTemplate");
@@ -790,8 +1405,16 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		sb.append(getModifiedDate());
 		sb.append("]]></column-value></column>");
 		sb.append(
-			"<column><column-name>structureId</column-name><column-value><![CDATA[");
-		sb.append(getStructureId());
+			"<column><column-name>classNameId</column-name><column-value><![CDATA[");
+		sb.append(getClassNameId());
+		sb.append("]]></column-value></column>");
+		sb.append(
+			"<column><column-name>classPK</column-name><column-value><![CDATA[");
+		sb.append(getClassPK());
+		sb.append("]]></column-value></column>");
+		sb.append(
+			"<column><column-name>templateKey</column-name><column-value><![CDATA[");
+		sb.append(getTemplateKey());
 		sb.append("]]></column-value></column>");
 		sb.append(
 			"<column><column-name>name</column-name><column-value><![CDATA[");
@@ -806,12 +1429,32 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 		sb.append(getType());
 		sb.append("]]></column-value></column>");
 		sb.append(
+			"<column><column-name>mode</column-name><column-value><![CDATA[");
+		sb.append(getMode());
+		sb.append("]]></column-value></column>");
+		sb.append(
 			"<column><column-name>language</column-name><column-value><![CDATA[");
 		sb.append(getLanguage());
 		sb.append("]]></column-value></column>");
 		sb.append(
 			"<column><column-name>script</column-name><column-value><![CDATA[");
 		sb.append(getScript());
+		sb.append("]]></column-value></column>");
+		sb.append(
+			"<column><column-name>cacheable</column-name><column-value><![CDATA[");
+		sb.append(getCacheable());
+		sb.append("]]></column-value></column>");
+		sb.append(
+			"<column><column-name>smallImage</column-name><column-value><![CDATA[");
+		sb.append(getSmallImage());
+		sb.append("]]></column-value></column>");
+		sb.append(
+			"<column><column-name>smallImageId</column-name><column-value><![CDATA[");
+		sb.append(getSmallImageId());
+		sb.append("]]></column-value></column>");
+		sb.append(
+			"<column><column-name>smallImageURL</column-name><column-value><![CDATA[");
+		sb.append(getSmallImageURL());
 		sb.append("]]></column-value></column>");
 
 		sb.append("</model>");
@@ -820,7 +1463,7 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 	}
 
 	private static ClassLoader _classLoader = DDMTemplate.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			DDMTemplate.class
 		};
 	private String _uuid;
@@ -830,17 +1473,38 @@ public class DDMTemplateModelImpl extends BaseModelImpl<DDMTemplate>
 	private long _originalGroupId;
 	private boolean _setOriginalGroupId;
 	private long _companyId;
+	private long _originalCompanyId;
+	private boolean _setOriginalCompanyId;
 	private long _userId;
 	private String _userUuid;
 	private String _userName;
 	private Date _createDate;
 	private Date _modifiedDate;
-	private long _structureId;
+	private long _classNameId;
+	private long _originalClassNameId;
+	private boolean _setOriginalClassNameId;
+	private long _classPK;
+	private long _originalClassPK;
+	private boolean _setOriginalClassPK;
+	private String _templateKey;
+	private String _originalTemplateKey;
 	private String _name;
+	private String _nameCurrentLanguageId;
 	private String _description;
+	private String _descriptionCurrentLanguageId;
 	private String _type;
+	private String _originalType;
+	private String _mode;
+	private String _originalMode;
 	private String _language;
+	private String _originalLanguage;
 	private String _script;
-	private transient ExpandoBridge _expandoBridge;
-	private DDMTemplate _escapedModelProxy;
+	private boolean _cacheable;
+	private boolean _smallImage;
+	private long _smallImageId;
+	private long _originalSmallImageId;
+	private boolean _setOriginalSmallImageId;
+	private String _smallImageURL;
+	private long _columnBitmask;
+	private DDMTemplate _escapedModel;
 }

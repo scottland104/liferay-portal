@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,13 +22,11 @@ import com.liferay.portal.security.auth.HttpPrincipal;
 import com.liferay.portal.service.CountryServiceUtil;
 
 /**
- * <p>
- * This class provides a HTTP utility for the
+ * Provides the HTTP utility for the
  * {@link com.liferay.portal.service.CountryServiceUtil} service utility. The
  * static methods of this class calls the same methods of the service utility.
  * However, the signatures are different because it requires an additional
  * {@link com.liferay.portal.security.auth.HttpPrincipal} parameter.
- * </p>
  *
  * <p>
  * The benefits of using the HTTP utility is that it is fast and allows for
@@ -45,10 +43,10 @@ import com.liferay.portal.service.CountryServiceUtil;
  * The HTTP utility is only generated for remote services.
  * </p>
  *
- * @author    Brian Wing Shun Chan
- * @see       CountryServiceSoap
- * @see       com.liferay.portal.security.auth.HttpPrincipal
- * @see       com.liferay.portal.service.CountryServiceUtil
+ * @author Brian Wing Shun Chan
+ * @see CountryServiceSoap
+ * @see com.liferay.portal.security.auth.HttpPrincipal
+ * @see com.liferay.portal.service.CountryServiceUtil
  * @generated
  */
 public class CountryServiceHttp {
@@ -59,7 +57,7 @@ public class CountryServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(CountryServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(CountryServiceUtil.class,
 					"addCountry", _addCountryParameterTypes0);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, name,
@@ -91,12 +89,105 @@ public class CountryServiceHttp {
 		}
 	}
 
+	public static com.liferay.portal.model.Country fetchCountry(
+		HttpPrincipal httpPrincipal, long countryId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		try {
+			MethodKey methodKey = new MethodKey(CountryServiceUtil.class,
+					"fetchCountry", _fetchCountryParameterTypes1);
+
+			MethodHandler methodHandler = new MethodHandler(methodKey, countryId);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception e) {
+				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
+					throw (com.liferay.portal.kernel.exception.SystemException)e;
+				}
+
+				throw new com.liferay.portal.kernel.exception.SystemException(e);
+			}
+
+			return (com.liferay.portal.model.Country)returnObj;
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException se) {
+			_log.error(se, se);
+
+			throw se;
+		}
+	}
+
+	public static com.liferay.portal.model.Country fetchCountryByA2(
+		HttpPrincipal httpPrincipal, java.lang.String a2)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		try {
+			MethodKey methodKey = new MethodKey(CountryServiceUtil.class,
+					"fetchCountryByA2", _fetchCountryByA2ParameterTypes2);
+
+			MethodHandler methodHandler = new MethodHandler(methodKey, a2);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception e) {
+				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
+					throw (com.liferay.portal.kernel.exception.SystemException)e;
+				}
+
+				throw new com.liferay.portal.kernel.exception.SystemException(e);
+			}
+
+			return (com.liferay.portal.model.Country)returnObj;
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException se) {
+			_log.error(se, se);
+
+			throw se;
+		}
+	}
+
+	public static com.liferay.portal.model.Country fetchCountryByA3(
+		HttpPrincipal httpPrincipal, java.lang.String a3)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		try {
+			MethodKey methodKey = new MethodKey(CountryServiceUtil.class,
+					"fetchCountryByA3", _fetchCountryByA3ParameterTypes3);
+
+			MethodHandler methodHandler = new MethodHandler(methodKey, a3);
+
+			Object returnObj = null;
+
+			try {
+				returnObj = TunnelUtil.invoke(httpPrincipal, methodHandler);
+			}
+			catch (Exception e) {
+				if (e instanceof com.liferay.portal.kernel.exception.SystemException) {
+					throw (com.liferay.portal.kernel.exception.SystemException)e;
+				}
+
+				throw new com.liferay.portal.kernel.exception.SystemException(e);
+			}
+
+			return (com.liferay.portal.model.Country)returnObj;
+		}
+		catch (com.liferay.portal.kernel.exception.SystemException se) {
+			_log.error(se, se);
+
+			throw se;
+		}
+	}
+
 	public static java.util.List<com.liferay.portal.model.Country> getCountries(
 		HttpPrincipal httpPrincipal)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(CountryServiceUtil.class.getName(),
-					"getCountries", _getCountriesParameterTypes1);
+			MethodKey methodKey = new MethodKey(CountryServiceUtil.class,
+					"getCountries", _getCountriesParameterTypes4);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey);
 
@@ -126,8 +217,8 @@ public class CountryServiceHttp {
 		HttpPrincipal httpPrincipal, boolean active)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(CountryServiceUtil.class.getName(),
-					"getCountries", _getCountriesParameterTypes2);
+			MethodKey methodKey = new MethodKey(CountryServiceUtil.class,
+					"getCountries", _getCountriesParameterTypes5);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, active);
 
@@ -158,8 +249,8 @@ public class CountryServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(CountryServiceUtil.class.getName(),
-					"getCountry", _getCountryParameterTypes3);
+			MethodKey methodKey = new MethodKey(CountryServiceUtil.class,
+					"getCountry", _getCountryParameterTypes6);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, countryId);
 
@@ -194,8 +285,8 @@ public class CountryServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(CountryServiceUtil.class.getName(),
-					"getCountryByA2", _getCountryByA2ParameterTypes4);
+			MethodKey methodKey = new MethodKey(CountryServiceUtil.class,
+					"getCountryByA2", _getCountryByA2ParameterTypes7);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, a2);
 
@@ -230,8 +321,8 @@ public class CountryServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(CountryServiceUtil.class.getName(),
-					"getCountryByA3", _getCountryByA3ParameterTypes5);
+			MethodKey methodKey = new MethodKey(CountryServiceUtil.class,
+					"getCountryByA3", _getCountryByA3ParameterTypes8);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, a3);
 
@@ -266,8 +357,8 @@ public class CountryServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(CountryServiceUtil.class.getName(),
-					"getCountryByName", _getCountryByNameParameterTypes6);
+			MethodKey methodKey = new MethodKey(CountryServiceUtil.class,
+					"getCountryByName", _getCountryByNameParameterTypes9);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, name);
 
@@ -303,20 +394,29 @@ public class CountryServiceHttp {
 			java.lang.String.class, java.lang.String.class,
 			java.lang.String.class, boolean.class
 		};
-	private static final Class<?>[] _getCountriesParameterTypes1 = new Class[] {  };
-	private static final Class<?>[] _getCountriesParameterTypes2 = new Class[] {
-			boolean.class
-		};
-	private static final Class<?>[] _getCountryParameterTypes3 = new Class[] {
+	private static final Class<?>[] _fetchCountryParameterTypes1 = new Class[] {
 			long.class
 		};
-	private static final Class<?>[] _getCountryByA2ParameterTypes4 = new Class[] {
+	private static final Class<?>[] _fetchCountryByA2ParameterTypes2 = new Class[] {
 			java.lang.String.class
 		};
-	private static final Class<?>[] _getCountryByA3ParameterTypes5 = new Class[] {
+	private static final Class<?>[] _fetchCountryByA3ParameterTypes3 = new Class[] {
 			java.lang.String.class
 		};
-	private static final Class<?>[] _getCountryByNameParameterTypes6 = new Class[] {
+	private static final Class<?>[] _getCountriesParameterTypes4 = new Class[] {  };
+	private static final Class<?>[] _getCountriesParameterTypes5 = new Class[] {
+			boolean.class
+		};
+	private static final Class<?>[] _getCountryParameterTypes6 = new Class[] {
+			long.class
+		};
+	private static final Class<?>[] _getCountryByA2ParameterTypes7 = new Class[] {
+			java.lang.String.class
+		};
+	private static final Class<?>[] _getCountryByA3ParameterTypes8 = new Class[] {
+			java.lang.String.class
+		};
+	private static final Class<?>[] _getCountryByNameParameterTypes9 = new Class[] {
 			java.lang.String.class
 		};
 }

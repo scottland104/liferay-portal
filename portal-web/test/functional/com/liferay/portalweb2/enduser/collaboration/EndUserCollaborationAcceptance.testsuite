@@ -1,0 +1,15 @@
+<definition>
+	<execute test-suite="CPBlogsAcceptance" />
+
+	<execute test-suite="CPMessageboardsAcceptance" />
+
+	<execute test-suite="CPWikiAcceptance" />
+
+	<execute test-suite="PGAnnouncementsAcceptance" />
+
+	<execute test-suite="PGBlogsAcceptance" />
+
+	<execute test-suite="PGMessageboardsAcceptance" />
+
+	<execute test-suite="PGWikiAcceptance" />
+</definition>

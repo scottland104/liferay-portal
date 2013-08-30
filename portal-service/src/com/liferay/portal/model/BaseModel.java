@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,8 @@ import com.liferay.portlet.expando.model.ExpandoBridge;
 
 import java.io.Serializable;
 
+import java.util.Map;
+
 /**
  * The base interface for all model classes. This interface should never need to
  * be used directly.
@@ -30,20 +32,29 @@ public interface BaseModel<T>
 	extends ClassedModel, Cloneable, Comparable<T>, Serializable {
 
 	/**
-	 * Returns <code>true</code> if this model instance does not yet exist in
-	 * the database.
+	 * Creates a shallow clone of this model instance.
 	 *
-	 * @return <code>true</code> if this model instance does not yet exist in
-	 *         the database; <code>false</code> otherwise
+	 * @return the shallow clone of this model instance
 	 */
-	public boolean isNew();
+	public Object clone();
 
 	/**
-	 * Sets whether this model instance does not yet exist in the database.
+	 * Returns the expando bridge for this model instance.
 	 *
-	 * @param n whether this model instance does not yet exist in the database
+	 * @return the expando bridge for this model instance
 	 */
-	public void setNew(boolean n);
+	@Override
+	public ExpandoBridge getExpandoBridge();
+
+	public Map<String, Object> getModelAttributes();
+
+	/**
+	 * Returns the primary key of this model instance.
+	 *
+	 * @return the primary key of this model instance
+	 */
+	@Override
+	public Serializable getPrimaryKeyObj();
 
 	/**
 	 * Returns <code>true</code> if this model instance was retrieved from the
@@ -56,6 +67,28 @@ public interface BaseModel<T>
 	public boolean isCachedModel();
 
 	/**
+	 * Returns <code>true</code> if this model instance is escaped.
+	 *
+	 * @return <code>true</code> if this model instance is escaped;
+	 *         <code>false</code> otherwise
+	 */
+	public boolean isEscapedModel();
+
+	/**
+	 * Returns <code>true</code> if this model instance does not yet exist in
+	 * the database.
+	 *
+	 * @return <code>true</code> if this model instance does not yet exist in
+	 *         the database; <code>false</code> otherwise
+	 */
+	public boolean isNew();
+
+	/**
+	 * Reset all original fields to current values.
+	 */
+	public void resetOriginalValues();
+
+	/**
 	 * Sets whether this model instance was retrieved from the entity cache.
 	 *
 	 * @param cachedModel whether this model instance was retrieved from the
@@ -64,72 +97,36 @@ public interface BaseModel<T>
 	 */
 	public void setCachedModel(boolean cachedModel);
 
-	/**
-	 * Returns <code>true</code> if this model instance is escaped.
-	 *
-	 * @return <code>true</code> if this model instance is escaped;
-	 *         <code>false</code> otherwise
-	 * @see    #setEscapedModel(boolean)
-	 */
-	public boolean isEscapedModel();
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
 
 	/**
-	 * Sets whether this model instance is escaped, meaning that all strings
-	 * returned from getter methods are HTML safe.
+	 * Sets the expando bridge attributes for this model instance to the
+	 * attributes stored in the service context.
 	 *
-	 * <p>
-	 * A model instance can be made escaped by wrapping it with an HTML auto
-	 * escape handler using its <code>toEscapedModel</code> method. For example,
-	 * {@link com.liferay.portal.model.UserModel#toEscapedModel()}.
-	 * </p>
-	 *
-	 * @param escapedModel whether this model instance is escaped
-	 * @see   com.liferay.portal.kernel.bean.AutoEscapeBeanHandler
+	 * @param serviceContext the service context to be applied
+	 * @see   com.liferay.portal.service.ServiceContext#getExpandoBridgeAttributes(
+	 *        )
 	 */
-	public void setEscapedModel(boolean escapedModel);
+	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
+
+	public void setModelAttributes(Map<String, Object> attributes);
 
 	/**
-	 * Returns the primary key of this model instance.
+	 * Sets whether this model instance does not yet exist in the database.
 	 *
-	 * @return the primary key of this model instance
+	 * @param n whether this model instance does not yet exist in the database
 	 */
-	public Serializable getPrimaryKeyObj();
+	public void setNew(boolean n);
 
 	/**
 	 * Sets the primary key of this model instance.
 	 *
 	 * @param primaryKeyObj the primary key of this model instance
 	 */
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
-
-	/**
-	 * Returns the expando bridge for this model instance.
-	 *
-	 * @return the expando bridge for this model instance
-	 */
-	public ExpandoBridge getExpandoBridge();
-
-	/**
-	 * Sets the expando bridge attributes for this model instance to the
-	 * attributes stored in the service context.
-	 *
-	 * @param serviceContext the service context
-	 * @see   com.liferay.portal.service.ServiceContext#getExpandoBridgeAttributes(
-	 *        )
-	 */
-	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
-
-	/**
-	 * Creates a shallow clone of this model instance.
-	 *
-	 * @return the shallow clone of this model instance
-	 */
-	public Object clone();
-
-	/**
-	 * Reset all original fields to current values.
-	 */
-	public void resetOriginalValues();
 
 	/**
 	 * Returns a cache model object for this entity used by entity cache.
@@ -146,6 +143,8 @@ public interface BaseModel<T>
 	 * @see    com.liferay.portal.kernel.bean.AutoEscapeBeanHandler
 	 */
 	public T toEscapedModel();
+
+	public T toUnescapedModel();
 
 	/**
 	 * Returns the XML representation of this model instance.

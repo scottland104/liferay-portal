@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -27,6 +27,7 @@ import java.util.List;
  */
 public class OrgLaborLocalServiceImpl extends OrgLaborLocalServiceBaseImpl {
 
+	@Override
 	public OrgLabor addOrgLabor(
 			long organizationId, int typeId, int sunOpen, int sunClose,
 			int monOpen, int monClose, int tueOpen, int tueClose, int wedOpen,
@@ -57,38 +58,19 @@ public class OrgLaborLocalServiceImpl extends OrgLaborLocalServiceBaseImpl {
 		orgLabor.setSatOpen(satOpen);
 		orgLabor.setSatClose(satClose);
 
-		orgLaborPersistence.update(orgLabor, false);
+		orgLaborPersistence.update(orgLabor);
 
 		return orgLabor;
 	}
 
 	@Override
-	public void deleteOrgLabor(long orgLaborId)
-		throws PortalException, SystemException {
-
-		OrgLabor orgLabor = orgLaborPersistence.findByPrimaryKey(orgLaborId);
-
-		deleteOrgLabor(orgLabor);
-	}
-
-	@Override
-	public void deleteOrgLabor(OrgLabor orgLabor) throws SystemException {
-		orgLaborPersistence.remove(orgLabor);
-	}
-
-	@Override
-	public OrgLabor getOrgLabor(long orgLaborId)
-		throws PortalException, SystemException {
-
-		return orgLaborPersistence.findByPrimaryKey(orgLaborId);
-	}
-
 	public List<OrgLabor> getOrgLabors(long organizationId)
 		throws SystemException {
 
 		return orgLaborPersistence.findByOrganizationId(organizationId);
 	}
 
+	@Override
 	public OrgLabor updateOrgLabor(
 			long orgLaborId, int typeId, int sunOpen, int sunClose, int monOpen,
 			int monClose, int tueOpen, int tueClose, int wedOpen, int wedClose,
@@ -116,7 +98,7 @@ public class OrgLaborLocalServiceImpl extends OrgLaborLocalServiceBaseImpl {
 		orgLabor.setSatOpen(satOpen);
 		orgLabor.setSatClose(satClose);
 
-		orgLaborPersistence.update(orgLabor, false);
+		orgLaborPersistence.update(orgLabor);
 
 		return orgLabor;
 	}

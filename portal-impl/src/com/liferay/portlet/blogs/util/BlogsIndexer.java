@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,19 +14,21 @@
 
 package com.liferay.portlet.blogs.util;
 
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.Property;
+import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.search.BaseIndexer;
 import com.liferay.portal.kernel.search.BooleanQuery;
 import com.liferay.portal.kernel.search.Document;
-import com.liferay.portal.kernel.search.DocumentImpl;
 import com.liferay.portal.kernel.search.Field;
-import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchEngineUtil;
 import com.liferay.portal.kernel.search.Summary;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
-import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
@@ -34,10 +36,11 @@ import com.liferay.portal.util.PortletKeys;
 import com.liferay.portlet.blogs.model.BlogsEntry;
 import com.liferay.portlet.blogs.service.BlogsEntryLocalServiceUtil;
 import com.liferay.portlet.blogs.service.permission.BlogsEntryPermission;
+import com.liferay.portlet.blogs.service.persistence.BlogsEntryActionableDynamicQuery;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Date;
 import java.util.Locale;
 
 import javax.portlet.PortletURL;
@@ -54,14 +57,29 @@ public class BlogsIndexer extends BaseIndexer {
 
 	public static final String PORTLET_ID = PortletKeys.BLOGS;
 
+	public BlogsIndexer() {
+		setPermissionAware(true);
+	}
+
+	@Override
+	public void addRelatedEntryFields(Document document, Object obj) {
+		document.addKeyword(Field.RELATED_ENTRY, true);
+	}
+
+	@Override
 	public String[] getClassNames() {
 		return CLASS_NAMES;
 	}
 
 	@Override
+	public String getPortletId() {
+		return PORTLET_ID;
+	}
+
+	@Override
 	public boolean hasPermission(
-			PermissionChecker permissionChecker, long entryClassPK,
-			String actionId)
+			PermissionChecker permissionChecker, String entryClassName,
+			long entryClassPK, String actionId)
 		throws Exception {
 
 		return BlogsEntryPermission.contains(
@@ -69,34 +87,18 @@ public class BlogsIndexer extends BaseIndexer {
 	}
 
 	@Override
-	public boolean isFilterSearch() {
-		return _FILTER_SEARCH;
-	}
-
-	@Override
 	public void postProcessContextQuery(
 			BooleanQuery contextQuery, SearchContext searchContext)
 		throws Exception {
 
-		int status = GetterUtil.getInteger(
-			searchContext.getAttribute(Field.STATUS),
-			WorkflowConstants.STATUS_ANY);
-
-		if (status != WorkflowConstants.STATUS_ANY) {
-			contextQuery.addRequiredTerm(Field.STATUS, status);
-		}
+		addStatus(contextQuery, searchContext);
 	}
 
 	@Override
 	protected void doDelete(Object obj) throws Exception {
 		BlogsEntry entry = (BlogsEntry)obj;
 
-		Document document = new DocumentImpl();
-
-		document.addUID(PORTLET_ID, entry.getEntryId());
-
-		SearchEngineUtil.deleteDocument(
-			entry.getCompanyId(), document.get(Field.UID));
+		deleteDocument(entry.getCompanyId(), entry.getEntryId());
 	}
 
 	@Override
@@ -107,7 +109,8 @@ public class BlogsIndexer extends BaseIndexer {
 
 		document.addText(
 			Field.CONTENT, HtmlUtil.extractText(entry.getContent()));
-		document.addDate(Field.MODIFIED_DATE, entry.getDisplayDate());
+		document.addText(Field.DESCRIPTION, entry.getDescription());
+		document.addDate(Field.MODIFIED_DATE, entry.getModifiedDate());
 		document.addText(Field.TITLE, entry.getTitle());
 
 		return document;
@@ -118,33 +121,31 @@ public class BlogsIndexer extends BaseIndexer {
 		Document document, Locale locale, String snippet,
 		PortletURL portletURL) {
 
-		String title = document.get(Field.TITLE);
-
-		String content = snippet;
-
-		if (Validator.isNull(snippet)) {
-			content = StringUtil.shorten(document.get(Field.CONTENT), 200);
-		}
-
 		String entryId = document.get(Field.ENTRY_CLASS_PK);
 
 		portletURL.setParameter("struts_action", "/blogs/view_entry");
 		portletURL.setParameter("entryId", entryId);
 
-		return new Summary(title, content, portletURL);
+		Summary summary = createSummary(document);
+
+		summary.setMaxContentLength(200);
+		summary.setPortletURL(portletURL);
+
+		return summary;
 	}
 
 	@Override
 	protected void doReindex(Object obj) throws Exception {
 		BlogsEntry entry = (BlogsEntry)obj;
 
-		if (!entry.isApproved()) {
+		if (!entry.isApproved() && !entry.isInTrash()) {
 			return;
 		}
 
 		Document document = getDocument(entry);
 
-		SearchEngineUtil.updateDocument(entry.getCompanyId(), document);
+		SearchEngineUtil.updateDocument(
+			getSearchEngineId(), entry.getCompanyId(), document);
 	}
 
 	@Override
@@ -166,41 +167,48 @@ public class BlogsIndexer extends BaseIndexer {
 		return PORTLET_ID;
 	}
 
-	protected void reindexEntries(long companyId) throws Exception {
-		int count = BlogsEntryLocalServiceUtil.getCompanyEntriesCount(
-			companyId, WorkflowConstants.STATUS_APPROVED);
+	protected void reindexEntries(long companyId)
+		throws PortalException, SystemException {
 
-		int pages = count / Indexer.DEFAULT_INTERVAL;
+		final Collection<Document> documents = new ArrayList<Document>();
 
-		for (int i = 0; i <= pages; i++) {
-			int start = (i * Indexer.DEFAULT_INTERVAL);
-			int end = start + Indexer.DEFAULT_INTERVAL;
+		ActionableDynamicQuery actionableDynamicQuery =
+			new BlogsEntryActionableDynamicQuery() {
 
-			reindexEntries(companyId, start, end);
-		}
+			@Override
+			protected void addCriteria(DynamicQuery dynamicQuery) {
+				Property displayDateProperty = PropertyFactoryUtil.forName(
+					"displayDate");
+
+				dynamicQuery.add(displayDateProperty.lt(new Date()));
+
+				Property statusProperty = PropertyFactoryUtil.forName("status");
+
+				Integer[] statuses = {
+					WorkflowConstants.STATUS_APPROVED,
+					WorkflowConstants.STATUS_IN_TRASH
+				};
+
+				dynamicQuery.add(statusProperty.in(statuses));
+			}
+
+			@Override
+			protected void performAction(Object object) throws PortalException {
+				BlogsEntry entry = (BlogsEntry)object;
+
+				Document document = getDocument(entry);
+
+				documents.add(document);
+			}
+
+		};
+
+		actionableDynamicQuery.setCompanyId(companyId);
+
+		actionableDynamicQuery.performActions();
+
+		SearchEngineUtil.updateDocuments(
+			getSearchEngineId(), companyId, documents);
 	}
-
-	protected void reindexEntries(long companyId, int start, int end)
-		throws Exception {
-
-		List<BlogsEntry> entries = BlogsEntryLocalServiceUtil.getCompanyEntries(
-			companyId, WorkflowConstants.STATUS_APPROVED, start, end);
-
-		if (entries.isEmpty()) {
-			return;
-		}
-
-		Collection<Document> documents = new ArrayList<Document>();
-
-		for (BlogsEntry entry : entries) {
-			Document document = getDocument(entry);
-
-			documents.add(document);
-		}
-
-		SearchEngineUtil.updateDocuments(companyId, documents);
-	}
-
-	private static final boolean _FILTER_SEARCH = true;
 
 }

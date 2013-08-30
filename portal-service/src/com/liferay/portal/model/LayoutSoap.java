@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,8 +23,8 @@ import java.util.List;
 /**
  * This class is used by SOAP remote services, specifically {@link com.liferay.portal.service.http.LayoutServiceSoap}.
  *
- * @author    Brian Wing Shun Chan
- * @see       com.liferay.portal.service.http.LayoutServiceSoap
+ * @author Brian Wing Shun Chan
+ * @see com.liferay.portal.service.http.LayoutServiceSoap
  * @generated
  */
 public class LayoutSoap implements Serializable {
@@ -35,6 +35,8 @@ public class LayoutSoap implements Serializable {
 		soapModel.setPlid(model.getPlid());
 		soapModel.setGroupId(model.getGroupId());
 		soapModel.setCompanyId(model.getCompanyId());
+		soapModel.setUserId(model.getUserId());
+		soapModel.setUserName(model.getUserName());
 		soapModel.setCreateDate(model.getCreateDate());
 		soapModel.setModifiedDate(model.getModifiedDate());
 		soapModel.setPrivateLayout(model.getPrivateLayout());
@@ -59,6 +61,7 @@ public class LayoutSoap implements Serializable {
 		soapModel.setPriority(model.getPriority());
 		soapModel.setLayoutPrototypeUuid(model.getLayoutPrototypeUuid());
 		soapModel.setLayoutPrototypeLinkEnabled(model.getLayoutPrototypeLinkEnabled());
+		soapModel.setSourcePrototypeLayoutUuid(model.getSourcePrototypeLayoutUuid());
 
 		return soapModel;
 	}
@@ -141,6 +144,22 @@ public class LayoutSoap implements Serializable {
 
 	public void setCompanyId(long companyId) {
 		_companyId = companyId;
+	}
+
+	public long getUserId() {
+		return _userId;
+	}
+
+	public void setUserId(long userId) {
+		_userId = userId;
+	}
+
+	public String getUserName() {
+		return _userName;
+	}
+
+	public void setUserName(String userName) {
+		_userName = userName;
 	}
 
 	public Date getCreateDate() {
@@ -352,10 +371,20 @@ public class LayoutSoap implements Serializable {
 		_layoutPrototypeLinkEnabled = layoutPrototypeLinkEnabled;
 	}
 
+	public String getSourcePrototypeLayoutUuid() {
+		return _sourcePrototypeLayoutUuid;
+	}
+
+	public void setSourcePrototypeLayoutUuid(String sourcePrototypeLayoutUuid) {
+		_sourcePrototypeLayoutUuid = sourcePrototypeLayoutUuid;
+	}
+
 	private String _uuid;
 	private long _plid;
 	private long _groupId;
 	private long _companyId;
+	private long _userId;
+	private String _userName;
 	private Date _createDate;
 	private Date _modifiedDate;
 	private boolean _privateLayout;
@@ -380,4 +409,5 @@ public class LayoutSoap implements Serializable {
 	private int _priority;
 	private String _layoutPrototypeUuid;
 	private boolean _layoutPrototypeLinkEnabled;
+	private String _sourcePrototypeLayoutUuid;
 }

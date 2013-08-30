@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,12 +14,15 @@
 
 package com.liferay.portal.spring.aop;
 
+import com.liferay.portal.kernel.annotation.AnnotationLocator;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.aopalliance.intercept.MethodInvocation;
@@ -31,25 +34,21 @@ import org.aopalliance.intercept.MethodInvocation;
 public abstract class AnnotationChainableMethodAdvice<T extends Annotation>
 	extends ChainableMethodAdvice {
 
-	public static void registerAnnotationType(
-		Class<? extends Annotation> annotationType) {
-
-		_annotationTypes.add(annotationType);
-	}
-
 	public AnnotationChainableMethodAdvice() {
 		_nullAnnotation = getNullAnnotation();
 
-		_annotationType = _nullAnnotation.annotationType();
+		_annotationClass = _nullAnnotation.annotationType();
+	}
 
-		_annotationTypes.add(_annotationType);
+	public Class<? extends Annotation> getAnnotationClass() {
+		return _annotationClass;
 	}
 
 	public abstract T getNullAnnotation();
 
 	protected T findAnnotation(MethodInvocation methodInvocation) {
-		Annotation annotation = ServiceMethodAnnotationCache.get(
-			methodInvocation, _annotationType, _nullAnnotation);
+		Annotation annotation = ServiceBeanAopCacheManager.getAnnotation(
+			methodInvocation, _annotationClass, _nullAnnotation);
 
 		if (annotation != null) {
 			return (T)annotation;
@@ -61,56 +60,87 @@ public abstract class AnnotationChainableMethodAdvice<T extends Annotation>
 
 		Method method = methodInvocation.getMethod();
 
-		Method targetMethod = null;
+		List<Annotation> annotations = AnnotationLocator.locate(
+			method, targetClass);
 
-		try {
-			targetMethod = targetClass.getDeclaredMethod(
-				method.getName(), method.getParameterTypes());
-		}
-		catch (Throwable t) {
-		}
+		Iterator<Annotation> iterator = annotations.iterator();
 
-		Annotation[] annotations = null;
+		while (iterator.hasNext()) {
+			Annotation curAnnotation = iterator.next();
 
-		if (targetMethod != null) {
-			annotations = targetMethod.getAnnotations();
-		}
+			if (!serviceBeanAopCacheManager.isRegisteredAnnotationClass(
+					curAnnotation.annotationType())) {
 
-		if ((annotations == null) || (annotations.length == 0)) {
-			annotations = method.getAnnotations();
-		}
-
-		if ((annotations != null) && (annotations.length > 0)) {
-			List<Annotation> filteredAnnotations = new ArrayList<Annotation>(
-							annotations.length);
-
-			for (Annotation curAnnotation : annotations) {
-				if (_annotationTypes.contains(
-						curAnnotation.annotationType())) {
-
-					filteredAnnotations.add(curAnnotation);
-				}
+				iterator.remove();
 			}
-
-			annotations = filteredAnnotations.toArray(
-				new Annotation[filteredAnnotations.size()]);
 		}
 
-		ServiceMethodAnnotationCache.put(methodInvocation, annotations);
+		ServiceBeanAopCacheManager.putAnnotations(
+			methodInvocation,
+			annotations.toArray(new Annotation[annotations.size()]));
+
+		Set<Class<? extends Annotation>> annotationClasses =
+			new HashSet<Class<? extends Annotation>>();
+
+		annotation = _nullAnnotation;
 
 		for (Annotation curAnnotation : annotations) {
-			if (curAnnotation.annotationType() == _annotationType) {
-				return (T)curAnnotation;
+			Class<? extends Annotation> annotationClass =
+				curAnnotation.annotationType();
+
+			if (annotationClass == _annotationClass) {
+				annotation = curAnnotation;
+			}
+
+			annotationClasses.add(annotationClass);
+		}
+
+		Map<Class<? extends Annotation>, AnnotationChainableMethodAdvice<?>[]>
+			annotationChainableMethodAdvices =
+				serviceBeanAopCacheManager.
+					getRegisteredAnnotationChainableMethodAdvices();
+
+		for (Map.Entry<Class<? extends Annotation>,
+				AnnotationChainableMethodAdvice<?>[]> entry :
+					annotationChainableMethodAdvices.entrySet()) {
+
+			Class<? extends Annotation> annotationClass = entry.getKey();
+			AnnotationChainableMethodAdvice<?>[]
+				annotationChainableMethodAdvicesArray = entry.getValue();
+
+			if (annotationClasses.contains(annotationClass) ||
+				(annotationChainableMethodAdvicesArray == null)) {
+
+				continue;
+			}
+
+			for (AnnotationChainableMethodAdvice<?>
+					annotationChainableMethodAdvice :
+						annotationChainableMethodAdvicesArray) {
+
+				serviceBeanAopCacheManager.removeMethodInterceptor(
+					methodInvocation, annotationChainableMethodAdvice);
 			}
 		}
 
-		return _nullAnnotation;
+		return (T)annotation;
 	}
 
-	private static Set<Class<? extends Annotation>> _annotationTypes =
-		new HashSet<Class<? extends Annotation>>();
+	@Override
+	protected void setServiceBeanAopCacheManager(
+		ServiceBeanAopCacheManager serviceBeanAopCacheManager) {
 
-	private Class<? extends Annotation> _annotationType;
+		if (this.serviceBeanAopCacheManager != null) {
+			return;
+		}
+
+		this.serviceBeanAopCacheManager = serviceBeanAopCacheManager;
+
+		serviceBeanAopCacheManager.registerAnnotationChainableMethodAdvice(
+			_annotationClass, this);
+	}
+
+	private Class<? extends Annotation> _annotationClass;
 	private T _nullAnnotation;
 
 }

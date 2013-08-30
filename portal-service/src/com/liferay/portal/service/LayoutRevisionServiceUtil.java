@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,15 +15,15 @@
 package com.liferay.portal.service;
 
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
-import com.liferay.portal.kernel.util.MethodCache;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the layout revision remote service. This utility wraps {@link com.liferay.portal.service.impl.LayoutRevisionServiceImpl} and is the primary access point for service operations in application layer code running on a remote server.
- *
- * <p>
- * This is a remote service. Methods of this service are expected to have security checks based on the propagated JAAS credentials because this service can be accessed remotely.
- * </p>
+ * Provides the remote service utility for LayoutRevision. This utility wraps
+ * {@link com.liferay.portal.service.impl.LayoutRevisionServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on a remote server. Methods of this service are expected to have security
+ * checks based on the propagated JAAS credentials because this service can be
+ * accessed remotely.
  *
  * @author Brian Wing Shun Chan
  * @see LayoutRevisionService
@@ -37,10 +37,30 @@ public class LayoutRevisionServiceUtil {
 	 *
 	 * Never modify this class directly. Add custom service methods to {@link com.liferay.portal.service.impl.LayoutRevisionServiceImpl} and rerun ServiceBuilder to regenerate this class.
 	 */
+
+	/**
+	* Returns the Spring bean ID for this bean.
+	*
+	* @return the Spring bean ID for this bean
+	*/
+	public static java.lang.String getBeanIdentifier() {
+		return getService().getBeanIdentifier();
+	}
+
+	/**
+	* Sets the Spring bean ID for this bean.
+	*
+	* @param beanIdentifier the Spring bean ID for this bean
+	*/
+	public static void setBeanIdentifier(java.lang.String beanIdentifier) {
+		getService().setBeanIdentifier(beanIdentifier);
+	}
+
 	public static com.liferay.portal.model.LayoutRevision addLayoutRevision(
 		long userId, long layoutSetBranchId, long layoutBranchId,
 		long parentLayoutRevisionId, boolean head, long plid,
-		boolean privateLayout, java.lang.String name, java.lang.String title,
+		long portletPreferencesPlid, boolean privateLayout,
+		java.lang.String name, java.lang.String title,
 		java.lang.String description, java.lang.String keywords,
 		java.lang.String robots, java.lang.String typeSettings,
 		boolean iconImage, long iconImageId, java.lang.String themeId,
@@ -51,10 +71,10 @@ public class LayoutRevisionServiceUtil {
 			com.liferay.portal.kernel.exception.SystemException {
 		return getService()
 				   .addLayoutRevision(userId, layoutSetBranchId,
-			layoutBranchId, parentLayoutRevisionId, head, plid, privateLayout,
-			name, title, description, keywords, robots, typeSettings,
-			iconImage, iconImageId, themeId, colorSchemeId, wapThemeId,
-			wapColorSchemeId, css, serviceContext);
+			layoutBranchId, parentLayoutRevisionId, head, plid,
+			portletPreferencesPlid, privateLayout, name, title, description,
+			keywords, robots, typeSettings, iconImage, iconImageId, themeId,
+			colorSchemeId, wapThemeId, wapColorSchemeId, css, serviceContext);
 	}
 
 	public static LayoutRevisionService getService() {
@@ -63,20 +83,15 @@ public class LayoutRevisionServiceUtil {
 
 			ReferenceRegistry.registerReference(LayoutRevisionServiceUtil.class,
 				"_service");
-			MethodCache.remove(LayoutRevisionService.class);
 		}
 
 		return _service;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setService(LayoutRevisionService service) {
-		MethodCache.remove(LayoutRevisionService.class);
-
-		_service = service;
-
-		ReferenceRegistry.registerReference(LayoutRevisionServiceUtil.class,
-			"_service");
-		MethodCache.remove(LayoutRevisionService.class);
 	}
 
 	private static LayoutRevisionService _service;

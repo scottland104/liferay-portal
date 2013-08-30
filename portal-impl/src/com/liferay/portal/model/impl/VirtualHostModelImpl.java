@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portal.model.impl;
 
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -28,9 +29,10 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the VirtualHost service. Represents a row in the &quot;VirtualHost&quot; database table, with each column mapped to a property of this class.
@@ -61,6 +63,8 @@ public class VirtualHostModelImpl extends BaseModelImpl<VirtualHost>
 		};
 	public static final String TABLE_SQL_CREATE = "create table VirtualHost (virtualHostId LONG not null primary key,companyId LONG,layoutSetId LONG,hostname VARCHAR(75) null)";
 	public static final String TABLE_SQL_DROP = "drop table VirtualHost";
+	public static final String ORDER_BY_JPQL = " ORDER BY virtualHost.virtualHostId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY VirtualHost.virtualHostId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -70,50 +74,107 @@ public class VirtualHostModelImpl extends BaseModelImpl<VirtualHost>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.VirtualHost"),
 			true);
-
-	public Class<?> getModelClass() {
-		return VirtualHost.class;
-	}
-
-	public String getModelClassName() {
-		return VirtualHost.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.VirtualHost"),
+			true);
+	public static long COMPANYID_COLUMN_BITMASK = 1L;
+	public static long HOSTNAME_COLUMN_BITMASK = 2L;
+	public static long LAYOUTSETID_COLUMN_BITMASK = 4L;
+	public static long VIRTUALHOSTID_COLUMN_BITMASK = 8L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.VirtualHost"));
 
 	public VirtualHostModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _virtualHostId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setVirtualHostId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_virtualHostId);
+		return _virtualHostId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return VirtualHost.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return VirtualHost.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("virtualHostId", getVirtualHostId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("layoutSetId", getLayoutSetId());
+		attributes.put("hostname", getHostname());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long virtualHostId = (Long)attributes.get("virtualHostId");
+
+		if (virtualHostId != null) {
+			setVirtualHostId(virtualHostId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long layoutSetId = (Long)attributes.get("layoutSetId");
+
+		if (layoutSetId != null) {
+			setLayoutSetId(layoutSetId);
+		}
+
+		String hostname = (String)attributes.get("hostname");
+
+		if (hostname != null) {
+			setHostname(hostname);
+		}
+	}
+
+	@Override
 	public long getVirtualHostId() {
 		return _virtualHostId;
 	}
 
+	@Override
 	public void setVirtualHostId(long virtualHostId) {
 		_virtualHostId = virtualHostId;
 	}
 
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
+		_columnBitmask |= COMPANYID_COLUMN_BITMASK;
+
 		if (!_setOriginalCompanyId) {
 			_setOriginalCompanyId = true;
 
@@ -127,11 +188,15 @@ public class VirtualHostModelImpl extends BaseModelImpl<VirtualHost>
 		return _originalCompanyId;
 	}
 
+	@Override
 	public long getLayoutSetId() {
 		return _layoutSetId;
 	}
 
+	@Override
 	public void setLayoutSetId(long layoutSetId) {
+		_columnBitmask |= LAYOUTSETID_COLUMN_BITMASK;
+
 		if (!_setOriginalLayoutSetId) {
 			_setOriginalLayoutSetId = true;
 
@@ -145,6 +210,7 @@ public class VirtualHostModelImpl extends BaseModelImpl<VirtualHost>
 		return _originalLayoutSetId;
 	}
 
+	@Override
 	public String getHostname() {
 		if (_hostname == null) {
 			return StringPool.BLANK;
@@ -154,7 +220,10 @@ public class VirtualHostModelImpl extends BaseModelImpl<VirtualHost>
 		}
 	}
 
+	@Override
 	public void setHostname(String hostname) {
+		_columnBitmask |= HOSTNAME_COLUMN_BITMASK;
+
 		if (_originalHostname == null) {
 			_originalHostname = _hostname;
 		}
@@ -166,35 +235,31 @@ public class VirtualHostModelImpl extends BaseModelImpl<VirtualHost>
 		return GetterUtil.getString(_originalHostname);
 	}
 
-	@Override
-	public VirtualHost toEscapedModel() {
-		if (isEscapedModel()) {
-			return (VirtualHost)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (VirtualHost)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					VirtualHost.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			VirtualHost.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public VirtualHost toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (VirtualHost)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -211,6 +276,7 @@ public class VirtualHostModelImpl extends BaseModelImpl<VirtualHost>
 		return virtualHostImpl;
 	}
 
+	@Override
 	public int compareTo(VirtualHost virtualHost) {
 		long primaryKey = virtualHost.getPrimaryKey();
 
@@ -227,18 +293,15 @@ public class VirtualHostModelImpl extends BaseModelImpl<VirtualHost>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof VirtualHost)) {
 			return false;
 		}
 
-		VirtualHost virtualHost = null;
-
-		try {
-			virtualHost = (VirtualHost)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		VirtualHost virtualHost = (VirtualHost)obj;
 
 		long primaryKey = virtualHost.getPrimaryKey();
 
@@ -268,6 +331,8 @@ public class VirtualHostModelImpl extends BaseModelImpl<VirtualHost>
 		virtualHostModelImpl._setOriginalLayoutSetId = false;
 
 		virtualHostModelImpl._originalHostname = virtualHostModelImpl._hostname;
+
+		virtualHostModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -308,6 +373,7 @@ public class VirtualHostModelImpl extends BaseModelImpl<VirtualHost>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(16);
 
@@ -338,7 +404,7 @@ public class VirtualHostModelImpl extends BaseModelImpl<VirtualHost>
 	}
 
 	private static ClassLoader _classLoader = VirtualHost.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			VirtualHost.class
 		};
 	private long _virtualHostId;
@@ -350,6 +416,6 @@ public class VirtualHostModelImpl extends BaseModelImpl<VirtualHost>
 	private boolean _setOriginalLayoutSetId;
 	private String _hostname;
 	private String _originalHostname;
-	private transient ExpandoBridge _expandoBridge;
-	private VirtualHost _escapedModelProxy;
+	private long _columnBitmask;
+	private VirtualHost _escapedModel;
 }

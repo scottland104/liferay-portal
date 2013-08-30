@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -36,18 +36,14 @@ decimalFormat.setMinimumFractionDigits(2);
 
 <input type="submit" value="<liferay-ui:message key="convert" />" />
 
-<input name="<portlet:namespace />number" size="3" type="text" value="<%= number %>" />
+<input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" name="<portlet:namespace />number" size="3" type="text" value="<%= number %>" />
 
 <select name="<portlet:namespace />from">
 
 	<%
-	Iterator itr = allSymbols.entrySet().iterator();
-
-	while (itr.hasNext()) {
-		Map.Entry entry = (Map.Entry)itr.next();
-
-		String symbol = (String)entry.getValue();
-		String currencyValue = (String)entry.getKey();
+	for (Map.Entry<String, String> entry : allSymbols.entrySet()) {
+		String symbol = entry.getValue();
+		String currencyValue = entry.getKey();
 	%>
 
 		<option <%= symbol.equals(from) ? "selected" : "" %> value="<%= symbol %>"><%= currencyValue %></option value>
@@ -63,13 +59,9 @@ decimalFormat.setMinimumFractionDigits(2);
 <select name="<portlet:namespace />to">
 
 	<%
-	itr = allSymbols.entrySet().iterator();
-
-	while (itr.hasNext()) {
-		Map.Entry entry = (Map.Entry)itr.next();
-
-		String symbol = (String)entry.getValue();
-		String currencyValue = (String)entry.getKey();
+	for (Map.Entry<String, String> entry : allSymbols.entrySet()) {
+		String symbol = entry.getValue();
+		String currencyValue = entry.getKey();
 	%>
 
 		<option <%= symbol.equals(to) ? "selected" : "" %> value="<%= symbol %>"><%= currencyValue %></option value>
@@ -84,27 +76,31 @@ decimalFormat.setMinimumFractionDigits(2);
 
 <c:choose>
 	<c:when test="<%= windowState.equals(WindowState.NORMAL) %>">
-		<table border="1" cellpadding="3" cellspacing="0" width="100%">
-		<tr class="portlet-section-header results-header">
-			<td>
+		<table class="table table-bordered table-hover table-striped">
+		<thead class="table-columns">
+		<tr>
+			<th class="table-header">
 				<strong><liferay-ui:message key="currency" /></strong>
-			</td>
+			</th>
 
 			<%
 			for (int i = 0; i < symbols.length; i++) {
 				String symbol = symbols[i];
 			%>
 
-				<td class="lfr-top">
+				<th class="table-header">
 					<liferay-ui:message key='<%= "currency." + symbol %>' /><br />
 					(<%= symbol %>)
-				</td>
+				</th>
 
 			<%
 			}
 			%>
 
 		</tr>
+		</thead>
+
+		<tbody class="table-data">
 
 		<%
 		for (int i = 0; i < symbols.length; i++) {
@@ -112,7 +108,7 @@ decimalFormat.setMinimumFractionDigits(2);
 		%>
 
 			<tr>
-				<td class="portlet-section-header results-header">
+				<td class="table-cell">
 					<%= symbol %>
 				</td>
 
@@ -126,11 +122,11 @@ decimalFormat.setMinimumFractionDigits(2);
 		%>
 
 						<c:if test="<%= i != j %>">
-							<td class="portlet-section-body results-row"><%= currency.getRate() %></td>
+							<td class="table-cell"><%= currency.getRate() %></td>
 						</c:if>
 
 						<c:if test="<%= i == j %>">
-							<td class="portlet-section-body results-row">1</td>
+							<td class="table-cell">1</td>
 						</c:if>
 
 		<%
@@ -144,6 +140,7 @@ decimalFormat.setMinimumFractionDigits(2);
 		}
 		%>
 
+		</tbody>
 		</table>
 	</c:when>
 	<c:otherwise>
@@ -189,7 +186,7 @@ decimalFormat.setMinimumFractionDigits(2);
 		<table border="1" cellpadding="2" cellspacing="0">
 		<tr>
 			<td>
-				<img height="288" src="http://ichart.yahoo.com/z?s=<%= currency.getSymbol() %>=X&t=<%= chartId %>?" width="512" />
+				<img height="288" src="http://ichart.yahoo.com/z?s=<%= currency.getSymbol() %>=X&t=<%= HtmlUtil.escape(chartId) %>?" width="512" />
 			</td>
 		</tr>
 		</table>
@@ -197,9 +194,3 @@ decimalFormat.setMinimumFractionDigits(2);
 </c:choose>
 
 </form>
-
-<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-	<aui:script>
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />number);
-	</aui:script>
-</c:if>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,13 +26,18 @@ import com.liferay.portal.kernel.deploy.hot.HotDeployException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.plugin.PluginPackage;
-import com.liferay.portal.kernel.servlet.PortletServlet;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
+import com.liferay.portal.kernel.util.AggregateClassLoader;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.plugin.PluginPackageUtil;
 import com.liferay.portal.service.ServiceComponentLocalServiceUtil;
+import com.liferay.portal.util.ClassLoaderUtil;
+import com.liferay.util.log4j.Log4JUtil;
+import com.liferay.util.portlet.PortletProps;
+
+import java.lang.reflect.Method;
 
 import java.net.URL;
 
@@ -48,22 +53,29 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 	public static final String SERVICE_BUILDER_PROPERTIES =
 		"SERVICE_BUILDER_PROPERTIES";
 
-	public void invokeDeploy(HotDeployEvent event) throws HotDeployException {
-		try {
-			doInvokeDeploy(event);
-		}
-		catch (Throwable t) {
-			throwHotDeployException(event, "Error registering plugins for ", t);
-		}
-	}
+	@Override
+	public void invokeDeploy(HotDeployEvent hotDeployEvent)
+		throws HotDeployException {
 
-	public void invokeUndeploy(HotDeployEvent event) throws HotDeployException {
 		try {
-			doInvokeUndeploy(event);
+			doInvokeDeploy(hotDeployEvent);
 		}
 		catch (Throwable t) {
 			throwHotDeployException(
-				event, "Error unregistering plugins for ", t);
+				hotDeployEvent, "Error registering plugins for ", t);
+		}
+	}
+
+	@Override
+	public void invokeUndeploy(HotDeployEvent hotDeployEvent)
+		throws HotDeployException {
+
+		try {
+			doInvokeUndeploy(hotDeployEvent);
+		}
+		catch (Throwable t) {
+			throwHotDeployException(
+				hotDeployEvent, "Error unregistering plugins for ", t);
 		}
 	}
 
@@ -75,19 +87,15 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 			servletContext, classLoader);
 	}
 
-	protected void doInvokeDeploy(HotDeployEvent event) throws Exception {
-		ServletContext servletContext = event.getServletContext();
+	protected void doInvokeDeploy(HotDeployEvent hotDeployEvent)
+		throws Exception {
+
+		ServletContext servletContext = hotDeployEvent.getServletContext();
 
 		String servletContextName = servletContext.getServletContextName();
 
 		if (_log.isDebugEnabled()) {
 			_log.debug("Invoking deploy for " + servletContextName);
-		}
-
-		if (servletContext.getResource(
-				"/WEB-INF/liferay-theme-loader.xml") != null) {
-
-			return;
 		}
 
 		PluginPackage pluginPackage =
@@ -97,24 +105,29 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 			return;
 		}
 
+		if (servletContext.getResource(
+				"/WEB-INF/liferay-theme-loader.xml") != null) {
+
+			PluginPackageUtil.registerInstalledPluginPackage(pluginPackage);
+
+			return;
+		}
+
 		pluginPackage.setContext(servletContextName);
 
-		event.setPluginPackage(pluginPackage);
+		hotDeployEvent.setPluginPackage(pluginPackage);
 
 		PluginPackageUtil.registerInstalledPluginPackage(pluginPackage);
 
-		ClassLoader portletClassLoader = event.getContextClassLoader();
+		ClassLoader classLoader = hotDeployEvent.getContextClassLoader();
 
-		servletContext.setAttribute(
-			PortletServlet.PORTLET_CLASS_LOADER, portletClassLoader);
+		initLogger(classLoader);
+		initPortletProps(classLoader);
+		initServiceComponent(servletContext, classLoader);
 
-		ServletContextPool.put(servletContextName, servletContext);
+		registerClpMessageListeners(servletContext, classLoader);
 
-		initServiceComponent(servletContext, portletClassLoader);
-
-		registerClpMessageListeners(servletContext, portletClassLoader);
-
-		reconfigureCaches(portletClassLoader);
+		reconfigureCaches(classLoader);
 
 		if (_log.isInfoEnabled()) {
 			_log.info(
@@ -123,8 +136,10 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 		}
 	}
 
-	protected void doInvokeUndeploy(HotDeployEvent event) throws Exception {
-		ServletContext servletContext = event.getServletContext();
+	protected void doInvokeUndeploy(HotDeployEvent hotDeployEvent)
+		throws Exception {
+
+		ServletContext servletContext = hotDeployEvent.getServletContext();
 
 		String servletContextName = servletContext.getServletContextName();
 
@@ -139,13 +154,14 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 			return;
 		}
 
-		event.setPluginPackage(pluginPackage);
+		hotDeployEvent.setPluginPackage(pluginPackage);
 
 		PluginPackageUtil.unregisterInstalledPluginPackage(pluginPackage);
 
 		ServletContextPool.remove(servletContextName);
 
-		destroyServiceComponent(servletContext, event.getContextClassLoader());
+		destroyServiceComponent(
+			servletContext, hotDeployEvent.getContextClassLoader());
 
 		unregisterClpMessageListeners(servletContext);
 
@@ -154,6 +170,23 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 				"Plugin package " + pluginPackage.getModuleId() +
 					" unregistered successfully");
 		}
+	}
+
+	protected void initLogger(ClassLoader classLoader) {
+		Log4JUtil.configureLog4J(
+			classLoader.getResource("META-INF/portal-log4j.xml"));
+	}
+
+	protected void initPortletProps(ClassLoader classLoader) throws Exception {
+		if (classLoader.getResourceAsStream("portlet.properties") == null) {
+			return;
+		}
+
+		Class<?> clazz = classLoader.loadClass(PortletProps.class.getName());
+
+		Method method = clazz.getMethod("get", String.class);
+
+		method.invoke(null, "init");
 	}
 
 	protected void initServiceComponent(
@@ -206,8 +239,8 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 		}
 
 		ServiceComponentLocalServiceUtil.initServiceComponent(
-			servletContext, classLoader, buildNamespace, buildNumber,
-			buildDate, buildAutoUpgrade);
+			servletContext, classLoader, buildNamespace, buildNumber, buildDate,
+			buildAutoUpgrade);
 	}
 
 	protected void reconfigureCaches(ClassLoader classLoader) throws Exception {
@@ -245,8 +278,7 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 			portletPropertiesConfiguration.get(
 				PropsKeys.NET_SF_EHCACHE_CONFIGURATION_RESOURCE_NAME);
 
-		reconfigureHibernateCache(
-			classLoader, hibernateCacheConfigurationPath);
+		reconfigureHibernateCache(classLoader, hibernateCacheConfigurationPath);
 	}
 
 	protected void reconfigureCaches(
@@ -261,9 +293,24 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 		URL cacheConfigurationURL = classLoader.getResource(
 			cacheConfigurationPath);
 
-		if (cacheConfigurationURL != null) {
-			PortalCacheManager portalCacheManager =
-				(PortalCacheManager)PortalBeanLocatorUtil.locate(
+		if (cacheConfigurationURL == null) {
+			return;
+		}
+
+		ClassLoader aggregateClassLoader =
+			AggregateClassLoader.getAggregateClassLoader(
+				new ClassLoader[] {
+					ClassLoaderUtil.getPortalClassLoader(), classLoader
+				});
+
+		ClassLoader contextClassLoader =
+			ClassLoaderUtil.getContextClassLoader();
+
+		try {
+			ClassLoaderUtil.setContextClassLoader(aggregateClassLoader);
+
+			PortalCacheManager<?, ?> portalCacheManager =
+				(PortalCacheManager<?, ?>)PortalBeanLocatorUtil.locate(
 					portalCacheManagerBeanId);
 
 			if (_log.isInfoEnabled()) {
@@ -274,6 +321,9 @@ public class PluginPackageHotDeployListener extends BaseHotDeployListener {
 			}
 
 			portalCacheManager.reconfigureCaches(cacheConfigurationURL);
+		}
+		finally {
+			ClassLoaderUtil.setContextClassLoader(contextClassLoader);
 		}
 	}
 

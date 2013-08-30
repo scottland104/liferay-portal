@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,7 @@
 
 package com.liferay.portal.scheduler.quartz;
 
+import com.liferay.portal.dao.shard.ShardDataSourceTargetSource;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.InfrastructureUtil;
@@ -29,10 +30,19 @@ import org.quartz.utils.ConnectionProvider;
  */
 public class QuartzConnectionProvider implements ConnectionProvider {
 
+	@Override
 	public Connection getConnection() {
 		Connection con = null;
 
 		try {
+			ShardDataSourceTargetSource shardDataSourceTargetSource =
+				(ShardDataSourceTargetSource)
+					InfrastructureUtil.getShardDataSourceTargetSource();
+
+			if (shardDataSourceTargetSource != null) {
+				shardDataSourceTargetSource.resetDataSource();
+			}
+
 			DataSource dataSource = InfrastructureUtil.getDataSource();
 
 			con = dataSource.getConnection();
@@ -44,6 +54,7 @@ public class QuartzConnectionProvider implements ConnectionProvider {
 		return con;
 	}
 
+	@Override
 	public void shutdown() {
 	}
 

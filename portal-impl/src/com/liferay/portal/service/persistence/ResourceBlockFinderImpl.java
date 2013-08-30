@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,7 +25,7 @@ import com.liferay.portal.security.permission.ResourceBlockIdsBag;
 import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
 import com.liferay.util.dao.orm.CustomSQLUtil;
 
-import java.util.List;
+import java.util.Iterator;
 
 /**
  * @author Connor McKay
@@ -34,9 +34,10 @@ public class ResourceBlockFinderImpl
 	extends BasePersistenceImpl<ResourceBlock>
 	implements ResourceBlockFinder {
 
-	public static String FIND_BY_C_G_N_R =
+	public static final String FIND_BY_C_G_N_R =
 		ResourceBlockFinder.class.getName() + ".findByC_G_N_R";
 
+	@Override
 	public ResourceBlockIdsBag findByC_G_N_R(
 			long companyId, long groupId, String name, long[] roleIds)
 		throws SystemException {
@@ -49,7 +50,7 @@ public class ResourceBlockFinderImpl
 			String sql = CustomSQLUtil.get(FIND_BY_C_G_N_R);
 
 			sql = StringUtil.replace(
-				sql, "[$ROLE_IDS$]", StringUtil.merge(roleIds));
+				sql, "[$ROLE_ID$]", StringUtil.merge(roleIds));
 
 			SQLQuery q = session.createSQLQuery(sql);
 
@@ -64,9 +65,11 @@ public class ResourceBlockFinderImpl
 
 			ResourceBlockIdsBag resourceBlockIdsBag = new ResourceBlockIdsBag();
 
-			List<Object[]> list = q.list();
+			Iterator<Object[]> itr = q.iterate();
 
-			for (Object[] array : list) {
+			while (itr.hasNext()) {
+				Object[] array = itr.next();
+
 				Long resourceBlockId = (Long)array[0];
 				Long actionIdsLong = (Long)array[1];
 

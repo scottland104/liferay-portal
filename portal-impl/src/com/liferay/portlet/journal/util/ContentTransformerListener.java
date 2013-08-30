@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -35,38 +35,31 @@ import java.util.Map;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Tina Tian
  */
 public class ContentTransformerListener extends BaseTransformerListener {
 
 	@Override
-	public String onOutput(String s) {
-		if (_log.isDebugEnabled()) {
-			_log.debug("onOutput");
-		}
+	public String onScript(
+		String script, String xml, String languageId,
+		Map<String, String> tokens) {
 
-		return s;
-	}
-
-	@Override
-	public String onScript(String s) {
 		if (_log.isDebugEnabled()) {
 			_log.debug("onScript");
 		}
 
-		s = injectEditInPlace(_xml, s);
-
-		return s;
+		return injectEditInPlace(xml, script);
 	}
 
 	@Override
-	public String onXml(String s) {
+	public String onXml(
+		String xml, String languageId, Map<String, String> tokens) {
+
 		if (_log.isDebugEnabled()) {
 			_log.debug("onXml");
 		}
 
-		_xml = replace(s);
-
-		return _xml;
+		return replace(xml, tokens);
 	}
 
 	protected String getDynamicContent(String xml, String elementName) {
@@ -109,7 +102,7 @@ public class ContentTransformerListener extends BaseTransformerListener {
 				String type = GetterUtil.getString(
 					element.attributeValue("type"));
 
-				if ((!name.startsWith("reserved-")) &&
+				if (!name.startsWith("reserved-") &&
 					(type.equals("text") || type.equals("text_area") ||
 					 type.equals("text_box"))) {
 
@@ -126,10 +119,11 @@ public class ContentTransformerListener extends BaseTransformerListener {
 		return script;
 	}
 
-	protected void replace(Element root) throws Exception {
-		Map<String, String> tokens = getTokens();
+	protected void replace(Element root, Map<String, String> tokens)
+		throws Exception {
 
-		long groupId = GetterUtil.getLong(tokens.get("group_id"));
+		long articleGroupId = GetterUtil.getLong(
+			tokens.get("article_group_id"));
 
 		for (Element el : root.elements()) {
 			Element dynamicContent = el.element("dynamic-content");
@@ -143,7 +137,7 @@ public class ContentTransformerListener extends BaseTransformerListener {
 
 				// [@articleId;elementName@]
 
-				if (Validator.isNotNull(text) && text.length() >= 7 &&
+				if (Validator.isNotNull(text) && (text.length() >= 7) &&
 					text.startsWith("[@") && text.endsWith("@]")) {
 
 					text = text.substring(2, text.length() - 2);
@@ -152,12 +146,11 @@ public class ContentTransformerListener extends BaseTransformerListener {
 
 					if (pos != -1) {
 						String articleId = text.substring(0, pos);
-						String elementName =
-							text.substring(pos + 1, text.length());
+						String elementName = text.substring(pos + 1);
 
 						JournalArticle article =
 							JournalArticleLocalServiceUtil.getArticle(
-								groupId, articleId);
+								articleGroupId, articleId);
 
 						dynamicContent.clearContent();
 						dynamicContent.addCDATA(
@@ -169,13 +162,13 @@ public class ContentTransformerListener extends BaseTransformerListener {
 				// Make sure to point images to the full path
 
 				else if ((text != null) &&
-						 (text.startsWith("/image/journal/article?img_id"))) {
+						 text.startsWith("/image/journal/article?img_id")) {
 
 					dynamicContent.setText("@cdn_host@@root_path@" + text);
 				}
 			}
 
-			replace(el);
+			replace(el, tokens);
 		}
 	}
 
@@ -185,13 +178,13 @@ public class ContentTransformerListener extends BaseTransformerListener {
 	 *
 	 * @return the processed string
 	 */
-	protected String replace(String xml) {
+	protected String replace(String xml, Map<String, String> tokens) {
 		try {
 			Document document = SAXReaderUtil.read(xml);
 
 			Element rootElement = document.getRootElement();
 
-			replace(rootElement);
+			replace(rootElement, tokens);
 
 			xml = DDMXMLUtil.formatXML(document);
 		}
@@ -217,7 +210,5 @@ public class ContentTransformerListener extends BaseTransformerListener {
 
 	private static Log _log = LogFactoryUtil.getLog(
 		ContentTransformerListener.class);
-
-	private String _xml;
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -37,8 +37,8 @@ import java.util.Date;
  * @see com.liferay.portal.model.impl.AddressModelImpl
  * @generated
  */
-public interface AddressModel extends AttachedModel, AuditedModel,
-	BaseModel<Address> {
+public interface AddressModel extends AttachedModel, BaseModel<Address>,
+	StagedAuditedModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -60,6 +60,23 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	public void setPrimaryKey(long primaryKey);
 
 	/**
+	 * Returns the uuid of this address.
+	 *
+	 * @return the uuid of this address
+	 */
+	@AutoEscape
+	@Override
+	public String getUuid();
+
+	/**
+	 * Sets the uuid of this address.
+	 *
+	 * @param uuid the uuid of this address
+	 */
+	@Override
+	public void setUuid(String uuid);
+
+	/**
 	 * Returns the address ID of this address.
 	 *
 	 * @return the address ID of this address
@@ -78,6 +95,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 *
 	 * @return the company ID of this address
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -85,6 +103,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param companyId the company ID of this address
 	 */
+	@Override
 	public void setCompanyId(long companyId);
 
 	/**
@@ -92,6 +111,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 *
 	 * @return the user ID of this address
 	 */
+	@Override
 	public long getUserId();
 
 	/**
@@ -99,6 +119,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param userId the user ID of this address
 	 */
+	@Override
 	public void setUserId(long userId);
 
 	/**
@@ -107,6 +128,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 * @return the user uuid of this address
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getUserUuid() throws SystemException;
 
 	/**
@@ -114,6 +136,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param userUuid the user uuid of this address
 	 */
+	@Override
 	public void setUserUuid(String userUuid);
 
 	/**
@@ -122,6 +145,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 * @return the user name of this address
 	 */
 	@AutoEscape
+	@Override
 	public String getUserName();
 
 	/**
@@ -129,6 +153,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param userName the user name of this address
 	 */
+	@Override
 	public void setUserName(String userName);
 
 	/**
@@ -136,6 +161,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 *
 	 * @return the create date of this address
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -143,6 +169,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param createDate the create date of this address
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -150,6 +177,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 *
 	 * @return the modified date of this address
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -157,6 +185,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param modifiedDate the modified date of this address
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
@@ -164,13 +193,17 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 *
 	 * @return the fully qualified class name of this address
 	 */
+	@Override
 	public String getClassName();
+
+	public void setClassName(String className);
 
 	/**
 	 * Returns the class name ID of this address.
 	 *
 	 * @return the class name ID of this address
 	 */
+	@Override
 	public long getClassNameId();
 
 	/**
@@ -178,6 +211,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param classNameId the class name ID of this address
 	 */
+	@Override
 	public void setClassNameId(long classNameId);
 
 	/**
@@ -185,6 +219,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 *
 	 * @return the class p k of this address
 	 */
+	@Override
 	public long getClassPK();
 
 	/**
@@ -192,6 +227,7 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 *
 	 * @param classPK the class p k of this address
 	 */
+	@Override
 	public void setClassPK(long classPK);
 
 	/**
@@ -353,37 +389,60 @@ public interface AddressModel extends AttachedModel, AuditedModel,
 	 */
 	public void setPrimary(boolean primary);
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(Address address);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<Address> toCacheModel();
 
+	@Override
 	public Address toEscapedModel();
 
+	@Override
+	public Address toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

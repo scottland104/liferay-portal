@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.UserIdMapper;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing UserIdMapper in entity cache.
  *
@@ -26,7 +31,8 @@ import com.liferay.portal.model.UserIdMapper;
  * @see UserIdMapper
  * @generated
  */
-public class UserIdMapperCacheModel implements CacheModel<UserIdMapper> {
+public class UserIdMapperCacheModel implements CacheModel<UserIdMapper>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(11);
@@ -46,6 +52,7 @@ public class UserIdMapperCacheModel implements CacheModel<UserIdMapper> {
 		return sb.toString();
 	}
 
+	@Override
 	public UserIdMapper toEntityModel() {
 		UserIdMapperImpl userIdMapperImpl = new UserIdMapperImpl();
 
@@ -76,6 +83,43 @@ public class UserIdMapperCacheModel implements CacheModel<UserIdMapper> {
 		userIdMapperImpl.resetOriginalValues();
 
 		return userIdMapperImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		userIdMapperId = objectInput.readLong();
+		userId = objectInput.readLong();
+		type = objectInput.readUTF();
+		description = objectInput.readUTF();
+		externalUserId = objectInput.readUTF();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(userIdMapperId);
+		objectOutput.writeLong(userId);
+
+		if (type == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(type);
+		}
+
+		if (description == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(description);
+		}
+
+		if (externalUserId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(externalUserId);
+		}
 	}
 
 	public long userIdMapperId;

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,14 +25,10 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 %>
 
 <style type="text/css">
-	.portlet-flags .aui-form fieldset {
+	.portlet-flags .form fieldset {
 		border: none;
 		padding: 0;
 		width: 100%;
-	}
-
-	.portlet-flags .aui-form .aui-fieldset label {
-		font-weight: bold;
 	}
 </style>
 
@@ -59,7 +55,7 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 				<aui:option label="other" />
 			</aui:select>
 
-			<span class="aui-helper-hidden" id="<portlet:namespace />otherReasonContainer">
+			<span class="hide" id="<portlet:namespace />otherReasonContainer">
 				<aui:input name="otherReason" />
 			</span>
 
@@ -74,17 +70,17 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 	</aui:form>
 </div>
 
-<div class="aui-helper-hidden" id="<portlet:namespace />confirmation">
+<div class="hide" id="<portlet:namespace />confirmation">
 	<p><strong><liferay-ui:message key="thank-you-for-your-report" /></strong></p>
 
-	<p><%= LanguageUtil.format(pageContext, "although-we-cannot-disclose-our-final-decision,-we-do-review-every-report-and-appreciate-your-effort-to-make-sure-x-is-a-safe-environment-for-everyone", company.getName()) %></p>
+	<p><%= LanguageUtil.format(pageContext, "although-we-cannot-disclose-our-final-decision,-we-do-review-every-report-and-appreciate-your-effort-to-make-sure-x-is-a-safe-environment-for-everyone", HtmlUtil.escape(company.getName())) %></p>
 </div>
 
-<div class="aui-helper-hidden" id="<portlet:namespace />error">
+<div class="hide" id="<portlet:namespace />error">
 	<p><strong><liferay-ui:message key="an-error-occurred-while-sending-the-report.-please-try-again-in-a-few-minutes" /></strong></p>
 </div>
 
-<aui:script use="aui-dialog">
+<aui:script use="liferay-util-window">
 	function <portlet:namespace />flag() {
 		var reasonNode = A.one('#<portlet:namespace />reason');
 		var reason = (reasonNode && reasonNode.val()) || '';
@@ -92,7 +88,7 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 		if (reason == 'other') {
 			var otherReasonNode = A.one('#<portlet:namespace />otherReason');
 
-			reason = (otherReasonNode && otherReasonNode.val()) || '<liferay-ui:message key="no-reason-specified" />';
+			reason = (otherReasonNode && otherReasonNode.val()) || '<%= UnicodeLanguageUtil.get(pageContext, "no-reason-specified") %>';
 		}
 
 		var reporterEmailAddressNode = A.one('#<portlet:namespace />reporterEmailAddress');
@@ -106,7 +102,7 @@ long reportedUserId = ParamUtil.getLong(request, "reportedUserId");
 		var confirmationMessage = (confirmationMessageNode && confirmationMessageNode.html()) || '';
 
 		var setDialogContent = function(message) {
-			var dialog = A.DialogManager.findByChild(flagsPopupNode);
+			var dialog = Liferay.Util.Window.getByChild(flagsPopupNode);
 
 			dialog.setStdModContent('body', message);
 		};

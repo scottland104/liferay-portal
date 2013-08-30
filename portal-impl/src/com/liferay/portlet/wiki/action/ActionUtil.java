@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,7 +23,6 @@ import com.liferay.portal.model.Layout;
 import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextFactory;
-import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.WebKeys;
@@ -75,7 +74,7 @@ public class ActionUtil {
 			}
 
 			node = WikiNodeLocalServiceUtil.addDefaultNode(
-				themeDisplay.getUserId(), serviceContext);
+				themeDisplay.getDefaultUserId(), serviceContext);
 		}
 		else {
 			node = WikiUtil.getFirstNode(portletRequest);
@@ -101,8 +100,8 @@ public class ActionUtil {
 		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		long nodeId = ParamUtil.getLong(request, "nodeId");
-		String nodeName = ParamUtil.getString(request, "nodeName");
+		long nodeId = ParamUtil.getLong(portletRequest, "nodeId");
+		String nodeName = ParamUtil.getString(portletRequest, "nodeName");
 
 		WikiNode node = null;
 
@@ -161,17 +160,13 @@ public class ActionUtil {
 
 		try {
 			page = WikiPageServiceUtil.getPage(nodeId, title, version);
+
+			if (page.isDraft()) {
+				throw new NoSuchPageException();
+			}
 		}
 		catch (NoSuchPageException nspe) {
 			if (title.equals(WikiPageConstants.FRONT_PAGE) && (version == 0)) {
-				long userId = PortalUtil.getUserId(request);
-
-				if (userId == 0) {
-					long companyId = PortalUtil.getCompanyId(request);
-
-					userId = UserLocalServiceUtil.getDefaultUserId(companyId);
-				}
-
 				ServiceContext serviceContext = new ServiceContext();
 
 				Layout layout = themeDisplay.getLayout();
@@ -191,8 +186,8 @@ public class ActionUtil {
 					WorkflowThreadLocal.setEnabled(false);
 
 					page = WikiPageLocalServiceUtil.addPage(
-						userId, nodeId, title, null, WikiPageConstants.NEW,
-						true, serviceContext);
+						themeDisplay.getDefaultUserId(), nodeId, title, null,
+						WikiPageConstants.NEW, true, serviceContext);
 				}
 				finally {
 					WorkflowThreadLocal.setEnabled(workflowEnabled);

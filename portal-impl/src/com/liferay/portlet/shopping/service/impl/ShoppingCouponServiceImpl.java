@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -29,6 +29,7 @@ import java.util.List;
  */
 public class ShoppingCouponServiceImpl extends ShoppingCouponServiceBaseImpl {
 
+	@Override
 	public ShoppingCoupon addCoupon(
 			String code, boolean autoCode, String name, String description,
 			int startDateMonth, int startDateDay, int startDateYear,
@@ -44,13 +45,14 @@ public class ShoppingCouponServiceImpl extends ShoppingCouponServiceBaseImpl {
 			ActionKeys.MANAGE_COUPONS);
 
 		return shoppingCouponLocalService.addCoupon(
-			getUserId(), code, autoCode, name, description,
-			startDateMonth, startDateDay, startDateYear, startDateHour,
-			startDateMinute, endDateMonth, endDateDay, endDateYear, endDateHour,
-			endDateMinute, neverExpire, active, limitCategories, limitSkus,
-			minOrder, discount, discountType, serviceContext);
+			getUserId(), code, autoCode, name, description, startDateMonth,
+			startDateDay, startDateYear, startDateHour, startDateMinute,
+			endDateMonth, endDateDay, endDateYear, endDateHour, endDateMinute,
+			neverExpire, active, limitCategories, limitSkus, minOrder, discount,
+			discountType, serviceContext);
 	}
 
+	@Override
 	public void deleteCoupon(long groupId, long couponId)
 		throws PortalException, SystemException {
 
@@ -60,6 +62,7 @@ public class ShoppingCouponServiceImpl extends ShoppingCouponServiceBaseImpl {
 		shoppingCouponLocalService.deleteCoupon(couponId);
 	}
 
+	@Override
 	public ShoppingCoupon getCoupon(long groupId, long couponId)
 		throws PortalException, SystemException {
 
@@ -69,6 +72,7 @@ public class ShoppingCouponServiceImpl extends ShoppingCouponServiceBaseImpl {
 		return shoppingCouponLocalService.getCoupon(couponId);
 	}
 
+	@Override
 	public List<ShoppingCoupon> search(
 			long groupId, long companyId, String code, boolean active,
 			String discountType, boolean andOperator, int start, int end)
@@ -82,6 +86,7 @@ public class ShoppingCouponServiceImpl extends ShoppingCouponServiceBaseImpl {
 			end);
 	}
 
+	@Override
 	public ShoppingCoupon updateCoupon(
 			long couponId, String name, String description, int startDateMonth,
 			int startDateDay, int startDateYear, int startDateHour,

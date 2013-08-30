@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -30,8 +30,8 @@ try {
 	if (bracketBegin > -1) {
 		bracketEnd = xmlUrl.indexOf("]", bracketBegin);
 
-		if (bracketEnd > -1 && ((bracketEnd - bracketBegin) > 0)) {
-			String[] compilerTagNames = (String[])request.getAttribute(WebKeys.TAGS_COMPILER_ENTRIES);
+		if ((bracketEnd > -1) && ((bracketEnd - bracketBegin) > 0)) {
+			String[] compilerTagNames = ParamUtil.getParameterValues(request, "tags");
 
 			if (compilerTagNames.length > 0) {
 				String category = null;
@@ -93,7 +93,7 @@ catch (Exception e) {
 	_log.error(e.getMessage());
 %>
 
-	<div class="portlet-msg-error">
+	<div class="alert alert-error">
 		<liferay-ui:message key="an-error-occurred-while-processing-your-xml-and-xsl" />
 	</div>
 

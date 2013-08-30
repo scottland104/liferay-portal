@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,12 @@
 
 package com.liferay.portal.cluster;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import org.jgroups.Address;
 import org.jgroups.Message;
 import org.jgroups.Receiver;
@@ -24,23 +30,45 @@ import org.jgroups.View;
  */
 public class BaseReceiver implements Receiver {
 
+	@Override
 	public void block() {
 	}
 
-	public byte[] getState() {
-		return null;
+	@Override
+	public void getState(OutputStream outputStream) throws Exception {
 	}
 
+	public View getView() {
+		return view;
+	}
+
+	@Override
 	public void receive(Message message) {
 	}
 
-	public void setState(byte[] state) {
+	@Override
+	public void setState(InputStream inputStream) throws Exception {
 	}
 
+	@Override
 	public void suspect(Address address) {
 	}
 
-	public void viewAccepted(View view) {
+	@Override
+	public void unblock() {
 	}
+
+	@Override
+	public void viewAccepted(View view) {
+		if (_log.isInfoEnabled()) {
+			_log.info("Accepted view " + view);
+		}
+
+		this.view = view;
+	}
+
+	protected volatile View view;
+
+	private static Log _log = LogFactoryUtil.getLog(BaseReceiver.class);
 
 }

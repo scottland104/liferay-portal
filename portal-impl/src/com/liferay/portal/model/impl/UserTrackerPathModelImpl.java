@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portal.model.impl;
 
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -28,11 +29,11 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the UserTrackerPath service. Represents a row in the &quot;UserTrackerPath&quot; database table, with each column mapped to a property of this class.
@@ -63,6 +64,8 @@ public class UserTrackerPathModelImpl extends BaseModelImpl<UserTrackerPath>
 		};
 	public static final String TABLE_SQL_CREATE = "create table UserTrackerPath (userTrackerPathId LONG not null primary key,userTrackerId LONG,path_ STRING null,pathDate DATE null)";
 	public static final String TABLE_SQL_DROP = "drop table UserTrackerPath";
+	public static final String ORDER_BY_JPQL = " ORDER BY userTrackerPath.userTrackerPathId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY UserTrackerPath.userTrackerPathId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -72,53 +75,119 @@ public class UserTrackerPathModelImpl extends BaseModelImpl<UserTrackerPath>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.UserTrackerPath"),
 			true);
-
-	public Class<?> getModelClass() {
-		return UserTrackerPath.class;
-	}
-
-	public String getModelClassName() {
-		return UserTrackerPath.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.UserTrackerPath"),
+			true);
+	public static long USERTRACKERID_COLUMN_BITMASK = 1L;
+	public static long USERTRACKERPATHID_COLUMN_BITMASK = 2L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.UserTrackerPath"));
 
 	public UserTrackerPathModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _userTrackerPathId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setUserTrackerPathId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_userTrackerPathId);
+		return _userTrackerPathId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return UserTrackerPath.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return UserTrackerPath.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("userTrackerPathId", getUserTrackerPathId());
+		attributes.put("userTrackerId", getUserTrackerId());
+		attributes.put("path", getPath());
+		attributes.put("pathDate", getPathDate());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long userTrackerPathId = (Long)attributes.get("userTrackerPathId");
+
+		if (userTrackerPathId != null) {
+			setUserTrackerPathId(userTrackerPathId);
+		}
+
+		Long userTrackerId = (Long)attributes.get("userTrackerId");
+
+		if (userTrackerId != null) {
+			setUserTrackerId(userTrackerId);
+		}
+
+		String path = (String)attributes.get("path");
+
+		if (path != null) {
+			setPath(path);
+		}
+
+		Date pathDate = (Date)attributes.get("pathDate");
+
+		if (pathDate != null) {
+			setPathDate(pathDate);
+		}
+	}
+
+	@Override
 	public long getUserTrackerPathId() {
 		return _userTrackerPathId;
 	}
 
+	@Override
 	public void setUserTrackerPathId(long userTrackerPathId) {
 		_userTrackerPathId = userTrackerPathId;
 	}
 
+	@Override
 	public long getUserTrackerId() {
 		return _userTrackerId;
 	}
 
+	@Override
 	public void setUserTrackerId(long userTrackerId) {
+		_columnBitmask |= USERTRACKERID_COLUMN_BITMASK;
+
+		if (!_setOriginalUserTrackerId) {
+			_setOriginalUserTrackerId = true;
+
+			_originalUserTrackerId = _userTrackerId;
+		}
+
 		_userTrackerId = userTrackerId;
 	}
 
+	public long getOriginalUserTrackerId() {
+		return _originalUserTrackerId;
+	}
+
+	@Override
 	public String getPath() {
 		if (_path == null) {
 			return StringPool.BLANK;
@@ -128,47 +197,46 @@ public class UserTrackerPathModelImpl extends BaseModelImpl<UserTrackerPath>
 		}
 	}
 
+	@Override
 	public void setPath(String path) {
 		_path = path;
 	}
 
+	@Override
 	public Date getPathDate() {
 		return _pathDate;
 	}
 
+	@Override
 	public void setPathDate(Date pathDate) {
 		_pathDate = pathDate;
 	}
 
-	@Override
-	public UserTrackerPath toEscapedModel() {
-		if (isEscapedModel()) {
-			return (UserTrackerPath)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (UserTrackerPath)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(0,
-					UserTrackerPath.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(0,
+			UserTrackerPath.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public UserTrackerPath toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (UserTrackerPath)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -185,6 +253,7 @@ public class UserTrackerPathModelImpl extends BaseModelImpl<UserTrackerPath>
 		return userTrackerPathImpl;
 	}
 
+	@Override
 	public int compareTo(UserTrackerPath userTrackerPath) {
 		long primaryKey = userTrackerPath.getPrimaryKey();
 
@@ -201,18 +270,15 @@ public class UserTrackerPathModelImpl extends BaseModelImpl<UserTrackerPath>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof UserTrackerPath)) {
 			return false;
 		}
 
-		UserTrackerPath userTrackerPath = null;
-
-		try {
-			userTrackerPath = (UserTrackerPath)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		UserTrackerPath userTrackerPath = (UserTrackerPath)obj;
 
 		long primaryKey = userTrackerPath.getPrimaryKey();
 
@@ -231,6 +297,13 @@ public class UserTrackerPathModelImpl extends BaseModelImpl<UserTrackerPath>
 
 	@Override
 	public void resetOriginalValues() {
+		UserTrackerPathModelImpl userTrackerPathModelImpl = this;
+
+		userTrackerPathModelImpl._originalUserTrackerId = userTrackerPathModelImpl._userTrackerId;
+
+		userTrackerPathModelImpl._setOriginalUserTrackerId = false;
+
+		userTrackerPathModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -278,6 +351,7 @@ public class UserTrackerPathModelImpl extends BaseModelImpl<UserTrackerPath>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(16);
 
@@ -308,13 +382,15 @@ public class UserTrackerPathModelImpl extends BaseModelImpl<UserTrackerPath>
 	}
 
 	private static ClassLoader _classLoader = UserTrackerPath.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			UserTrackerPath.class
 		};
 	private long _userTrackerPathId;
 	private long _userTrackerId;
+	private long _originalUserTrackerId;
+	private boolean _setOriginalUserTrackerId;
 	private String _path;
 	private Date _pathDate;
-	private transient ExpandoBridge _expandoBridge;
-	private UserTrackerPath _escapedModelProxy;
+	private long _columnBitmask;
+	private UserTrackerPath _escapedModel;
 }

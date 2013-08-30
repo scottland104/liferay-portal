@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,13 +16,14 @@ package com.liferay.util.axis;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.servlet.BufferCacheServletResponse;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
-import com.liferay.portal.kernel.servlet.StringServletResponse;
 import com.liferay.portal.kernel.servlet.UncommittedServletResponse;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ReflectionUtil;
 import com.liferay.portal.kernel.util.ServerDetector;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.xml.Document;
@@ -78,6 +79,61 @@ public class AxisServlet extends org.apache.axis.transport.http.AxisServlet {
 	public void init(ServletConfig servletConfig) throws ServletException {
 		_servletConfig = servletConfig;
 
+		StringBundler sb = new StringBundler(9);
+
+		sb.append("<complexType abstract=\"true\" name=\"OrderByComparator\">");
+		sb.append("<sequence><element name=\"ascending\" ");
+		sb.append("type=\"xsd:boolean\"/><element name=\"orderBy\" ");
+		sb.append("nillable=\"true\" type=\"soapenc:string\"/><element ");
+		sb.append("name=\"orderByConditionFields\" nillable=\"true\" ");
+		sb.append("type=\"impl:ArrayOf_xsd_string\"/><element ");
+		sb.append("name=\"orderByFields\" nillable=\"true\" ");
+		sb.append("type=\"impl:ArrayOf_xsd_string\"/></sequence>");
+		sb.append("</complexType>");
+
+		_correctOrderByComparator = sb.toString();
+
+		sb = new StringBundler(5);
+
+		sb.append("<complexType name=\"ArrayOf_xsd_long\"><complexContent>");
+		sb.append("<restriction base=\"soapenc:Array\"><attribute ");
+		sb.append("ref=\"soapenc:arrayType\" ");
+		sb.append("wsdl:arrayType=\"soapenc:long[]\"/></restriction>");
+		sb.append("</complexContent></complexType>");
+
+		_correctLongArray = sb.toString();
+
+		sb = new StringBundler(5);
+
+		sb.append("<complexType name=\"ArrayOf_xsd_string\"><complexContent>");
+		sb.append("<restriction base=\"soapenc:Array\"><attribute ");
+		sb.append("ref=\"soapenc:arrayType\" ");
+		sb.append("wsdl:arrayType=\"soapenc:string[]\"/></restriction>");
+		sb.append("</complexContent></complexType>");
+
+		_correctStringArray = sb.toString();
+
+		sb = new StringBundler(2);
+
+		sb.append("<complexType name=\"OrderByComparator\"><simpleContent>");
+		sb.append("<extension/></simpleContent></complexType>");
+
+		_incorrectOrderByComparator = sb.toString();
+
+		sb = new StringBundler(2);
+
+		sb.append("<complexType name=\"ArrayOf_xsd_long\"><simpleContent>");
+		sb.append("<extension/></simpleContent></complexType>");
+
+		_incorrectLongArray = sb.toString();
+
+		sb = new StringBundler(2);
+
+		sb.append("<complexType name=\"ArrayOf_xsd_string\"><simpleContent>");
+		sb.append("<extension/></simpleContent></complexType>");
+
+		_incorrectStringArray = sb.toString();
+
 		if (ServerDetector.isResin() || ServerDetector.isWebLogic()) {
 			doInit();
 		}
@@ -116,16 +172,16 @@ public class AxisServlet extends org.apache.axis.transport.http.AxisServlet {
 				return;
 			}
 
-			StringServletResponse stringResponse = new StringServletResponse(
-				response);
+			BufferCacheServletResponse bufferCacheServletResponse =
+				new BufferCacheServletResponse(response);
 
-			super.service(request, stringResponse);
+			super.service(request, bufferCacheServletResponse);
 
-			String contentType = stringResponse.getContentType();
+			String contentType = bufferCacheServletResponse.getContentType();
 
 			response.setContentType(contentType);
 
-			String content = stringResponse.getString();
+			String content = bufferCacheServletResponse.getString();
 
 			if (_fixContent) {
 				if (contentType.contains(ContentTypes.TEXT_HTML)) {
@@ -180,27 +236,20 @@ public class AxisServlet extends org.apache.axis.transport.http.AxisServlet {
 	}
 
 	protected String fixXml(String xml) throws Exception {
-		if (xml.indexOf("<wsdl:definitions") == -1) {
+		if (!xml.contains("<wsdl:definitions")) {
 			return xml;
 		}
 
 		xml = StringUtil.replace(
 			xml,
 			new String[] {
-				"\r\n",
-				"\n",
-				"  ",
-				"> <",
-				_INCORRECT_LONG_ARRAY,
-				_INCORRECT_STRING_ARRAY
+				"\r\n", "\n", "  ", "> <", _incorrectOrderByComparator,
+				_incorrectLongArray, _incorrectStringArray
 			},
 			new String[] {
-				StringPool.BLANK,
-				StringPool.BLANK,
-				StringPool.BLANK,
-				"><",
-				_CORRECT_LONG_ARRAY,
-				_CORRECT_STRING_ARRAY
+				StringPool.BLANK, StringPool.BLANK, StringPool.BLANK, "><",
+				_correctOrderByComparator, _correctLongArray,
+				_correctStringArray
 			});
 
 		Document document = SAXReaderUtil.read(xml);
@@ -208,35 +257,21 @@ public class AxisServlet extends org.apache.axis.transport.http.AxisServlet {
 		return document.formattedString();
 	}
 
-	private static final String _CORRECT_LONG_ARRAY =
-		"<complexType name=\"ArrayOf_xsd_long\"><complexContent>" +
-			"<restriction base=\"soapenc:Array\"><attribute ref=\"soapenc:" +
-				"arrayType\" wsdl:arrayType=\"soapenc:long[]\"/>" +
-					"</restriction></complexContent></complexType>";
-
-	private static final String _CORRECT_STRING_ARRAY =
-		"<complexType name=\"ArrayOf_xsd_string\"><complexContent>" +
-			"<restriction base=\"soapenc:Array\"><attribute ref=\"soapenc:" +
-				"arrayType\" wsdl:arrayType=\"soapenc:string[]\"/>" +
-					"</restriction></complexContent></complexType>";
-
 	private static final String _HTML_BOTTOM_WRAPPER = "</body></html>";
 
 	private static final String _HTML_TOP_WRAPPER = "<html><body>";
-
-	private static final String _INCORRECT_LONG_ARRAY =
-		"<complexType name=\"ArrayOf_xsd_long\"><simpleContent><extension/>" +
-			"</simpleContent></complexType>";
-
-	private static final String _INCORRECT_STRING_ARRAY =
-		"<complexType name=\"ArrayOf_xsd_string\"><simpleContent><extension/>" +
-			"</simpleContent></complexType>";
 
 	private static Log _log = LogFactoryUtil.getLog(AxisServlet.class);
 
 	private static Field _cacheField;
 
+	private String _correctLongArray;
+	private String _correctOrderByComparator;
+	private String _correctStringArray;
 	private boolean _fixContent;
+	private String _incorrectLongArray;
+	private String _incorrectOrderByComparator;
+	private String _incorrectStringArray;
 	private boolean _ready;
 	private ServletConfig _servletConfig;
 

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,8 +17,6 @@
 <%@ include file="/html/taglib/ui/asset_categories_selector/init.jsp" %>
 
 <%
-themeDisplay.setIncludeServiceJs(true);
-
 String randomNamespace = PortalUtil.generateRandomKey(request, "taglib_ui_asset_categories_selector_page") + StringPool.UNDERLINE;
 
 String className = (String)request.getAttribute("liferay-ui:asset-categories-selector:className");
@@ -26,20 +24,32 @@ long classPK = GetterUtil.getLong((String)request.getAttribute("liferay-ui:asset
 String hiddenInput = (String)request.getAttribute("liferay-ui:asset-categories-selector:hiddenInput");
 String curCategoryIds = GetterUtil.getString((String)request.getAttribute("liferay-ui:asset-categories-selector:curCategoryIds"), "");
 String curCategoryNames = StringPool.BLANK;
+int maxEntries = GetterUtil.getInteger(PropsUtil.get(PropsKeys.ASSET_CATEGORIES_SELECTOR_MAX_ENTRIES));
+
+List<AssetVocabulary> vocabularies = new ArrayList<AssetVocabulary>();
+
+Group siteGroup = themeDisplay.getSiteGroup();
+
+StringBundler vocabularyGroupIds = new StringBundler(3);
+
+vocabularies.addAll(AssetVocabularyServiceUtil.getGroupVocabularies(siteGroup.getGroupId(), false));
+
+vocabularyGroupIds.append(siteGroup.getGroupId());
+
+if (scopeGroupId != themeDisplay.getCompanyGroupId()) {
+	vocabularies.addAll(AssetVocabularyServiceUtil.getGroupVocabularies(themeDisplay.getCompanyGroupId(), false));
+
+	vocabularyGroupIds.append(StringPool.COMMA);
+	vocabularyGroupIds.append(themeDisplay.getCompanyGroupId());
+}
 
 if (Validator.isNotNull(className)) {
 	long classNameId = PortalUtil.getClassNameId(className);
 
-	List<AssetVocabulary> vocabularies = new ArrayList<AssetVocabulary>();
-
-	vocabularies.addAll(AssetVocabularyLocalServiceUtil.getGroupVocabularies(scopeGroupId, false));
-
-	if (scopeGroupId != themeDisplay.getCompanyGroupId()) {
-		vocabularies.addAll(AssetVocabularyLocalServiceUtil.getGroupVocabularies(themeDisplay.getCompanyGroupId(), false));
-	}
-
 	for (AssetVocabulary vocabulary : vocabularies) {
-		int vocabularyCategoriesCount = AssetCategoryLocalServiceUtil.getVocabularyCategoriesCount(vocabulary.getVocabularyId());
+		vocabulary = vocabulary.toEscapedModel();
+
+		int vocabularyCategoriesCount = AssetCategoryServiceUtil.getVocabularyCategoriesCount(vocabulary.getGroupId(), vocabulary.getVocabularyId());
 
 		if (vocabularyCategoriesCount == 0) {
 			continue;
@@ -54,7 +64,7 @@ if (Validator.isNotNull(className)) {
 		}
 
 		if (Validator.isNotNull(className) && (classPK > 0)) {
-			List<AssetCategory> categories = AssetCategoryLocalServiceUtil.getCategories(className, classPK);
+			List<AssetCategory> categories = AssetCategoryServiceUtil.getCategories(className, classPK);
 
 			curCategoryIds = ListUtil.toString(categories, AssetCategory.CATEGORY_ID_ACCESSOR);
 			curCategoryNames = ListUtil.toString(categories, AssetCategory.NAME_ACCESSOR);
@@ -67,11 +77,11 @@ if (Validator.isNotNull(className)) {
 			curCategoryNames = StringPool.BLANK;
 		}
 
-		String[] categoryIdsNames = _getCategoryIdsNames(curCategoryIds, curCategoryNames, vocabulary.getVocabularyId());
+		String[] categoryIdsTitles = _getCategoryIdsTitles(curCategoryIds, curCategoryNames, vocabulary.getVocabularyId(), themeDisplay);
 	%>
 
-		<span class="aui-field-content">
-			<label class="aui-field-label" id="<%= namespace %>assetCategoriesLabel_<%= vocabulary.getVocabularyId() %>">
+		<span class="field-content">
+			<label id="<%= namespace %>assetCategoriesLabel_<%= vocabulary.getVocabularyId() %>">
 				<%= vocabulary.getTitle(locale) %>
 
 				<c:if test="<%= vocabulary.getGroupId() == themeDisplay.getCompanyGroupId() %>">
@@ -79,7 +89,7 @@ if (Validator.isNotNull(className)) {
 				</c:if>
 
 				<c:if test="<%= vocabulary.isRequired(classNameId) %>">
-					<span class="aui-label-required">(<liferay-ui:message key="required" />)</span>
+					<span class="label-required">(<liferay-ui:message key="required" />)</span>
 				</c:if>
 			</label>
 
@@ -93,13 +103,16 @@ if (Validator.isNotNull(className)) {
 				{
 					className: '<%= className %>',
 					contentBox: '#<%= namespace + randomNamespace %>assetCategoriesSelector_<%= vocabulary.getVocabularyId() %>',
-					curEntries: '<%= HtmlUtil.escapeJS(categoryIdsNames[1]) %>',
-					curEntryIds: '<%= categoryIdsNames[0] %>',
+					curEntries: '<%= HtmlUtil.escapeJS(categoryIdsTitles[1]) %>',
+					curEntryIds: '<%= categoryIdsTitles[0] %>',
 					hiddenInput: '#<%= namespace + hiddenInput + StringPool.UNDERLINE + vocabulary.getVocabularyId() %>',
 					instanceVar: '<%= namespace + randomNamespace %>',
 					labelNode: '#<%= namespace %>assetCategoriesLabel_<%= vocabulary.getVocabularyId() %>',
+					maxEntries: <%= maxEntries %>,
 					portalModelResource: <%= Validator.isNotNull(className) && (ResourceActionsUtil.isPortalModelResource(className) || className.equals(Group.class.getName())) %>,
 					singleSelect: <%= !vocabulary.isMultiValued() %>,
+					title: '<%= UnicodeLanguageUtil.format(pageContext, "select-x", vocabulary.getTitle(locale)) %>',
+					vocabularyGroupIds: '<%= vocabulary.getGroupId() %>',
 					vocabularyIds: '<%= String.valueOf(vocabulary.getVocabularyId()) %>'
 				}
 			).render();
@@ -115,7 +128,7 @@ else {
 		curCategoryIds = curCategoryIdsParam;
 	}
 
-	String[] categoryIdsNames = _getCategoryIdsNames(curCategoryIds, curCategoryNames, 0);
+	String[] categoryIdsTitles = _getCategoryIdsTitles(curCategoryIds, curCategoryNames, 0, themeDisplay);
 %>
 
 	<div class="lfr-tags-selector-content" id="<%= namespace + randomNamespace %>assetCategoriesSelector">
@@ -127,11 +140,14 @@ else {
 			{
 				className: '<%= className %>',
 				contentBox: '#<%= namespace + randomNamespace %>assetCategoriesSelector',
-				curEntries: '<%= HtmlUtil.escapeJS(categoryIdsNames[1]) %>',
-				curEntryIds: '<%= categoryIdsNames[0] %>',
+				curEntries: '<%= HtmlUtil.escapeJS(categoryIdsTitles[1]) %>',
+				curEntryIds: '<%= categoryIdsTitles[0] %>',
 				hiddenInput: '#<%= namespace + hiddenInput %>',
 				instanceVar: '<%= namespace + randomNamespace %>',
-				portalModelResource: <%= Validator.isNotNull(className) && (ResourceActionsUtil.isPortalModelResource(className) || className.equals(Group.class.getName())) %>
+				maxEntries: <%= maxEntries %>,
+				portalModelResource: <%= Validator.isNotNull(className) && (ResourceActionsUtil.isPortalModelResource(className) || className.equals(Group.class.getName())) %>,
+				vocabularyGroupIds: '<%= vocabularyGroupIds.toString() %>',
+				vocabularyIds: '<%= ListUtil.toString(vocabularies, "vocabularyId") %>'
 			}
 		).render();
 	</aui:script>
@@ -145,7 +161,11 @@ private long[] _filterCategoryIds(long vocabularyId, long[] categoryIds) throws 
 	List<Long> filteredCategoryIds = new ArrayList<Long>();
 
 	for (long categoryId : categoryIds) {
-		AssetCategory category = AssetCategoryLocalServiceUtil.getCategory(categoryId);
+		AssetCategory category = AssetCategoryLocalServiceUtil.fetchCategory(categoryId);
+
+		if (category == null) {
+			continue;
+		}
 
 		if (category.getVocabularyId() == vocabularyId) {
 			filteredCategoryIds.add(category.getCategoryId());
@@ -155,7 +175,7 @@ private long[] _filterCategoryIds(long vocabularyId, long[] categoryIds) throws 
 	return ArrayUtil.toArray(filteredCategoryIds.toArray(new Long[filteredCategoryIds.size()]));
 }
 
-private String[] _getCategoryIdsNames(String categoryIds, String categoryNames, long vocabularyId) throws PortalException, SystemException {
+private String[] _getCategoryIdsTitles(String categoryIds, String categoryNames, long vocabularyId, ThemeDisplay themeDisplay) throws PortalException, SystemException {
 	if (Validator.isNotNull(categoryIds)) {
 		long[] categoryIdsArray = GetterUtil.getLongValues(StringUtil.split(categoryIds));
 
@@ -163,29 +183,41 @@ private String[] _getCategoryIdsNames(String categoryIds, String categoryNames, 
 			categoryIdsArray = _filterCategoryIds(vocabularyId, categoryIdsArray);
 		}
 
-		if (categoryIdsArray.length == 0) {
-			categoryIds = StringPool.BLANK;
-			categoryNames = StringPool.BLANK;
-		}
-		else {
-			StringBundler sb = new StringBundler(categoryIdsArray.length * 2);
+		categoryIds = StringPool.BLANK;
+		categoryNames = StringPool.BLANK;
+
+		if (categoryIdsArray.length > 0) {
+			StringBundler categoryIdsSb = new StringBundler(categoryIdsArray.length * 2);
+			StringBundler categoryNamesSb = new StringBundler(categoryIdsArray.length * 2);
 
 			for (long categoryId : categoryIdsArray) {
-				AssetCategory category = AssetCategoryLocalServiceUtil.getCategory(categoryId);
+				AssetCategory category = AssetCategoryLocalServiceUtil.fetchCategory(categoryId);
+
+				if (category == null) {
+					continue;
+				}
 
 				category = category.toEscapedModel();
 
-				sb.append(category.getName());
-				sb.append(StringPool.COMMA);
+				categoryIdsSb.append(categoryId);
+				categoryIdsSb.append(StringPool.COMMA);
+
+				categoryNamesSb.append(category.getTitle(themeDisplay.getLocale()));
+				categoryNamesSb.append(_CATEGORY_SEPARATOR);
 			}
 
-			sb.setIndex(sb.index() - 1);
+			if (categoryIdsSb.index() > 0) {
+				categoryIdsSb.setIndex(categoryIdsSb.index() - 1);
+				categoryNamesSb.setIndex(categoryNamesSb.index() - 1);
 
-			categoryIds = StringUtil.merge(categoryIdsArray);
-			categoryNames = sb.toString();
+				categoryIds = categoryIdsSb.toString();
+				categoryNames = categoryNamesSb.toString();
+			}
 		}
 	}
 
 	return new String[] {categoryIds, categoryNames};
 }
+
+private static final String _CATEGORY_SEPARATOR = "_CATEGORY_";
 %>

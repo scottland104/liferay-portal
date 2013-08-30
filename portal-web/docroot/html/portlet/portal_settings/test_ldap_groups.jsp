@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -86,8 +86,8 @@ int counter = 0;
 for (SearchResult searchResult : searchResults) {
 	Attributes attributes = searchResult.getAttributes();
 
-	String name = LDAPUtil.getAttributeValue(attributes, groupMappings.getProperty("groupName")).toLowerCase();
-	String description = LDAPUtil.getAttributeValue(attributes, groupMappings.getProperty("description"));
+	String name = LDAPUtil.getAttributeString(attributes, groupMappings.getProperty("groupName")).toLowerCase();
+	String description = LDAPUtil.getAttributeString(attributes, groupMappings.getProperty("description"));
 	Attribute attribute = attributes.get(groupMappings.getProperty("user"));
 
 	if (Validator.isNull(name)) {
@@ -99,7 +99,7 @@ for (SearchResult searchResult : searchResults) {
 
 		sb.append("(&");
 		sb.append(groupFilter);
-		sb.append("(");
+		sb.append(StringPool.OPEN_PARENTHESIS);
 		sb.append(groupMappings.getProperty("groupName"));
 		sb.append("=");
 		sb.append(name);
@@ -171,7 +171,7 @@ if (counter == 0) {
 if (showMissingAttributeMessage) {
 %>
 
-	<div class="portlet-msg-info">
+	<div class="alert alert-info">
 		<liferay-ui:message key="the-above-results-include-groups-which-are-missing-the-required-attributes-(group-name-and-user).-these-groups-will-not-be-imported-until-these-attributes-are-filled-in" />
 	</div>
 

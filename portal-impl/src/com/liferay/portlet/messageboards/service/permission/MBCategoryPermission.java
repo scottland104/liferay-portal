@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,7 @@ import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.util.PropsValues;
+import com.liferay.portlet.messageboards.NoSuchCategoryException;
 import com.liferay.portlet.messageboards.model.MBCategory;
 import com.liferay.portlet.messageboards.model.MBCategoryConstants;
 import com.liferay.portlet.messageboards.service.MBBanLocalServiceUtil;
@@ -27,6 +28,7 @@ import com.liferay.portlet.messageboards.service.MBCategoryLocalServiceUtil;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Mate Thurzo
  */
 public class MBCategoryPermission {
 
@@ -36,6 +38,16 @@ public class MBCategoryPermission {
 		throws PortalException, SystemException {
 
 		if (!contains(permissionChecker, groupId, categoryId, actionId)) {
+			throw new PrincipalException();
+		}
+	}
+
+	public static void check(
+			PermissionChecker permissionChecker, long categoryId,
+			String actionId)
+		throws PortalException, SystemException {
+
+		if (!contains(permissionChecker, categoryId, actionId)) {
 			throw new PrincipalException();
 		}
 	}
@@ -69,6 +81,17 @@ public class MBCategoryPermission {
 	}
 
 	public static boolean contains(
+			PermissionChecker permissionChecker, long categoryId,
+			String actionId)
+		throws PortalException, SystemException {
+
+		MBCategory category = MBCategoryLocalServiceUtil.getCategory(
+			categoryId);
+
+		return contains(permissionChecker, category, actionId);
+	}
+
+	public static boolean contains(
 			PermissionChecker permissionChecker, MBCategory category,
 			String actionId)
 		throws PortalException, SystemException {
@@ -83,64 +106,54 @@ public class MBCategoryPermission {
 			return false;
 		}
 
-		long categoryId = category.getCategoryId();
+		if (actionId.equals(ActionKeys.VIEW) &&
+			PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
 
-		if (actionId.equals(ActionKeys.VIEW)) {
-			while (categoryId !=
-					MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) {
+			try {
+				long categoryId = category.getCategoryId();
 
-				category = MBCategoryLocalServiceUtil.getCategory(categoryId);
+				while (categoryId !=
+							MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) {
 
-				categoryId = category.getParentCategoryId();
+					category = MBCategoryLocalServiceUtil.getCategory(
+						categoryId);
 
-				if (!permissionChecker.hasOwnerPermission(
-						category.getCompanyId(), MBCategory.class.getName(),
-						category.getCategoryId(), category.getUserId(),
-						actionId) &&
-					!permissionChecker.hasPermission(
-						category.getGroupId(), MBCategory.class.getName(),
-						category.getCategoryId(), actionId)) {
+					if (!_hasPermission(
+							permissionChecker, category, actionId)) {
 
-					return false;
+						return false;
+					}
+
+					categoryId = category.getParentCategoryId();
 				}
-
-				if (!PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
-					break;
+			}
+			catch (NoSuchCategoryException nsce) {
+				if (!category.isInTrash()) {
+					throw nsce;
 				}
 			}
 
 			return true;
 		}
-		else {
-			while (categoryId !=
-					MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) {
 
-				category = MBCategoryLocalServiceUtil.getCategory(categoryId);
+		return _hasPermission(permissionChecker, category, actionId);
+	}
 
-				categoryId = category.getParentCategoryId();
+	private static boolean _hasPermission(
+		PermissionChecker permissionChecker, MBCategory category,
+		String actionId) {
 
-				if (permissionChecker.hasOwnerPermission(
-						category.getCompanyId(), MBCategory.class.getName(),
-						category.getCategoryId(), category.getUserId(),
-						actionId)) {
+		if (permissionChecker.hasOwnerPermission(
+				category.getCompanyId(), MBCategory.class.getName(),
+				category.getCategoryId(), category.getUserId(), actionId) ||
+			permissionChecker.hasPermission(
+				category.getGroupId(), MBCategory.class.getName(),
+				category.getCategoryId(), actionId)) {
 
-					return true;
-				}
-
-				if (permissionChecker.hasPermission(
-						category.getGroupId(), MBCategory.class.getName(),
-						category.getCategoryId(), actionId)) {
-
-					return true;
-				}
-
-				if (actionId.equals(ActionKeys.VIEW)) {
-					break;
-				}
-			}
-
-			return false;
+			return true;
 		}
+
+		return false;
 	}
 
 }

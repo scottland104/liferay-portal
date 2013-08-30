@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,9 +20,9 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.mail.MailMessage;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -31,10 +31,14 @@ import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Organization;
 import com.liferay.portal.model.ResourceConstants;
 import com.liferay.portal.model.Role;
+import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.User;
 import com.liferay.portal.model.UserGroup;
 import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.util.PortletKeys;
+import com.liferay.portal.util.PrefsPropsUtil;
 import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.util.SubscriptionSender;
 import com.liferay.portlet.announcements.EntryContentException;
 import com.liferay.portlet.announcements.EntryDisplayDateException;
 import com.liferay.portlet.announcements.EntryExpirationDateException;
@@ -45,14 +49,10 @@ import com.liferay.portlet.announcements.model.AnnouncementsEntry;
 import com.liferay.portlet.announcements.service.base.AnnouncementsEntryLocalServiceBaseImpl;
 import com.liferay.util.ContentUtil;
 
-import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
-
-import javax.mail.internet.InternetAddress;
 
 /**
  * @author Brian Wing Shun Chan
@@ -61,31 +61,36 @@ import javax.mail.internet.InternetAddress;
 public class AnnouncementsEntryLocalServiceImpl
 	extends AnnouncementsEntryLocalServiceBaseImpl {
 
+	@Override
 	public AnnouncementsEntry addEntry(
 			long userId, long classNameId, long classPK, String title,
 			String content, String url, String type, int displayDateMonth,
 			int displayDateDay, int displayDateYear, int displayDateHour,
-			int displayDateMinute, int expirationDateMonth,
-			int expirationDateDay, int expirationDateYear,
-			int expirationDateHour, int expirationDateMinute, int priority,
-			boolean alert)
+			int displayDateMinute, boolean displayImmediately,
+			int expirationDateMonth, int expirationDateDay,
+			int expirationDateYear, int expirationDateHour,
+			int expirationDateMinute, int priority, boolean alert)
 		throws PortalException, SystemException {
 
 		// Entry
 
 		User user = userPersistence.findByPrimaryKey(userId);
 
-		Date displayDate = PortalUtil.getDate(
-			displayDateMonth, displayDateDay, displayDateYear, displayDateHour,
-			displayDateMinute, user.getTimeZone(),
-			new EntryDisplayDateException());
+		Date now = new Date();
+
+		Date displayDate = now;
+
+		if (!displayImmediately) {
+			displayDate = PortalUtil.getDate(
+				displayDateMonth, displayDateDay, displayDateYear,
+				displayDateHour, displayDateMinute, user.getTimeZone(),
+				EntryDisplayDateException.class);
+		}
 
 		Date expirationDate = PortalUtil.getDate(
 			expirationDateMonth, expirationDateDay, expirationDateYear,
 			expirationDateHour, expirationDateMinute, user.getTimeZone(),
-			new EntryExpirationDateException());
-
-		Date now = new Date();
+			EntryExpirationDateException.class);
 
 		validate(title, content, url);
 
@@ -110,7 +115,7 @@ public class AnnouncementsEntryLocalServiceImpl
 		entry.setPriority(priority);
 		entry.setAlert(alert);
 
-		announcementsEntryPersistence.update(entry, false);
+		announcementsEntryPersistence.update(entry);
 
 		// Resources
 
@@ -122,28 +127,54 @@ public class AnnouncementsEntryLocalServiceImpl
 		return entry;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #addEntry(long, long, long,
+	 *             String, String, String, String, int, int, int, int, int,
+	 *             boolean, int, int, int, int, int, int, boolean)}
+	 */
+	@Override
+	public AnnouncementsEntry addEntry(
+			long userId, long classNameId, long classPK, String title,
+			String content, String url, String type, int displayDateMonth,
+			int displayDateDay, int displayDateYear, int displayDateHour,
+			int displayDateMinute, int expirationDateMonth,
+			int expirationDateDay, int expirationDateYear,
+			int expirationDateHour, int expirationDateMinute, int priority,
+			boolean alert)
+		throws PortalException, SystemException {
+
+		return addEntry(
+			userId, classNameId, classPK, title, content, url, type,
+			displayDateMonth, displayDateDay, displayDateYear, displayDateHour,
+			displayDateMinute, false, expirationDateMonth, expirationDateDay,
+			expirationDateYear, expirationDateHour, expirationDateMinute,
+			priority, alert);
+	}
+
+	@Override
 	public void checkEntries() throws PortalException, SystemException {
 		Date now = new Date();
 
+		if (_previousCheckDate == null) {
+			_previousCheckDate = new Date(
+				now.getTime() - _ANNOUNCEMENTS_ENTRY_CHECK_INTERVAL);
+		}
+
 		List<AnnouncementsEntry> entries =
-			announcementsEntryFinder.findByDisplayDate(
-				now,
-				new Date(now.getTime() - _ANNOUNCEMENTS_ENTRY_CHECK_INTERVAL));
+			announcementsEntryFinder.findByDisplayDate(now, _previousCheckDate);
 
 		if (_log.isDebugEnabled()) {
 			_log.debug("Processing " + entries.size() + " entries");
 		}
 
 		for (AnnouncementsEntry entry : entries) {
-			try {
-				notifyUsers(entry);
-			}
-			catch (IOException ioe) {
-				throw new SystemException(ioe);
-			}
+			notifyUsers(entry);
 		}
+
+		_previousCheckDate = now;
 	}
 
+	@Override
 	public void deleteEntry(AnnouncementsEntry entry)
 		throws PortalException, SystemException {
 
@@ -162,6 +193,7 @@ public class AnnouncementsEntryLocalServiceImpl
 		announcementsFlagLocalService.deleteFlags(entry.getEntryId());
 	}
 
+	@Override
 	public void deleteEntry(long entryId)
 		throws PortalException, SystemException {
 
@@ -171,6 +203,7 @@ public class AnnouncementsEntryLocalServiceImpl
 		deleteEntry(entry);
 	}
 
+	@Override
 	public List<AnnouncementsEntry> getEntries(
 			long userId, LinkedHashMap<Long, long[]> scopes, boolean alert,
 			int flagValue, int start, int end)
@@ -181,6 +214,7 @@ public class AnnouncementsEntryLocalServiceImpl
 			start, end);
 	}
 
+	@Override
 	public List<AnnouncementsEntry> getEntries(
 			long userId, LinkedHashMap<Long, long[]> scopes,
 			int displayDateMonth, int displayDateDay, int displayDateYear,
@@ -197,6 +231,7 @@ public class AnnouncementsEntryLocalServiceImpl
 			expirationDateMinute, alert, flagValue, start, end);
 	}
 
+	@Override
 	public List<AnnouncementsEntry> getEntries(
 			long classNameId, long classPK, boolean alert, int start, int end)
 		throws SystemException {
@@ -205,6 +240,7 @@ public class AnnouncementsEntryLocalServiceImpl
 			classNameId, classPK, alert, start, end);
 	}
 
+	@Override
 	public List<AnnouncementsEntry> getEntries(
 			long userId, long classNameId, long[] classPKs,
 			int displayDateMonth, int displayDateDay, int displayDateYear,
@@ -222,6 +258,7 @@ public class AnnouncementsEntryLocalServiceImpl
 			end);
 	}
 
+	@Override
 	public int getEntriesCount(
 			long userId, LinkedHashMap<Long, long[]> scopes, boolean alert,
 			int flagValue)
@@ -231,6 +268,7 @@ public class AnnouncementsEntryLocalServiceImpl
 			userId, scopes, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, alert, flagValue);
 	}
 
+	@Override
 	public int getEntriesCount(
 			long userId, LinkedHashMap<Long, long[]> scopes,
 			int displayDateMonth, int displayDateDay, int displayDateYear,
@@ -247,6 +285,7 @@ public class AnnouncementsEntryLocalServiceImpl
 			expirationDateMinute, alert, flagValue);
 	}
 
+	@Override
 	public int getEntriesCount(long classNameId, long classPK, boolean alert)
 		throws SystemException {
 
@@ -254,6 +293,7 @@ public class AnnouncementsEntryLocalServiceImpl
 			classNameId, classPK, alert);
 	}
 
+	@Override
 	public int getEntriesCount(
 			long userId, long classNameId, long[] classPKs, boolean alert,
 			int flagValue)
@@ -264,6 +304,7 @@ public class AnnouncementsEntryLocalServiceImpl
 			flagValue);
 	}
 
+	@Override
 	public int getEntriesCount(
 			long userId, long classNameId, long[] classPKs,
 			int displayDateMonth, int displayDateDay, int displayDateYear,
@@ -280,12 +321,14 @@ public class AnnouncementsEntryLocalServiceImpl
 			expirationDateHour, expirationDateMinute, alert, flagValue);
 	}
 
+	@Override
 	public AnnouncementsEntry getEntry(long entryId)
 		throws PortalException, SystemException {
 
 		return announcementsEntryPersistence.findByPrimaryKey(entryId);
 	}
 
+	@Override
 	public List<AnnouncementsEntry> getUserEntries(
 			long userId, int start, int end)
 		throws SystemException {
@@ -293,10 +336,12 @@ public class AnnouncementsEntryLocalServiceImpl
 		return announcementsEntryPersistence.findByUserId(userId, start, end);
 	}
 
+	@Override
 	public int getUserEntriesCount(long userId) throws SystemException {
 		return announcementsEntryPersistence.countByUserId(userId);
 	}
 
+	@Override
 	public AnnouncementsEntry updateEntry(
 			long userId, long entryId, String title, String content, String url,
 			String type, int displayDateMonth, int displayDateDay,
@@ -313,12 +358,12 @@ public class AnnouncementsEntryLocalServiceImpl
 		Date displayDate = PortalUtil.getDate(
 			displayDateMonth, displayDateDay, displayDateYear, displayDateHour,
 			displayDateMinute, user.getTimeZone(),
-			new EntryDisplayDateException());
+			EntryDisplayDateException.class);
 
 		Date expirationDate = PortalUtil.getDate(
 			expirationDateMonth, expirationDateDay, expirationDateYear,
 			expirationDateHour, expirationDateMinute, user.getTimeZone(),
-			new EntryExpirationDateException());
+			EntryExpirationDateException.class);
 
 		validate(title, content, url);
 
@@ -334,7 +379,7 @@ public class AnnouncementsEntryLocalServiceImpl
 		entry.setExpirationDate(expirationDate);
 		entry.setPriority(priority);
 
-		announcementsEntryPersistence.update(entry, false);
+		announcementsEntryPersistence.update(entry);
 
 		// Flags
 
@@ -344,7 +389,7 @@ public class AnnouncementsEntryLocalServiceImpl
 	}
 
 	protected void notifyUsers(AnnouncementsEntry entry)
-		throws IOException, PortalException, SystemException {
+		throws PortalException, SystemException {
 
 		Company company = companyPersistence.findByPrimaryKey(
 			entry.getCompanyId());
@@ -352,8 +397,12 @@ public class AnnouncementsEntryLocalServiceImpl
 		String className = entry.getClassName();
 		long classPK = entry.getClassPK();
 
-		String fromName = PropsValues.ANNOUNCEMENTS_EMAIL_FROM_NAME;
-		String fromAddress = PropsValues.ANNOUNCEMENTS_EMAIL_FROM_ADDRESS;
+		String fromName = PrefsPropsUtil.getStringFromNames(
+			entry.getCompanyId(), PropsKeys.ANNOUNCEMENTS_EMAIL_FROM_NAME,
+			PropsKeys.ADMIN_EMAIL_FROM_NAME);
+		String fromAddress = PrefsPropsUtil.getStringFromNames(
+			entry.getCompanyId(), PropsKeys.ANNOUNCEMENTS_EMAIL_FROM_ADDRESS,
+			PropsKeys.ADMIN_EMAIL_FROM_ADDRESS);
 
 		String toName = PropsValues.ANNOUNCEMENTS_EMAIL_TO_NAME;
 		String toAddress = PropsValues.ANNOUNCEMENTS_EMAIL_TO_ADDRESS;
@@ -369,6 +418,7 @@ public class AnnouncementsEntryLocalServiceImpl
 
 				toName = group.getName();
 
+				params.put("inherit", Boolean.TRUE);
 				params.put("usersGroups", classPK);
 			}
 			else if (className.equals(Organization.class.getName())) {
@@ -377,14 +427,23 @@ public class AnnouncementsEntryLocalServiceImpl
 
 				toName = organization.getName();
 
-				params.put("usersOrgs", classPK);
+				params.put(
+					"usersOrgsTree",
+					ListUtil.fromArray(new Organization[] {organization}));
 			}
 			else if (className.equals(Role.class.getName())) {
 				Role role = rolePersistence.findByPrimaryKey(classPK);
 
 				toName = role.getName();
 
-				params.put("usersRoles", classPK);
+				if (role.getType() == RoleConstants.TYPE_REGULAR) {
+					params.put("inherit", Boolean.TRUE);
+					params.put("usersRoles", classPK);
+				}
+				else {
+					params.put(
+						"userGroupRole", new Long[] {Long.valueOf(0), classPK});
+				}
 			}
 			else if (className.equals(UserGroup.class.getName())) {
 				UserGroup userGroup = userGroupPersistence.findByPrimaryKey(
@@ -399,7 +458,7 @@ public class AnnouncementsEntryLocalServiceImpl
 		List<User> users = null;
 
 		if (className.equals(User.class.getName())) {
-			User user = userLocalService.getUserById(classPK);
+			User user = userPersistence.findByPrimaryKey(classPK);
 
 			toName = user.getFullName();
 			toAddress = user.getEmailAddress();
@@ -421,7 +480,9 @@ public class AnnouncementsEntryLocalServiceImpl
 			_log.debug("Notifying " + users.size() + " users");
 		}
 
-		List<InternetAddress> bulkAddresses = new ArrayList<InternetAddress>();
+		boolean notifyUsers = false;
+
+		SubscriptionSender subscriptionSender = new SubscriptionSender();
 
 		for (User user : users) {
 			AnnouncementsDelivery announcementsDelivery =
@@ -429,23 +490,23 @@ public class AnnouncementsEntryLocalServiceImpl
 					user.getUserId(), entry.getType());
 
 			if (announcementsDelivery.isEmail()) {
-				InternetAddress address = new InternetAddress(
+				subscriptionSender.addRuntimeSubscribers(
 					user.getEmailAddress(), user.getFullName());
 
-				bulkAddresses.add(address);
+				notifyUsers = true;
 			}
 
 			if (announcementsDelivery.isSms()) {
 				String smsSn = user.getContact().getSmsSn();
 
-				InternetAddress address = new InternetAddress(
+				subscriptionSender.addRuntimeSubscribers(
 					smsSn, user.getFullName());
 
-				bulkAddresses.add(address);
+				notifyUsers = true;
 			}
 		}
 
-		if (bulkAddresses.size() == 0) {
+		if (!notifyUsers) {
 			return;
 		}
 
@@ -453,81 +514,29 @@ public class AnnouncementsEntryLocalServiceImpl
 			PropsValues.ANNOUNCEMENTS_EMAIL_SUBJECT);
 		String body = ContentUtil.get(PropsValues.ANNOUNCEMENTS_EMAIL_BODY);
 
-		subject = StringUtil.replace(
-			subject,
-			new String[] {
-				"[$ENTRY_CONTENT$]",
-				"[$ENTRY_ID$]",
-				"[$ENTRY_TITLE$]",
-				"[$ENTRY_TYPE$]",
-				"[$ENTRY_URL$]",
-				"[$FROM_ADDRESS$]",
-				"[$FROM_NAME$]",
-				"[$PORTAL_URL$]",
-				"[$PORTLET_NAME$]",
-				"[$TO_ADDRESS$]",
-				"[$TO_NAME$]"
-			},
-			new String[] {
-				entry.getContent(),
-				String.valueOf(entry.getEntryId()),
-				entry.getTitle(),
-				LanguageUtil.get(company.getLocale(), entry.getType()),
-				entry.getUrl(),
-				fromAddress,
-				fromName,
-				company.getVirtualHostname(),
-				LanguageUtil.get(
-					company.getLocale(),
-					(entry.isAlert() ? "alert" : "announcement")),
-				toAddress,
-				toName
-			});
+		subscriptionSender.setBody(body);
+		subscriptionSender.setCompanyId(entry.getCompanyId());
+		subscriptionSender.setContextAttribute(
+			"[$ENTRY_CONTENT$]", entry.getContent(), false);
+		subscriptionSender.setContextAttributes(
+			"[$ENTRY_ID$]", entry.getEntryId(), "[$ENTRY_TITLE$]",
+			entry.getTitle(), "[$ENTRY_TYPE$]",
+			LanguageUtil.get(company.getLocale(), entry.getType()),
+			"[$ENTRY_URL$]", entry.getUrl(), "[$PORTLET_NAME$]",
+			LanguageUtil.get(
+				company.getLocale(),
+				(entry.isAlert() ? "alert" : "announcement")));
+		subscriptionSender.setFrom(fromAddress, fromName);
+		subscriptionSender.setHtmlFormat(true);
+		subscriptionSender.setMailId("announcements_entry", entry.getEntryId());
+		subscriptionSender.setPortletId(PortletKeys.ANNOUNCEMENTS);
+		subscriptionSender.setScopeGroupId(entry.getGroupId());
+		subscriptionSender.setSubject(subject);
+		subscriptionSender.setUserId(entry.getUserId());
 
-		body = StringUtil.replace(
-			body,
-			new String[] {
-				"[$ENTRY_CONTENT$]",
-				"[$ENTRY_ID$]",
-				"[$ENTRY_TITLE$]",
-				"[$ENTRY_TYPE$]",
-				"[$ENTRY_URL$]",
-				"[$FROM_ADDRESS$]",
-				"[$FROM_NAME$]",
-				"[$PORTAL_URL$]",
-				"[$PORTLET_NAME$]",
-				"[$TO_ADDRESS$]",
-				"[$TO_NAME$]"
-			},
-			new String[] {
-				entry.getContent(),
-				String.valueOf(entry.getEntryId()),
-				entry.getTitle(),
-				LanguageUtil.get(company.getLocale(), entry.getType()),
-				entry.getUrl(),
-				fromAddress,
-				fromName,
-				company.getVirtualHostname(),
-				LanguageUtil.get(
-					company.getLocale(),
-					(entry.isAlert() ? "alert" : "announcement")),
-				toAddress,
-				toName
-			});
+		subscriptionSender.addRuntimeSubscribers(toAddress, toName);
 
-		InternetAddress from = new InternetAddress(fromAddress, fromName);
-
-		InternetAddress to = new InternetAddress(toAddress, toName);
-
-		InternetAddress[] bulkAddressesArray = bulkAddresses.toArray(
-			new InternetAddress[bulkAddresses.size()]);
-
-		MailMessage message = new MailMessage(
-			from, to, subject, body, true);
-
-		message.setBulkAddresses(bulkAddressesArray);
-
-		mailService.sendEmail(message);
+		subscriptionSender.flushNotificationsAsync();
 	}
 
 	protected void validate(String title, String content, String url)
@@ -546,10 +555,12 @@ public class AnnouncementsEntryLocalServiceImpl
 		}
 	}
 
-	private static long _ANNOUNCEMENTS_ENTRY_CHECK_INTERVAL =
+	private static final long _ANNOUNCEMENTS_ENTRY_CHECK_INTERVAL =
 		PropsValues.ANNOUNCEMENTS_ENTRY_CHECK_INTERVAL * Time.MINUTE;
 
 	private static Log _log = LogFactoryUtil.getLog(
 		AnnouncementsEntryLocalServiceImpl.class);
+
+	private Date _previousCheckDate;
 
 }

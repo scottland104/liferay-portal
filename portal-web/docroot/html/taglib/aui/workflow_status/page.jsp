@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,21 +14,9 @@
  */
 --%>
 
-<%@ include file="/html/taglib/init.jsp" %>
+<%@ include file="/html/taglib/aui/workflow_status/init.jsp" %>
 
-<%@ page import="com.liferay.portal.NoSuchWorkflowInstanceLinkException" %>
-
-<%
-Object bean = request.getAttribute("aui:workflow-status:bean");
-String helpMessage = GetterUtil.getString((String)request.getAttribute("aui:workflow-status:help-message"), "a-new-version-will-be-created-automatically-if-this-content-is-modified");
-String id = GetterUtil.getString((String)request.getAttribute("aui:workflow-status:id"));
-Class<?> model = (Class<?>)request.getAttribute("aui:workflow-status:model");
-int status = GetterUtil.getInteger((String)request.getAttribute("aui:workflow-status:status"));
-String statusMessage = ((String)request.getAttribute("aui:workflow-status:status-message"));
-String version = GetterUtil.getString((String)request.getAttribute("aui:workflow-status:version"));
-%>
-
-<div class="taglib-workflow-status">
+<span class="taglib-workflow-status">
 	<c:if test="<%= Validator.isNotNull(id) %>">
 		<span class="workflow-id"><liferay-ui:message key="id" />: <%= HtmlUtil.escape(id) %></span>
 	</c:if>
@@ -41,9 +29,9 @@ String version = GetterUtil.getString((String)request.getAttribute("aui:workflow
 	String additionalText = StringPool.BLANK;
 
 	if (Validator.isNull(statusMessage)) {
-		statusMessage = WorkflowConstants.toLabel(status);
+		statusMessage = WorkflowConstants.getStatusLabel(status);
 
-		if (status == WorkflowConstants.STATUS_PENDING) {
+		if ((status == WorkflowConstants.STATUS_PENDING) && (bean != null) && (model != null)) {
 			long companyId = BeanPropertiesUtil.getLong(bean, "companyId");
 			long groupId = BeanPropertiesUtil.getLong(bean, "groupId");
 			long classPK = BeanPropertiesUtil.getLong(bean, "primaryKey");
@@ -66,9 +54,17 @@ String version = GetterUtil.getString((String)request.getAttribute("aui:workflow
 	}
 	%>
 
-	<span class="workflow-status"><liferay-ui:message key="status" />: <strong class="workflow-status-<%= statusMessage %>"><liferay-ui:message key="<%= statusMessage %>" /><%= additionalText %></strong></span>
+	<span class='<%= showIcon ? "workflow-status workflow-status-icon" : "workflow-status" %>'>
+		<c:if test="<%= showLabel %>">
+			<liferay-ui:message key="status" />:
+		</c:if>
 
-	<c:if test="<%= (status == WorkflowConstants.STATUS_APPROVED) && Validator.isNotNull(version) %>">
+		<strong class="label workflow-status-<%= WorkflowConstants.getStatusLabel(status) %> <%= WorkflowConstants.getStatusCssClass(status) %>">
+			<liferay-ui:message key="<%= statusMessage %>" /><%= additionalText %>
+		</strong>
+	</span>
+
+	<c:if test="<%= Validator.isNotNull(helpMessage) %>">
 		<liferay-ui:icon-help message="<%= helpMessage %>" />
 	</c:if>
-</div>
+</span>

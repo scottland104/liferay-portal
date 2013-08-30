@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -13,6 +13,8 @@
  */
 
 package com.liferay.portal.kernel.util;
+
+import com.liferay.portal.kernel.security.pacl.permission.PortalRuntimePermission;
 
 /**
  * @author Brian Wing Shun Chan
@@ -50,6 +52,14 @@ public class HtmlUtil {
 		return getHtml().escapeURL(url);
 	}
 
+	public static String escapeXPath(String xPath) {
+		return getHtml().escapeXPath(xPath);
+	}
+
+	public static String escapeXPathAttribute(String xPathAttribute) {
+		return getHtml().escapeXPathAttribute(xPathAttribute);
+	}
+
 	public static String extractText(String html) {
 		return getHtml().extractText(html);
 	}
@@ -59,11 +69,21 @@ public class HtmlUtil {
 	}
 
 	public static Html getHtml() {
+		PortalRuntimePermission.checkGetBeanProperty(HtmlUtil.class);
+
 		return _html;
+	}
+
+	public static String render(String html) {
+		return getHtml().render(html);
 	}
 
 	public static String replaceMsWordCharacters(String html) {
 		return getHtml().replaceMsWordCharacters(html);
+	}
+
+	public static String replaceNewLine(String html) {
+		return getHtml().replaceNewLine(html);
 	}
 
 	public static String stripBetween(String html, String tag) {
@@ -95,6 +115,8 @@ public class HtmlUtil {
 	}
 
 	public void setHtml(Html html) {
+		PortalRuntimePermission.checkSetBeanProperty(getClass());
+
 		_html = html;
 	}
 

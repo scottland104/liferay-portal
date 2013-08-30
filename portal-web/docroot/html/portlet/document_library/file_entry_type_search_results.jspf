@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,9 +17,13 @@
 <%
 StructureSearchTerms searchTerms = (StructureSearchTerms)searchContainer.getSearchTerms();
 
-results = DLFileEntryTypeLocalServiceUtil.search(company.getCompanyId(), scopeGroupId, searchTerms.getKeywords(), searchContainer.getStart(), searchContainer.getEnd(), searchContainer.getOrderByComparator());
-total = DLFileEntryTypeLocalServiceUtil.searchCount(company.getCompanyId(), scopeGroupId, searchTerms.getKeywords());
+boolean includeBasicFileEntryType = ParamUtil.getBoolean(renderRequest, "includeBasicFileEntryType");
 
-pageContext.setAttribute("results", results);
-pageContext.setAttribute("total", total);
+total = DLFileEntryTypeServiceUtil.searchCount(company.getCompanyId(), PortalUtil.getSiteAndCompanyGroupIds(themeDisplay), searchTerms.getKeywords(), includeBasicFileEntryType);
+
+searchContainer.setTotal(total);
+
+results = DLFileEntryTypeServiceUtil.search(company.getCompanyId(), PortalUtil.getSiteAndCompanyGroupIds(themeDisplay), searchTerms.getKeywords(), includeBasicFileEntryType, searchContainer.getStart(), searchContainer.getEnd(), searchContainer.getOrderByComparator());
+
+searchContainer.setResults(results);
 %>

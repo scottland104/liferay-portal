@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -53,31 +53,29 @@ String viewFullContentURLString = viewFullContentURL.toString();
 
 viewFullContentURLString = HttpUtil.setParameter(viewFullContentURLString, "redirect", currentURL);
 
-String viewURL = viewInContext ? assetRenderer.getURLViewInContext(liferayPortletRequest, liferayPortletResponse, viewFullContentURLString) : viewFullContentURL.toString();
+String viewURL = viewInContext ? assetRenderer.getURLViewInContext(liferayPortletRequest, liferayPortletResponse, viewFullContentURLString) : viewFullContentURLString;
 
-viewURL = _checkViewURL(viewURL, currentURL, themeDisplay);
+viewURL = _checkViewURL(assetEntry, viewInContext, viewURL, currentURL, themeDisplay);
 %>
 
 	<c:if test="<%= assetEntryIndex == 0 %>">
 		<ul class="title-list">
 	</c:if>
 
-	<c:if test="<%= show && assetRenderer.hasViewPermission(permissionChecker) %>">
-		<li class="title-list <%= assetRendererFactory.getType() %>">
-			<liferay-ui:icon
-				label="<%= true %>"
-				message="<%= HtmlUtil.escape(title) %>"
-				src="<%= assetRendererFactory.getIconPath(renderRequest) %>"
-				url="<%= viewURL %>"
-			/>
+	<li class="title-list <%= assetRendererFactory.getType() %>">
+		<liferay-ui:icon
+			label="<%= true %>"
+			message="<%= HtmlUtil.escape(title) %>"
+			src="<%= assetRenderer.getIconPath(renderRequest) %>"
+			url="<%= viewURL %>"
+		/>
 
-			<liferay-util:include page="/html/portlet/asset_publisher/asset_actions.jsp" />
+		<liferay-util:include page="/html/portlet/asset_publisher/asset_actions.jsp" />
 
-			<div class="asset-metadata">
-				<%@ include file="/html/portlet/asset_publisher/asset_metadata.jspf" %>
-			</div>
-		</li>
-	</c:if>
+		<div class="asset-metadata">
+			<%@ include file="/html/portlet/asset_publisher/asset_metadata.jspf" %>
+		</div>
+	</li>
 
 	<c:if test="<%= (assetEntryIndex + 1) == results.size() %>">
 		</ul>

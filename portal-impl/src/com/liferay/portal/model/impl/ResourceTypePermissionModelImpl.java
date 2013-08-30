@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portal.model.impl;
 
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -28,9 +29,10 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the ResourceTypePermission service. Represents a row in the &quot;ResourceTypePermission&quot; database table, with each column mapped to a property of this class.
@@ -63,6 +65,8 @@ public class ResourceTypePermissionModelImpl extends BaseModelImpl<ResourceTypeP
 		};
 	public static final String TABLE_SQL_CREATE = "create table ResourceTypePermission (resourceTypePermissionId LONG not null primary key,companyId LONG,groupId LONG,name VARCHAR(75) null,roleId LONG,actionIds LONG)";
 	public static final String TABLE_SQL_DROP = "drop table ResourceTypePermission";
+	public static final String ORDER_BY_JPQL = " ORDER BY resourceTypePermission.resourceTypePermissionId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY ResourceTypePermission.resourceTypePermissionId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -72,50 +76,123 @@ public class ResourceTypePermissionModelImpl extends BaseModelImpl<ResourceTypeP
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.ResourceTypePermission"),
 			true);
-
-	public Class<?> getModelClass() {
-		return ResourceTypePermission.class;
-	}
-
-	public String getModelClassName() {
-		return ResourceTypePermission.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.ResourceTypePermission"),
+			true);
+	public static long COMPANYID_COLUMN_BITMASK = 1L;
+	public static long GROUPID_COLUMN_BITMASK = 2L;
+	public static long NAME_COLUMN_BITMASK = 4L;
+	public static long ROLEID_COLUMN_BITMASK = 8L;
+	public static long RESOURCETYPEPERMISSIONID_COLUMN_BITMASK = 16L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.ResourceTypePermission"));
 
 	public ResourceTypePermissionModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _resourceTypePermissionId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setResourceTypePermissionId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_resourceTypePermissionId);
+		return _resourceTypePermissionId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return ResourceTypePermission.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return ResourceTypePermission.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("resourceTypePermissionId", getResourceTypePermissionId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("groupId", getGroupId());
+		attributes.put("name", getName());
+		attributes.put("roleId", getRoleId());
+		attributes.put("actionIds", getActionIds());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long resourceTypePermissionId = (Long)attributes.get(
+				"resourceTypePermissionId");
+
+		if (resourceTypePermissionId != null) {
+			setResourceTypePermissionId(resourceTypePermissionId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long groupId = (Long)attributes.get("groupId");
+
+		if (groupId != null) {
+			setGroupId(groupId);
+		}
+
+		String name = (String)attributes.get("name");
+
+		if (name != null) {
+			setName(name);
+		}
+
+		Long roleId = (Long)attributes.get("roleId");
+
+		if (roleId != null) {
+			setRoleId(roleId);
+		}
+
+		Long actionIds = (Long)attributes.get("actionIds");
+
+		if (actionIds != null) {
+			setActionIds(actionIds);
+		}
+	}
+
+	@Override
 	public long getResourceTypePermissionId() {
 		return _resourceTypePermissionId;
 	}
 
+	@Override
 	public void setResourceTypePermissionId(long resourceTypePermissionId) {
 		_resourceTypePermissionId = resourceTypePermissionId;
 	}
 
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
+		_columnBitmask |= COMPANYID_COLUMN_BITMASK;
+
 		if (!_setOriginalCompanyId) {
 			_setOriginalCompanyId = true;
 
@@ -129,11 +206,15 @@ public class ResourceTypePermissionModelImpl extends BaseModelImpl<ResourceTypeP
 		return _originalCompanyId;
 	}
 
+	@Override
 	public long getGroupId() {
 		return _groupId;
 	}
 
+	@Override
 	public void setGroupId(long groupId) {
+		_columnBitmask |= GROUPID_COLUMN_BITMASK;
+
 		if (!_setOriginalGroupId) {
 			_setOriginalGroupId = true;
 
@@ -147,6 +228,7 @@ public class ResourceTypePermissionModelImpl extends BaseModelImpl<ResourceTypeP
 		return _originalGroupId;
 	}
 
+	@Override
 	public String getName() {
 		if (_name == null) {
 			return StringPool.BLANK;
@@ -156,7 +238,10 @@ public class ResourceTypePermissionModelImpl extends BaseModelImpl<ResourceTypeP
 		}
 	}
 
+	@Override
 	public void setName(String name) {
+		_columnBitmask |= NAME_COLUMN_BITMASK;
+
 		if (_originalName == null) {
 			_originalName = _name;
 		}
@@ -168,11 +253,15 @@ public class ResourceTypePermissionModelImpl extends BaseModelImpl<ResourceTypeP
 		return GetterUtil.getString(_originalName);
 	}
 
+	@Override
 	public long getRoleId() {
 		return _roleId;
 	}
 
+	@Override
 	public void setRoleId(long roleId) {
+		_columnBitmask |= ROLEID_COLUMN_BITMASK;
+
 		if (!_setOriginalRoleId) {
 			_setOriginalRoleId = true;
 
@@ -186,43 +275,41 @@ public class ResourceTypePermissionModelImpl extends BaseModelImpl<ResourceTypeP
 		return _originalRoleId;
 	}
 
+	@Override
 	public long getActionIds() {
 		return _actionIds;
 	}
 
+	@Override
 	public void setActionIds(long actionIds) {
 		_actionIds = actionIds;
 	}
 
-	@Override
-	public ResourceTypePermission toEscapedModel() {
-		if (isEscapedModel()) {
-			return (ResourceTypePermission)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (ResourceTypePermission)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					ResourceTypePermission.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			ResourceTypePermission.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public ResourceTypePermission toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (ResourceTypePermission)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -241,6 +328,7 @@ public class ResourceTypePermissionModelImpl extends BaseModelImpl<ResourceTypeP
 		return resourceTypePermissionImpl;
 	}
 
+	@Override
 	public int compareTo(ResourceTypePermission resourceTypePermission) {
 		long primaryKey = resourceTypePermission.getPrimaryKey();
 
@@ -257,18 +345,15 @@ public class ResourceTypePermissionModelImpl extends BaseModelImpl<ResourceTypeP
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof ResourceTypePermission)) {
 			return false;
 		}
 
-		ResourceTypePermission resourceTypePermission = null;
-
-		try {
-			resourceTypePermission = (ResourceTypePermission)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		ResourceTypePermission resourceTypePermission = (ResourceTypePermission)obj;
 
 		long primaryKey = resourceTypePermission.getPrimaryKey();
 
@@ -302,6 +387,8 @@ public class ResourceTypePermissionModelImpl extends BaseModelImpl<ResourceTypeP
 		resourceTypePermissionModelImpl._originalRoleId = resourceTypePermissionModelImpl._roleId;
 
 		resourceTypePermissionModelImpl._setOriginalRoleId = false;
+
+		resourceTypePermissionModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -350,6 +437,7 @@ public class ResourceTypePermissionModelImpl extends BaseModelImpl<ResourceTypeP
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(22);
 
@@ -388,7 +476,7 @@ public class ResourceTypePermissionModelImpl extends BaseModelImpl<ResourceTypeP
 	}
 
 	private static ClassLoader _classLoader = ResourceTypePermission.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			ResourceTypePermission.class
 		};
 	private long _resourceTypePermissionId;
@@ -404,6 +492,6 @@ public class ResourceTypePermissionModelImpl extends BaseModelImpl<ResourceTypeP
 	private long _originalRoleId;
 	private boolean _setOriginalRoleId;
 	private long _actionIds;
-	private transient ExpandoBridge _expandoBridge;
-	private ResourceTypePermission _escapedModelProxy;
+	private long _columnBitmask;
+	private ResourceTypePermission _escapedModel;
 }

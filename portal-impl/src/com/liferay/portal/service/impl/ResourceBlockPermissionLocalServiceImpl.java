@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,14 +14,19 @@
 
 package com.liferay.portal.service.impl;
 
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.model.ResourceBlock;
 import com.liferay.portal.model.ResourceBlockConstants;
 import com.liferay.portal.model.ResourceBlockPermission;
 import com.liferay.portal.model.ResourceBlockPermissionsContainer;
 import com.liferay.portal.service.base.ResourceBlockPermissionLocalServiceBaseImpl;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Manages resource block permissions.
@@ -36,6 +41,7 @@ import java.util.Map;
 public class ResourceBlockPermissionLocalServiceImpl
 	extends ResourceBlockPermissionLocalServiceBaseImpl {
 
+	@Override
 	public void addResourceBlockPermissions(
 			long resourceBlockId,
 			ResourceBlockPermissionsContainer resourceBlockPermissionsContainer)
@@ -59,6 +65,7 @@ public class ResourceBlockPermissionLocalServiceImpl
 		}
 	}
 
+	@Override
 	public void deleteResourceBlockPermissions(long resourceBlockId)
 		throws SystemException {
 
@@ -66,6 +73,46 @@ public class ResourceBlockPermissionLocalServiceImpl
 			resourceBlockId);
 	}
 
+	@Override
+	public Map<Long, Set<String>> getAvailableResourceBlockPermissionActionIds(
+			long[] roleIds, String name, long primKey, List<String> actionIds)
+		throws PortalException, SystemException {
+
+		ResourceBlock resourceBlock =
+			resourceBlockLocalService.getResourceBlock(name, primKey);
+
+		Map<Long, Set<String>> roleIdsToActionIds =
+			new HashMap<Long, Set<String>>();
+
+		for (long roleId : roleIds) {
+			Set<String> availableActionIds = roleIdsToActionIds.get(roleId);
+
+			if (availableActionIds != null) {
+				continue;
+			}
+
+			List<String> resourceBlockActionIds =
+				resourceBlockLocalService.getPermissions(resourceBlock, roleId);
+
+			if (resourceBlockActionIds.isEmpty()) {
+				continue;
+			}
+
+			availableActionIds = new HashSet<String>();
+
+			roleIdsToActionIds.put(roleId, availableActionIds);
+
+			for (String actionId : actionIds) {
+				if (resourceBlockActionIds.contains(actionId)) {
+					availableActionIds.add(actionId);
+				}
+			}
+		}
+
+		return roleIdsToActionIds;
+	}
+
+	@Override
 	public ResourceBlockPermissionsContainer
 			getResourceBlockPermissionsContainer(long resourceBlockId)
 		throws SystemException {
@@ -88,6 +135,16 @@ public class ResourceBlockPermissionLocalServiceImpl
 		return resourceBlockPermissionContainer;
 	}
 
+	@Override
+	public int getResourceBlockPermissionsCount(
+			long resourceBlockId, long roleId)
+		throws SystemException {
+
+		return resourceBlockPermissionPersistence.countByR_R(
+			resourceBlockId, roleId);
+	}
+
+	@Override
 	public void updateResourceBlockPermission(
 			long resourceBlockId, long roleId, long actionIdsLong, int operator)
 		throws SystemException {

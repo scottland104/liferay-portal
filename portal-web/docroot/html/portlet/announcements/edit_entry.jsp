@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,6 +22,14 @@ String redirect = ParamUtil.getString(request, "redirect");
 AnnouncementsEntry entry = (AnnouncementsEntry)request.getAttribute(WebKeys.ANNOUNCEMENTS_ENTRY);
 
 long entryId = BeanParamUtil.getLong(entry, request, "entryId");
+
+String content = BeanParamUtil.getString(entry, request, "content");
+
+boolean displayImmediately = ParamUtil.getBoolean(request, "displayImmediately");
+
+if (entry == null) {
+	displayImmediately = true;
+}
 %>
 
 <aui:form method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "saveEntry();" %>'>
@@ -77,11 +85,15 @@ long entryId = BeanParamUtil.getLong(entry, request, "entryId");
 			</c:otherwise>
 		</c:choose>
 
-		<aui:input name="title" />
+		<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" name="title" />
 
 		<aui:input name="url" />
 
-		<aui:input name="content" />
+		<aui:field-wrapper label="content">
+			<liferay-ui:input-editor editorImpl="<%= EDITOR_WYSIWYG_IMPL_KEY %>" />
+
+			<aui:input name="content" type="hidden" />
+		</aui:field-wrapper>
 
 		<aui:select name="type">
 
@@ -89,7 +101,7 @@ long entryId = BeanParamUtil.getLong(entry, request, "entryId");
 			for (String curType : AnnouncementsEntryConstants.TYPES) {
 			%>
 
-				<aui:option label="<%= curType %>" />
+				<aui:option label="<%= curType %>" selected="<%= (entry != null) && curType.equals(entry.getType()) %>" />
 
 			<%
 			}
@@ -98,11 +110,11 @@ long entryId = BeanParamUtil.getLong(entry, request, "entryId");
 		</aui:select>
 
 		<aui:select name="priority">
-			<aui:option label="normal" value="0" />
-			<aui:option label="important" value="1" />
+			<aui:option label="normal" selected="<%= (entry != null) && (entry.getPriority() == 0) %>" value="0" />
+			<aui:option label="important" selected="<%= (entry != null) && (entry.getPriority() == 1) %>" value="1" />
 		</aui:select>
 
-		<aui:input name="displayDate" />
+		<aui:input dateTogglerCheckboxLabel="display-immediately" disabled="<%= displayImmediately %>" name="displayDate" />
 
 		<aui:input name="expirationDate" />
 	</aui:fieldset>
@@ -117,10 +129,19 @@ long entryId = BeanParamUtil.getLong(entry, request, "entryId");
 </aui:form>
 
 <aui:script>
+	function <portlet:namespace />getContent() {
+		return window.<portlet:namespace />editor.getHTML();
+	}
+
+	function <portlet:namespace />initEditor() {
+		return "<%= UnicodeFormatter.toString(content) %>";
+	}
+
 	function <portlet:namespace />previewEntry() {
 		document.<portlet:namespace />fm.action = '<portlet:actionURL><portlet:param name="struts_action" value="/announcements/preview_entry" /></portlet:actionURL>';
 		document.<portlet:namespace />fm.target = '_blank';
 		document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= Constants.PREVIEW %>";
+		document.<portlet:namespace />fm.<portlet:namespace />content.value = <portlet:namespace />getContent();
 		document.<portlet:namespace />fm.submit();
 	}
 
@@ -128,10 +149,12 @@ long entryId = BeanParamUtil.getLong(entry, request, "entryId");
 		document.<portlet:namespace />fm.action = '<portlet:actionURL><portlet:param name="struts_action" value="/announcements/edit_entry" /></portlet:actionURL>';
 		document.<portlet:namespace />fm.target = '';
 		document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= (entry == null) ? Constants.ADD : Constants.UPDATE %>";
+		document.<portlet:namespace />fm.<portlet:namespace />content.value = <portlet:namespace />getContent();
+
 		submitForm(document.<portlet:namespace />fm);
 	}
-
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />title);
-	</c:if>
 </aui:script>
+
+<%!
+public static final String EDITOR_WYSIWYG_IMPL_KEY = "editor.wysiwyg.portal-web.docroot.html.portlet.announcements.edit_entry.jsp";
+%>

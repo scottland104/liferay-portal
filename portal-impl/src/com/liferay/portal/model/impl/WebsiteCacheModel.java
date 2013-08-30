@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.Website;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -28,12 +33,14 @@ import java.util.Date;
  * @see Website
  * @generated
  */
-public class WebsiteCacheModel implements CacheModel<Website> {
+public class WebsiteCacheModel implements CacheModel<Website>, Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(23);
+		StringBundler sb = new StringBundler(25);
 
-		sb.append("{websiteId=");
+		sb.append("{uuid=");
+		sb.append(uuid);
+		sb.append(", websiteId=");
 		sb.append(websiteId);
 		sb.append(", companyId=");
 		sb.append(companyId);
@@ -60,8 +67,16 @@ public class WebsiteCacheModel implements CacheModel<Website> {
 		return sb.toString();
 	}
 
+	@Override
 	public Website toEntityModel() {
 		WebsiteImpl websiteImpl = new WebsiteImpl();
+
+		if (uuid == null) {
+			websiteImpl.setUuid(StringPool.BLANK);
+		}
+		else {
+			websiteImpl.setUuid(uuid);
+		}
 
 		websiteImpl.setWebsiteId(websiteId);
 		websiteImpl.setCompanyId(companyId);
@@ -106,6 +121,60 @@ public class WebsiteCacheModel implements CacheModel<Website> {
 		return websiteImpl;
 	}
 
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		uuid = objectInput.readUTF();
+		websiteId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		userId = objectInput.readLong();
+		userName = objectInput.readUTF();
+		createDate = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
+		classNameId = objectInput.readLong();
+		classPK = objectInput.readLong();
+		url = objectInput.readUTF();
+		typeId = objectInput.readInt();
+		primary = objectInput.readBoolean();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		if (uuid == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
+
+		objectOutput.writeLong(websiteId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(userId);
+
+		if (userName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(userName);
+		}
+
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(modifiedDate);
+		objectOutput.writeLong(classNameId);
+		objectOutput.writeLong(classPK);
+
+		if (url == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(url);
+		}
+
+		objectOutput.writeInt(typeId);
+		objectOutput.writeBoolean(primary);
+	}
+
+	public String uuid;
 	public long websiteId;
 	public long companyId;
 	public long userId;

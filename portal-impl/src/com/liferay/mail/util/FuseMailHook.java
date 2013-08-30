@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -41,11 +41,13 @@ public class FuseMailHook implements Hook {
 		_client = new HttpClient();
 	}
 
+	@Override
 	public void addForward(
 		long companyId, long userId, List<Filter> filters,
 		List<String> emailAddresses, boolean leaveCopy) {
 	}
 
+	@Override
 	public void addUser(
 		long companyId, long userId, String password, String firstName,
 		String middleName, String lastName, String emailAddress) {
@@ -71,11 +73,13 @@ public class FuseMailHook implements Hook {
 		}
 	}
 
+	@Override
 	public void addVacationMessage(
 		long companyId, long userId, String emailAddress,
 		String vacationMessage) {
 	}
 
+	@Override
 	public void deleteEmailAddress(long companyId, long userId) {
 		try {
 			User user = UserLocalServiceUtil.getUserById(userId);
@@ -95,6 +99,7 @@ public class FuseMailHook implements Hook {
 		}
 	}
 
+	@Override
 	public void deleteUser(long companyId, long userId) {
 		try {
 			String mailUserId = getMailUserId(companyId, userId);
@@ -111,10 +116,12 @@ public class FuseMailHook implements Hook {
 		}
 	}
 
+	@Override
 	public void updateBlocked(
 		long companyId, long userId, List<String> blocked) {
 	}
 
+	@Override
 	public void updateEmailAddress(
 		long companyId, long userId, String emailAddress) {
 
@@ -136,6 +143,7 @@ public class FuseMailHook implements Hook {
 		}
 	}
 
+	@Override
 	public void updatePassword(long companyId, long userId, String password) {
 		try {
 			String mailUserId = getMailUserId(companyId, userId);
@@ -158,30 +166,36 @@ public class FuseMailHook implements Hook {
 
 		int status = client.executeMethod(method);
 
-		if (_log.isDebugEnabled()) {
-			_log.debug("Posting to URI: " + method.getURI());
-
-			NameValuePair[] pairs = method.getParameters();
-
-			if (pairs.length > 0) {
-				StringBundler sb = new StringBundler(pairs.length * 3 + 1);
-
-				sb.append("With parameters:\n");
-
-				for (int i = 0; i < pairs.length; i++) {
-					sb.append("\t");
-					sb.append(pairs[i]);
-					sb.append("\n");
-				}
-
-				_log.debug(sb.toString());
-			}
-
-			_log.debug("Status: " + status);
-			_log.debug("Response body: " + method.getResponseBodyAsString());
+		if (!_log.isDebugEnabled()) {
+			return status;
 		}
 
+		_log.debug("Posting to URI: " + method.getURI());
+
+		NameValuePair[] pairs = method.getParameters();
+
+		if (pairs.length > 0) {
+			StringBundler sb = new StringBundler(pairs.length * 3 + 1);
+
+			sb.append("With parameters:\n");
+
+			for (int i = 0; i < pairs.length; i++) {
+				sb.append("\t");
+				sb.append(pairs[i]);
+				sb.append("\n");
+			}
+
+			_log.debug(sb.toString());
+		}
+
+		_log.debug("Status: " + status);
+		_log.debug("Response body: " + method.getResponseBodyAsString());
+
 		return status;
+	}
+
+	protected HttpClient getHttpClient() {
+		return _client;
 	}
 
 	protected String getMailUserId(long companyId, long userId)
@@ -199,10 +213,6 @@ public class FuseMailHook implements Hook {
 		return mailUserId;
 	}
 
-	protected HttpClient getHttpClient() {
-		return _client;
-	}
-
 	protected PostMethod getPostMethod() {
 		PostMethod post = new PostMethod(_URL);
 
@@ -212,20 +222,20 @@ public class FuseMailHook implements Hook {
 		return post;
 	}
 
-	private static final String _URL = PropsUtil.get(
-		PropsKeys.MAIL_HOOK_FUSEMAIL_URL);
-
-	private static final String _USERNAME = PropsUtil.get(
-		PropsKeys.MAIL_HOOK_FUSEMAIL_USERNAME);
-
-	private static final String _PASSWORD = PropsUtil.get(
-		PropsKeys.MAIL_HOOK_FUSEMAIL_PASSWORD);
-
 	private static final String _ACCOUNT_TYPE = PropsUtil.get(
 		PropsKeys.MAIL_HOOK_FUSEMAIL_ACCOUNT_TYPE);
 
 	private static final String _GROUP_PARENT = PropsUtil.get(
 		PropsKeys.MAIL_HOOK_FUSEMAIL_GROUP_PARENT);
+
+	private static final String _PASSWORD = PropsUtil.get(
+		PropsKeys.MAIL_HOOK_FUSEMAIL_PASSWORD);
+
+	private static final String _URL = PropsUtil.get(
+		PropsKeys.MAIL_HOOK_FUSEMAIL_URL);
+
+	private static final String _USERNAME = PropsUtil.get(
+		PropsKeys.MAIL_HOOK_FUSEMAIL_USERNAME);
 
 	private static Log _log = LogFactoryUtil.getLog(FuseMailHook.class);
 

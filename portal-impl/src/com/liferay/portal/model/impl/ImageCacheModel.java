@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.Image;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -28,17 +33,15 @@ import java.util.Date;
  * @see Image
  * @generated
  */
-public class ImageCacheModel implements CacheModel<Image> {
+public class ImageCacheModel implements CacheModel<Image>, Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(15);
+		StringBundler sb = new StringBundler(13);
 
 		sb.append("{imageId=");
 		sb.append(imageId);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
-		sb.append(", text=");
-		sb.append(text);
 		sb.append(", type=");
 		sb.append(type);
 		sb.append(", height=");
@@ -52,6 +55,7 @@ public class ImageCacheModel implements CacheModel<Image> {
 		return sb.toString();
 	}
 
+	@Override
 	public Image toEntityModel() {
 		ImageImpl imageImpl = new ImageImpl();
 
@@ -62,13 +66,6 @@ public class ImageCacheModel implements CacheModel<Image> {
 		}
 		else {
 			imageImpl.setModifiedDate(new Date(modifiedDate));
-		}
-
-		if (text == null) {
-			imageImpl.setText(StringPool.BLANK);
-		}
-		else {
-			imageImpl.setText(text);
 		}
 
 		if (type == null) {
@@ -87,9 +84,36 @@ public class ImageCacheModel implements CacheModel<Image> {
 		return imageImpl;
 	}
 
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		imageId = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
+		type = objectInput.readUTF();
+		height = objectInput.readInt();
+		width = objectInput.readInt();
+		size = objectInput.readInt();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(imageId);
+		objectOutput.writeLong(modifiedDate);
+
+		if (type == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(type);
+		}
+
+		objectOutput.writeInt(height);
+		objectOutput.writeInt(width);
+		objectOutput.writeInt(size);
+	}
+
 	public long imageId;
 	public long modifiedDate;
-	public String text;
 	public String type;
 	public int height;
 	public int width;

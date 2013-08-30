@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portlet.documentlibrary.util;
 import com.liferay.portal.kernel.search.HitsOpenSearchImpl;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.util.PortletKeys;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 
 /**
@@ -26,7 +27,7 @@ public class DLOpenSearchImpl extends HitsOpenSearchImpl {
 
 	public static final String SEARCH_PATH = "/c/document_library/open_search";
 
-	public static final String TITLE = "Liferay Document Library Search: ";
+	public static final String TITLE = "Liferay Documents and Media Search: ";
 
 	@Override
 	public Indexer getIndexer() {
@@ -35,7 +36,7 @@ public class DLOpenSearchImpl extends HitsOpenSearchImpl {
 
 	@Override
 	public String getPortletId() {
-		return DLIndexer.PORTLET_ID;
+		return PortletKeys.DOCUMENT_LIBRARY;
 	}
 
 	@Override

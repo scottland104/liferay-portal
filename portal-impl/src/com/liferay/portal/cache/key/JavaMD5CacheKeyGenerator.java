@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -55,6 +55,7 @@ public class JavaMD5CacheKeyGenerator extends BaseCacheKeyGenerator {
 		}
 	}
 
+	@Override
 	public String getCacheKey(String key) {
 		if ((_maxLength > -1) && (key.length() < _maxLength)) {
 			return key;
@@ -74,10 +75,12 @@ public class JavaMD5CacheKeyGenerator extends BaseCacheKeyGenerator {
 		}
 	}
 
+	@Override
 	public String getCacheKey(String[] keys) {
 		return getCacheKey(new StringBundler(keys));
 	}
 
+	@Override
 	public String getCacheKey(StringBundler sb) {
 		if ((_maxLength > -1) && (sb.length() < _maxLength)) {
 			return sb.toString();
@@ -102,6 +105,11 @@ public class JavaMD5CacheKeyGenerator extends BaseCacheKeyGenerator {
 		}
 	}
 
+	@Override
+	public boolean isCallingGetCacheKeyThreadSafe() {
+		return _CALLING_GET_CACHE_KEY_THREAD_SAFE;
+	}
+
 	public void setMaxLength(int maxLength) {
 		_maxLength = maxLength;
 	}
@@ -118,6 +126,8 @@ public class JavaMD5CacheKeyGenerator extends BaseCacheKeyGenerator {
 	}
 
 	private static final String _ALGORITHM_MD5 = "MD5";
+
+	private static final boolean _CALLING_GET_CACHE_KEY_THREAD_SAFE = false;
 
 	private static final char[] _HEX_CHARACTERS = {
 		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,10 +18,13 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.pop.MessageListener;
 import com.liferay.portal.kernel.pop.MessageListenerException;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.CharPool;
-import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.StreamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.model.Company;
 import com.liferay.portal.model.User;
@@ -33,7 +36,6 @@ import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.portlet.messageboards.NoSuchCategoryException;
 import com.liferay.portlet.messageboards.NoSuchMessageException;
 import com.liferay.portlet.messageboards.model.MBCategory;
 import com.liferay.portlet.messageboards.model.MBCategoryConstants;
@@ -45,11 +47,12 @@ import com.liferay.portlet.messageboards.service.MBMessageServiceUtil;
 import com.liferay.portlet.messageboards.util.MBMailMessage;
 import com.liferay.portlet.messageboards.util.MBUtil;
 
-import java.io.File;
+import java.io.InputStream;
 
 import java.util.List;
 
 import javax.mail.Message;
+import javax.mail.MessagingException;
 
 import org.apache.commons.lang.time.StopWatch;
 
@@ -60,29 +63,44 @@ import org.apache.commons.lang.time.StopWatch;
  */
 public class MessageListenerImpl implements MessageListener {
 
+	@Override
 	public boolean accept(String from, String recipient, Message message) {
 		try {
-			String messageId = getMessageId(recipient, message);
+			if (isAutoReply(message)) {
+				return false;
+			}
 
-			if ((messageId == null) ||
-				(!messageId.startsWith(
-					MBUtil.MESSAGE_POP_PORTLET_PREFIX, getOffset()))) {
+			String messageIdString = getMessageIdString(recipient, message);
+
+			if ((messageIdString == null) ||
+				!messageIdString.startsWith(
+					MBUtil.MESSAGE_POP_PORTLET_PREFIX, getOffset())) {
 
 				return false;
 			}
 
-			Company company = getCompany(messageId);
-			long categoryId = getCategoryId(messageId);
+			Company company = getCompany(messageIdString);
+			long categoryId = getCategoryId(messageIdString);
 
 			MBCategory category = MBCategoryLocalServiceUtil.getCategory(
 				categoryId);
 
-			if (category.getCompanyId() != company.getCompanyId()) {
+			if ((category.getCompanyId() != company.getCompanyId()) &&
+				!category.isRoot()) {
+
 				return false;
 			}
 
 			if (_log.isDebugEnabled()) {
 				_log.debug("Check to see if user " + from + " exists");
+			}
+
+			String pop3User = PrefsPropsUtil.getString(
+				PropsKeys.MAIL_SESSION_MAIL_POP3_USER,
+				PropsValues.MAIL_SESSION_MAIL_POP3_USER);
+
+			if (from.equalsIgnoreCase(pop3User)) {
+				return false;
 			}
 
 			UserLocalServiceUtil.getUserByEmailAddress(
@@ -99,10 +117,11 @@ public class MessageListenerImpl implements MessageListener {
 		}
 	}
 
+	@Override
 	public void deliver(String from, String recipient, Message message)
 		throws MessageListenerException {
 
-		List<ObjectValuePair<String, File>> files = null;
+		List<ObjectValuePair<String, InputStream>> inputStreamOVPs = null;
 
 		try {
 			StopWatch stopWatch = null;
@@ -115,32 +134,43 @@ public class MessageListenerImpl implements MessageListener {
 				_log.debug("Deliver message from " + from + " to " + recipient);
 			}
 
-			String messageId = getMessageId(recipient, message);
+			String messageIdString = getMessageIdString(recipient, message);
 
-			Company company = getCompany(messageId);
+			Company company = getCompany(messageIdString);
 
 			if (_log.isDebugEnabled()) {
-				_log.debug("Message id " + messageId);
+				_log.debug("Message id " + messageIdString);
 			}
 
 			long groupId = 0;
-			long categoryId = getCategoryId(messageId);
+			long categoryId = getCategoryId(messageIdString);
 
-			try {
-				MBCategory category = MBCategoryLocalServiceUtil.getCategory(
-					categoryId);
+			MBCategory category = MBCategoryLocalServiceUtil.fetchMBCategory(
+				categoryId);
 
+			if (category == null) {
+				groupId = categoryId;
+				categoryId = MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID;
+			}
+			else {
 				groupId = category.getGroupId();
-		 	}
-		 	catch (NoSuchCategoryException nsce) {
-		 		groupId = categoryId;
-		 		categoryId = MBCategoryConstants.DEFAULT_PARENT_CATEGORY_ID;
-		 	}
 
-		 	if (_log.isDebugEnabled()) {
-		 		_log.debug("Group id " + groupId);
-		 		_log.debug("Category id " + categoryId);
-		 	}
+				if (category.isRoot()) {
+					long messageId = getMessageId(messageIdString);
+
+					MBMessage threadMessage =
+						MBMessageLocalServiceUtil.fetchMBMessage(messageId);
+
+					if (threadMessage != null) {
+						groupId = threadMessage.getGroupId();
+					}
+				}
+			}
+
+			if (_log.isDebugEnabled()) {
+				_log.debug("Group id " + groupId);
+				_log.debug("Category id " + categoryId);
+			}
 
 			User user = UserLocalServiceUtil.getUserByEmailAddress(
 				company.getCompanyId(), from);
@@ -172,11 +202,11 @@ public class MessageListenerImpl implements MessageListener {
 
 			String subject = MBUtil.getSubjectWithoutMessageId(message);
 
-			MBMailMessage collector = new MBMailMessage();
+			MBMailMessage mbMailMessage = new MBMailMessage();
 
-			MBUtil.collectPartContent(message, collector);
+			MBUtil.collectPartContent(message, mbMailMessage);
 
-			files = collector.getFiles();
+			inputStreamOVPs = mbMailMessage.getInputStreamOVPs();
 
 			PermissionCheckerUtil.setThreadValues(user);
 
@@ -191,16 +221,15 @@ public class MessageListenerImpl implements MessageListener {
 
 			if (parentMessage == null) {
 				MBMessageServiceUtil.addMessage(
-					groupId, categoryId, subject, collector.getBody(),
-					MBMessageConstants.DEFAULT_FORMAT, files, false, 0.0, true,
-					serviceContext);
+					groupId, categoryId, subject, mbMailMessage.getBody(),
+					MBMessageConstants.DEFAULT_FORMAT, inputStreamOVPs, false,
+					0.0, true, serviceContext);
 			}
 			else {
 				MBMessageServiceUtil.addMessage(
-					groupId, categoryId, parentMessage.getThreadId(),
-					parentMessage.getMessageId(), subject, collector.getBody(),
-					MBMessageConstants.DEFAULT_FORMAT, files, false, 0.0, true,
-					serviceContext);
+					parentMessage.getMessageId(), subject,
+					mbMailMessage.getBody(), MBMessageConstants.DEFAULT_FORMAT,
+					inputStreamOVPs, false, 0.0, true, serviceContext);
 			}
 
 			if (_log.isDebugEnabled()) {
@@ -221,11 +250,13 @@ public class MessageListenerImpl implements MessageListener {
 			throw new MessageListenerException(e);
 		}
 		finally {
-			if (files != null) {
-				for (ObjectValuePair<String, File> ovp : files) {
-					File file = ovp.getValue();
+			if (inputStreamOVPs != null) {
+				for (ObjectValuePair<String, InputStream> inputStreamOVP :
+						inputStreamOVPs) {
 
-					FileUtil.delete(file);
+					InputStream inputStream = inputStreamOVP.getValue();
+
+					StreamUtil.cleanUp(inputStream);
 				}
 			}
 
@@ -233,36 +264,44 @@ public class MessageListenerImpl implements MessageListener {
 		}
 	}
 
+	@Override
 	public String getId() {
 		return MessageListenerImpl.class.getName();
 	}
 
-	protected long getCategoryId(String recipient) {
-		int pos = recipient.indexOf(CharPool.AT);
-
-		String target = recipient.substring(
-			MBUtil.MESSAGE_POP_PORTLET_PREFIX.length() + getOffset(), pos);
-
-		String[] parts = StringUtil.split(target, CharPool.PERIOD);
+	protected long getCategoryId(String messageIdString) {
+		String[] parts = getMessageIdStringParts(messageIdString);
 
 		return GetterUtil.getLong(parts[0]);
 	}
 
-	protected Company getCompany(String messageId) throws Exception {
+	protected Company getCompany(String messageIdString) throws Exception {
 		int pos =
-			messageId.indexOf(CharPool.AT) +
+			messageIdString.indexOf(CharPool.AT) +
 				PropsValues.POP_SERVER_SUBDOMAIN.length() + 1;
 
 		if (PropsValues.POP_SERVER_SUBDOMAIN.length() > 0) {
 			pos++;
 		}
 
-		String mx = messageId.substring(pos, messageId.length() - 1);
+		int endPos = messageIdString.indexOf(CharPool.GREATER_THAN, pos);
+
+		if (endPos == -1) {
+			endPos = messageIdString.length();
+		}
+
+		String mx = messageIdString.substring(pos, endPos);
 
 		return CompanyLocalServiceUtil.getCompanyByMx(mx);
 	}
 
-	protected String getMessageId(String recipient, Message message)
+	protected long getMessageId(String messageIdString) {
+		String[] parts = getMessageIdStringParts(messageIdString);
+
+		return GetterUtil.getLong(parts[1]);
+	}
+
+	protected String getMessageIdString(String recipient, Message message)
 		throws Exception {
 
 		if (PropsValues.POP_SERVER_SUBDOMAIN.length() > 0) {
@@ -271,6 +310,15 @@ public class MessageListenerImpl implements MessageListener {
 		else {
 			return MBUtil.getParentMessageIdString(message);
 		}
+	}
+
+	protected String[] getMessageIdStringParts(String messageIdString) {
+		int pos = messageIdString.indexOf(CharPool.AT);
+
+		String target = messageIdString.substring(
+			MBUtil.MESSAGE_POP_PORTLET_PREFIX.length() + getOffset(), pos);
+
+		return StringUtil.split(target, CharPool.PERIOD);
 	}
 
 	protected int getOffset() {
@@ -312,6 +360,28 @@ public class MessageListenerImpl implements MessageListener {
 		}
 
 		return MBUtil.getParentMessageId(message);
+	}
+
+	protected boolean isAutoReply(Message message) throws MessagingException {
+		String[] autoReply = message.getHeader("X-Autoreply");
+
+		if (ArrayUtil.isNotEmpty(autoReply)) {
+			return true;
+		}
+
+		String[] autoReplyFrom = message.getHeader("X-Autoreply-From");
+
+		if (ArrayUtil.isNotEmpty(autoReplyFrom)) {
+			return true;
+		}
+
+		String[] mailAutoReply = message.getHeader("X-Mail-Autoreply");
+
+		if (ArrayUtil.isNotEmpty(mailAutoReply)) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(MessageListenerImpl.class);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,16 +16,24 @@ package com.liferay.portal.kernel.staging;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.lar.MissingReference;
 import com.liferay.portal.kernel.lar.PortletDataContext;
+import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Layout;
+import com.liferay.portal.model.LayoutRevision;
 import com.liferay.portal.model.Portlet;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.ServiceContext;
 
+import java.io.Serializable;
+
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.portlet.PortletRequest;
@@ -36,6 +44,10 @@ import javax.servlet.http.HttpServletRequest;
  * @author Raymond Augé
  */
 public interface Staging {
+
+	public String buildRemoteURL(
+		String remoteAddress, int remotePort, String remotePathContext,
+		boolean secureConnection, long remoteGroupId, boolean privateLayout);
 
 	public void copyFromLive(PortletRequest PortletRequest) throws Exception;
 
@@ -51,9 +63,9 @@ public interface Staging {
 	public void copyRemoteLayouts(
 			long sourceGroupId, boolean privateLayout,
 			Map<Long, Boolean> layoutIdMap, Map<String, String[]> parameterMap,
-			String remoteAddress, int remotePort, boolean secureConnection,
-			long remoteGroupId, boolean remotePrivateLayout, Date startDate,
-			Date endDate)
+			String remoteAddress, int remotePort, String remotePathContext,
+			boolean secureConnection, long remoteGroupId,
+			boolean remotePrivateLayout, Date startDate, Date endDate)
 		throws Exception;
 
 	public void deleteLastImportSettings(Group liveGroup, boolean privateLayout)
@@ -67,12 +79,28 @@ public interface Staging {
 			User user, long layoutSetBranchId, long plid)
 		throws SystemException;
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #disableStaging(Group,
+	 *             ServiceContext)}
+	 */
 	public void disableStaging(
 			Group scopeGroup, Group liveGroup, ServiceContext serviceContext)
 		throws Exception;
 
+	public void disableStaging(Group liveGroup, ServiceContext serviceContext)
+		throws Exception;
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #disableStaging(PortletRequest, Group, ServiceContext)}
+	 */
 	public void disableStaging(
 			PortletRequest portletRequest, Group scopeGroup, Group liveGroup,
+			ServiceContext serviceContext)
+		throws Exception;
+
+	public void disableStaging(
+			PortletRequest portletRequest, Group liveGroup,
 			ServiceContext serviceContext)
 		throws Exception;
 
@@ -85,9 +113,23 @@ public interface Staging {
 	public void enableRemoteStaging(
 			long userId, Group scopeGroup, Group liveGroup,
 			boolean branchingPublic, boolean branchingPrivate,
-			String remoteAddress, long remoteGroupId, int remotePort,
-			boolean secureConnection, ServiceContext serviceContext)
+			String remoteAddress, int remotePort, String remotePathContext,
+			boolean secureConnection, long remoteGroupId,
+			ServiceContext serviceContext)
 		throws Exception;
+
+	public JSONArray getErrorMessagesJSONArray(
+		Locale locale, Map<String, MissingReference> missingReferences,
+		Map<String, Serializable> contextMap);
+
+	public JSONObject getExceptionMessagesJSONObject(
+		Locale locale, Exception e, Map<String, Serializable> contextMap);
+
+	public Group getLiveGroup(long groupId)
+		throws PortalException, SystemException;
+
+	public long getLiveGroupId(long groupId)
+		throws PortalException, SystemException;
 
 	public List<Layout> getMissingParentLayouts(Layout layout, long liveGroupId)
 		throws Exception;
@@ -100,18 +142,35 @@ public interface Staging {
 			User user, long layoutSetBranchId, long plid)
 		throws PortalException, SystemException;
 
-	public long getRecentLayoutSetBranchId(HttpServletRequest request);
+	public long getRecentLayoutSetBranchId(
+		HttpServletRequest request, long layoutSetId);
 
-	public long getRecentLayoutSetBranchId(User user) throws SystemException;
+	public long getRecentLayoutSetBranchId(User user, long layoutSetId)
+		throws SystemException;
 
 	public String getSchedulerGroupName(String destinationName, long groupId);
+
+	public String getStagedPortletId(String portletId);
 
 	public Map<String, String[]> getStagingParameters();
 
 	public Map<String, String[]> getStagingParameters(
 		PortletRequest PortletRequest);
 
+	public JSONArray getWarningMessagesJSONArray(
+		Locale locale, Map<String, MissingReference> missingReferences,
+		Map<String, Serializable> contextMap);
+
+	public WorkflowTask getWorkflowTask(
+			long userId, LayoutRevision layoutRevision)
+		throws PortalException, SystemException;
+
+	public boolean hasWorkflowTask(long userId, LayoutRevision layoutRevision)
+		throws PortalException, SystemException;
+
 	public boolean isIncomplete(Layout layout, long layoutSetBranchId);
+
+	public void lockGroup(long userId, long groupId) throws Exception;
 
 	public void publishLayout(
 			long userId, long plid, long liveGroupId, boolean includeChildren)
@@ -152,12 +211,12 @@ public interface Staging {
 		throws Exception;
 
 	public void setRecentLayoutBranchId(
-		HttpServletRequest request, long layoutSetBranchId, long plid,
-		long layoutBranchId)
+			HttpServletRequest request, long layoutSetBranchId, long plid,
+			long layoutBranchId)
 		throws SystemException;
 
 	public void setRecentLayoutBranchId(
-		User user, long layoutSetBranchId, long plid, long layoutBranchId)
+			User user, long layoutSetBranchId, long plid, long layoutBranchId)
 		throws SystemException;
 
 	public void setRecentLayoutRevisionId(
@@ -170,10 +229,13 @@ public interface Staging {
 		throws SystemException;
 
 	public void setRecentLayoutSetBranchId(
-		HttpServletRequest request, long layoutSetBranchId);
+		HttpServletRequest request, long layoutSetId, long layoutSetBranchId);
 
-	public void setRecentLayoutSetBranchId(User user, long layoutSetBranchId)
+	public void setRecentLayoutSetBranchId(
+			User user, long layoutSetId, long layoutSetBranchId)
 		throws SystemException;
+
+	public void unlockGroup(long groupId) throws SystemException;
 
 	public void unscheduleCopyFromLive(PortletRequest PortletRequest)
 		throws Exception;

@@ -6,6 +6,11 @@ import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -15,7 +20,7 @@ import java.util.Date;
  * @see ${entity.name}
  * @generated
  */
-public class ${entity.name}CacheModel implements CacheModel<${entity.name}> {
+public class ${entity.name}CacheModel implements CacheModel<${entity.name}>, Externalizable {
 
 	@Override
 	public String toString() {
@@ -40,6 +45,7 @@ public class ${entity.name}CacheModel implements CacheModel<${entity.name}> {
 		return sb.toString();
 	}
 
+	@Override
 	public ${entity.name} toEntityModel() {
 		${entity.name}Impl ${entity.varName}Impl = new ${entity.name}Impl();
 
@@ -69,7 +75,77 @@ public class ${entity.name}CacheModel implements CacheModel<${entity.name}> {
 
 		${entity.varName}Impl.resetOriginalValues();
 
+		<#list cacheFields as cacheField>
+			<#assign methodName = textFormatter.format(serviceBuilder.getVariableName(cacheField), 6)>
+
+			${entity.varName}Impl.set${methodName}(${cacheField.name});
+		</#list>
+
 		return ${entity.varName}Impl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws
+		<#assign throwsClassNotFoundException = false>
+
+		<#list entity.regularColList as column>
+			<#if column.primitiveType>
+			<#elseif column.type == "Date">
+			<#elseif column.type == "String">
+			<#elseif column.type != "Blob">
+				<#assign throwsClassNotFoundException = true>
+			</#if>
+		</#list>
+
+		<#if (cacheFields?size > 0)>
+			<#assign throwsClassNotFoundException = true>
+		</#if>
+
+		<#if throwsClassNotFoundException>
+			ClassNotFoundException,
+		</#if>
+
+		IOException {
+
+		<#list entity.regularColList as column>
+			<#if column.primitiveType>
+				${column.name} = objectInput.read${textFormatter.format(column.type, 6)}();
+			<#elseif column.type == "Date">
+				${column.name} = objectInput.readLong();
+			<#elseif column.type == "String">
+				${column.name} = objectInput.readUTF();
+			<#elseif column.type != "Blob">
+				${column.name} = (${column.type})objectInput.readObject();
+			</#if>
+		</#list>
+
+		<#list cacheFields as cacheField>
+			${cacheField.name} = (${cacheField.type.genericValue})objectInput.readObject();
+		</#list>
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput) throws IOException {
+		<#list entity.regularColList as column>
+			<#if column.primitiveType>
+				objectOutput.write${textFormatter.format(column.type, 6)}(${column.name});
+			<#elseif column.type == "Date">
+				objectOutput.writeLong(${column.name});
+			<#elseif column.type == "String">
+				if (${column.name} == null) {
+					objectOutput.writeUTF(StringPool.BLANK);
+				}
+				else {
+					objectOutput.writeUTF(${column.name});
+				}
+			<#elseif column.type != "Blob">
+				objectOutput.writeObject(${column.name});
+			</#if>
+		</#list>
+
+		<#list cacheFields as cacheField>
+			objectOutput.writeObject(${cacheField.name});
+		</#list>
 	}
 
 	<#list entity.regularColList as column>
@@ -80,6 +156,10 @@ public class ${entity.name}CacheModel implements CacheModel<${entity.name}> {
 				public ${column.type} ${column.name};
 			</#if>
 		</#if>
+	</#list>
+
+	<#list cacheFields as cacheField>
+		public ${cacheField.type.genericValue} ${cacheField.name};
 	</#list>
 
 }

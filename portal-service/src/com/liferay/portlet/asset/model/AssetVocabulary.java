@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -31,20 +31,14 @@ public interface AssetVocabulary extends AssetVocabularyModel, PersistedModel {
 	 *
 	 * Never modify this interface directly. Add methods to {@link com.liferay.portlet.asset.model.impl.AssetVocabularyImpl} and rerun ServiceBuilder to automatically copy the method declarations to this interface.
 	 */
-	public java.lang.String getSettings();
+	public java.util.List<com.liferay.portlet.asset.model.AssetCategory> getCategories()
+		throws com.liferay.portal.kernel.exception.SystemException;
 
 	public com.liferay.portal.kernel.util.UnicodeProperties getSettingsProperties();
-
-	public java.lang.String getTitle(java.lang.String languageId);
-
-	public java.lang.String getTitle(java.lang.String languageId,
-		boolean useDefault);
 
 	public boolean isMultiValued();
 
 	public boolean isRequired(long classNameId);
-
-	public void setSettings(java.lang.String settings);
 
 	public void setSettingsProperties(
 		com.liferay.portal.kernel.util.UnicodeProperties settingsProperties);

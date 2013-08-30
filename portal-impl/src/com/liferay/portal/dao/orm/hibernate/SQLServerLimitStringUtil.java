@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -45,7 +45,7 @@ public class SQLServerLimitStringUtil {
 		if (orderByPos > 0) {
 			selectFromWhere = sql.substring(fromPos, orderByPos);
 
-			orderBy = sql.substring(orderByPos + 9, sql.length());
+			orderBy = sql.substring(orderByPos + 9);
 		}
 		else {
 			selectFromWhere = sql.substring(fromPos);
@@ -196,13 +196,13 @@ public class SQLServerLimitStringUtil {
 		};
 	}
 
-	private static final Pattern _columnAliasPattern = Pattern.compile(
-		"[\\w\\.]+ AS (\\w+)", Pattern.CASE_INSENSITIVE);
-	private static final Pattern _distinctPattern = Pattern.compile(
+	private static Pattern _columnAliasPattern = Pattern.compile(
+		"[\\w\\.]+(?:\\(.+?\\))? AS (\\w+)", Pattern.CASE_INSENSITIVE);
+	private static Pattern _distinctPattern = Pattern.compile(
 		" DISTINCT ", Pattern.CASE_INSENSITIVE);
-	private static final Pattern _qualifiedColumnPattern = Pattern.compile(
+	private static Pattern _qualifiedColumnPattern = Pattern.compile(
 		"\\w+\\.([\\w\\*]+)");
-	private static final Pattern _selectPattern = Pattern.compile(
+	private static Pattern _selectPattern = Pattern.compile(
 		"SELECT ", Pattern.CASE_INSENSITIVE);
 
 }

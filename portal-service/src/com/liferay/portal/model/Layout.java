@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,6 +32,7 @@ public interface Layout extends LayoutModel, PersistedModel {
 	 * Never modify this interface directly. Add methods to {@link com.liferay.portal.model.impl.LayoutImpl} and rerun ServiceBuilder to automatically copy the method declarations to this interface.
 	 */
 	public static final Accessor<Layout, Long> LAYOUT_ID_ACCESSOR = new Accessor<Layout, Long>() {
+			@Override
 			public Long get(Layout layout) {
 				return layout.getLayoutId();
 			}
@@ -67,6 +68,14 @@ public interface Layout extends LayoutModel, PersistedModel {
 	public java.lang.String getCssText()
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException;
+
+	public java.lang.String getFriendlyURL(java.util.Locale locale);
+
+	public java.util.Map<java.util.Locale, java.lang.String> getFriendlyURLMap()
+		throws com.liferay.portal.kernel.exception.SystemException;
+
+	public java.lang.String getFriendlyURLsXML()
+		throws com.liferay.portal.kernel.exception.SystemException;
 
 	public com.liferay.portal.model.Group getGroup()
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -114,11 +123,12 @@ public interface Layout extends LayoutModel, PersistedModel {
 	public java.lang.String getThemeSetting(java.lang.String key,
 		java.lang.String device);
 
-	public java.lang.String getTypeSettings();
-
 	public com.liferay.portal.kernel.util.UnicodeProperties getTypeSettingsProperties();
 
 	public java.lang.String getTypeSettingsProperty(java.lang.String key);
+
+	public java.lang.String getTypeSettingsProperty(java.lang.String key,
+		java.lang.String defaultValue);
 
 	public com.liferay.portal.model.ColorScheme getWapColorScheme()
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -154,12 +164,16 @@ public interface Layout extends LayoutModel, PersistedModel {
 
 	public boolean isInheritWapLookAndFeel();
 
+	public boolean isLayoutPrototypeLinkActive();
+
 	public boolean isPublicLayout();
 
 	public boolean isRootLayout();
 
 	public boolean isSelected(boolean selectable,
 		com.liferay.portal.model.Layout layout, long ancestorPlid);
+
+	public boolean isSupportsEmbeddedPortlets();
 
 	public boolean isTypeArticle();
 
@@ -175,7 +189,7 @@ public interface Layout extends LayoutModel, PersistedModel {
 
 	public boolean isTypeURL();
 
-	public void setTypeSettings(java.lang.String typeSettings);
+	public void setLayoutSet(com.liferay.portal.model.LayoutSet layoutSet);
 
 	public void setTypeSettingsProperties(
 		com.liferay.portal.kernel.util.UnicodeProperties typeSettingsProperties);

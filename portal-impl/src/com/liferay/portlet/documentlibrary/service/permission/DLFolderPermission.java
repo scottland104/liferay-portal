@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,6 +23,7 @@ import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.PropsValues;
+import com.liferay.portlet.documentlibrary.NoSuchFolderException;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
 import com.liferay.portlet.documentlibrary.service.DLAppLocalServiceUtil;
@@ -44,8 +45,7 @@ public class DLFolderPermission {
 	}
 
 	public static void check(
-			PermissionChecker permissionChecker, Folder folder,
-			String actionId)
+			PermissionChecker permissionChecker, Folder folder, String actionId)
 		throws PortalException, SystemException {
 
 		if (!folder.containsPermission(permissionChecker, actionId)) {
@@ -80,56 +80,36 @@ public class DLFolderPermission {
 			return hasPermission.booleanValue();
 		}
 
-		long folderId = dlFolder.getFolderId();
+		if (actionId.equals(ActionKeys.VIEW) &&
+			PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
 
-		if (actionId.equals(ActionKeys.VIEW)) {
-			while (folderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
-				dlFolder = DLFolderLocalServiceUtil.getFolder(folderId);
+			try {
+				long dlFolderId = dlFolder.getFolderId();
 
-				folderId = dlFolder.getParentFolderId();
+				while (dlFolderId !=
+							DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
 
-				if (!permissionChecker.hasOwnerPermission(
-						dlFolder.getCompanyId(), DLFolder.class.getName(),
-						dlFolder.getFolderId(), dlFolder.getUserId(),
-						actionId) &&
-					!permissionChecker.hasPermission(
-						dlFolder.getGroupId(), DLFolder.class.getName(),
-						dlFolder.getFolderId(), actionId)) {
+					dlFolder = DLFolderLocalServiceUtil.getFolder(dlFolderId);
 
-					return false;
+					if (!_hasPermission(
+							permissionChecker, dlFolder, actionId)) {
+
+						return false;
+					}
+
+					dlFolderId = dlFolder.getParentFolderId();
 				}
-
-				if (!PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
-					break;
+			}
+			catch (NoSuchFolderException nsfe) {
+				if (!dlFolder.isInTrash()) {
+					throw nsfe;
 				}
 			}
 
 			return true;
 		}
-		else {
-			while (folderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
-				dlFolder = DLFolderLocalServiceUtil.getFolder(folderId);
 
-				folderId = dlFolder.getParentFolderId();
-
-				if (permissionChecker.hasOwnerPermission(
-						dlFolder.getCompanyId(), DLFolder.class.getName(),
-						dlFolder.getFolderId(), dlFolder.getUserId(),
-						actionId)) {
-
-					return true;
-				}
-
-				if (permissionChecker.hasPermission(
-						dlFolder.getGroupId(), DLFolder.class.getName(),
-						dlFolder.getFolderId(), actionId)) {
-
-					return true;
-				}
-			}
-
-			return false;
-		}
+		return _hasPermission(permissionChecker, dlFolder, actionId);
 	}
 
 	public static boolean contains(
@@ -145,6 +125,17 @@ public class DLFolderPermission {
 		throws PortalException, SystemException {
 
 		if (folderId == DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+
+			// Prevent the propagation of checks for actions that are not
+			// supported at the application resource level. See LPS-24245.
+
+			if (actionId.equals(ActionKeys.ACCESS) ||
+				actionId.equals(ActionKeys.ADD_SUBFOLDER) ||
+				actionId.equals(ActionKeys.DELETE)) {
+
+				return false;
+			}
+
 			return DLPermission.contains(permissionChecker, groupId, actionId);
 		}
 		else {
@@ -152,6 +143,23 @@ public class DLFolderPermission {
 
 			return folder.containsPermission(permissionChecker, actionId);
 		}
+	}
+
+	private static boolean _hasPermission(
+		PermissionChecker permissionChecker, DLFolder dlFolder,
+		String actionId) {
+
+		if (permissionChecker.hasOwnerPermission(
+				dlFolder.getCompanyId(), DLFolder.class.getName(),
+				dlFolder.getFolderId(), dlFolder.getUserId(), actionId) ||
+			permissionChecker.hasPermission(
+				dlFolder.getGroupId(), DLFolder.class.getName(),
+				dlFolder.getFolderId(), actionId)) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 }

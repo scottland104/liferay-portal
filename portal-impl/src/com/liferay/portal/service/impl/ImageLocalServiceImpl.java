@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,290 +16,149 @@ package com.liferay.portal.service.impl;
 
 import com.liferay.portal.ImageTypeException;
 import com.liferay.portal.NoSuchImageException;
-import com.liferay.portal.image.DatabaseHook;
 import com.liferay.portal.image.HookFactory;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.image.Hook;
-import com.liferay.portal.kernel.image.ImageBag;
-import com.liferay.portal.kernel.image.ImageProcessorUtil;
+import com.liferay.portal.kernel.image.ImageToolUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.servlet.ImageServletTokenUtil;
-import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.Image;
-import com.liferay.portal.model.impl.ImageImpl;
 import com.liferay.portal.service.base.ImageLocalServiceBaseImpl;
-import com.liferay.portal.util.PropsUtil;
-import com.liferay.portal.util.PropsValues;
-
-import java.awt.image.RenderedImage;
+import com.liferay.portal.webserver.WebServerServletTokenUtil;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
 /**
  * @author Brian Wing Shun Chan
  * @author Julio Camarero
+ * @author Shuyang Zhou
  */
 public class ImageLocalServiceImpl extends ImageLocalServiceBaseImpl {
 
-	public void afterPropertiesSet() {
-		ClassLoader classLoader = getClass().getClassLoader();
-
-		try {
-			InputStream is = classLoader.getResourceAsStream(
-				PropsUtil.get(PropsKeys.IMAGE_DEFAULT_SPACER));
-
-			if (is == null) {
-				_log.error("Default spacer is not available");
-			}
-
-			_defaultSpacer = getImage(is);
-		}
-		catch (Exception ioe) {
-			_log.error(
-				"Unable to configure the default spacer: " + ioe.getMessage());
-		}
-
-		try {
-			InputStream is = classLoader.getResourceAsStream(
-				PropsUtil.get(PropsKeys.IMAGE_DEFAULT_COMPANY_LOGO));
-
-			if (is == null) {
-				_log.error("Default company logo is not available");
-			}
-
-			_defaultCompanyLogo = getImage(is);
-		}
-		catch (Exception ioe) {
-			_log.error(
-				"Unable to configure the default company logo: " +
-					ioe.getMessage());
-		}
-
-		try {
-			InputStream is = classLoader.getResourceAsStream(
-				PropsUtil.get(PropsKeys.IMAGE_DEFAULT_ORGANIZATION_LOGO));
-
-			if (is == null) {
-				_log.error("Default organization logo is not available");
-			}
-
-			_defaultOrganizationLogo = getImage(is);
-		}
-		catch (Exception ioe) {
-			_log.error(
-				"Unable to configure the default organization logo: " +
-					ioe.getMessage());
-		}
-
-		try {
-			InputStream is = classLoader.getResourceAsStream(
-				PropsUtil.get(PropsKeys.IMAGE_DEFAULT_USER_FEMALE_PORTRAIT));
-
-			if (is == null) {
-				_log.error("Default user female portrait is not available");
-			}
-
-			_defaultUserFemalePortrait = getImage(is);
-		}
-		catch (Exception ioe) {
-			_log.error(
-				"Unable to configure the default user female portrait: " +
-					ioe.getMessage());
-		}
-
-		try {
-			InputStream is = classLoader.getResourceAsStream(
-				PropsUtil.get(PropsKeys.IMAGE_DEFAULT_USER_MALE_PORTRAIT));
-
-			if (is == null) {
-				_log.error("Default user male portrait is not available");
-			}
-
-			_defaultUserMalePortrait = getImage(is);
-		}
-		catch (Exception ioe) {
-			_log.error(
-				"Unable to configure the default user male portrait: " +
-					ioe.getMessage());
-		}
-	}
-
 	@Override
-	public void deleteImage(long imageId)
+	public Image deleteImage(long imageId)
 		throws PortalException, SystemException {
 
 		if (imageId <= 0) {
-			return;
+			return null;
 		}
 
-		if (PropsValues.IMAGE_HOOK_IMPL.equals(DatabaseHook.class.getName()) &&
+		/*if (PropsValues.IMAGE_HOOK_IMPL.equals(
+				DatabaseHook.class.getName()) &&
 			(imagePersistence.getListeners().length == 0)) {
 
 			runSQL("delete from Image where imageId = " + imageId);
 
 			imagePersistence.clearCache();
 		}
-		else {
-			try {
-				Image image = getImage(imageId);
+		else {*/
+			Image image = getImage(imageId);
 
-				imagePersistence.remove(imageId);
+			if (image != null) {
+				imagePersistence.remove(image);
 
 				Hook hook = HookFactory.getInstance();
 
-				hook.deleteImage(image);
+				try {
+					hook.deleteImage(image);
+				}
+				catch (NoSuchImageException nsie) {
+
+					// DLHook throws NoSuchImageException if the file no longer
+					// exists. See LPS-30430. This exception can be ignored.
+
+					if (_log.isWarnEnabled()) {
+						_log.warn(nsie, nsie);
+					}
+				}
 			}
-			catch (NoSuchImageException nsie) {
-			}
-		}
+
+			return image;
+		//}
 	}
 
+	@Override
 	public Image getCompanyLogo(long imageId) {
 		Image image = getImage(imageId);
 
 		if (image == null) {
-			image = getDefaultCompanyLogo();
+			image = ImageToolUtil.getDefaultCompanyLogo();
 		}
 
 		return image;
 	}
 
-	public Image getDefaultCompanyLogo() {
-		return _defaultCompanyLogo;
-	}
-
-	public Image getDefaultOrganizationLogo() {
-		return _defaultOrganizationLogo;
-	}
-
-	public Image getDefaultSpacer() {
-		return _defaultSpacer;
-	}
-
-	public Image getDefaultUserFemalePortrait() {
-		return _defaultUserFemalePortrait;
-	}
-
-	public Image getDefaultUserMalePortrait() {
-		return _defaultUserMalePortrait;
-	}
-
 	@Override
 	public Image getImage(long imageId) {
-		try {
-			if (imageId > 0) {
-				return imagePersistence.findByPrimaryKey(imageId);
+		if (imageId > 0) {
+			try {
+				return imagePersistence.fetchByPrimaryKey(imageId);
 			}
-		}
-		catch (Exception e) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(
-					"Unable to get image " + imageId + ": " + e.getMessage());
+			catch (Exception e) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Unable to get image " + imageId + ": " +
+							e.getMessage());
+				}
 			}
 		}
 
 		return null;
 	}
 
-	public Image getImage(byte[] bytes)
-		throws PortalException, SystemException {
-
-		return getImage(null, bytes);
-	}
-
-	public Image getImage(File file) throws PortalException, SystemException {
-		try {
-			return getImage(new FileInputStream(file));
-		}
-		catch (IOException ioe) {
-			throw new SystemException(ioe);
-		}
-	}
-
-	public Image getImage(InputStream is)
-		throws PortalException, SystemException {
-
-		return getImage(is, null);
-	}
-
+	@Override
 	public Image getImageOrDefault(long imageId) {
 		Image image = getImage(imageId);
 
 		if (image == null) {
-			image = getDefaultSpacer();
+			image = ImageToolUtil.getDefaultSpacer();
 		}
 
 		return image;
 	}
 
+	@Override
 	public List<Image> getImages() throws SystemException {
 		return imagePersistence.findAll();
 	}
 
 	@Override
-	public List<Image> getImages(int start, int end) throws SystemException {
-		return imagePersistence.findAll(start, end);
-	}
-
 	public List<Image> getImagesBySize(int size) throws SystemException {
 		return imagePersistence.findByLtSize(size);
 	}
 
-	public boolean isNullOrDefaultSpacer(byte[] bytes) {
-		if ((bytes == null) || (bytes.length == 0) ||
-			(Arrays.equals(bytes, getDefaultSpacer().getTextObj()))) {
-
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-
+	@Override
 	public Image updateImage(long imageId, byte[] bytes)
 		throws PortalException, SystemException {
 
-		Image image = getImage(bytes);
+		Image image = null;
+
+		try {
+			image = ImageToolUtil.getImage(bytes);
+		}
+		catch (IOException ioe) {
+			throw new SystemException(ioe);
+		}
 
 		return updateImage(
 			imageId, image.getTextObj(), image.getType(), image.getHeight(),
 			image.getWidth(), image.getSize());
 	}
 
-	public Image updateImage(long imageId, File file)
-		throws PortalException, SystemException {
-
-		Image image = getImage(file);
-
-		return updateImage(
-			imageId, image.getTextObj(), image.getType(), image.getHeight(),
-			image.getWidth(), image.getSize());
-	}
-
-	public Image updateImage(long imageId, InputStream is)
-		throws PortalException, SystemException {
-
-		Image image = getImage(is);
-
-		return updateImage(
-			imageId, image.getTextObj(), image.getType(), image.getHeight(),
-			image.getWidth(), image.getSize());
-	}
-
+	@Override
 	public Image updateImage(
 			long imageId, byte[] bytes, String type, int height, int width,
 			int size)
 		throws PortalException, SystemException {
+
+		validate(type);
 
 		Image image = imagePersistence.fetchByPrimaryKey(imageId);
 
@@ -317,72 +176,88 @@ public class ImageLocalServiceImpl extends ImageLocalServiceBaseImpl {
 
 		hook.updateImage(image, type, bytes);
 
-		imagePersistence.update(image, false);
+		imagePersistence.update(image);
 
-		ImageServletTokenUtil.resetToken(imageId);
+		WebServerServletTokenUtil.resetToken(imageId);
 
 		return image;
 	}
 
-	protected Image getImage(InputStream is, byte[] bytes)
+	@Override
+	public Image updateImage(long imageId, File file)
 		throws PortalException, SystemException {
 
+		Image image = null;
+
 		try {
-			if (is != null) {
-				bytes = FileUtil.getBytes(is);
-			}
-
-			if (bytes == null) {
-				return null;
-			}
-
-			ImageBag imageBag = ImageProcessorUtil.read(bytes);
-
-			RenderedImage renderedImage = imageBag.getRenderedImage();
-			String type = imageBag.getType();
-
-			if (renderedImage == null) {
-				throw new ImageTypeException();
-			}
-
-			int height = renderedImage.getHeight();
-			int width = renderedImage.getWidth();
-			int size = bytes.length;
-
-			Image image = new ImageImpl();
-
-			image.setTextObj(bytes);
-			image.setType(type);
-			image.setHeight(height);
-			image.setWidth(width);
-			image.setSize(size);
-
-			return image;
+			image = ImageToolUtil.getImage(file);
 		}
 		catch (IOException ioe) {
 			throw new SystemException(ioe);
 		}
-		finally {
-			if (is != null) {
-				try {
-					is.close();
-				}
-				catch (IOException ioe) {
-					if (_log.isWarnEnabled()) {
-						_log.warn(ioe);
-					}
-				}
-			}
+
+		return updateImage(
+			imageId, image.getTextObj(), image.getType(), image.getHeight(),
+			image.getWidth(), image.getSize());
+	}
+
+	@Override
+	public Image updateImage(long imageId, InputStream is)
+		throws PortalException, SystemException {
+
+		Image image = null;
+
+		try {
+			image = ImageToolUtil.getImage(is);
+		}
+		catch (IOException ioe) {
+			throw new SystemException(ioe);
+		}
+
+		return updateImage(
+			imageId, image.getTextObj(), image.getType(), image.getHeight(),
+			image.getWidth(), image.getSize());
+	}
+
+	@Override
+	public Image updateImage(
+			long imageId, InputStream is, boolean cleanUpStream)
+		throws PortalException, SystemException {
+
+		Image image = null;
+
+		try {
+			image = ImageToolUtil.getImage(is, cleanUpStream);
+		}
+		catch (IOException ioe) {
+			throw new SystemException(ioe);
+		}
+
+		return updateImage(
+			imageId, image.getTextObj(), image.getType(), image.getHeight(),
+			image.getWidth(), image.getSize());
+	}
+
+	protected void validate(String type) throws PortalException {
+		if ((type == null) ||
+			type.contains(StringPool.BACK_SLASH) ||
+			type.contains(StringPool.COLON) ||
+			type.contains(StringPool.GREATER_THAN) ||
+			type.contains(StringPool.LESS_THAN) ||
+			type.contains(StringPool.PERCENT) ||
+			type.contains(StringPool.PERIOD) ||
+			type.contains(StringPool.PIPE) ||
+			type.contains(StringPool.QUESTION) ||
+			type.contains(StringPool.QUOTE) ||
+			type.contains(StringPool.SLASH) ||
+			type.contains(StringPool.SPACE) ||
+			type.contains(StringPool.STAR)) {
+
+			throw new ImageTypeException();
 		}
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(
 		ImageLocalServiceImpl.class);
-
-	private Image _defaultSpacer;
-	private Image _defaultCompanyLogo;
-	private Image _defaultOrganizationLogo;
-	private Image _defaultUserFemalePortrait;
-	private Image _defaultUserMalePortrait;
 
 }

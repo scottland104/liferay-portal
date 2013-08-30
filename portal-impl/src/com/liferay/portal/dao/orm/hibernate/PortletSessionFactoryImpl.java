@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,7 +20,9 @@ import com.liferay.portal.kernel.dao.orm.ORMException;
 import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.portlet.PortletClassLoaderUtil;
 import com.liferay.portal.kernel.util.InfrastructureUtil;
+import com.liferay.portal.security.lang.DoPrivilegedUtil;
 import com.liferay.portal.spring.hibernate.PortletHibernateConfiguration;
 import com.liferay.portal.util.PropsValues;
 
@@ -38,6 +40,45 @@ import org.hibernate.SessionFactory;
  * @author Alexander Chow
  */
 public class PortletSessionFactoryImpl extends SessionFactoryImpl {
+
+	public void afterPropertiesSet() {
+		if (_dataSource == InfrastructureUtil.getDataSource()) {
+
+			// Register only if the current session factory is using the portal
+			// data source
+
+			portletSessionFactories.add(this);
+		}
+	}
+
+	@Override
+	public void closeSession(Session session) throws ORMException {
+		if (session != null) {
+			session.flush();
+
+			if (!PropsValues.SPRING_HIBERNATE_SESSION_DELEGATED) {
+				session.close();
+			}
+		}
+	}
+
+	@Override
+	public void destroy() {
+		portletSessionFactories.remove(this);
+	}
+
+	public DataSource getDataSource() {
+		ShardDataSourceTargetSource shardDataSourceTargetSource =
+			(ShardDataSourceTargetSource)
+				InfrastructureUtil.getShardDataSourceTargetSource();
+
+		if (shardDataSourceTargetSource != null) {
+			return shardDataSourceTargetSource.getDataSource();
+		}
+		else {
+			return _dataSource;
+		}
+	}
 
 	@Override
 	public Session openSession() throws ORMException {
@@ -76,19 +117,6 @@ public class PortletSessionFactoryImpl extends SessionFactoryImpl {
 		_dataSource = dataSource;
 	}
 
-	protected DataSource getDataSource() {
-		ShardDataSourceTargetSource shardDataSourceTargetSource =
-			(ShardDataSourceTargetSource)
-				InfrastructureUtil.getShardDataSourceTargetSource();
-
-		if (shardDataSourceTargetSource != null) {
-			return shardDataSourceTargetSource.getDataSource();
-		}
-		else {
-			return _dataSource;
-		}
-	}
-
 	protected SessionFactory getSessionFactory() {
 		ShardDataSourceTargetSource shardDataSourceTargetSource =
 			(ShardDataSourceTargetSource)
@@ -106,24 +134,39 @@ public class PortletSessionFactoryImpl extends SessionFactoryImpl {
 			return sessionFactory;
 		}
 
-		PortletHibernateConfiguration portletHibernateConfiguration =
-			new PortletHibernateConfiguration();
-
-		portletHibernateConfiguration.setDataSource(dataSource);
+		ClassLoader classLoader = PortletClassLoaderUtil.getClassLoader();
 
 		try {
-			sessionFactory =
-				portletHibernateConfiguration.buildSessionFactory();
+			PortletClassLoaderUtil.setClassLoader(
+				getSessionFactoryClassLoader());
+
+			PortletHibernateConfiguration portletHibernateConfiguration =
+				new PortletHibernateConfiguration();
+
+			portletHibernateConfiguration.setDataSource(dataSource);
+
+			try {
+				sessionFactory =
+					portletHibernateConfiguration.buildSessionFactory();
+			}
+			catch (Exception e) {
+				_log.error(e, e);
+
+				return null;
+			}
+
+			_sessionFactories.put(dataSource, sessionFactory);
+
+			return sessionFactory;
 		}
-		catch (Exception e) {
-			_log.error(e, e);
-
-			return null;
+		finally {
+			PortletClassLoaderUtil.setClassLoader(classLoader);
 		}
+	}
 
-		_sessionFactories.put(dataSource, sessionFactory);
-
-		return sessionFactory;
+	@Override
+	protected Session wrapSession(org.hibernate.Session session) {
+		return DoPrivilegedUtil.wrapWhenActive(super.wrapSession(session));
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(

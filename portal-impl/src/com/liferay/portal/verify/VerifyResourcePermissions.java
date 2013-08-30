@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,7 +18,9 @@ import com.liferay.portal.NoSuchResourcePermissionException;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.model.Contact;
+import com.liferay.portal.model.Layout;
 import com.liferay.portal.model.LayoutSetBranch;
 import com.liferay.portal.model.PasswordPolicy;
 import com.liferay.portal.model.ResourceConstants;
@@ -28,32 +30,24 @@ import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.Team;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.ContactLocalServiceUtil;
+import com.liferay.portal.service.LayoutLocalServiceUtil;
 import com.liferay.portal.service.ResourceLocalServiceUtil;
 import com.liferay.portal.service.ResourcePermissionLocalServiceUtil;
 import com.liferay.portal.service.RoleLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.util.PortalInstances;
-import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.announcements.model.AnnouncementsEntry;
 import com.liferay.portlet.asset.model.AssetCategory;
 import com.liferay.portlet.asset.model.AssetTag;
 import com.liferay.portlet.asset.model.AssetVocabulary;
 import com.liferay.portlet.blogs.model.BlogsEntry;
-import com.liferay.portlet.bookmarks.model.BookmarksEntry;
-import com.liferay.portlet.bookmarks.model.BookmarksFolder;
-import com.liferay.portlet.calendar.model.CalEvent;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.model.DLFileShortcut;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
-import com.liferay.portlet.dynamicdatamapping.model.DDMContent;
 import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
 import com.liferay.portlet.dynamicdatamapping.model.DDMTemplate;
-import com.liferay.portlet.imagegallery.model.IGFolder;
-import com.liferay.portlet.imagegallery.model.IGImage;
 import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.model.JournalFeed;
-import com.liferay.portlet.journal.model.JournalStructure;
-import com.liferay.portlet.journal.model.JournalTemplate;
 import com.liferay.portlet.messageboards.model.MBCategory;
 import com.liferay.portlet.messageboards.model.MBMessage;
 import com.liferay.portlet.polls.model.PollsQuestion;
@@ -68,15 +62,18 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import java.util.List;
+
 /**
  * @author Raymond Augé
+ * @author James Lefeu
  */
 public class VerifyResourcePermissions extends VerifyProcess {
 
 	@Override
 	protected void doVerify() throws Exception {
-		if (PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM != 6) {
-			return;
+		for (String[] portletAndActionId : _PORTLET_ACTION_IDS) {
+			verifyActionIds(portletAndActionId[0], portletAndActionId[1]);
 		}
 
 		long[] companyIds = PortalInstances.getCompanyIdsBySQL();
@@ -88,6 +85,44 @@ public class VerifyResourcePermissions extends VerifyProcess {
 			for (String[] model : _MODELS) {
 				verifyModel(role, model[0], model[1], model[2]);
 			}
+
+			verifyLayout(role);
+		}
+	}
+
+	protected void verifyActionIds(String portlet, String actionId)
+		throws Exception {
+
+		Connection con = null;
+		PreparedStatement ps = null;
+
+		try {
+			con = DataAccess.getUpgradeOptimizedConnection();
+
+			ps = con.prepareStatement(
+				"update ResourcePermission set actionIds = ? where name = ? " +
+					"and roleId in (select roleId from Role_ where name = ?) " +
+						"and primKey != '0'");
+
+			ps.setLong(1, GetterUtil.getLong(actionId));
+			ps.setString(2, portlet);
+			ps.setString(3, "Site Member");
+
+			ps.executeUpdate();
+		}
+		finally {
+			DataAccess.cleanUp(con, ps);
+		}
+	}
+
+	protected void verifyLayout(Role role) throws Exception {
+		List<Layout> layouts = LayoutLocalServiceUtil.getNoPermissionLayouts(
+			role.getRoleId());
+
+		for (Layout layout : layouts) {
+			verifyModel(
+				role.getCompanyId(), Layout.class.getName(), layout.getPlid(),
+				role, 0);
 		}
 	}
 
@@ -145,7 +180,7 @@ public class VerifyResourcePermissions extends VerifyProcess {
 		}
 
 		if (_log.isInfoEnabled() &&
-			(resourcePermission.getResourcePermissionId() % 100 == 0)) {
+			((resourcePermission.getResourcePermissionId() % 100) == 0)) {
 
 			_log.info("Processed 100 resource permissions for " + name);
 		}
@@ -160,7 +195,7 @@ public class VerifyResourcePermissions extends VerifyProcess {
 		ResultSet rs = null;
 
 		try {
-			con = DataAccess.getConnection();
+			con = DataAccess.getUpgradeOptimizedConnection();
 
 			ps = con.prepareStatement(
 				"select " + pkColumnName + ", userId AS ownerId " +
@@ -183,170 +218,94 @@ public class VerifyResourcePermissions extends VerifyProcess {
 
 	private static final String[][] _MODELS = new String[][] {
 		new String[] {
-			AnnouncementsEntry.class.getName(),
-			"AnnouncementsEntry",
-			"entryId"
+			AnnouncementsEntry.class.getName(), "AnnouncementsEntry", "entryId"
 		},
 		new String[] {
-			AssetCategory.class.getName(),
-			"AssetCategory",
-			"categoryId"
+			AssetCategory.class.getName(), "AssetCategory", "categoryId"
 		},
 		new String[] {
-			AssetTag.class.getName(),
-			"AssetTag",
-			"tagId"
+			AssetTag.class.getName(), "AssetTag", "tagId"
 		},
 		new String[] {
-			AssetVocabulary.class.getName(),
-			"AssetVocabulary",
-			"vocabularyId"
+			AssetVocabulary.class.getName(), "AssetVocabulary", "vocabularyId"
 		},
 		new String[] {
-			BlogsEntry.class.getName(),
-			"BlogsEntry",
-			"entryId"
+			BlogsEntry.class.getName(), "BlogsEntry", "entryId"
 		},
 		new String[] {
-			BookmarksEntry.class.getName(),
-			"BookmarksEntry",
-			"entryId"
+			DDMStructure.class.getName(), "DDMStructure", "structureId"
 		},
 		new String[] {
-			BookmarksFolder.class.getName(),
-			"BookmarksFolder",
-			"folderId"
+			DDMTemplate.class.getName(), "DDMTemplate", "templateId"
 		},
 		new String[] {
-			CalEvent.class.getName(),
-			"CalEvent",
-			"eventId"
+			DLFileEntry.class.getName(), "DLFileEntry", "fileEntryId"
 		},
 		new String[] {
-			DDMContent.class.getName(),
-			"DDMContent",
-			"contentId"
+			DLFileShortcut.class.getName(), "DLFileShortcut", "fileShortcutId"
 		},
 		new String[] {
-			DDMStructure.class.getName(),
-			"DDMStructure",
-			"structureId"
+			DLFolder.class.getName(), "DLFolder", "folderId"
 		},
 		new String[] {
-			DDMTemplate.class.getName(),
-			"DDMTemplate",
-			"templateId"
+			JournalArticle.class.getName(), "JournalArticle", "resourcePrimKey"
 		},
 		new String[] {
-			DLFileEntry.class.getName(),
-			"DLFileEntry",
-			"fileEntryId"
+			JournalFeed.class.getName(), "JournalFeed", "id_"
 		},
 		new String[] {
-			DLFileShortcut.class.getName(),
-			"DLFileShortcut",
-			"fileShortcutId"
+			Layout.class.getName(), "Layout", "plid"
 		},
 		new String[] {
-			DLFolder.class.getName(),
-			"DLFolder",
-			"folderId"
-		},
-		new String[] {
-			IGFolder.class.getName(),
-			"IGFolder",
-			"folderId"
-		},
-		new String[] {
-			IGImage.class.getName(),
-			"IGImage",
-			"imageId"
-		},
-		new String[] {
-			JournalArticle.class.getName(),
-			"JournalArticle",
-			"resourcePrimKey"
-		},
-		new String[] {
-			JournalFeed.class.getName(),
-			"JournalFeed",
-			"id_"
-		},
-		new String[] {
-			JournalStructure.class.getName(),
-			"JournalStructure",
-			"id_"
-		},
-		new String[] {
-			JournalTemplate.class.getName(),
-			"JournalTemplate",
-			"id_"
-		},
-		new String[] {
-			LayoutSetBranch.class.getName(),
-			"LayoutSetBranch",
+			LayoutSetBranch.class.getName(), "LayoutSetBranch",
 			"layoutSetBranchId"
 		},
 		new String[] {
-			MBCategory.class.getName(),
-			"MBCategory",
-			"categoryId"
+			MBCategory.class.getName(), "MBCategory", "categoryId"
 		},
 		new String[] {
-			MBMessage.class.getName(),
-			"MBMessage",
-			"messageId"
+			MBMessage.class.getName(), "MBMessage", "messageId"
 		},
 		new String[] {
-			PasswordPolicy.class.getName(),
-			"PasswordPolicy",
-			"passwordPolicyId"
+			PasswordPolicy.class.getName(), "PasswordPolicy", "passwordPolicyId"
 		},
 		new String[] {
-			PollsQuestion.class.getName(),
-			"PollsQuestion",
-			"questionId"
+			PollsQuestion.class.getName(), "PollsQuestion", "questionId"
 		},
 		new String[] {
-			SCFrameworkVersion.class.getName(),
-			"SCFrameworkVersion",
+			SCFrameworkVersion.class.getName(), "SCFrameworkVersion",
 			"frameworkVersionId"
 		},
 		new String[] {
-			SCProductEntry.class.getName(),
-			"SCProductEntry",
-			"productEntryId"
+			SCProductEntry.class.getName(), "SCProductEntry", "productEntryId"
 		},
 		new String[] {
-			ShoppingCategory.class.getName(),
-			"ShoppingCategory",
-			"categoryId"
+			ShoppingCategory.class.getName(), "ShoppingCategory", "categoryId"
 		},
 		new String[] {
-			ShoppingItem.class.getName(),
-			"ShoppingItem",
-			"itemId"
+			ShoppingItem.class.getName(), "ShoppingItem", "itemId"
 		},
 		new String[] {
-			Team.class.getName(),
-			"Team",
-			"teamId"
+			Team.class.getName(), "Team", "teamId"
 		},
 		new String[] {
-			User.class.getName(),
-			"User_",
-			"userId"
+			User.class.getName(), "User_", "userId"
 		},
 		new String[] {
-			WikiNode.class.getName(),
-			"WikiNode",
-			"nodeId"
+			WikiNode.class.getName(), "WikiNode", "nodeId"
 		},
 		new String[] {
-			WikiPage.class.getName(),
-			"WikiPage",
-			"resourcePrimKey"
+			WikiPage.class.getName(), "WikiPage", "resourcePrimKey"
 		}
+	};
+
+	private static final String[][] _PORTLET_ACTION_IDS = new String[][] {
+		new String[] {
+			"com.liferay.portlet.bookmarks", "17"
+		},
+		new String[] {
+			"com.liferay.portlet.documentlibrary", "513"
+		},
 	};
 
 	private static Log _log = LogFactoryUtil.getLog(

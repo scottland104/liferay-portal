@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portal.upgrade.v6_1_0;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.StringBundler;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.security.auth.FullNameGenerator;
 import com.liferay.portal.security.auth.FullNameGeneratorFactory;
 
@@ -46,13 +47,13 @@ public class UpgradeUserName extends UpgradeProcess {
 		ResultSet rs = null;
 
 		try {
-			con = DataAccess.getConnection();
+			con = DataAccess.getUpgradeOptimizedConnection();
 
 			StringBundler sb = new StringBundler(11);
 
 			sb.append("select distinct User_.companyId, User_.userId, ");
 			sb.append("User_.firstName, User_.middleName, User_.lastName ");
-			sb.append("User_ inner join ");
+			sb.append("from User_ inner join ");
 			sb.append(tableName);
 			sb.append(" on ");
 			sb.append(tableName);
@@ -62,7 +63,9 @@ public class UpgradeUserName extends UpgradeProcess {
 			sb.append(tableName);
 			sb.append(".userName = ''");
 
-			ps = con.prepareStatement(sb.toString());
+			String sql = sb.toString();
+
+			ps = con.prepareStatement(sql);
 
 			rs = ps.executeQuery();
 
@@ -78,6 +81,9 @@ public class UpgradeUserName extends UpgradeProcess {
 
 				String fullName = fullNameGenerator.getFullName(
 					firstName, middleName, lastName);
+
+				fullName = fullName.replace(
+					StringPool.APOSTROPHE, StringPool.DOUBLE_APOSTROPHE);
 
 				if (setCompanyId) {
 					sb = new StringBundler(8);

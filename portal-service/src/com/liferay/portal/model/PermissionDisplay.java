@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -38,38 +38,7 @@ public class PermissionDisplay
 		_actionLabel = actionLabel;
 	}
 
-	public Permission getPermission() {
-		return _permission;
-	}
-
-	public Resource getResource() {
-		return _resource;
-	}
-
-	public String getPortletName() {
-		return _portletName;
-	}
-
-	public String getPortletLabel() {
-		return _portletLabel;
-	}
-
-	public String getModelName() {
-		return _modelName;
-	}
-
-	public String getModelLabel() {
-		return _modelLabel;
-	}
-
-	public String getActionId() {
-		return _actionId;
-	}
-
-	public String getActionLabel() {
-		return _actionLabel;
-	}
-
+	@Override
 	public int compareTo(PermissionDisplay permissionDisplay) {
 		int value = getPortletLabel().compareTo(
 			permissionDisplay.getPortletLabel());
@@ -89,8 +58,8 @@ public class PermissionDisplay
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
+		if (this == obj) {
+			return true;
 		}
 
 		if (!(obj instanceof PermissionDisplay)) {
@@ -110,18 +79,50 @@ public class PermissionDisplay
 		}
 	}
 
+	public String getActionId() {
+		return _actionId;
+	}
+
+	public String getActionLabel() {
+		return _actionLabel;
+	}
+
+	public String getModelLabel() {
+		return _modelLabel;
+	}
+
+	public String getModelName() {
+		return _modelName;
+	}
+
+	public Permission getPermission() {
+		return _permission;
+	}
+
+	public String getPortletLabel() {
+		return _portletLabel;
+	}
+
+	public String getPortletName() {
+		return _portletName;
+	}
+
+	public Resource getResource() {
+		return _resource;
+	}
+
 	@Override
 	public int hashCode() {
 		return _portletName.concat(_modelName).concat(_actionId).hashCode();
 	}
 
-	private Permission _permission;
-	private Resource _resource;
-	private String _portletName;
-	private String _portletLabel;
-	private String _modelName;
-	private String _modelLabel;
 	private String _actionId;
 	private String _actionLabel;
+	private String _modelLabel;
+	private String _modelName;
+	private Permission _permission;
+	private String _portletLabel;
+	private String _portletName;
+	private Resource _resource;
 
 }

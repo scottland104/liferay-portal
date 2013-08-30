@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,10 +16,12 @@ package com.liferay.portlet.softwarecatalog.action;
 
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.Image;
@@ -43,7 +45,7 @@ import com.liferay.portlet.softwarecatalog.model.SCProductScreenshot;
 import com.liferay.portlet.softwarecatalog.service.SCProductEntryServiceUtil;
 import com.liferay.portlet.softwarecatalog.service.SCProductScreenshotLocalServiceUtil;
 
-import java.io.File;
+import java.io.InputStream;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -66,8 +68,9 @@ public class EditProductEntryAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
@@ -88,7 +91,7 @@ public class EditProductEntryAction extends PortletAction {
 			if (e instanceof NoSuchProductEntryException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				setForward(actionRequest, "portlet.software_catalog.error");
 			}
@@ -101,7 +104,7 @@ public class EditProductEntryAction extends PortletAction {
 					 e instanceof ProductEntryShortDescriptionException ||
 					 e instanceof ProductEntryTypeException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 			}
 			else {
 				throw e;
@@ -111,8 +114,9 @@ public class EditProductEntryAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -122,17 +126,19 @@ public class EditProductEntryAction extends PortletAction {
 			if (e instanceof NoSuchProductEntryException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(renderRequest, e.getClass().getName());
+				SessionErrors.add(renderRequest, e.getClass());
 
-				return mapping.findForward("portlet.software_catalog.error");
+				return actionMapping.findForward(
+					"portlet.software_catalog.error");
 			}
 			else {
 				throw e;
 			}
 		}
 
-		return mapping.findForward(getForward(
-			renderRequest, "portlet.software_catalog.edit_product_entry"));
+		return actionMapping.findForward(
+			getForward(
+				renderRequest, "portlet.software_catalog.edit_product_entry"));
 	}
 
 	protected void deleteProductEntry(ActionRequest actionRequest)
@@ -144,33 +150,39 @@ public class EditProductEntryAction extends PortletAction {
 		SCProductEntryServiceUtil.deleteProductEntry(productEntryId);
 	}
 
-	protected List<byte[]> getFullImages(UploadPortletRequest uploadRequest)
+	protected List<byte[]> getFullImages(
+			UploadPortletRequest uploadPortletRequest)
 		throws Exception {
 
-		return getImages(uploadRequest, "fullImage");
+		return getImages(uploadPortletRequest, "fullImage");
 	}
 
 	protected List<byte[]> getImages(
-			UploadPortletRequest uploadRequest, String imagePrefix)
+			UploadPortletRequest uploadPortletRequest, String imagePrefix)
 		throws Exception {
 
 		List<byte[]> images = new ArrayList<byte[]>();
 
 		for (String name :
-				getSortedParameterNames(uploadRequest, imagePrefix)) {
+				getSortedParameterNames(uploadPortletRequest, imagePrefix)) {
+
+			String contentType = uploadPortletRequest.getContentType(name);
+
+			if (!MimeTypesUtil.isWebImage(contentType)) {
+				throw new ProductEntryScreenshotsException();
+			}
 
 			int priority = GetterUtil.getInteger(
-				name.substring(imagePrefix.length(), name.length()));
-
-			File file = uploadRequest.getFile(name);
-			byte[] bytes = FileUtil.getBytes(file);
+				name.substring(imagePrefix.length()));
 
 			boolean preserveScreenshot = ParamUtil.getBoolean(
-				uploadRequest, "preserveScreenshot" + priority);
+				uploadPortletRequest, "preserveScreenshot" + priority);
+
+			byte[] bytes = null;
 
 			if (preserveScreenshot) {
 				SCProductScreenshot productScreenshot = getProductScreenshot(
-					uploadRequest, priority);
+					uploadPortletRequest, priority);
 
 				Image image = null;
 
@@ -185,8 +197,16 @@ public class EditProductEntryAction extends PortletAction {
 
 				bytes = image.getTextObj();
 			}
+			else {
+				InputStream inputStream = uploadPortletRequest.getFileAsStream(
+					name);
 
-			if ((bytes != null) && (bytes.length > 0)) {
+				if (inputStream != null) {
+					bytes = FileUtil.getBytes(inputStream);
+				}
+			}
+
+			if (ArrayUtil.isNotEmpty(bytes)) {
 				images.add(bytes);
 			}
 			else {
@@ -198,11 +218,11 @@ public class EditProductEntryAction extends PortletAction {
 	}
 
 	protected SCProductScreenshot getProductScreenshot(
-			UploadPortletRequest uploadRequest, int priority)
+			UploadPortletRequest uploadPortletRequest, int priority)
 		throws Exception {
 
 		long productEntryId = ParamUtil.getLong(
-			uploadRequest, "productEntryId");
+			uploadPortletRequest, "productEntryId");
 
 		try {
 			return SCProductScreenshotLocalServiceUtil.getProductScreenshot(
@@ -214,12 +234,12 @@ public class EditProductEntryAction extends PortletAction {
 	}
 
 	protected List<String> getSortedParameterNames(
-			UploadPortletRequest uploadRequest, String imagePrefix)
+			UploadPortletRequest uploadPortletRequest, String imagePrefix)
 		throws Exception {
 
 		List<String> parameterNames = new ArrayList<String>();
 
-		Enumeration<String> enu = uploadRequest.getParameterNames();
+		Enumeration<String> enu = uploadPortletRequest.getParameterNames();
 
 		while (enu.hasMoreElements()) {
 			String name = enu.nextElement();
@@ -232,17 +252,18 @@ public class EditProductEntryAction extends PortletAction {
 		return ListUtil.sort(parameterNames);
 	}
 
-	protected List<byte[]> getThumbnails(UploadPortletRequest uploadRequest)
+	protected List<byte[]> getThumbnails(
+			UploadPortletRequest uploadPortletRequest)
 		throws Exception {
 
-		return getImages(uploadRequest, "thumbnail");
+		return getImages(uploadPortletRequest, "thumbnail");
 	}
 
 	protected void updateProductEntry(ActionRequest actionRequest)
 		throws Exception {
 
-		UploadPortletRequest uploadRequest = PortalUtil.getUploadPortletRequest(
-			actionRequest);
+		UploadPortletRequest uploadPortletRequest =
+			PortalUtil.getUploadPortletRequest(actionRequest);
 
 		long productEntryId = ParamUtil.getLong(
 			actionRequest, "productEntryId");
@@ -262,8 +283,8 @@ public class EditProductEntryAction extends PortletAction {
 
 		long[] licenseIds = ParamUtil.getLongValues(actionRequest, "licenses");
 
-		List<byte[]> thumbnails = getThumbnails(uploadRequest);
-		List<byte[]> fullImages = getFullImages(uploadRequest);
+		List<byte[]> thumbnails = getThumbnails(uploadPortletRequest);
+		List<byte[]> fullImages = getFullImages(uploadPortletRequest);
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			SCProductEntry.class.getName(), actionRequest);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,11 +34,13 @@ import java.util.List;
  */
 public class GoogleHook implements Hook {
 
+	@Override
 	public void addForward(
 		long companyId, long userId, List<Filter> filters,
 		List<String> emailAddresses, boolean leaveCopy) {
 	}
 
+	@Override
 	public void addUser(
 		long companyId, long userId, String password, String firstName,
 		String middleName, String lastName, String emailAddress) {
@@ -52,14 +54,12 @@ public class GoogleHook implements Hook {
 			gUserManager.addGUser(userId, password, firstName, lastName);
 
 			GNicknameManager gNicknameManager =
-				GoogleAppsFactoryUtil.getGNicknameManager(
-					companyId);
+				GoogleAppsFactoryUtil.getGNicknameManager(companyId);
 
 			gNicknameManager.addGNickname(userId, nickname);
 
 			GEmailSettingsManager gEmailSettingsManager =
-				GoogleAppsFactoryUtil.getGEmailSettingsManager(
-					companyId);
+				GoogleAppsFactoryUtil.getGEmailSettingsManager(companyId);
 
 			FullNameGenerator fullNameGenerator =
 				FullNameGeneratorFactory.getInstance();
@@ -74,11 +74,13 @@ public class GoogleHook implements Hook {
 		}
 	}
 
+	@Override
 	public void addVacationMessage(
 		long companyId, long userId, String emailAddress,
 		String vacationMessage) {
 	}
 
+	@Override
 	public void deleteEmailAddress(long companyId, long userId) {
 		try {
 			User user = UserLocalServiceUtil.getUserById(userId);
@@ -86,8 +88,7 @@ public class GoogleHook implements Hook {
 			String nickname = _getNickname(user.getEmailAddress());
 
 			GNicknameManager gNicknameManager =
-				GoogleAppsFactoryUtil.getGNicknameManager(
-					companyId);
+				GoogleAppsFactoryUtil.getGNicknameManager(companyId);
 
 			gNicknameManager.deleteGNickname(nickname);
 		}
@@ -96,6 +97,7 @@ public class GoogleHook implements Hook {
 		}
 	}
 
+	@Override
 	public void deleteUser(long companyId, long userId) {
 		try {
 			GUserManager gUserManager = GoogleAppsFactoryUtil.getGUserManager(
@@ -108,10 +110,12 @@ public class GoogleHook implements Hook {
 		}
 	}
 
+	@Override
 	public void updateBlocked(
 		long companyId, long userId, List<String> blocked) {
 	}
 
+	@Override
 	public void updateEmailAddress(
 		long companyId, long userId, String emailAddress) {
 
@@ -121,14 +125,14 @@ public class GoogleHook implements Hook {
 			deleteEmailAddress(companyId, userId);
 
 			GNicknameManager gNicknameManager =
-				GoogleAppsFactoryUtil.getGNicknameManager(
-					companyId);
+				GoogleAppsFactoryUtil.getGNicknameManager(companyId);
 
-			gNicknameManager.addGNickname(userId, emailAddress);
+			String nickname = _getNickname(emailAddress);
+
+			gNicknameManager.addGNickname(userId, nickname);
 
 			GEmailSettingsManager gEmailSettingsManager =
-				GoogleAppsFactoryUtil.getGEmailSettingsManager(
-					companyId);
+				GoogleAppsFactoryUtil.getGEmailSettingsManager(companyId);
 
 			gEmailSettingsManager.addSendAs(
 				userId, user.getFullName(), emailAddress);
@@ -138,6 +142,7 @@ public class GoogleHook implements Hook {
 		}
 	}
 
+	@Override
 	public void updatePassword(long companyId, long userId, String password) {
 		try {
 			GUserManager gUserManager = GoogleAppsFactoryUtil.getGUserManager(

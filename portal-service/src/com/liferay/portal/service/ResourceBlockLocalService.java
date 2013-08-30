@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,11 +21,10 @@ import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
 
 /**
- * The interface for the resource block local service.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
+ * Provides the local service interface for ResourceBlock. Methods of this
+ * service will not have security checks based on the propagated JAAS
+ * credentials because this service can only be accessed from within the same
+ * VM.
  *
  * @author Brian Wing Shun Chan
  * @see ResourceBlockLocalServiceUtil
@@ -35,7 +34,8 @@ import com.liferay.portal.kernel.transaction.Transactional;
  */
 @Transactional(isolation = Isolation.PORTAL, rollbackFor =  {
 	PortalException.class, SystemException.class})
-public interface ResourceBlockLocalService extends PermissionedModelLocalService {
+public interface ResourceBlockLocalService extends BaseLocalService,
+	PermissionedModelLocalService {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -66,10 +66,12 @@ public interface ResourceBlockLocalService extends PermissionedModelLocalService
 	* Deletes the resource block with the primary key from the database. Also notifies the appropriate model listeners.
 	*
 	* @param resourceBlockId the primary key of the resource block
+	* @return the resource block that was removed
 	* @throws PortalException if a resource block with the primary key could not be found
 	* @throws SystemException if a system exception occurred
 	*/
-	public void deleteResourceBlock(long resourceBlockId)
+	public com.liferay.portal.model.ResourceBlock deleteResourceBlock(
+		long resourceBlockId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException;
 
@@ -77,11 +79,14 @@ public interface ResourceBlockLocalService extends PermissionedModelLocalService
 	* Deletes the resource block from the database. Also notifies the appropriate model listeners.
 	*
 	* @param resourceBlock the resource block
+	* @return the resource block that was removed
 	* @throws SystemException if a system exception occurred
 	*/
-	public void deleteResourceBlock(
+	public com.liferay.portal.model.ResourceBlock deleteResourceBlock(
 		com.liferay.portal.model.ResourceBlock resourceBlock)
 		throws com.liferay.portal.kernel.exception.SystemException;
+
+	public com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery();
 
 	/**
 	* Performs a dynamic query on the database and returns the matching rows.
@@ -99,7 +104,7 @@ public interface ResourceBlockLocalService extends PermissionedModelLocalService
 	* Performs a dynamic query on the database and returns a range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourceBlockModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -117,7 +122,7 @@ public interface ResourceBlockLocalService extends PermissionedModelLocalService
 	* Performs a dynamic query on the database and returns an ordered range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourceBlockModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -146,6 +151,24 @@ public interface ResourceBlockLocalService extends PermissionedModelLocalService
 		throws com.liferay.portal.kernel.exception.SystemException;
 
 	/**
+	* Returns the number of rows that match the dynamic query.
+	*
+	* @param dynamicQuery the dynamic query
+	* @param projection the projection to apply to the query
+	* @return the number of rows that match the dynamic query
+	* @throws SystemException if a system exception occurred
+	*/
+	public long dynamicQueryCount(
+		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		com.liferay.portal.kernel.dao.orm.Projection projection)
+		throws com.liferay.portal.kernel.exception.SystemException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public com.liferay.portal.model.ResourceBlock fetchResourceBlock(
+		long resourceBlockId)
+		throws com.liferay.portal.kernel.exception.SystemException;
+
+	/**
 	* Returns the resource block with the primary key.
 	*
 	* @param resourceBlockId the primary key of the resource block
@@ -159,6 +182,7 @@ public interface ResourceBlockLocalService extends PermissionedModelLocalService
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException;
 
+	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public com.liferay.portal.model.PersistedModel getPersistedModel(
 		java.io.Serializable primaryKeyObj)
@@ -169,7 +193,7 @@ public interface ResourceBlockLocalService extends PermissionedModelLocalService
 	* Returns a range of all the resource blocks.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.ResourceBlockModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param start the lower bound of the range of resource blocks
@@ -201,18 +225,6 @@ public interface ResourceBlockLocalService extends PermissionedModelLocalService
 	*/
 	public com.liferay.portal.model.ResourceBlock updateResourceBlock(
 		com.liferay.portal.model.ResourceBlock resourceBlock)
-		throws com.liferay.portal.kernel.exception.SystemException;
-
-	/**
-	* Updates the resource block in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
-	*
-	* @param resourceBlock the resource block
-	* @param merge whether to merge the resource block with the current session. See {@link com.liferay.portal.service.persistence.BatchSession#update(com.liferay.portal.kernel.dao.orm.Session, com.liferay.portal.model.BaseModel, boolean)} for an explanation.
-	* @return the resource block that was updated
-	* @throws SystemException if a system exception occurred
-	*/
-	public com.liferay.portal.model.ResourceBlock updateResourceBlock(
-		com.liferay.portal.model.ResourceBlock resourceBlock, boolean merge)
 		throws com.liferay.portal.kernel.exception.SystemException;
 
 	/**
@@ -278,6 +290,10 @@ public interface ResourceBlockLocalService extends PermissionedModelLocalService
 	*
 	* @param companyId the primary key of the resource block's company
 	* @param groupId the primary key of the resource block's group
+	* @param name the resource block's name
+	* @param permissionsHash the resource block's permission hash
+	* @param resourceBlockPermissionsContainer the resource block's
+	permissions container
 	* @return the new resource block
 	* @throws SystemException if a system exception occurred
 	*/
@@ -322,18 +338,6 @@ public interface ResourceBlockLocalService extends PermissionedModelLocalService
 		com.liferay.portal.model.ResourceBlock resourceBlock, long roleId)
 		throws com.liferay.portal.kernel.exception.SystemException;
 
-	/**
-	* Returns the permissions hash of the resource permissions. The permissions
-	* hash is a representation of all the roles with access to the resource
-	* along with the actions they can perform.
-	*
-	* @param resourceBlockPermissionsContainer the resource block permissions
-	* @return the permissions hash of the resource permissions
-	*/
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public java.lang.String getPermissionsHash(
-		com.liferay.portal.model.ResourceBlockPermissionsContainer resourceBlockPermissionsContainer);
-
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public com.liferay.portal.model.ResourceBlock getResourceBlock(
 		java.lang.String name, long primKey)
@@ -370,8 +374,7 @@ public interface ResourceBlockLocalService extends PermissionedModelLocalService
 
 	public void releasePermissionedModelResourceBlock(
 		com.liferay.portal.model.PermissionedModel permissionedModel)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException;
+		throws com.liferay.portal.kernel.exception.SystemException;
 
 	public void releasePermissionedModelResourceBlock(java.lang.String name,
 		long primKey)
@@ -387,8 +390,7 @@ public interface ResourceBlockLocalService extends PermissionedModelLocalService
 	* @throws SystemException if a system exception occurred
 	*/
 	public void releaseResourceBlock(long resourceBlockId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException;
+		throws com.liferay.portal.kernel.exception.SystemException;
 
 	/**
 	* Decrements the reference count of the resource block and updates it in
@@ -453,28 +455,6 @@ public interface ResourceBlockLocalService extends PermissionedModelLocalService
 		long roleId, long actionIdsLong)
 		throws com.liferay.portal.kernel.exception.SystemException;
 
-	/**
-	* Increments the reference count of the resource block and updates it in
-	* the database.
-	*
-	* @param resourceBlockId the primary key of the resource block
-	* @throws SystemException if a system exception occurred
-	*/
-	public void retainResourceBlock(long resourceBlockId)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException;
-
-	/**
-	* Increments the reference count of the resource block and updates it in
-	* the database.
-	*
-	* @param resourceBlock the resource block
-	* @throws SystemException if a system exception occurred
-	*/
-	public void retainResourceBlock(
-		com.liferay.portal.model.ResourceBlock resourceBlock)
-		throws com.liferay.portal.kernel.exception.SystemException;
-
 	public void setCompanyScopePermissions(long companyId,
 		java.lang.String name, long roleId,
 		java.util.List<java.lang.String> actionIds)
@@ -503,6 +483,12 @@ public interface ResourceBlockLocalService extends PermissionedModelLocalService
 
 	public void setIndividualScopePermissions(long companyId, long groupId,
 		java.lang.String name, long primKey, long roleId, long actionIdsLong)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException;
+
+	public void setIndividualScopePermissions(long companyId, long groupId,
+		java.lang.String name, long primKey,
+		java.util.Map<java.lang.Long, java.lang.String[]> roleIdsToActionIds)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException;
 

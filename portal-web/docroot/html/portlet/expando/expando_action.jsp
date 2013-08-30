@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -28,7 +28,7 @@ String modelResource = (String)row.getParameter("modelResource");
 %>
 
 <liferay-ui:icon-menu>
-	<c:if test="<%= ExpandoColumnPermission.contains(permissionChecker, expandoColumn, ActionKeys.UPDATE) %>">
+	<c:if test="<%= ExpandoColumnPermissionUtil.contains(permissionChecker, expandoColumn, ActionKeys.UPDATE) %>">
 		<portlet:renderURL var="editURL">
 			<portlet:param name="struts_action" value="/expando/edit_expando" />
 			<portlet:param name="redirect" value="<%= redirect %>" />
@@ -42,21 +42,24 @@ String modelResource = (String)row.getParameter("modelResource");
 		/>
 	</c:if>
 
-	<c:if test="<%= ExpandoColumnPermission.contains(permissionChecker, expandoColumn, ActionKeys.PERMISSIONS) %>">
+	<c:if test="<%= ExpandoColumnPermissionUtil.contains(permissionChecker, expandoColumn, ActionKeys.PERMISSIONS) %>">
 		<liferay-security:permissionsURL
 			modelResource="<%= ExpandoColumn.class.getName() %>"
 			modelResourceDescription="<%= HtmlUtil.escape(expandoColumn.getName()) %>"
 			resourcePrimKey="<%= String.valueOf(expandoColumn.getColumnId()) %>"
 			var="permissionsURL"
+			windowState="<%= LiferayWindowState.POP_UP.toString() %>"
 		/>
 
 		<liferay-ui:icon
 			image="permissions"
+			method="get"
 			url="<%= permissionsURL %>"
+			useDialog="<%= true %>"
 		/>
 	</c:if>
 
-	<c:if test="<%= ExpandoColumnPermission.contains(permissionChecker, expandoColumn, ActionKeys.DELETE) %>">
+	<c:if test="<%= ExpandoColumnPermissionUtil.contains(permissionChecker, expandoColumn, ActionKeys.DELETE) %>">
 		<portlet:actionURL var="deleteURL">
 			<portlet:param name="struts_action" value="/expando/edit_expando" />
 			<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.DELETE %>" />

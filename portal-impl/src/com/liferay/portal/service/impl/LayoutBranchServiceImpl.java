@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,12 +24,12 @@ import com.liferay.portal.service.permission.GroupPermissionUtil;
 import com.liferay.portal.service.permission.LayoutBranchPermissionUtil;
 
 /**
- *
  * @author Brian Wing Shun Chan
  * @author Julio Camarero
  */
 public class LayoutBranchServiceImpl extends LayoutBranchServiceBaseImpl {
 
+	@Override
 	public LayoutBranch addLayoutBranch(
 			long layoutRevisionId, String name, String description,
 			boolean master, ServiceContext serviceContext)
@@ -44,6 +44,7 @@ public class LayoutBranchServiceImpl extends LayoutBranchServiceBaseImpl {
 			layoutRevisionId, name, description, false, serviceContext);
 	}
 
+	@Override
 	public void deleteLayoutBranch(long layoutBranchId)
 		throws PortalException, SystemException {
 
@@ -53,6 +54,7 @@ public class LayoutBranchServiceImpl extends LayoutBranchServiceBaseImpl {
 		layoutBranchLocalService.deleteLayoutBranch(layoutBranchId);
 	}
 
+	@Override
 	public LayoutBranch updateLayoutBranch(
 			long layoutBranchId, String name, String description,
 			ServiceContext serviceContext)

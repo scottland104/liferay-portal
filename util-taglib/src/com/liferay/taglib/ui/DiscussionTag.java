@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,6 +23,10 @@ import javax.servlet.http.HttpServletRequest;
  * @author Charles May
  */
 public class DiscussionTag extends IncludeTag {
+
+	public void setAssetEntryVisible(boolean assetEntryVisible) {
+		_assetEntryVisible = assetEntryVisible;
+	}
 
 	public void setClassName(String className) {
 		_className = className;
@@ -60,8 +64,10 @@ public class DiscussionTag extends IncludeTag {
 		_redirect = redirect;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, with no direct replacement
+	 */
 	public void setSubject(String subject) {
-		_subject = subject;
 	}
 
 	public void setUserId(long userId) {
@@ -70,6 +76,7 @@ public class DiscussionTag extends IncludeTag {
 
 	@Override
 	protected void cleanUp() {
+		_assetEntryVisible = true;
 		_className = null;
 		_classPK = 0;
 		_formAction = null;
@@ -79,7 +86,6 @@ public class DiscussionTag extends IncludeTag {
 		_permissionClassPK = 0;
 		_ratingsEnabled = true;
 		_redirect = null;
-		_subject = null;
 		_userId = 0;
 	}
 
@@ -102,6 +108,9 @@ public class DiscussionTag extends IncludeTag {
 			permissionClassPK = _classPK;
 		}
 
+		request.setAttribute(
+			"liferay-ui:discussion:assetEntryVisible",
+			String.valueOf(_assetEntryVisible));
 		request.setAttribute("liferay-ui:discussion:className", _className);
 		request.setAttribute(
 			"liferay-ui:discussion:classPK", String.valueOf(_classPK));
@@ -119,13 +128,13 @@ public class DiscussionTag extends IncludeTag {
 			"liferay-ui:discussion:ratingsEnabled",
 			String.valueOf(_ratingsEnabled));
 		request.setAttribute("liferay-ui:discussion:redirect", _redirect);
-		request.setAttribute("liferay-ui:discussion:subject", _subject);
 		request.setAttribute(
 			"liferay-ui:discussion:userId", String.valueOf(_userId));
 	}
 
 	private static final String _PAGE = "/html/taglib/ui/discussion/page.jsp";
 
+	private boolean _assetEntryVisible = true;
 	private String _className;
 	private long _classPK;
 	private String _formAction;
@@ -135,7 +144,6 @@ public class DiscussionTag extends IncludeTag {
 	private long _permissionClassPK;
 	private boolean _ratingsEnabled = true;
 	private String _redirect;
-	private String _subject;
 	private long _userId;
 
 }

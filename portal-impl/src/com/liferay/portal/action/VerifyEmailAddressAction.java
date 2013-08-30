@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,7 +20,10 @@ import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.model.User;
 import com.liferay.portal.security.auth.AuthTokenUtil;
+import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.service.ServiceContextFactory;
 import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portal.struts.ActionConstants;
 import com.liferay.portal.theme.ThemeDisplay;
@@ -47,8 +50,8 @@ public class VerifyEmailAddressAction extends Action {
 
 	@Override
 	public ActionForward execute(
-			ActionMapping mapping, ActionForm form, HttpServletRequest request,
-			HttpServletResponse response)
+			ActionMapping actionMapping, ActionForm actionForm,
+			HttpServletRequest request, HttpServletResponse response)
 		throws Exception {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
@@ -57,7 +60,13 @@ public class VerifyEmailAddressAction extends Action {
 		String cmd = ParamUtil.getString(request, Constants.CMD);
 
 		if (Validator.isNull(cmd)) {
-			return mapping.findForward("portal.verify_email_address");
+			return actionMapping.findForward("portal.verify_email_address");
+		}
+
+		if (themeDisplay.isSignedIn() && cmd.equals(Constants.SEND)) {
+			sendEmailAddressVerification(request, response, themeDisplay);
+
+			return actionMapping.findForward("portal.verify_email_address");
 		}
 
 		try {
@@ -73,16 +82,15 @@ public class VerifyEmailAddressAction extends Action {
 				return null;
 			}
 			else {
-				return mapping.findForward(ActionConstants.COMMON_REFERER);
+				return actionMapping.findForward(
+					ActionConstants.COMMON_REFERER_JSP);
 			}
 		}
 		catch (Exception e) {
-			if (e instanceof PortalException ||
-				e instanceof SystemException) {
+			if (e instanceof PortalException || e instanceof SystemException) {
+				SessionErrors.add(request, e.getClass());
 
-				SessionErrors.add(request, e.getClass().getName());
-
-				return mapping.findForward("portal.verify_email_address");
+				return actionMapping.findForward("portal.verify_email_address");
 			}
 			else {
 				PortalUtil.sendError(e, request, response);
@@ -90,6 +98,20 @@ public class VerifyEmailAddressAction extends Action {
 				return null;
 			}
 		}
+	}
+
+	protected void sendEmailAddressVerification(
+			HttpServletRequest request, HttpServletResponse response,
+			ThemeDisplay themeDisplay)
+		throws Exception {
+
+		User user = themeDisplay.getUser();
+
+		ServiceContext serviceContext = ServiceContextFactory.getInstance(
+			request);
+
+		UserLocalServiceUtil.sendEmailAddressVerification(
+			user, user.getEmailAddress(), serviceContext);
 	}
 
 	protected void verifyEmailAddress(

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,78 +20,113 @@ import com.liferay.portal.kernel.dao.shard.ShardUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.model.BaseModel;
 
 import java.io.Serializable;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Shuyang Zhou
  */
 public class FinderPath {
 
 	public FinderPath(
 		boolean entityCacheEnabled, boolean finderCacheEnabled,
-		Class<?> resultClass, String className, String methodName,
+		Class<?> resultClass, String cacheName, String methodName,
 		String[] params) {
+
+		this(
+			entityCacheEnabled, finderCacheEnabled, resultClass, cacheName,
+			methodName, params, -1);
+	}
+
+	public FinderPath(
+		boolean entityCacheEnabled, boolean finderCacheEnabled,
+		Class<?> resultClass, String cacheName, String methodName,
+		String[] params, long columnBitmask) {
 
 		_entityCacheEnabled = entityCacheEnabled;
 		_finderCacheEnabled = finderCacheEnabled;
 		_resultClass = resultClass;
-		_className = className;
-		_methodName = methodName;
-		_params = params;
+		_cacheName = cacheName;
+		_columnBitmask = columnBitmask;
 
-		_initCacheKeyPrefix();
+		if (BaseModel.class.isAssignableFrom(_resultClass)) {
+			_cacheKeyGeneratorCacheName =
+				FinderCache.class.getName() + "#BaseModel";
+		}
+		else {
+			_cacheKeyGeneratorCacheName = FinderCache.class.getName();
+		}
+
+		CacheKeyGenerator cacheKeyGenerator =
+			CacheKeyGeneratorUtil.getCacheKeyGenerator(
+				_cacheKeyGeneratorCacheName);
+
+		if (cacheKeyGenerator.isCallingGetCacheKeyThreadSafe()) {
+			_cacheKeyGenerator = cacheKeyGenerator;
+		}
+
+		_initCacheKeyPrefix(methodName, params);
 		_initLocalCacheKeyPrefix();
 	}
 
-	public Serializable encodeCacheKey(Object[] args) {
-		StringBundler sb = new StringBundler(args.length * 2 + 3);
+	public Serializable encodeCacheKey(
+		boolean shardEnabled, Object[] arguments) {
 
-		sb.append(ShardUtil.getCurrentShardName());
-		sb.append(StringPool.PERIOD);
+		StringBundler sb = null;
+
+		if (shardEnabled) {
+			sb = new StringBundler(arguments.length * 2 + 3);
+
+			sb.append(ShardUtil.getCurrentShardName());
+			sb.append(StringPool.PERIOD);
+		}
+		else {
+			sb = new StringBundler(arguments.length * 2 + 1);
+		}
+
 		sb.append(_cacheKeyPrefix);
 
-		for (Object arg : args) {
+		for (Object arg : arguments) {
 			sb.append(StringPool.PERIOD);
 			sb.append(StringUtil.toHexString(arg));
 		}
 
-		CacheKeyGenerator cacheKeyGenerator =
-			CacheKeyGeneratorUtil.getCacheKeyGenerator(
-				FinderCache.class.getName());
-
-		return cacheKeyGenerator.getCacheKey(sb);
+		return _getCacheKey(sb);
 	}
 
-	public Serializable encodeLocalCacheKey(Object[] args) {
-		StringBundler sb = new StringBundler(args.length * 2 + 3);
+	public Serializable encodeLocalCacheKey(
+		boolean shardEnabled, Object[] arguments) {
 
-		sb.append(ShardUtil.getCurrentShardName());
-		sb.append(StringPool.PERIOD);
+		StringBundler sb = null;
+
+		if (shardEnabled) {
+			sb = new StringBundler(arguments.length * 2 + 3);
+
+			sb.append(ShardUtil.getCurrentShardName());
+			sb.append(StringPool.PERIOD);
+		}
+		else {
+			sb = new StringBundler(arguments.length * 2 + 1);
+		}
+
 		sb.append(_localCacheKeyPrefix);
 
-		for (Object arg : args) {
+		for (Object arg : arguments) {
 			sb.append(StringPool.PERIOD);
 			sb.append(StringUtil.toHexString(arg));
 		}
 
-		CacheKeyGenerator cacheKeyGenerator =
-			CacheKeyGeneratorUtil.getCacheKeyGenerator(
-				FinderCache.class.getName());
-
-		return cacheKeyGenerator.getCacheKey(sb);
+		return _getCacheKey(sb);
 	}
 
-	public String getClassName() {
-		return _className;
+	public String getCacheName() {
+		return _cacheName;
 	}
 
-	public String getMethodName() {
-		return _methodName;
-	}
-
-	public String[] getParams() {
-		return _params;
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	public Class<?> getResultClass() {
@@ -106,13 +141,45 @@ public class FinderPath {
 		return _finderCacheEnabled;
 	}
 
-	private void _initCacheKeyPrefix() {
-		StringBundler sb = new StringBundler(_params.length * 2 + 3);
+	public void setCacheKeyGeneratorCacheName(
+		String cacheKeyGeneratorCacheName) {
 
-		sb.append(_methodName);
+		if (cacheKeyGeneratorCacheName == null) {
+			cacheKeyGeneratorCacheName = FinderCache.class.getName();
+		}
+
+		_cacheKeyGeneratorCacheName = cacheKeyGeneratorCacheName;
+
+		CacheKeyGenerator cacheKeyGenerator =
+			CacheKeyGeneratorUtil.getCacheKeyGenerator(
+				cacheKeyGeneratorCacheName);
+
+		if (cacheKeyGenerator.isCallingGetCacheKeyThreadSafe()) {
+			_cacheKeyGenerator = cacheKeyGenerator;
+		}
+		else {
+			_cacheKeyGenerator = null;
+		}
+	}
+
+	private Serializable _getCacheKey(StringBundler sb) {
+		CacheKeyGenerator cacheKeyGenerator = _cacheKeyGenerator;
+
+		if (cacheKeyGenerator == null) {
+			cacheKeyGenerator = CacheKeyGeneratorUtil.getCacheKeyGenerator(
+				_cacheKeyGeneratorCacheName);
+		}
+
+		return cacheKeyGenerator.getCacheKey(sb);
+	}
+
+	private void _initCacheKeyPrefix(String methodName, String[] params) {
+		StringBundler sb = new StringBundler(params.length * 2 + 3);
+
+		sb.append(methodName);
 		sb.append(_PARAMS_SEPARATOR);
 
-		for (String param : _params) {
+		for (String param : params) {
 			sb.append(StringPool.PERIOD);
 			sb.append(param);
 		}
@@ -123,7 +190,7 @@ public class FinderPath {
 	}
 
 	private void _initLocalCacheKeyPrefix() {
-		_localCacheKeyPrefix = _className.concat(StringPool.PERIOD).concat(
+		_localCacheKeyPrefix = _cacheName.concat(StringPool.PERIOD).concat(
 			_cacheKeyPrefix);
 	}
 
@@ -131,13 +198,14 @@ public class FinderPath {
 
 	private static final String _PARAMS_SEPARATOR = "_P_";
 
+	private CacheKeyGenerator _cacheKeyGenerator;
+	private String _cacheKeyGeneratorCacheName;
 	private String _cacheKeyPrefix;
-	private String _className;
+	private String _cacheName;
+	private long _columnBitmask;
 	private boolean _entityCacheEnabled;
 	private boolean _finderCacheEnabled;
 	private String _localCacheKeyPrefix;
-	private String _methodName;
-	private String[] _params;
 	private Class<?> _resultClass;
 
 }

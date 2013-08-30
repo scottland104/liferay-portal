@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -67,6 +67,10 @@ else {
 		categoryPropertiesIndexes = new int[0];
 	}
 }
+
+String categoryDescriptionId = "categoryDescription";
+String categoryNameId = "categoryName";
+String categoryPropertiesId = "categoryProperties";
 %>
 
 <portlet:actionURL var="editCategoryURL">
@@ -74,6 +78,8 @@ else {
 </portlet:actionURL>
 
 <aui:form action="<%= editCategoryURL %>" cssClass="update-category-form" method="get" name='<%= randomNamespace + "fm" %>'>
+	<div class="hide lfr-message-response" id="categoryMessagesEdit"></div>
+
 	<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= category == null ? Constants.ADD : Constants.UPDATE %>" />
 
 	<aui:model-context bean="<%= category %>" model="<%= AssetCategory.class %>" />
@@ -84,24 +90,37 @@ else {
 				<aui:input name="categoryId" type="hidden" value="<%= categoryId %>" />
 				<aui:input name="parentCategoryId" type="hidden" value="<%= parentCategoryId %>" />
 
-				<aui:input cssClass="category-name" label="name" name="title" />
+				<%
+				if (category != null) {
+					categoryNameId += "Edit";
+					categoryDescriptionId += "Edit";
+				}
+				%>
 
-				<aui:input name="description" />
+				<aui:input autoFocus="<%= true %>" cssClass="category-name" id="<%= categoryNameId %>" label="name" name="title" />
 
-				<aui:select inputCssClass="vocabulary-select-list" label="to-vocabulary" name="vocabularyId">
+				<aui:input id="<%= categoryDescriptionId %>" name="description" />
 
-					<%
-					for (AssetVocabulary vocabulary : vocabularies) {
-						vocabulary.setEscapedModel(true);
-					%>
+				<c:choose>
+					<c:when test="<%= parentCategoryId == 0 %>">
+						<aui:select cssClass="vocabulary-select-list" label="to-vocabulary" name="vocabularyId">
 
-						<aui:option label="<%= vocabulary.getTitle(locale) %>" selected="<%= vocabulary.getVocabularyId() == vocabularyId %>" value="<%= vocabulary.getVocabularyId() %>" />
+							<%
+							for (AssetVocabulary vocabulary : vocabularies) {
+							%>
 
-					<%
-					}
-					%>
+								<aui:option label="<%= HtmlUtil.escape(vocabulary.getTitle(locale)) %>" selected="<%= vocabulary.getVocabularyId() == vocabularyId %>" value="<%= vocabulary.getVocabularyId() %>" />
 
-				</aui:select>
+							<%
+							}
+							%>
+
+						</aui:select>
+					</c:when>
+					<c:otherwise>
+						<aui:input name="vocabularyId" type="hidden" value="<%= vocabularyId %>" />
+					</c:otherwise>
+				</c:choose>
 
 				<liferay-ui:panel-container extended="<%= false %>" id="assetCategoryPanelContainer" persistState="<%= true %>">
 					<c:if test="<%= category == null %>">
@@ -112,8 +131,14 @@ else {
 						</liferay-ui:panel>
 					</c:if>
 
+					<%
+					if (category != null) {
+						categoryPropertiesId += "Edit";
+					}
+					%>
+
 					<liferay-ui:panel collapsible="<%= true %>" defaultState="closed" extended="<%= true %>" helpMessage="properties-are-a-way-to-add-more-detailed-information-to-a-specific-category" id="assetCategoryPropertiesPanel" persistState="<%= true %>" title="properties">
-						<aui:fieldset cssClass="category-categoryProperties" id="categoryProperties">
+						<aui:fieldset cssClass="category-categoryProperties" id="<%= categoryPropertiesId %>">
 
 							<%
 							for (int i = 0; i < categoryPropertiesIndexes.length; i++) {
@@ -126,9 +151,9 @@ else {
 
 								<div class="lfr-form-row lfr-form-row-inline">
 									<div class="row-fields">
-										<aui:input fieldParam='<%= "key" + categoryPropertiesIndex %>' name="key" />
+										<aui:input fieldParam='<%= "key" + categoryPropertiesIndex %>' id='<%= "key" + categoryPropertiesIndex %>' name="key" />
 
-										<aui:input fieldParam='<%= "value" + categoryPropertiesIndex %>' name="value" />
+										<aui:input fieldParam='<%= "value" + categoryPropertiesIndex %>' id='<%= "value" + categoryPropertiesIndex %>' name="value" />
 									</div>
 								</div>
 
@@ -145,11 +170,11 @@ else {
 					<aui:button type="submit" />
 
 					<c:if test="<%= category != null %>">
-						<c:if test="<%= permissionChecker.hasPermission(scopeGroupId, AssetCategory.class.getName(), category.getCategoryId(), ActionKeys.DELETE) %>">
+						<c:if test="<%= AssetCategoryPermission.contains(permissionChecker, category, ActionKeys.DELETE) %>">
 							<aui:button id="deleteCategoryButton" value="delete" />
 						</c:if>
 
-						<c:if test="<%= permissionChecker.hasPermission(scopeGroupId, AssetCategory.class.getName(), category.getCategoryId(), ActionKeys.PERMISSIONS) %>">
+						<c:if test="<%= AssetCategoryPermission.contains(permissionChecker, category, ActionKeys.PERMISSIONS) %>">
 							<liferay-security:permissionsURL
 								modelResource="<%= AssetCategory.class.getName() %>"
 								modelResourceDescription="<%= category.getTitle(locale) %>"
@@ -172,12 +197,12 @@ else {
 <aui:script use="liferay-auto-fields">
 	var autoFields = new Liferay.AutoFields(
 		{
-			contentBox: 'fieldset#categoryProperties',
+			contentBox: 'fieldset#<portlet:namespace /><%= categoryPropertiesId %>',
 			fieldIndexes: '<portlet:namespace />categoryPropertiesIndexes'
 		}
 	).render();
 
-	var categoryPropertiesTrigger = A.one('fieldset#categoryProperties');
+	var categoryPropertiesTrigger = A.one('fieldset#<portlet:namespace /><%= categoryPropertiesId %>');
 
 	if (categoryPropertiesTrigger) {
 		categoryPropertiesTrigger.setData('autoFieldsInstance', autoFields);

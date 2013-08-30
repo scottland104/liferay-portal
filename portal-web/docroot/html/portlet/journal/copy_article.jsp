@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -41,12 +41,12 @@ double version = ParamUtil.getDouble(request, "version");
 		title="web-content"
 	/>
 
-	<liferay-ui:error exception="<%= DuplicateArticleIdException.class %>" message="please-enter-a-unique-id" />
 	<liferay-ui:error exception="<%= ArticleIdException.class %>" message="please-enter-a-valid-id" />
+	<liferay-ui:error exception="<%= DuplicateArticleIdException.class %>" message="please-enter-a-unique-id" />
 
 	<aui:fieldset>
 		<aui:field-wrapper label="id">
-			<%= oldArticleId %>
+			<%= HtmlUtil.escape(oldArticleId) %>
 		</aui:field-wrapper>
 
 		<aui:field-wrapper label="new-id">
@@ -58,7 +58,7 @@ double version = ParamUtil.getDouble(request, "version");
 					<aui:input name="autoArticleId" type="hidden" value="<%= true %>" />
 				</c:when>
 				<c:otherwise>
-					<aui:input bean="<%= null %>" cssClass="lfr-input-text-container" label="" field="articleId" fieldParam="newArticleId" model="<%= JournalArticle.class %>" name="newArticleId" value="<%= newArticleId %>" />
+					<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" bean="<%= null %>" cssClass="lfr-input-text-container" field="articleId" fieldParam="newArticleId" label="" model="<%= JournalArticle.class %>" name="newArticleId" value="<%= newArticleId %>" />
 				</c:otherwise>
 			</c:choose>
 		</aui:field-wrapper>
@@ -70,9 +70,3 @@ double version = ParamUtil.getDouble(request, "version");
 		<aui:button href="<%= redirect %>" type="cancel" />
 	</aui:button-row>
 </aui:form>
-
-<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-	<aui:script>
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />newArticleId);
-	</aui:script>
-</c:if>

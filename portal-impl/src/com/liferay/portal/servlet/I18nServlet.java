@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,18 +19,21 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.CharPool;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Element;
+import com.liferay.portal.model.User;
 import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.util.WebKeys;
 
 import java.io.IOException;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -40,6 +43,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.apache.struts.Globals;
 
 /**
  * @author Brian Wing Shun Chan
@@ -51,15 +57,15 @@ public class I18nServlet extends HttpServlet {
 	}
 
 	public static void setLanguageIds(Element root) {
-		Iterator<Element> itr = root.elements("servlet-mapping").iterator();
+		_languageIds = new HashSet<String>();
 
-		while (itr.hasNext()) {
-			Element el = itr.next();
+		List<Element> rootElements = root.elements("servlet-mapping");
 
-			String servletName = el.elementText("servlet-name");
+		for (Element element : rootElements) {
+			String servletName = element.elementText("servlet-name");
 
 			if (servletName.equals("I18n Servlet")) {
-				String urlPattern = el.elementText("url-pattern");
+				String urlPattern = element.elementText("url-pattern");
 
 				String languageId = urlPattern.substring(
 					0, urlPattern.lastIndexOf(CharPool.SLASH));
@@ -94,6 +100,22 @@ public class I18nServlet extends HttpServlet {
 				request.setAttribute(WebKeys.I18N_LANGUAGE_ID, i18nLanguageId);
 				request.setAttribute(WebKeys.I18N_PATH, i18nPath);
 
+				Locale locale = LocaleUtil.fromLanguageId(i18nLanguageId);
+
+				HttpSession session = request.getSession();
+
+				session.setAttribute(Globals.LOCALE_KEY, locale);
+
+				LanguageUtil.updateCookie(request, response, locale);
+
+				if (PropsValues.LOCALE_PREPEND_FRIENDLY_URL_STYLE == 3) {
+					User user = (User)request.getAttribute(WebKeys.USER);
+
+					if ((user != null) && (user.getLocale() != locale)) {
+						PortalUtil.addUserLocaleOptionsMessage(request);
+					}
+				}
+
 				ServletContext servletContext = getServletContext();
 
 				RequestDispatcher requestDispatcher =
@@ -112,18 +134,13 @@ public class I18nServlet extends HttpServlet {
 	}
 
 	protected String[] getI18nData(HttpServletRequest request) {
-		String path = request.getRequestURI();
-
-		String contextPath = request.getContextPath();
-		String servletPath = request.getServletPath();
-
-		path = path.substring(contextPath.length() + servletPath.length());
+		String path = GetterUtil.getString(request.getPathInfo());
 
 		if (Validator.isNull(path)) {
 			return null;
 		}
 
-		String i18nLanguageId = servletPath;
+		String i18nLanguageId = request.getServletPath();
 
 		int pos = i18nLanguageId.lastIndexOf(CharPool.SLASH);
 
@@ -161,6 +178,6 @@ public class I18nServlet extends HttpServlet {
 
 	private static Log _log = LogFactoryUtil.getLog(I18nServlet.class);
 
-	private static Set<String> _languageIds = new HashSet<String>();
+	private static Set<String> _languageIds;
 
 }

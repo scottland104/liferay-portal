@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,8 +17,6 @@
 <%@ include file="/html/portlet/wiki/init.jsp" %>
 
 <%
-themeDisplay.setIncludeServiceJs(true);
-
 String redirect = ParamUtil.getString(request, "redirect");
 
 WikiNode node = (WikiNode)request.getAttribute(WebKeys.WIKI_NODE);
@@ -42,11 +40,34 @@ WikiPage wikiPage = (WikiPage)request.getAttribute(WebKeys.WIKI_PAGE);
 	<aui:input name="title" type="hidden" value="<%= wikiPage.getTitle() %>" />
 	<aui:input name="numOfFiles" type="hidden" value="3" />
 
+	<liferay-ui:error exception="<%= DuplicateFileException.class %>" message="a-file-with-that-name-already-exists" />
+
+	<liferay-ui:error exception="<%= FileExtensionException.class %>">
+		<liferay-ui:message key="document-names-must-end-with-one-of-the-following-extensions" /> <%= StringUtil.merge(PrefsPropsUtil.getStringArray(PropsKeys.DL_FILE_EXTENSIONS, StringPool.COMMA), StringPool.COMMA_AND_SPACE) %>.
+	</liferay-ui:error>
+
+	<liferay-ui:error exception="<%= FileNameException.class %>" message="please-enter-a-file-with-a-valid-file-name" />
+
+	<liferay-ui:error exception="<%= FileSizeException.class %>">
+
+		<%
+		long fileMaxSize = PrefsPropsUtil.getLong(PropsKeys.DL_FILE_MAX_SIZE);
+
+		if (fileMaxSize == 0) {
+			fileMaxSize = PrefsPropsUtil.getLong(PropsKeys.UPLOAD_SERVLET_REQUEST_IMPL_MAX_SIZE);
+		}
+
+		fileMaxSize /= 1024;
+		%>
+
+		<liferay-ui:message arguments="<%= fileMaxSize %>" key="please-enter-a-file-with-a-valid-file-size-no-larger-than-x" />
+	</liferay-ui:error>
+
 	<div class="lfr-dynamic-uploader">
 		<div class="lfr-upload-container" id="<portlet:namespace />fileUpload"></div>
 	</div>
 
-	<div class="lfr-fallback aui-helper-hidden" id="<portlet:namespace />fallback">
+	<div class="lfr-fallback hide" id="<portlet:namespace />fallback">
 		<aui:fieldset label="upload-files">
 			<aui:input label='<%= LanguageUtil.get(pageContext, "file") + " 1" %>' name="file1" type="file" />
 
@@ -59,7 +80,7 @@ WikiPage wikiPage = (WikiPage)request.getAttribute(WebKeys.WIKI_PAGE);
 			<aui:button type="submit" />
 
 			<%
-			String taglibOnClick = "parent.location = '" + HtmlUtil.escapeURL(redirect) + "';";
+			String taglibOnClick = "parent.location = '" + HtmlUtil.escape(redirect) + "';";
 			%>
 
 			<aui:button onClick="<%= taglibOnClick %>" type="cancel" />
@@ -107,26 +128,23 @@ Ticket ticket = TicketLocalServiceUtil.addTicket(user.getCompanyId(), User.class
 %>
 
 <aui:script use="liferay-upload">
-	var params = {
-		nodeId: <%= node.getNodeId() %>,
-		tempFolderName: 'com.liferay.portlet.wiki.action.EditPageAttachmentAction'
-	};
-
-	var service = {
-		method : Liferay.Service.Wiki.WikiPage.getTempPageAttachmentNames,
-		params : params
-	};
-
 	new Liferay.Upload(
 		{
-			allowedFileTypes: '<%= StringUtil.merge(PrefsPropsUtil.getStringArray(PropsKeys.DL_FILE_EXTENSIONS, StringPool.COMMA)) %>',
-			container: '#<portlet:namespace />fileUpload',
+			boundingBox: '#<portlet:namespace />fileUpload',
 			deleteFile: '<liferay-portlet:actionURL windowState="<%= LiferayWindowState.POP_UP.toString() %>" doAsUserId="<%= user.getUserId() %>"><portlet:param name="struts_action" value="/wiki/edit_page_attachment" /><portlet:param name="<%= Constants.CMD %>" value="<%= Constants.DELETE_TEMP %>" /><portlet:param name="nodeId" value="<%= String.valueOf(node.getNodeId()) %>" /><portlet:param name="title" value="<%= wikiPage.getTitle() %>" /></liferay-portlet:actionURL>&ticketKey=<%= ticket.getKey() %><liferay-ui:input-permissions-params modelName="<%= WikiPage.class.getName() %>" />',
-			fallbackContainer: '#<portlet:namespace />fallback',
+			fallback: '#<portlet:namespace />fallback',
 			fileDescription: '<%= StringUtil.merge(PrefsPropsUtil.getStringArray(PropsKeys.DL_FILE_EXTENSIONS, StringPool.COMMA)) %>',
-			maxFileSize: <%= PrefsPropsUtil.getLong(PropsKeys.DL_FILE_MAX_SIZE) %> / 1024,
+			maxFileSize: '<%= PrefsPropsUtil.getLong(PropsKeys.DL_FILE_MAX_SIZE) %> B',
+			metadataContainer: '#<portlet:namespace />selectedFileNameMetadataContainer',
+			metadataExplanationContainer: '#<portlet:namespace />metadataExplanationContainer',
 			namespace: '<portlet:namespace />',
-			service: service,
+			tempFileURL: {
+				method: Liferay.Service.bind('/wikipage/get-temp-page-attachment-names'),
+				params: {
+					nodeId: <%= node.getNodeId() %>,
+					tempFolderName: 'com.liferay.portlet.wiki.action.EditPageAttachmentsAction'
+				}
+			},
 			uploadFile: '<liferay-portlet:actionURL windowState="<%= LiferayWindowState.POP_UP.toString() %>" doAsUserId="<%= user.getUserId() %>"><portlet:param name="struts_action" value="/wiki/edit_page_attachment" /><portlet:param name="<%= Constants.CMD %>" value="<%= Constants.ADD_TEMP %>" /><portlet:param name="nodeId" value="<%= String.valueOf(node.getNodeId()) %>" /><portlet:param name="title" value="<%= wikiPage.getTitle() %>" /></liferay-portlet:actionURL>&ticketKey=<%= ticket.getKey() %><liferay-ui:input-permissions-params modelName="<%= WikiPage.class.getName() %>" />'
 		}
 	);
@@ -134,15 +152,20 @@ Ticket ticket = TicketLocalServiceUtil.addTicket(user.getCompanyId(), User.class
 
 <portlet:actionURL var="editMultiplePageAttachmentsURL">
 	<portlet:param name="struts_action" value="/wiki/edit_page_attachment" />
-	<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.ADD_MULTIPLE %>" />
-	<portlet:param name="nodeId" value="<%= String.valueOf(node.getNodeId()) %>" />
-	<portlet:param name="title" value="<%= wikiPage.getTitle() %>" />
 </portlet:actionURL>
 
 <aui:form action="<%= editMultiplePageAttachmentsURL %>" method="post" name="fm2" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "updateMultiplePageAttachments();" %>'>
+	<aui:input name="<%= Constants.CMD %>" type="hidden" value="<%= Constants.ADD_MULTIPLE %>" />
+	<aui:input name="nodeId" type="hidden" value="<%= String.valueOf(node.getNodeId()) %>" />
+	<aui:input name="title" type="hidden" value="<%= wikiPage.getTitle() %>" />
+
 	<span id="<portlet:namespace />selectedFileNameContainer"></span>
 
-	<aui:button type="submit" />
+	<div class="hide" id="<portlet:namespace />metadataExplanationContainer"></div>
+
+	<div class="hide selected" id="<portlet:namespace />selectedFileNameMetadataContainer">
+		<aui:button type="submit" />
+	</div>
 </aui:form>
 
 <aui:script>
@@ -186,7 +209,7 @@ Ticket ticket = TicketLocalServiceUtil.addTicket(user.getCompanyId(), User.class
 							for (var i = 0; i < jsonArray.length; i++) {
 								var item = jsonArray[i];
 
-								var checkBox = A.one('input[data-fileName=' + item.fileName + ']');
+								var checkBox = A.one('input[data-fileName="' + item.fileName + '"]');
 
 								checkBox.attr('checked', false);
 								checkBox.hide();
@@ -201,7 +224,7 @@ Ticket ticket = TicketLocalServiceUtil.addTicket(user.getCompanyId(), User.class
 								if (item.added) {
 									cssClass = 'file-saved';
 
-									childHTML = '<span class="success-message"><%= LanguageUtil.get(pageContext, "successfully-saved") %></span>';
+									childHTML = '<span class="success-message"><%= UnicodeLanguageUtil.get(pageContext, "successfully-saved") %></span>';
 								}
 								else {
 									cssClass = 'upload-error';

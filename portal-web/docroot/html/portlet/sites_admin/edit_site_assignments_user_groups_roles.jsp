@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -39,9 +39,12 @@ portletURL.setParameter("userGroupId", String.valueOf(userGroupId));
 <aui:input name="addRoleIds" type="hidden" />
 <aui:input name="removeRoleIds" type="hidden" />
 
-<liferay-ui:message key="edit-site-roles-for-user-group" />: <%= HtmlUtil.escape(userGroup.getName()) %>
-
-<br /><br />
+<liferay-ui:header
+	backURL="<%= redirect %>"
+	escapeXml="<%= false %>"
+	localizeTitle="<%= false %>"
+	title='<%= LanguageUtil.get(pageContext, "edit-site-roles-for-user-group") + ": " + HtmlUtil.escape(userGroup.getName()) %>'
+/>
 
 <%
 RoleSearch searchContainer = new RoleSearch(renderRequest, portletURL);
@@ -109,7 +112,7 @@ for (int i = 0; i < results.size(); i++) {
 
 	// Description
 
-	row.addText(role.getDescription());
+	row.addText(role.getDescription(locale));
 
 	// CSS
 

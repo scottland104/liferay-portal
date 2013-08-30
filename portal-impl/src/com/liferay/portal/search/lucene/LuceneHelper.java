@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,10 +16,13 @@ package com.liferay.portal.search.lucene;
 
 import com.liferay.portal.kernel.cluster.Address;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.search.BooleanClauseOccur;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -27,6 +30,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.highlight.Formatter;
 import org.apache.lucene.util.Version;
 
 /**
@@ -59,7 +63,13 @@ public interface LuceneHelper {
 		BooleanQuery booleanQuery, String field, String value, boolean like);
 
 	public void addTerm(
+		BooleanQuery booleanQuery, String field, String value, boolean like,
+		BooleanClauseOccur booleanClauseOccur);
+
+	public void addTerm(
 		BooleanQuery booleanQuery, String field, String[] values, boolean like);
+
+	public void cleanUp(IndexSearcher indexSearcher);
 
 	public int countScoredFieldNames(Query query, String[] fieldNames);
 
@@ -72,21 +82,22 @@ public interface LuceneHelper {
 
 	public Analyzer getAnalyzer();
 
+	public IndexAccessor getIndexAccessor(long companyId);
+
 	public long getLastGeneration(long companyId);
 
 	public InputStream getLoadIndexesInputStreamFromCluster(
 			long companyId, Address bootupAddress)
 		throws SystemException;
 
-	public String[] getQueryTerms(Query query);
+	public Set<String> getQueryTerms(Query query);
 
 	public IndexSearcher getSearcher(long companyId, boolean readOnly)
 		throws IOException;
 
 	public String getSnippet(
 			Query query, String field, String s, int maxNumFragments,
-			int fragmentLength, String fragmentSuffix, String preTag,
-			String postTag)
+			int fragmentLength, String fragmentSuffix, Formatter formatter)
 		throws IOException;
 
 	public Version getVersion();
@@ -96,11 +107,11 @@ public interface LuceneHelper {
 	public void loadIndex(long companyId, InputStream inputStream)
 		throws IOException;
 
-	public Address selectBootupClusterAddress(
-			long companyId, long localLastGeneration)
-		throws SystemException;
+	public void loadIndexesFromCluster(long companyId) throws SystemException;
 
 	public void shutdown();
+
+	public void shutdown(long companyId);
 
 	public void startup(long companyId);
 

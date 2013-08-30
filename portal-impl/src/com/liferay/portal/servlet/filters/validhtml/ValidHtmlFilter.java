@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,8 +16,8 @@ package com.liferay.portal.servlet.filters.validhtml;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.servlet.BufferCacheServletResponse;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
-import com.liferay.portal.kernel.servlet.StringServletResponse;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.StringPool;
@@ -42,13 +42,11 @@ public class ValidHtmlFilter extends BasePortalFilter {
 	public boolean isFilterEnabled(
 		HttpServletRequest request, HttpServletResponse response) {
 
-		if (isEnsureValidHtml(request, response) &&
-			!isAlreadyFiltered(request)) {
-
-			return true;
+		if (isAlreadyFiltered(request)) {
+			return false;
 		}
 		else {
-			return false;
+			return true;
 		}
 	}
 
@@ -70,21 +68,6 @@ public class ValidHtmlFilter extends BasePortalFilter {
 		}
 	}
 
-	protected boolean isEnsureValidHtml(
-		HttpServletRequest request, HttpServletResponse response) {
-
-		String contentType = response.getContentType();
-
-		if ((contentType != null) &&
-			contentType.startsWith(ContentTypes.TEXT_HTML)) {
-
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-
 	@Override
 	protected void processFilter(
 			HttpServletRequest request, HttpServletResponse response,
@@ -99,15 +82,27 @@ public class ValidHtmlFilter extends BasePortalFilter {
 			_log.debug("Ensuring valid HTML " + completeURL);
 		}
 
-		StringServletResponse stringServerResponse = new StringServletResponse(
-			response);
+		BufferCacheServletResponse bufferCacheServletResponse =
+			new BufferCacheServletResponse(response);
 
 		processFilter(
-			ValidHtmlFilter.class, request, stringServerResponse, filterChain);
+			ValidHtmlFilter.class, request, bufferCacheServletResponse,
+			filterChain);
 
-		String content = getContent(request, stringServerResponse.getString());
+		String content = bufferCacheServletResponse.getString();
 
-		ServletResponseUtil.write(response, content);
+		String contentType = response.getContentType();
+
+		if ((contentType != null) &&
+			contentType.startsWith(ContentTypes.TEXT_HTML)) {
+
+			content = getContent(request, content);
+
+			ServletResponseUtil.write(response, content);
+		}
+		else {
+			ServletResponseUtil.write(response, bufferCacheServletResponse);
+		}
 	}
 
 	private static final String _CLOSE_BODY = "</body>";

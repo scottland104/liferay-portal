@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -43,57 +43,82 @@ public class WebDAVRequestImpl implements WebDAVRequest {
 		_response = response;
 		_userAgent = userAgent;
 		_lockUuid = WebDAVUtil.getLockUuid(request);
-		_path = HttpUtil.fixPath(_request.getPathInfo(), false, true);
+
+		String pathInfo = HttpUtil.fixPath(_request.getPathInfo(), false, true);
+
+		String strippedPathInfo = WebDAVUtil.stripManualCheckInRequiredPath(
+			pathInfo);
+
+		if (strippedPathInfo.length() != pathInfo.length()) {
+			pathInfo = strippedPathInfo;
+
+			_manualCheckInRequired = true;
+		}
+
+		_path = WebDAVUtil.stripOfficeExtension(pathInfo);
+
 		_companyId = PortalUtil.getCompanyId(request);
 		_groupId = WebDAVUtil.getGroupId(_companyId, _path);
 		_userId = GetterUtil.getLong(_request.getRemoteUser());
 		_permissionChecker = permissionChecker;
 	}
 
-	public WebDAVStorage getWebDAVStorage() {
-		return _storage;
-	}
-
-	public HttpServletRequest getHttpServletRequest() {
-		return _request;
-	}
-
-	public HttpServletResponse getHttpServletResponse() {
-		return _response;
-	}
-
-	public String getRootPath() {
-		return _storage.getRootPath();
-	}
-
-	public String getPath() {
-		return _path;
-	}
-
-	public String[] getPathArray() {
-		return WebDAVUtil.getPathArray(_path);
-	}
-
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public long getGroupId() {
 		return _groupId;
 	}
 
-	public long getUserId() {
-		return _userId;
+	@Override
+	public HttpServletRequest getHttpServletRequest() {
+		return _request;
 	}
 
+	@Override
+	public HttpServletResponse getHttpServletResponse() {
+		return _response;
+	}
+
+	@Override
 	public String getLockUuid() {
 		return _lockUuid;
 	}
 
+	@Override
+	public String getPath() {
+		return _path;
+	}
+
+	@Override
+	public String[] getPathArray() {
+		return WebDAVUtil.getPathArray(_path);
+	}
+
+	@Override
 	public PermissionChecker getPermissionChecker() {
 		return _permissionChecker;
 	}
 
+	@Override
+	public String getRootPath() {
+		return _storage.getRootPath();
+	}
+
+	@Override
+	public long getUserId() {
+		return _userId;
+	}
+
+	@Override
+	public WebDAVStorage getWebDAVStorage() {
+		return _storage;
+	}
+
+	@Override
 	public boolean isAppleDoubleRequest() {
 		String[] pathArray = getPathArray();
 
@@ -107,30 +132,39 @@ public class WebDAVRequestImpl implements WebDAVRequest {
 		}
 	}
 
+	@Override
 	public boolean isLitmus() {
 		return _userAgent.contains("litmus");
 	}
 
+	@Override
 	public boolean isMac() {
 		return _userAgent.contains("WebDAVFS");
 	}
 
+	@Override
+	public boolean isManualCheckInRequired() {
+		return _manualCheckInRequired;
+	}
+
+	@Override
 	public boolean isWindows() {
 		return _userAgent.contains(
 			"Microsoft Data Access Internet Publishing Provider");
 	}
 
-	public static final String _APPLE_DOUBLE_PREFIX = "._";
+	private static final String _APPLE_DOUBLE_PREFIX = "._";
 
-	private WebDAVStorage _storage;
-	private HttpServletRequest _request;
-	private HttpServletResponse _response;
-	private String _userAgent;
-	private String _path = StringPool.BLANK;
 	private long _companyId;
 	private long _groupId;
-	private long _userId;
 	private String _lockUuid;
+	private boolean _manualCheckInRequired;
+	private String _path = StringPool.BLANK;
 	private PermissionChecker _permissionChecker;
+	private HttpServletRequest _request;
+	private HttpServletResponse _response;
+	private WebDAVStorage _storage;
+	private String _userAgent;
+	private long _userId;
 
 }

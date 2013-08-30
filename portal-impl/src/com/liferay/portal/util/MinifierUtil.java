@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,25 +14,35 @@
 
 package com.liferay.portal.util;
 
-import com.liferay.mozilla.javascript.ErrorReporter;
-import com.liferay.mozilla.javascript.EvaluatorException;
 import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
 import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.yahoo.platform.yui.compressor.CssCompressor;
-import com.liferay.yahoo.platform.yui.compressor.JavaScriptCompressor;
+
+import com.yahoo.platform.yui.compressor.CssCompressor;
+import com.yahoo.platform.yui.compressor.JavaScriptCompressor;
+import com.yahoo.platform.yui.mozilla.javascript.ErrorReporter;
+import com.yahoo.platform.yui.mozilla.javascript.EvaluatorException;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Raymond Augé
  */
 public class MinifierUtil {
 
 	public static String minifyCss(String content) {
+		if (!PropsValues.MINIFIER_ENABLED) {
+			return content;
+		}
+
 		return _instance._minifyCss(content);
 	}
 
 	public static String minifyJavaScript(String content) {
+		if (!PropsValues.MINIFIER_ENABLED) {
+			return content;
+		}
+
 		return _instance._minifyJavaScript(content);
 	}
 
@@ -46,7 +56,8 @@ public class MinifierUtil {
 			CssCompressor cssCompressor = new CssCompressor(
 				new UnsyncStringReader(content));
 
-			cssCompressor.compress(unsyncStringWriter, _CSS_LINE_BREAK);
+			cssCompressor.compress(
+				unsyncStringWriter, PropsValues.YUI_COMPRESSOR_CSS_LINE_BREAK);
 		}
 		catch (Exception e) {
 			_log.error("CSS Minifier failed for\n" + content);
@@ -67,8 +78,11 @@ public class MinifierUtil {
 					new JavaScriptErrorReporter());
 
 			javaScriptCompressor.compress(
-					unsyncStringWriter, _JS_LINE_BREAK, _JS_MUNGE, _JS_VERBOSE,
-					_JS_PRESERVE_ALL_SEMICOLONS, _JS_DISABLE_OPTIMIZATIONS);
+				unsyncStringWriter, PropsValues.YUI_COMPRESSOR_JS_LINE_BREAK,
+				PropsValues.YUI_COMPRESSOR_JS_MUNGE,
+				PropsValues.YUI_COMPRESSOR_JS_VERBOSE,
+				PropsValues.YUI_COMPRESSOR_JS_PRESERVE_ALL_SEMICOLONS,
+				PropsValues.YUI_COMPRESSOR_JS_DISABLE_OPTIMIZATIONS);
 		}
 		catch (Exception e) {
 			_log.error("JavaScript Minifier failed for\n" + content);
@@ -79,24 +93,13 @@ public class MinifierUtil {
 		return unsyncStringWriter.toString();
 	}
 
-	private static final int _CSS_LINE_BREAK = -1;
-
-	private static final boolean _JS_DISABLE_OPTIMIZATIONS = false;
-
-	private static final int _JS_LINE_BREAK = -1;
-
-	private static final boolean _JS_MUNGE = true;
-
-	private static final boolean _JS_PRESERVE_ALL_SEMICOLONS = false;
-
-	private static final boolean _JS_VERBOSE = false;
-
 	private static Log _log = LogFactoryUtil.getLog(MinifierUtil.class);
 
 	private static MinifierUtil _instance = new MinifierUtil();
 
 	private class JavaScriptErrorReporter implements ErrorReporter {
 
+		@Override
 		public void error(
 			String message, String sourceName, int line, String lineSource,
 			int lineOffset) {
@@ -109,6 +112,7 @@ public class MinifierUtil {
 			}
 		}
 
+		@Override
 		public EvaluatorException runtimeError(
 			String message, String sourceName, int line, String lineSource,
 			int lineOffset) {
@@ -118,6 +122,7 @@ public class MinifierUtil {
 			return new EvaluatorException(message);
 		}
 
+		@Override
 		public void warning(
 			String message, String sourceName, int line, String lineSource,
 			int lineOffset) {

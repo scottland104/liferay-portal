@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,9 +15,9 @@
 package com.liferay.portal.workflow;
 
 import com.liferay.portal.kernel.workflow.WorkflowEngineManagerUtil;
+import com.liferay.portal.model.Group;
 import com.liferay.portal.model.Portlet;
 import com.liferay.portal.security.permission.PermissionChecker;
-import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portlet.BaseControlPanelEntry;
 
 /**
@@ -26,21 +26,15 @@ import com.liferay.portlet.BaseControlPanelEntry;
 public class WorkflowControlPanelEntry extends BaseControlPanelEntry {
 
 	@Override
-	public boolean isVisible(
-			Portlet portlet, String category, ThemeDisplay themeDisplay)
+	protected boolean hasAccessPermissionDenied(
+			PermissionChecker permissionChecker, Group group, Portlet portlet)
 		throws Exception {
 
-		if (WorkflowEngineManagerUtil.isDeployed()) {
-			return super.isVisible(portlet, category, themeDisplay);
-		}
-		else {
-			return false;
-		}
-	}
+		if (group.isLayoutSetPrototype() ||
+			!WorkflowEngineManagerUtil.isDeployed()) {
 
-	public boolean isVisible(
-			PermissionChecker permissionChecker, Portlet portlet)
-		throws Exception {
+			return true;
+		}
 
 		return false;
 	}

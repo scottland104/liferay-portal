@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.StringBundler;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.sql.Connection;
@@ -42,9 +43,9 @@ public class VerifySQLServer extends VerifyProcess {
 		ResultSet rs = null;
 
 		try {
-			con = DataAccess.getConnection();
+			con = DataAccess.getUpgradeOptimizedConnection();
 
-			StringBundler sb = new StringBundler(11);
+			StringBundler sb = new StringBundler(12);
 
 			sb.append("select sysobjects.name as table_name, syscolumns.name ");
 			sb.append("AS column_name, systypes.name as data_type, ");
@@ -52,7 +53,8 @@ public class VerifySQLServer extends VerifyProcess {
 			sb.append("is_nullable FROM sysobjects inner join syscolumns on ");
 			sb.append("sysobjects.id = syscolumns.id inner join systypes on ");
 			sb.append("syscolumns.xtype = systypes.xtype where ");
-			sb.append("(sysobjects.xtype = 'U') and ");
+			sb.append("(sysobjects.xtype = 'U') and (sysobjects.category != ");
+			sb.append("2) and ");
 			sb.append(_FILTER_NONUNICODE_DATA_TYPES);
 			sb.append(" and ");
 			sb.append(_FILTER_EXCLUDED_TABLES);
@@ -66,6 +68,11 @@ public class VerifySQLServer extends VerifyProcess {
 
 			while (rs.next()) {
 				String tableName = rs.getString("table_name");
+
+				if (!isPortalTableName(tableName)) {
+					continue;
+				}
+
 				String columnName = rs.getString("column_name");
 				String dataType = rs.getString("data_type");
 				int length = rs.getInt("length");
@@ -75,9 +82,8 @@ public class VerifySQLServer extends VerifyProcess {
 					convertVarcharColumn(
 						tableName, columnName, length, nullable);
 				}
-				else if (dataType.equals("text")) {
-					convertTextColumn(
-						tableName, columnName, length, nullable);
+				else if (dataType.equals("ntext") || dataType.equals("text")) {
+					convertTextColumn(tableName, columnName, nullable);
 				}
 			}
 
@@ -94,19 +100,20 @@ public class VerifySQLServer extends VerifyProcess {
 	}
 
 	protected void convertTextColumn(
-			String tableName, String columnName, int length, boolean nullable)
+			String tableName, String columnName, boolean nullable)
 		throws Exception {
 
 		if (_log.isInfoEnabled()) {
 			_log.info(
-				"Updating " + tableName + "." + columnName + " to use ntext");
+				"Updating " + tableName + "." + columnName +" to use " +
+					"nvarchar(max)");
 		}
 
 		StringBundler sb = new StringBundler(4);
 
 		sb.append("alter table ");
 		sb.append(tableName);
-		sb.append(" add temp ntext");
+		sb.append(" add temp nvarchar(max)");
 
 		if (!nullable) {
 			sb.append(" not null");
@@ -140,8 +147,15 @@ public class VerifySQLServer extends VerifyProcess {
 		sb.append(" alter column ");
 		sb.append(columnName);
 		sb.append(" nvarchar(");
-		sb.append(length);
-		sb.append(")");
+
+		if (length == -1) {
+			sb.append("max");
+		}
+		else {
+			sb.append(length);
+		}
+
+		sb.append(StringPool.CLOSE_PARENTHESIS);
 
 		if (!nullable) {
 			sb.append(" not null");
@@ -169,9 +183,9 @@ public class VerifySQLServer extends VerifyProcess {
 		ResultSet rs = null;
 
 		try {
-			con = DataAccess.getConnection();
+			con = DataAccess.getUpgradeOptimizedConnection();
 
-			StringBundler sb = new StringBundler(12);
+			StringBundler sb = new StringBundler(15);
 
 			sb.append("select distinct sysobjects.name as table_name, ");
 			sb.append("sysindexes.name as index_name FROM sysobjects inner ");
@@ -182,7 +196,8 @@ public class VerifySQLServer extends VerifyProcess {
 			sb.append("(syscolumns.colid = sysindexkeys.colid) and ");
 			sb.append("(sysindexes.indid = sysindexkeys.indid)) inner join ");
 			sb.append("systypes on syscolumns.xtype = systypes.xtype where ");
-			sb.append("sysobjects.type = 'U' and ");
+			sb.append("(sysobjects.type = 'U') and (sysobjects.category != ");
+			sb.append("2) and ");
 			sb.append(_FILTER_NONUNICODE_DATA_TYPES);
 			sb.append(" and ");
 			sb.append(_FILTER_EXCLUDED_TABLES);
@@ -196,13 +211,20 @@ public class VerifySQLServer extends VerifyProcess {
 
 			while (rs.next()) {
 				String tableName = rs.getString("table_name");
+
+				if (!isPortalTableName(tableName)) {
+					continue;
+				}
+
 				String indexName = rs.getString("index_name");
 
 				if (_log.isInfoEnabled()) {
 					_log.info("Dropping index " + tableName + "." + indexName);
 				}
 
-				if (indexName.startsWith("PK")) {
+				String indexNameUpperCase = indexName.toUpperCase();
+
+				if (indexNameUpperCase.startsWith("PK")) {
 					String primaryKeyColumnNames = StringUtil.merge(
 						getPrimaryKeyColumnNames(indexName));
 
@@ -235,7 +257,7 @@ public class VerifySQLServer extends VerifyProcess {
 		ResultSet rs = null;
 
 		try {
-			con = DataAccess.getConnection();
+			con = DataAccess.getUpgradeOptimizedConnection();
 
 			StringBundler sb = new StringBundler(10);
 

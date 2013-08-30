@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -95,6 +95,7 @@ public class DefaultFriendlyURLMapper extends BaseFriendlyURLMapper {
 		defaultReservedParameters.put(name, value);
 	}
 
+	@Override
 	public String buildPath(LiferayPortletURL liferayPortletURL) {
 		Map<String, String> routeParameters = new HashMap<String, String>();
 
@@ -102,7 +103,7 @@ public class DefaultFriendlyURLMapper extends BaseFriendlyURLMapper {
 
 		String friendlyURLPath = router.parametersToUrl(routeParameters);
 
-		if (friendlyURLPath == null) {
+		if (Validator.isNull(friendlyURLPath)) {
 			return null;
 		}
 
@@ -134,13 +135,14 @@ public class DefaultFriendlyURLMapper extends BaseFriendlyURLMapper {
 		return defaultReservedParameters;
 	}
 
+	@Override
 	public void populateParams(
 		String friendlyURLPath, Map<String, String[]> parameterMap,
 		Map<String, Object> requestContext) {
 
 		friendlyURLPath = friendlyURLPath.substring(getMapping().length() + 1);
 
-		if (friendlyURLPath.endsWith(StringPool.SLASH))	{
+		if (friendlyURLPath.endsWith(StringPool.SLASH)) {
 			friendlyURLPath = friendlyURLPath.substring(
 				0, friendlyURLPath.length() - 1);
 		}
@@ -158,7 +160,7 @@ public class DefaultFriendlyURLMapper extends BaseFriendlyURLMapper {
 
 		String portletId = getPortletId(routeParameters);
 
-		if (portletId == null) {
+		if (Validator.isNull(portletId)) {
 			return;
 		}
 
@@ -167,134 +169,6 @@ public class DefaultFriendlyURLMapper extends BaseFriendlyURLMapper {
 		addParameter(namespace, parameterMap, "p_p_id", portletId);
 
 		populateParams(parameterMap, namespace, routeParameters);
-	}
-
-	/**
-	 * Builds the parameter map to be used by the router by copying parameters
-	 * from the portlet URL.
-	 *
-	 * <p>
-	 * This method also populates the special virtual parameters
-	 * <code>p_p_id</code> and <code>instanceId</code> for instanceable
-	 * portlets.
-	 * </p>
-	 *
-	 * @param liferayPortletURL the portlet URL to copy parameters from
-	 * @param routeParameters the parameter map to populate for use by the
-	 *        router
-	 */
-	protected void buildRouteParameters(
-		LiferayPortletURL liferayPortletURL,
-		Map<String, String> routeParameters) {
-
-		// Copy application parameters
-
-		Map<String, String[]> portletURLParameters =
-			liferayPortletURL.getParameterMap();
-
-		for (Map.Entry<String, String[]> entry :
-				portletURLParameters.entrySet()) {
-
-			String[] values = entry.getValue();
-
-			if (values.length > 0) {
-				routeParameters.put(entry.getKey(), values[0]);
-			}
-		}
-
-		// Populate virtual parameters for instanceable portlets
-
-		if (isPortletInstanceable()) {
-			String portletId = liferayPortletURL.getPortletId();
-
-			routeParameters.put("p_p_id", portletId);
-
-			if (Validator.isNotNull(portletId)) {
-				String[] parts = portletId.split(
-					PortletConstants.INSTANCE_SEPARATOR);
-
-				if (parts.length > 1) {
-					routeParameters.put("instanceId", parts[1]);
-				}
-			}
-		}
-
-		// Copy reserved parameters
-
-		routeParameters.putAll(liferayPortletURL.getReservedParameterMap());
-	}
-
-	/**
-	 * Returns the portlet ID, including the instance ID if applicable, from the
-	 * parameter map.
-	 *
-	 * @param  routeParameters the parameter map. For an instanceable portlet,
-	 *         this must contain either <code>p_p_id</code> or
-	 *         <code>instanceId</code>.
-	 * @return the portlet ID, including the instance ID if applicable, or
-	 *         <code>null</code> if it cannot be determined
-	 */
-	protected String getPortletId(Map<String, String> routeParameters) {
-		if (!isPortletInstanceable()) {
-			return getPortletId();
-		}
-
-		String portletId = routeParameters.remove("p_p_id");
-
-		if (Validator.isNotNull(portletId)) {
-			return portletId;
-		}
-
-		String instanceId = routeParameters.remove("instanceId");
-
-		if (Validator.isNull(instanceId)) {
-			if (_log.isErrorEnabled()) {
-				_log.error(
-					"Either p_p_id or instanceId must be provided for an " +
-						"instanceable portlet");
-			}
-
-			return null;
-		}
-		else {
-			return getPortletId().concat(
-				PortletConstants.INSTANCE_SEPARATOR).concat(instanceId);
-		}
-	}
-
-	/**
-	 * Populates the parameter map using the parameters from the router and the
-	 * default reserved parameters.
-	 *
-	 * @param parameterMap the parameter map to populate. This should be the map
-	 *        passed to {@link #populateParams(String, Map, Map)} by {@link
-	 *        com.liferay.portal.util.PortalImpl}.
-	 * @param namespace the namespace to use for parameters added to
-	 *        <code>parameterMap</code>
-	 * @param routeParameters the parameter map populated by the router
-	 */
-	protected void populateParams(
-		Map<String, String[]> parameterMap, String namespace,
-		Map<String, String> routeParameters) {
-
-		// Copy route parameters
-
-		for (Map.Entry<String, String> entry : routeParameters.entrySet()) {
-			addParameter(
-				namespace, parameterMap, entry.getKey(), entry.getValue());
-		}
-
-		// Copy default reserved parameters if they are not already set
-
-		for (Map.Entry<String, String> entry :
-				defaultReservedParameters.entrySet()) {
-
-			String key = entry.getKey();
-
-			if (!parameterMap.containsKey(key)) {
-				addParameter(namespace, parameterMap, key, entry.getValue());
-			}
-		}
 	}
 
 	/**
@@ -347,6 +221,130 @@ public class DefaultFriendlyURLMapper extends BaseFriendlyURLMapper {
 				value.equals(defaultReservedParameters.get(key))) {
 
 				liferayPortletURL.addParameterIncludedInPath(key);
+			}
+		}
+	}
+
+	/**
+	 * Builds the parameter map to be used by the router by copying parameters
+	 * from the portlet URL.
+	 *
+	 * <p>
+	 * This method also populates the special virtual parameters
+	 * <code>p_p_id</code> and <code>instanceId</code> for instanceable
+	 * portlets.
+	 * </p>
+	 *
+	 * @param liferayPortletURL the portlet URL to copy parameters from
+	 * @param routeParameters the parameter map to populate for use by the
+	 *        router
+	 */
+	protected void buildRouteParameters(
+		LiferayPortletURL liferayPortletURL,
+		Map<String, String> routeParameters) {
+
+		// Copy application parameters
+
+		Map<String, String[]> portletURLParameters =
+			liferayPortletURL.getParameterMap();
+
+		for (Map.Entry<String, String[]> entry :
+				portletURLParameters.entrySet()) {
+
+			String[] values = entry.getValue();
+
+			if (values.length > 0) {
+				routeParameters.put(entry.getKey(), values[0]);
+			}
+		}
+
+		// Populate virtual parameters for instanceable portlets
+
+		if (isPortletInstanceable()) {
+			String portletId = liferayPortletURL.getPortletId();
+
+			routeParameters.put("p_p_id", portletId);
+
+			if (Validator.isNotNull(portletId) &&
+				PortletConstants.hasInstanceId(portletId)) {
+
+				routeParameters.put(
+					"instanceId", PortletConstants.getInstanceId(portletId));
+			}
+		}
+
+		// Copy reserved parameters
+
+		routeParameters.putAll(liferayPortletURL.getReservedParameterMap());
+	}
+
+	/**
+	 * Returns the portlet ID, including the instance ID if applicable, from the
+	 * parameter map.
+	 *
+	 * @param  routeParameters the parameter map. For an instanceable portlet,
+	 *         this must contain either <code>p_p_id</code> or
+	 *         <code>instanceId</code>.
+	 * @return the portlet ID, including the instance ID if applicable, or
+	 *         <code>null</code> if it cannot be determined
+	 */
+	protected String getPortletId(Map<String, String> routeParameters) {
+		if (!isPortletInstanceable()) {
+			return getPortletId();
+		}
+
+		String portletId = routeParameters.remove("p_p_id");
+
+		if (Validator.isNotNull(portletId)) {
+			return portletId;
+		}
+
+		String instanceId = routeParameters.remove("instanceId");
+
+		if (Validator.isNull(instanceId)) {
+			if (_log.isErrorEnabled()) {
+				_log.error(
+					"Either p_p_id or instanceId must be provided for an " +
+						"instanceable portlet");
+			}
+
+			return null;
+		}
+
+		return PortletConstants.assemblePortletId(getPortletId(), instanceId);
+	}
+
+	/**
+	 * Populates the parameter map using the parameters from the router and the
+	 * default reserved parameters.
+	 *
+	 * @param parameterMap the parameter map to populate. This should be the map
+	 *        passed to {@link #populateParams(String, Map, Map)} by {@link
+	 *        com.liferay.portal.util.PortalImpl}.
+	 * @param namespace the namespace to use for parameters added to
+	 *        <code>parameterMap</code>
+	 * @param routeParameters the parameter map populated by the router
+	 */
+	protected void populateParams(
+		Map<String, String[]> parameterMap, String namespace,
+		Map<String, String> routeParameters) {
+
+		// Copy route parameters
+
+		for (Map.Entry<String, String> entry : routeParameters.entrySet()) {
+			addParameter(
+				namespace, parameterMap, entry.getKey(), entry.getValue());
+		}
+
+		// Copy default reserved parameters if they are not already set
+
+		for (Map.Entry<String, String> entry :
+				defaultReservedParameters.entrySet()) {
+
+			String key = entry.getKey();
+
+			if (!parameterMap.containsKey(key)) {
+				addParameter(namespace, parameterMap, key, entry.getValue());
 			}
 		}
 	}

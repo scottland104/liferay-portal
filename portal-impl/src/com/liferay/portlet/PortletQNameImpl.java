@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portlet;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.pacl.DoPrivileged;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
@@ -30,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Brian Wing Shun Chan
  */
+@DoPrivileged
 public class PortletQNameImpl implements PortletQName {
 
 	public PortletQNameImpl() {
@@ -37,14 +39,17 @@ public class PortletQNameImpl implements PortletQName {
 		_identifiers = new ConcurrentHashMap<String, String>();
 	}
 
+	@Override
 	public String getKey(QName qName) {
 		return getKey(qName.getNamespaceURI(), qName.getLocalPart());
 	}
 
+	@Override
 	public String getKey(String uri, String localPart) {
 		return uri.concat(_KEY_SEPARATOR).concat(localPart);
 	}
 
+	@Override
 	public String getPublicRenderParameterIdentifier(
 		String publicRenderParameterName) {
 
@@ -59,6 +64,7 @@ public class PortletQNameImpl implements PortletQName {
 		return _identifiers.get(publicRenderParameterName);
 	}
 
+	@Override
 	public String getPublicRenderParameterName(QName qName) {
 		StringBundler sb = new StringBundler(4);
 
@@ -76,18 +82,7 @@ public class PortletQNameImpl implements PortletQName {
 		return publicRenderParameterName;
 	}
 
-	public QName getQName(String publicRenderParameterName) {
-		if (!publicRenderParameterName.startsWith(
-				PUBLIC_RENDER_PARAMETER_NAMESPACE) &&
-			!publicRenderParameterName.startsWith(
-				REMOVE_PUBLIC_RENDER_PARAMETER_NAMESPACE)) {
-
-			return null;
-		}
-
-		return _qNames.get(publicRenderParameterName);
-	}
-
+	@Override
 	public QName getQName(
 		Element qNameEl, Element nameEl, String defaultNamespace) {
 
@@ -133,6 +128,20 @@ public class PortletQNameImpl implements PortletQName {
 		return SAXReaderUtil.createQName(localPart, namespace);
 	}
 
+	@Override
+	public QName getQName(String publicRenderParameterName) {
+		if (!publicRenderParameterName.startsWith(
+				PUBLIC_RENDER_PARAMETER_NAMESPACE) &&
+			!publicRenderParameterName.startsWith(
+				REMOVE_PUBLIC_RENDER_PARAMETER_NAMESPACE)) {
+
+			return null;
+		}
+
+		return _qNames.get(publicRenderParameterName);
+	}
+
+	@Override
 	public String getRemovePublicRenderParameterName(QName qName) {
 		StringBundler sb = new StringBundler(4);
 
@@ -150,6 +159,7 @@ public class PortletQNameImpl implements PortletQName {
 		return removePublicRenderParameterName;
 	}
 
+	@Override
 	public void setPublicRenderParameterIdentifier(
 		String publicRenderParameterName, String identifier) {
 
@@ -160,7 +170,7 @@ public class PortletQNameImpl implements PortletQName {
 
 	private static Log _log = LogFactoryUtil.getLog(PortletQNameImpl.class);
 
-	private Map<String, QName> _qNames;
 	private Map<String, String> _identifiers;
+	private Map<String, QName> _qNames;
 
 }

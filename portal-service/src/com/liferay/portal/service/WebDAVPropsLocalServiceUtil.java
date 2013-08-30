@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,15 +15,15 @@
 package com.liferay.portal.service;
 
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
-import com.liferay.portal.kernel.util.MethodCache;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the web d a v props local service. This utility wraps {@link com.liferay.portal.service.impl.WebDAVPropsLocalServiceImpl} and is the primary access point for service operations in application layer code running on the local server.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
+ * Provides the local service utility for WebDAVProps. This utility wraps
+ * {@link com.liferay.portal.service.impl.WebDAVPropsLocalServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on the local server. Methods of this service will not have security checks
+ * based on the propagated JAAS credentials because this service can only be
+ * accessed from within the same VM.
  *
  * @author Brian Wing Shun Chan
  * @see WebDAVPropsLocalService
@@ -66,25 +66,32 @@ public class WebDAVPropsLocalServiceUtil {
 	* Deletes the web d a v props with the primary key from the database. Also notifies the appropriate model listeners.
 	*
 	* @param webDavPropsId the primary key of the web d a v props
+	* @return the web d a v props that was removed
 	* @throws PortalException if a web d a v props with the primary key could not be found
 	* @throws SystemException if a system exception occurred
 	*/
-	public static void deleteWebDAVProps(long webDavPropsId)
+	public static com.liferay.portal.model.WebDAVProps deleteWebDAVProps(
+		long webDavPropsId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		getService().deleteWebDAVProps(webDavPropsId);
+		return getService().deleteWebDAVProps(webDavPropsId);
 	}
 
 	/**
 	* Deletes the web d a v props from the database. Also notifies the appropriate model listeners.
 	*
 	* @param webDAVProps the web d a v props
+	* @return the web d a v props that was removed
 	* @throws SystemException if a system exception occurred
 	*/
-	public static void deleteWebDAVProps(
+	public static com.liferay.portal.model.WebDAVProps deleteWebDAVProps(
 		com.liferay.portal.model.WebDAVProps webDAVProps)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		getService().deleteWebDAVProps(webDAVProps);
+		return getService().deleteWebDAVProps(webDAVProps);
+	}
+
+	public static com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery() {
+		return getService().dynamicQuery();
 	}
 
 	/**
@@ -105,7 +112,7 @@ public class WebDAVPropsLocalServiceUtil {
 	* Performs a dynamic query on the database and returns a range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.WebDAVPropsModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -125,7 +132,7 @@ public class WebDAVPropsLocalServiceUtil {
 	* Performs a dynamic query on the database and returns an ordered range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.WebDAVPropsModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -159,6 +166,27 @@ public class WebDAVPropsLocalServiceUtil {
 	}
 
 	/**
+	* Returns the number of rows that match the dynamic query.
+	*
+	* @param dynamicQuery the dynamic query
+	* @param projection the projection to apply to the query
+	* @return the number of rows that match the dynamic query
+	* @throws SystemException if a system exception occurred
+	*/
+	public static long dynamicQueryCount(
+		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		com.liferay.portal.kernel.dao.orm.Projection projection)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().dynamicQueryCount(dynamicQuery, projection);
+	}
+
+	public static com.liferay.portal.model.WebDAVProps fetchWebDAVProps(
+		long webDavPropsId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().fetchWebDAVProps(webDavPropsId);
+	}
+
+	/**
 	* Returns the web d a v props with the primary key.
 	*
 	* @param webDavPropsId the primary key of the web d a v props
@@ -184,7 +212,7 @@ public class WebDAVPropsLocalServiceUtil {
 	* Returns a range of all the web d a v propses.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.WebDAVPropsModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param start the lower bound of the range of web d a v propses
@@ -220,20 +248,6 @@ public class WebDAVPropsLocalServiceUtil {
 		com.liferay.portal.model.WebDAVProps webDAVProps)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getService().updateWebDAVProps(webDAVProps);
-	}
-
-	/**
-	* Updates the web d a v props in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
-	*
-	* @param webDAVProps the web d a v props
-	* @param merge whether to merge the web d a v props with the current session. See {@link com.liferay.portal.service.persistence.BatchSession#update(com.liferay.portal.kernel.dao.orm.Session, com.liferay.portal.model.BaseModel, boolean)} for an explanation.
-	* @return the web d a v props that was updated
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portal.model.WebDAVProps updateWebDAVProps(
-		com.liferay.portal.model.WebDAVProps webDAVProps, boolean merge)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getService().updateWebDAVProps(webDAVProps, merge);
 	}
 
 	/**
@@ -279,20 +293,15 @@ public class WebDAVPropsLocalServiceUtil {
 
 			ReferenceRegistry.registerReference(WebDAVPropsLocalServiceUtil.class,
 				"_service");
-			MethodCache.remove(WebDAVPropsLocalService.class);
 		}
 
 		return _service;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setService(WebDAVPropsLocalService service) {
-		MethodCache.remove(WebDAVPropsLocalService.class);
-
-		_service = service;
-
-		ReferenceRegistry.registerReference(WebDAVPropsLocalServiceUtil.class,
-			"_service");
-		MethodCache.remove(WebDAVPropsLocalService.class);
 	}
 
 	private static WebDAVPropsLocalService _service;

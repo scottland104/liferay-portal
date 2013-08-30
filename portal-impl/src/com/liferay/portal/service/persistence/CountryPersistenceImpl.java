@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,8 +15,6 @@
 package com.liferay.portal.service.persistence;
 
 import com.liferay.portal.NoSuchCountryException;
-import com.liferay.portal.NoSuchModelException;
-import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.cache.CacheRegistryUtil;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
 import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
@@ -31,9 +29,11 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.InstanceFactory;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.UnmodifiableList;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.Country;
@@ -47,6 +47,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The persistence implementation for the country service.
@@ -68,439 +69,28 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * Never modify or reference this class directly. Always use {@link CountryUtil} to access the country persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
 	 */
 	public static final String FINDER_CLASS_NAME_ENTITY = CountryImpl.class.getName();
-	public static final String FINDER_CLASS_NAME_LIST = FINDER_CLASS_NAME_ENTITY +
-		".List";
+	public static final String FINDER_CLASS_NAME_LIST_WITH_PAGINATION = FINDER_CLASS_NAME_ENTITY +
+		".List1";
+	public static final String FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION = FINDER_CLASS_NAME_ENTITY +
+		".List2";
+	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_ALL = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
+			CountryModelImpl.FINDER_CACHE_ENABLED, CountryImpl.class,
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0]);
+	public static final FinderPath FINDER_PATH_WITHOUT_PAGINATION_FIND_ALL = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
+			CountryModelImpl.FINDER_CACHE_ENABLED, CountryImpl.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll", new String[0]);
+	public static final FinderPath FINDER_PATH_COUNT_ALL = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
+			CountryModelImpl.FINDER_CACHE_ENABLED, Long.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll", new String[0]);
 	public static final FinderPath FINDER_PATH_FETCH_BY_NAME = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
 			CountryModelImpl.FINDER_CACHE_ENABLED, CountryImpl.class,
 			FINDER_CLASS_NAME_ENTITY, "fetchByName",
-			new String[] { String.class.getName() });
+			new String[] { String.class.getName() },
+			CountryModelImpl.NAME_COLUMN_BITMASK);
 	public static final FinderPath FINDER_PATH_COUNT_BY_NAME = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
 			CountryModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countByName",
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByName",
 			new String[] { String.class.getName() });
-	public static final FinderPath FINDER_PATH_FETCH_BY_A2 = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
-			CountryModelImpl.FINDER_CACHE_ENABLED, CountryImpl.class,
-			FINDER_CLASS_NAME_ENTITY, "fetchByA2",
-			new String[] { String.class.getName() });
-	public static final FinderPath FINDER_PATH_COUNT_BY_A2 = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
-			CountryModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countByA2",
-			new String[] { String.class.getName() });
-	public static final FinderPath FINDER_PATH_FETCH_BY_A3 = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
-			CountryModelImpl.FINDER_CACHE_ENABLED, CountryImpl.class,
-			FINDER_CLASS_NAME_ENTITY, "fetchByA3",
-			new String[] { String.class.getName() });
-	public static final FinderPath FINDER_PATH_COUNT_BY_A3 = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
-			CountryModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countByA3",
-			new String[] { String.class.getName() });
-	public static final FinderPath FINDER_PATH_FIND_BY_ACTIVE = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
-			CountryModelImpl.FINDER_CACHE_ENABLED, CountryImpl.class,
-			FINDER_CLASS_NAME_LIST, "findByActive",
-			new String[] {
-				Boolean.class.getName(),
-				
-			"java.lang.Integer", "java.lang.Integer",
-				"com.liferay.portal.kernel.util.OrderByComparator"
-			});
-	public static final FinderPath FINDER_PATH_COUNT_BY_ACTIVE = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
-			CountryModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countByActive",
-			new String[] { Boolean.class.getName() });
-	public static final FinderPath FINDER_PATH_FIND_ALL = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
-			CountryModelImpl.FINDER_CACHE_ENABLED, CountryImpl.class,
-			FINDER_CLASS_NAME_LIST, "findAll", new String[0]);
-	public static final FinderPath FINDER_PATH_COUNT_ALL = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
-			CountryModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countAll", new String[0]);
-
-	/**
-	 * Caches the country in the entity cache if it is enabled.
-	 *
-	 * @param country the country
-	 */
-	public void cacheResult(Country country) {
-		EntityCacheUtil.putResult(CountryModelImpl.ENTITY_CACHE_ENABLED,
-			CountryImpl.class, country.getPrimaryKey(), country);
-
-		FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_NAME,
-			new Object[] { country.getName() }, country);
-
-		FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_A2,
-			new Object[] { country.getA2() }, country);
-
-		FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_A3,
-			new Object[] { country.getA3() }, country);
-
-		country.resetOriginalValues();
-	}
-
-	/**
-	 * Caches the countries in the entity cache if it is enabled.
-	 *
-	 * @param countries the countries
-	 */
-	public void cacheResult(List<Country> countries) {
-		for (Country country : countries) {
-			if (EntityCacheUtil.getResult(
-						CountryModelImpl.ENTITY_CACHE_ENABLED,
-						CountryImpl.class, country.getPrimaryKey(), this) == null) {
-				cacheResult(country);
-			}
-		}
-	}
-
-	/**
-	 * Clears the cache for all countries.
-	 *
-	 * <p>
-	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
-	 * </p>
-	 */
-	@Override
-	public void clearCache() {
-		if (_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE) {
-			CacheRegistryUtil.clear(CountryImpl.class.getName());
-		}
-
-		EntityCacheUtil.clearCache(CountryImpl.class.getName());
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_ENTITY);
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
-	}
-
-	/**
-	 * Clears the cache for the country.
-	 *
-	 * <p>
-	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
-	 * </p>
-	 */
-	@Override
-	public void clearCache(Country country) {
-		EntityCacheUtil.removeResult(CountryModelImpl.ENTITY_CACHE_ENABLED,
-			CountryImpl.class, country.getPrimaryKey());
-
-		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_NAME,
-			new Object[] { country.getName() });
-
-		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_A2,
-			new Object[] { country.getA2() });
-
-		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_A3,
-			new Object[] { country.getA3() });
-	}
-
-	/**
-	 * Creates a new country with the primary key. Does not add the country to the database.
-	 *
-	 * @param countryId the primary key for the new country
-	 * @return the new country
-	 */
-	public Country create(long countryId) {
-		Country country = new CountryImpl();
-
-		country.setNew(true);
-		country.setPrimaryKey(countryId);
-
-		return country;
-	}
-
-	/**
-	 * Removes the country with the primary key from the database. Also notifies the appropriate model listeners.
-	 *
-	 * @param primaryKey the primary key of the country
-	 * @return the country that was removed
-	 * @throws com.liferay.portal.NoSuchModelException if a country with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public Country remove(Serializable primaryKey)
-		throws NoSuchModelException, SystemException {
-		return remove(((Long)primaryKey).longValue());
-	}
-
-	/**
-	 * Removes the country with the primary key from the database. Also notifies the appropriate model listeners.
-	 *
-	 * @param countryId the primary key of the country
-	 * @return the country that was removed
-	 * @throws com.liferay.portal.NoSuchCountryException if a country with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	public Country remove(long countryId)
-		throws NoSuchCountryException, SystemException {
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			Country country = (Country)session.get(CountryImpl.class,
-					Long.valueOf(countryId));
-
-			if (country == null) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + countryId);
-				}
-
-				throw new NoSuchCountryException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
-					countryId);
-			}
-
-			return countryPersistence.remove(country);
-		}
-		catch (NoSuchCountryException nsee) {
-			throw nsee;
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	/**
-	 * Removes the country from the database. Also notifies the appropriate model listeners.
-	 *
-	 * @param country the country
-	 * @return the country that was removed
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public Country remove(Country country) throws SystemException {
-		return super.remove(country);
-	}
-
-	@Override
-	protected Country removeImpl(Country country) throws SystemException {
-		country = toUnwrappedModel(country);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BatchSessionUtil.delete(session, country);
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
-
-		CountryModelImpl countryModelImpl = (CountryModelImpl)country;
-
-		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_NAME,
-			new Object[] { countryModelImpl.getName() });
-
-		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_A2,
-			new Object[] { countryModelImpl.getA2() });
-
-		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_A3,
-			new Object[] { countryModelImpl.getA3() });
-
-		EntityCacheUtil.removeResult(CountryModelImpl.ENTITY_CACHE_ENABLED,
-			CountryImpl.class, country.getPrimaryKey());
-
-		return country;
-	}
-
-	@Override
-	public Country updateImpl(com.liferay.portal.model.Country country,
-		boolean merge) throws SystemException {
-		country = toUnwrappedModel(country);
-
-		boolean isNew = country.isNew();
-
-		CountryModelImpl countryModelImpl = (CountryModelImpl)country;
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BatchSessionUtil.update(session, country, merge);
-
-			country.setNew(false);
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
-
-		EntityCacheUtil.putResult(CountryModelImpl.ENTITY_CACHE_ENABLED,
-			CountryImpl.class, country.getPrimaryKey(), country);
-
-		if (!isNew &&
-				(!Validator.equals(country.getName(),
-					countryModelImpl.getOriginalName()))) {
-			FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_NAME,
-				new Object[] { countryModelImpl.getOriginalName() });
-		}
-
-		if (isNew ||
-				(!Validator.equals(country.getName(),
-					countryModelImpl.getOriginalName()))) {
-			FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_NAME,
-				new Object[] { country.getName() }, country);
-		}
-
-		if (!isNew &&
-				(!Validator.equals(country.getA2(),
-					countryModelImpl.getOriginalA2()))) {
-			FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_A2,
-				new Object[] { countryModelImpl.getOriginalA2() });
-		}
-
-		if (isNew ||
-				(!Validator.equals(country.getA2(),
-					countryModelImpl.getOriginalA2()))) {
-			FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_A2,
-				new Object[] { country.getA2() }, country);
-		}
-
-		if (!isNew &&
-				(!Validator.equals(country.getA3(),
-					countryModelImpl.getOriginalA3()))) {
-			FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_A3,
-				new Object[] { countryModelImpl.getOriginalA3() });
-		}
-
-		if (isNew ||
-				(!Validator.equals(country.getA3(),
-					countryModelImpl.getOriginalA3()))) {
-			FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_A3,
-				new Object[] { country.getA3() }, country);
-		}
-
-		return country;
-	}
-
-	protected Country toUnwrappedModel(Country country) {
-		if (country instanceof CountryImpl) {
-			return country;
-		}
-
-		CountryImpl countryImpl = new CountryImpl();
-
-		countryImpl.setNew(country.isNew());
-		countryImpl.setPrimaryKey(country.getPrimaryKey());
-
-		countryImpl.setCountryId(country.getCountryId());
-		countryImpl.setName(country.getName());
-		countryImpl.setA2(country.getA2());
-		countryImpl.setA3(country.getA3());
-		countryImpl.setNumber(country.getNumber());
-		countryImpl.setIdd(country.getIdd());
-		countryImpl.setActive(country.isActive());
-
-		return countryImpl;
-	}
-
-	/**
-	 * Returns the country with the primary key or throws a {@link com.liferay.portal.NoSuchModelException} if it could not be found.
-	 *
-	 * @param primaryKey the primary key of the country
-	 * @return the country
-	 * @throws com.liferay.portal.NoSuchModelException if a country with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public Country findByPrimaryKey(Serializable primaryKey)
-		throws NoSuchModelException, SystemException {
-		return findByPrimaryKey(((Long)primaryKey).longValue());
-	}
-
-	/**
-	 * Returns the country with the primary key or throws a {@link com.liferay.portal.NoSuchCountryException} if it could not be found.
-	 *
-	 * @param countryId the primary key of the country
-	 * @return the country
-	 * @throws com.liferay.portal.NoSuchCountryException if a country with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	public Country findByPrimaryKey(long countryId)
-		throws NoSuchCountryException, SystemException {
-		Country country = fetchByPrimaryKey(countryId);
-
-		if (country == null) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + countryId);
-			}
-
-			throw new NoSuchCountryException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
-				countryId);
-		}
-
-		return country;
-	}
-
-	/**
-	 * Returns the country with the primary key or returns <code>null</code> if it could not be found.
-	 *
-	 * @param primaryKey the primary key of the country
-	 * @return the country, or <code>null</code> if a country with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public Country fetchByPrimaryKey(Serializable primaryKey)
-		throws SystemException {
-		return fetchByPrimaryKey(((Long)primaryKey).longValue());
-	}
-
-	/**
-	 * Returns the country with the primary key or returns <code>null</code> if it could not be found.
-	 *
-	 * @param countryId the primary key of the country
-	 * @return the country, or <code>null</code> if a country with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	public Country fetchByPrimaryKey(long countryId) throws SystemException {
-		Country country = (Country)EntityCacheUtil.getResult(CountryModelImpl.ENTITY_CACHE_ENABLED,
-				CountryImpl.class, countryId, this);
-
-		if (country == _nullCountry) {
-			return null;
-		}
-
-		if (country == null) {
-			Session session = null;
-
-			boolean hasException = false;
-
-			try {
-				session = openSession();
-
-				country = (Country)session.get(CountryImpl.class,
-						Long.valueOf(countryId));
-			}
-			catch (Exception e) {
-				hasException = true;
-
-				throw processException(e);
-			}
-			finally {
-				if (country != null) {
-					cacheResult(country);
-				}
-				else if (!hasException) {
-					EntityCacheUtil.putResult(CountryModelImpl.ENTITY_CACHE_ENABLED,
-						CountryImpl.class, countryId, _nullCountry);
-				}
-
-				closeSession(session);
-			}
-		}
-
-		return country;
-	}
 
 	/**
 	 * Returns the country where name = &#63; or throws a {@link com.liferay.portal.NoSuchCountryException} if it could not be found.
@@ -510,6 +100,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @throws com.liferay.portal.NoSuchCountryException if a matching country could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Country findByName(String name)
 		throws NoSuchCountryException, SystemException {
 		Country country = fetchByName(name);
@@ -541,6 +132,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @return the matching country, or <code>null</code> if a matching country could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Country fetchByName(String name) throws SystemException {
 		return fetchByName(name, true);
 	}
@@ -553,6 +145,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @return the matching country, or <code>null</code> if a matching country could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Country fetchByName(String name, boolean retrieveFromCache)
 		throws SystemException {
 		Object[] finderArgs = new Object[] { name };
@@ -564,24 +157,32 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 					finderArgs, this);
 		}
 
+		if (result instanceof Country) {
+			Country country = (Country)result;
+
+			if (!Validator.equals(name, country.getName())) {
+				result = null;
+			}
+		}
+
 		if (result == null) {
 			StringBundler query = new StringBundler(3);
 
 			query.append(_SQL_SELECT_COUNTRY_WHERE);
 
+			boolean bindName = false;
+
 			if (name == null) {
 				query.append(_FINDER_COLUMN_NAME_NAME_1);
 			}
-			else {
-				if (name.equals(StringPool.BLANK)) {
-					query.append(_FINDER_COLUMN_NAME_NAME_3);
-				}
-				else {
-					query.append(_FINDER_COLUMN_NAME_NAME_2);
-				}
+			else if (name.equals(StringPool.BLANK)) {
+				query.append(_FINDER_COLUMN_NAME_NAME_3);
 			}
+			else {
+				bindName = true;
 
-			query.append(CountryModelImpl.ORDER_BY_JPQL);
+				query.append(_FINDER_COLUMN_NAME_NAME_2);
+			}
 
 			String sql = query.toString();
 
@@ -594,22 +195,20 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 
 				QueryPos qPos = QueryPos.getInstance(q);
 
-				if (name != null) {
+				if (bindName) {
 					qPos.add(name);
 				}
 
 				List<Country> list = q.list();
-
-				result = list;
-
-				Country country = null;
 
 				if (list.isEmpty()) {
 					FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_NAME,
 						finderArgs, list);
 				}
 				else {
-					country = list.get(0);
+					Country country = list.get(0);
+
+					result = country;
 
 					cacheResult(country);
 
@@ -619,30 +218,120 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 							finderArgs, country);
 					}
 				}
-
-				return country;
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_NAME,
+					finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (result == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_NAME,
-						finderArgs);
-				}
-
 				closeSession(session);
 			}
 		}
+
+		if (result instanceof List<?>) {
+			return null;
+		}
 		else {
-			if (result instanceof List<?>) {
-				return null;
-			}
-			else {
-				return (Country)result;
-			}
+			return (Country)result;
 		}
 	}
+
+	/**
+	 * Removes the country where name = &#63; from the database.
+	 *
+	 * @param name the name
+	 * @return the country that was removed
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public Country removeByName(String name)
+		throws NoSuchCountryException, SystemException {
+		Country country = findByName(name);
+
+		return remove(country);
+	}
+
+	/**
+	 * Returns the number of countries where name = &#63;.
+	 *
+	 * @param name the name
+	 * @return the number of matching countries
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public int countByName(String name) throws SystemException {
+		FinderPath finderPath = FINDER_PATH_COUNT_BY_NAME;
+
+		Object[] finderArgs = new Object[] { name };
+
+		Long count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs,
+				this);
+
+		if (count == null) {
+			StringBundler query = new StringBundler(2);
+
+			query.append(_SQL_COUNT_COUNTRY_WHERE);
+
+			boolean bindName = false;
+
+			if (name == null) {
+				query.append(_FINDER_COLUMN_NAME_NAME_1);
+			}
+			else if (name.equals(StringPool.BLANK)) {
+				query.append(_FINDER_COLUMN_NAME_NAME_3);
+			}
+			else {
+				bindName = true;
+
+				query.append(_FINDER_COLUMN_NAME_NAME_2);
+			}
+
+			String sql = query.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query q = session.createQuery(sql);
+
+				QueryPos qPos = QueryPos.getInstance(q);
+
+				if (bindName) {
+					qPos.add(name);
+				}
+
+				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, count);
+			}
+			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return count.intValue();
+	}
+
+	private static final String _FINDER_COLUMN_NAME_NAME_1 = "country.name IS NULL";
+	private static final String _FINDER_COLUMN_NAME_NAME_2 = "country.name = ?";
+	private static final String _FINDER_COLUMN_NAME_NAME_3 = "(country.name IS NULL OR country.name = '')";
+	public static final FinderPath FINDER_PATH_FETCH_BY_A2 = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
+			CountryModelImpl.FINDER_CACHE_ENABLED, CountryImpl.class,
+			FINDER_CLASS_NAME_ENTITY, "fetchByA2",
+			new String[] { String.class.getName() },
+			CountryModelImpl.A2_COLUMN_BITMASK);
+	public static final FinderPath FINDER_PATH_COUNT_BY_A2 = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
+			CountryModelImpl.FINDER_CACHE_ENABLED, Long.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByA2",
+			new String[] { String.class.getName() });
 
 	/**
 	 * Returns the country where a2 = &#63; or throws a {@link com.liferay.portal.NoSuchCountryException} if it could not be found.
@@ -652,6 +341,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @throws com.liferay.portal.NoSuchCountryException if a matching country could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Country findByA2(String a2)
 		throws NoSuchCountryException, SystemException {
 		Country country = fetchByA2(a2);
@@ -683,6 +373,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @return the matching country, or <code>null</code> if a matching country could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Country fetchByA2(String a2) throws SystemException {
 		return fetchByA2(a2, true);
 	}
@@ -695,6 +386,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @return the matching country, or <code>null</code> if a matching country could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Country fetchByA2(String a2, boolean retrieveFromCache)
 		throws SystemException {
 		Object[] finderArgs = new Object[] { a2 };
@@ -706,24 +398,32 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 					finderArgs, this);
 		}
 
+		if (result instanceof Country) {
+			Country country = (Country)result;
+
+			if (!Validator.equals(a2, country.getA2())) {
+				result = null;
+			}
+		}
+
 		if (result == null) {
 			StringBundler query = new StringBundler(3);
 
 			query.append(_SQL_SELECT_COUNTRY_WHERE);
 
+			boolean bindA2 = false;
+
 			if (a2 == null) {
 				query.append(_FINDER_COLUMN_A2_A2_1);
 			}
-			else {
-				if (a2.equals(StringPool.BLANK)) {
-					query.append(_FINDER_COLUMN_A2_A2_3);
-				}
-				else {
-					query.append(_FINDER_COLUMN_A2_A2_2);
-				}
+			else if (a2.equals(StringPool.BLANK)) {
+				query.append(_FINDER_COLUMN_A2_A2_3);
 			}
+			else {
+				bindA2 = true;
 
-			query.append(CountryModelImpl.ORDER_BY_JPQL);
+				query.append(_FINDER_COLUMN_A2_A2_2);
+			}
 
 			String sql = query.toString();
 
@@ -736,22 +436,20 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 
 				QueryPos qPos = QueryPos.getInstance(q);
 
-				if (a2 != null) {
+				if (bindA2) {
 					qPos.add(a2);
 				}
 
 				List<Country> list = q.list();
-
-				result = list;
-
-				Country country = null;
 
 				if (list.isEmpty()) {
 					FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_A2,
 						finderArgs, list);
 				}
 				else {
-					country = list.get(0);
+					Country country = list.get(0);
+
+					result = country;
 
 					cacheResult(country);
 
@@ -761,30 +459,119 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 							finderArgs, country);
 					}
 				}
-
-				return country;
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_A2, finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (result == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_A2,
-						finderArgs);
-				}
-
 				closeSession(session);
 			}
 		}
+
+		if (result instanceof List<?>) {
+			return null;
+		}
 		else {
-			if (result instanceof List<?>) {
-				return null;
-			}
-			else {
-				return (Country)result;
-			}
+			return (Country)result;
 		}
 	}
+
+	/**
+	 * Removes the country where a2 = &#63; from the database.
+	 *
+	 * @param a2 the a2
+	 * @return the country that was removed
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public Country removeByA2(String a2)
+		throws NoSuchCountryException, SystemException {
+		Country country = findByA2(a2);
+
+		return remove(country);
+	}
+
+	/**
+	 * Returns the number of countries where a2 = &#63;.
+	 *
+	 * @param a2 the a2
+	 * @return the number of matching countries
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public int countByA2(String a2) throws SystemException {
+		FinderPath finderPath = FINDER_PATH_COUNT_BY_A2;
+
+		Object[] finderArgs = new Object[] { a2 };
+
+		Long count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs,
+				this);
+
+		if (count == null) {
+			StringBundler query = new StringBundler(2);
+
+			query.append(_SQL_COUNT_COUNTRY_WHERE);
+
+			boolean bindA2 = false;
+
+			if (a2 == null) {
+				query.append(_FINDER_COLUMN_A2_A2_1);
+			}
+			else if (a2.equals(StringPool.BLANK)) {
+				query.append(_FINDER_COLUMN_A2_A2_3);
+			}
+			else {
+				bindA2 = true;
+
+				query.append(_FINDER_COLUMN_A2_A2_2);
+			}
+
+			String sql = query.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query q = session.createQuery(sql);
+
+				QueryPos qPos = QueryPos.getInstance(q);
+
+				if (bindA2) {
+					qPos.add(a2);
+				}
+
+				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, count);
+			}
+			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return count.intValue();
+	}
+
+	private static final String _FINDER_COLUMN_A2_A2_1 = "country.a2 IS NULL";
+	private static final String _FINDER_COLUMN_A2_A2_2 = "country.a2 = ?";
+	private static final String _FINDER_COLUMN_A2_A2_3 = "(country.a2 IS NULL OR country.a2 = '')";
+	public static final FinderPath FINDER_PATH_FETCH_BY_A3 = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
+			CountryModelImpl.FINDER_CACHE_ENABLED, CountryImpl.class,
+			FINDER_CLASS_NAME_ENTITY, "fetchByA3",
+			new String[] { String.class.getName() },
+			CountryModelImpl.A3_COLUMN_BITMASK);
+	public static final FinderPath FINDER_PATH_COUNT_BY_A3 = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
+			CountryModelImpl.FINDER_CACHE_ENABLED, Long.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByA3",
+			new String[] { String.class.getName() });
 
 	/**
 	 * Returns the country where a3 = &#63; or throws a {@link com.liferay.portal.NoSuchCountryException} if it could not be found.
@@ -794,6 +581,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @throws com.liferay.portal.NoSuchCountryException if a matching country could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Country findByA3(String a3)
 		throws NoSuchCountryException, SystemException {
 		Country country = fetchByA3(a3);
@@ -825,6 +613,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @return the matching country, or <code>null</code> if a matching country could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Country fetchByA3(String a3) throws SystemException {
 		return fetchByA3(a3, true);
 	}
@@ -837,6 +626,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @return the matching country, or <code>null</code> if a matching country could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Country fetchByA3(String a3, boolean retrieveFromCache)
 		throws SystemException {
 		Object[] finderArgs = new Object[] { a3 };
@@ -848,24 +638,32 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 					finderArgs, this);
 		}
 
+		if (result instanceof Country) {
+			Country country = (Country)result;
+
+			if (!Validator.equals(a3, country.getA3())) {
+				result = null;
+			}
+		}
+
 		if (result == null) {
 			StringBundler query = new StringBundler(3);
 
 			query.append(_SQL_SELECT_COUNTRY_WHERE);
 
+			boolean bindA3 = false;
+
 			if (a3 == null) {
 				query.append(_FINDER_COLUMN_A3_A3_1);
 			}
-			else {
-				if (a3.equals(StringPool.BLANK)) {
-					query.append(_FINDER_COLUMN_A3_A3_3);
-				}
-				else {
-					query.append(_FINDER_COLUMN_A3_A3_2);
-				}
+			else if (a3.equals(StringPool.BLANK)) {
+				query.append(_FINDER_COLUMN_A3_A3_3);
 			}
+			else {
+				bindA3 = true;
 
-			query.append(CountryModelImpl.ORDER_BY_JPQL);
+				query.append(_FINDER_COLUMN_A3_A3_2);
+			}
 
 			String sql = query.toString();
 
@@ -878,22 +676,20 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 
 				QueryPos qPos = QueryPos.getInstance(q);
 
-				if (a3 != null) {
+				if (bindA3) {
 					qPos.add(a3);
 				}
 
 				List<Country> list = q.list();
-
-				result = list;
-
-				Country country = null;
 
 				if (list.isEmpty()) {
 					FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_A3,
 						finderArgs, list);
 				}
 				else {
-					country = list.get(0);
+					Country country = list.get(0);
+
+					result = country;
 
 					cacheResult(country);
 
@@ -903,30 +699,130 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 							finderArgs, country);
 					}
 				}
-
-				return country;
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_A3, finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (result == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_A3,
-						finderArgs);
-				}
-
 				closeSession(session);
 			}
 		}
+
+		if (result instanceof List<?>) {
+			return null;
+		}
 		else {
-			if (result instanceof List<?>) {
-				return null;
-			}
-			else {
-				return (Country)result;
-			}
+			return (Country)result;
 		}
 	}
+
+	/**
+	 * Removes the country where a3 = &#63; from the database.
+	 *
+	 * @param a3 the a3
+	 * @return the country that was removed
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public Country removeByA3(String a3)
+		throws NoSuchCountryException, SystemException {
+		Country country = findByA3(a3);
+
+		return remove(country);
+	}
+
+	/**
+	 * Returns the number of countries where a3 = &#63;.
+	 *
+	 * @param a3 the a3
+	 * @return the number of matching countries
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public int countByA3(String a3) throws SystemException {
+		FinderPath finderPath = FINDER_PATH_COUNT_BY_A3;
+
+		Object[] finderArgs = new Object[] { a3 };
+
+		Long count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs,
+				this);
+
+		if (count == null) {
+			StringBundler query = new StringBundler(2);
+
+			query.append(_SQL_COUNT_COUNTRY_WHERE);
+
+			boolean bindA3 = false;
+
+			if (a3 == null) {
+				query.append(_FINDER_COLUMN_A3_A3_1);
+			}
+			else if (a3.equals(StringPool.BLANK)) {
+				query.append(_FINDER_COLUMN_A3_A3_3);
+			}
+			else {
+				bindA3 = true;
+
+				query.append(_FINDER_COLUMN_A3_A3_2);
+			}
+
+			String sql = query.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query q = session.createQuery(sql);
+
+				QueryPos qPos = QueryPos.getInstance(q);
+
+				if (bindA3) {
+					qPos.add(a3);
+				}
+
+				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, count);
+			}
+			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return count.intValue();
+	}
+
+	private static final String _FINDER_COLUMN_A3_A3_1 = "country.a3 IS NULL";
+	private static final String _FINDER_COLUMN_A3_A3_2 = "country.a3 = ?";
+	private static final String _FINDER_COLUMN_A3_A3_3 = "(country.a3 IS NULL OR country.a3 = '')";
+	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_BY_ACTIVE = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
+			CountryModelImpl.FINDER_CACHE_ENABLED, CountryImpl.class,
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByActive",
+			new String[] {
+				Boolean.class.getName(),
+				
+			Integer.class.getName(), Integer.class.getName(),
+				OrderByComparator.class.getName()
+			});
+	public static final FinderPath FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_ACTIVE =
+		new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
+			CountryModelImpl.FINDER_CACHE_ENABLED, CountryImpl.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByActive",
+			new String[] { Boolean.class.getName() },
+			CountryModelImpl.ACTIVE_COLUMN_BITMASK |
+			CountryModelImpl.NAME_COLUMN_BITMASK);
+	public static final FinderPath FINDER_PATH_COUNT_BY_ACTIVE = new FinderPath(CountryModelImpl.ENTITY_CACHE_ENABLED,
+			CountryModelImpl.FINDER_CACHE_ENABLED, Long.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByActive",
+			new String[] { Boolean.class.getName() });
 
 	/**
 	 * Returns all the countries where active = &#63;.
@@ -935,6 +831,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @return the matching countries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Country> findByActive(boolean active) throws SystemException {
 		return findByActive(active, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
@@ -943,7 +840,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * Returns a range of all the countries where active = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.CountryModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param active the active
@@ -952,6 +849,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @return the range of matching countries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Country> findByActive(boolean active, int start, int end)
 		throws SystemException {
 		return findByActive(active, start, end, null);
@@ -961,7 +859,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * Returns an ordered range of all the countries where active = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.CountryModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param active the active
@@ -971,17 +869,36 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @return the ordered range of matching countries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Country> findByActive(boolean active, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
-		Object[] finderArgs = new Object[] {
-				active,
-				
-				String.valueOf(start), String.valueOf(end),
-				String.valueOf(orderByComparator)
-			};
+		boolean pagination = true;
+		FinderPath finderPath = null;
+		Object[] finderArgs = null;
 
-		List<Country> list = (List<Country>)FinderCacheUtil.getResult(FINDER_PATH_FIND_BY_ACTIVE,
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+			pagination = false;
+			finderPath = FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_ACTIVE;
+			finderArgs = new Object[] { active };
+		}
+		else {
+			finderPath = FINDER_PATH_WITH_PAGINATION_FIND_BY_ACTIVE;
+			finderArgs = new Object[] { active, start, end, orderByComparator };
+		}
+
+		List<Country> list = (List<Country>)FinderCacheUtil.getResult(finderPath,
 				finderArgs, this);
+
+		if ((list != null) && !list.isEmpty()) {
+			for (Country country : list) {
+				if ((active != country.getActive())) {
+					list = null;
+
+					break;
+				}
+			}
+		}
 
 		if (list == null) {
 			StringBundler query = null;
@@ -1002,8 +919,8 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
 					orderByComparator);
 			}
-
-			else {
+			else
+			 if (pagination) {
 				query.append(CountryModelImpl.ORDER_BY_JPQL);
 			}
 
@@ -1020,23 +937,29 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 
 				qPos.add(active);
 
-				list = (List<Country>)QueryUtil.list(q, getDialect(), start, end);
+				if (!pagination) {
+					list = (List<Country>)QueryUtil.list(q, getDialect(),
+							start, end, false);
+
+					Collections.sort(list);
+
+					list = new UnmodifiableList<Country>(list);
+				}
+				else {
+					list = (List<Country>)QueryUtil.list(q, getDialect(),
+							start, end);
+				}
+
+				cacheResult(list);
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, list);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (list == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FIND_BY_ACTIVE,
-						finderArgs);
-				}
-				else {
-					cacheResult(list);
-
-					FinderCacheUtil.putResult(FINDER_PATH_FIND_BY_ACTIVE,
-						finderArgs, list);
-				}
-
 				closeSession(session);
 			}
 		}
@@ -1047,44 +970,56 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	/**
 	 * Returns the first country in the ordered set where active = &#63;.
 	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
-	 *
 	 * @param active the active
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching country
 	 * @throws com.liferay.portal.NoSuchCountryException if a matching country could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Country findByActive_First(boolean active,
 		OrderByComparator orderByComparator)
 		throws NoSuchCountryException, SystemException {
+		Country country = fetchByActive_First(active, orderByComparator);
+
+		if (country != null) {
+			return country;
+		}
+
+		StringBundler msg = new StringBundler(4);
+
+		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		msg.append("active=");
+		msg.append(active);
+
+		msg.append(StringPool.CLOSE_CURLY_BRACE);
+
+		throw new NoSuchCountryException(msg.toString());
+	}
+
+	/**
+	 * Returns the first country in the ordered set where active = &#63;.
+	 *
+	 * @param active the active
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching country, or <code>null</code> if a matching country could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public Country fetchByActive_First(boolean active,
+		OrderByComparator orderByComparator) throws SystemException {
 		List<Country> list = findByActive(active, 0, 1, orderByComparator);
 
-		if (list.isEmpty()) {
-			StringBundler msg = new StringBundler(4);
-
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-			msg.append("active=");
-			msg.append(active);
-
-			msg.append(StringPool.CLOSE_CURLY_BRACE);
-
-			throw new NoSuchCountryException(msg.toString());
-		}
-		else {
+		if (!list.isEmpty()) {
 			return list.get(0);
 		}
+
+		return null;
 	}
 
 	/**
 	 * Returns the last country in the ordered set where active = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
 	 *
 	 * @param active the active
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
@@ -1092,37 +1027,57 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @throws com.liferay.portal.NoSuchCountryException if a matching country could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Country findByActive_Last(boolean active,
 		OrderByComparator orderByComparator)
 		throws NoSuchCountryException, SystemException {
+		Country country = fetchByActive_Last(active, orderByComparator);
+
+		if (country != null) {
+			return country;
+		}
+
+		StringBundler msg = new StringBundler(4);
+
+		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		msg.append("active=");
+		msg.append(active);
+
+		msg.append(StringPool.CLOSE_CURLY_BRACE);
+
+		throw new NoSuchCountryException(msg.toString());
+	}
+
+	/**
+	 * Returns the last country in the ordered set where active = &#63;.
+	 *
+	 * @param active the active
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching country, or <code>null</code> if a matching country could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public Country fetchByActive_Last(boolean active,
+		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByActive(active);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<Country> list = findByActive(active, count - 1, count,
 				orderByComparator);
 
-		if (list.isEmpty()) {
-			StringBundler msg = new StringBundler(4);
-
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-			msg.append("active=");
-			msg.append(active);
-
-			msg.append(StringPool.CLOSE_CURLY_BRACE);
-
-			throw new NoSuchCountryException(msg.toString());
-		}
-		else {
+		if (!list.isEmpty()) {
 			return list.get(0);
 		}
+
+		return null;
 	}
 
 	/**
 	 * Returns the countries before and after the current country in the ordered set where active = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
 	 *
 	 * @param countryId the primary key of the current country
 	 * @param active the active
@@ -1131,6 +1086,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @throws com.liferay.portal.NoSuchCountryException if a country with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Country[] findByActive_PrevAndNext(long countryId, boolean active,
 		OrderByComparator orderByComparator)
 		throws NoSuchCountryException, SystemException {
@@ -1178,17 +1134,17 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 		query.append(_FINDER_COLUMN_ACTIVE_ACTIVE_2);
 
 		if (orderByComparator != null) {
-			String[] orderByFields = orderByComparator.getOrderByFields();
+			String[] orderByConditionFields = orderByComparator.getOrderByConditionFields();
 
-			if (orderByFields.length > 0) {
+			if (orderByConditionFields.length > 0) {
 				query.append(WHERE_AND);
 			}
 
-			for (int i = 0; i < orderByFields.length; i++) {
+			for (int i = 0; i < orderByConditionFields.length; i++) {
 				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				query.append(orderByConditionFields[i]);
 
-				if ((i + 1) < orderByFields.length) {
+				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
 						query.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
@@ -1207,6 +1163,8 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 			}
 
 			query.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
 				query.append(_ORDER_BY_ENTITY_ALIAS);
@@ -1230,7 +1188,6 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 				}
 			}
 		}
-
 		else {
 			query.append(CountryModelImpl.ORDER_BY_JPQL);
 		}
@@ -1247,7 +1204,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 		qPos.add(active);
 
 		if (orderByComparator != null) {
-			Object[] values = orderByComparator.getOrderByValues(country);
+			Object[] values = orderByComparator.getOrderByConditionValues(country);
 
 			for (Object value : values) {
 				qPos.add(value);
@@ -1265,368 +1222,17 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	}
 
 	/**
-	 * Returns all the countries.
-	 *
-	 * @return the countries
-	 * @throws SystemException if a system exception occurred
-	 */
-	public List<Country> findAll() throws SystemException {
-		return findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
-	}
-
-	/**
-	 * Returns a range of all the countries.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
-	 *
-	 * @param start the lower bound of the range of countries
-	 * @param end the upper bound of the range of countries (not inclusive)
-	 * @return the range of countries
-	 * @throws SystemException if a system exception occurred
-	 */
-	public List<Country> findAll(int start, int end) throws SystemException {
-		return findAll(start, end, null);
-	}
-
-	/**
-	 * Returns an ordered range of all the countries.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
-	 *
-	 * @param start the lower bound of the range of countries
-	 * @param end the upper bound of the range of countries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of countries
-	 * @throws SystemException if a system exception occurred
-	 */
-	public List<Country> findAll(int start, int end,
-		OrderByComparator orderByComparator) throws SystemException {
-		Object[] finderArgs = new Object[] {
-				String.valueOf(start), String.valueOf(end),
-				String.valueOf(orderByComparator)
-			};
-
-		List<Country> list = (List<Country>)FinderCacheUtil.getResult(FINDER_PATH_FIND_ALL,
-				finderArgs, this);
-
-		if (list == null) {
-			StringBundler query = null;
-			String sql = null;
-
-			if (orderByComparator != null) {
-				query = new StringBundler(2 +
-						(orderByComparator.getOrderByFields().length * 3));
-
-				query.append(_SQL_SELECT_COUNTRY);
-
-				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
-					orderByComparator);
-
-				sql = query.toString();
-			}
-			else {
-				sql = _SQL_SELECT_COUNTRY.concat(CountryModelImpl.ORDER_BY_JPQL);
-			}
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				if (orderByComparator == null) {
-					list = (List<Country>)QueryUtil.list(q, getDialect(),
-							start, end, false);
-
-					Collections.sort(list);
-				}
-				else {
-					list = (List<Country>)QueryUtil.list(q, getDialect(),
-							start, end);
-				}
-			}
-			catch (Exception e) {
-				throw processException(e);
-			}
-			finally {
-				if (list == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FIND_ALL,
-						finderArgs);
-				}
-				else {
-					cacheResult(list);
-
-					FinderCacheUtil.putResult(FINDER_PATH_FIND_ALL, finderArgs,
-						list);
-				}
-
-				closeSession(session);
-			}
-		}
-
-		return list;
-	}
-
-	/**
-	 * Removes the country where name = &#63; from the database.
-	 *
-	 * @param name the name
-	 * @throws SystemException if a system exception occurred
-	 */
-	public void removeByName(String name)
-		throws NoSuchCountryException, SystemException {
-		Country country = findByName(name);
-
-		countryPersistence.remove(country);
-	}
-
-	/**
-	 * Removes the country where a2 = &#63; from the database.
-	 *
-	 * @param a2 the a2
-	 * @throws SystemException if a system exception occurred
-	 */
-	public void removeByA2(String a2)
-		throws NoSuchCountryException, SystemException {
-		Country country = findByA2(a2);
-
-		countryPersistence.remove(country);
-	}
-
-	/**
-	 * Removes the country where a3 = &#63; from the database.
-	 *
-	 * @param a3 the a3
-	 * @throws SystemException if a system exception occurred
-	 */
-	public void removeByA3(String a3)
-		throws NoSuchCountryException, SystemException {
-		Country country = findByA3(a3);
-
-		countryPersistence.remove(country);
-	}
-
-	/**
 	 * Removes all the countries where active = &#63; from the database.
 	 *
 	 * @param active the active
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeByActive(boolean active) throws SystemException {
-		for (Country country : findByActive(active)) {
-			countryPersistence.remove(country);
+		for (Country country : findByActive(active, QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS, null)) {
+			remove(country);
 		}
-	}
-
-	/**
-	 * Removes all the countries from the database.
-	 *
-	 * @throws SystemException if a system exception occurred
-	 */
-	public void removeAll() throws SystemException {
-		for (Country country : findAll()) {
-			countryPersistence.remove(country);
-		}
-	}
-
-	/**
-	 * Returns the number of countries where name = &#63;.
-	 *
-	 * @param name the name
-	 * @return the number of matching countries
-	 * @throws SystemException if a system exception occurred
-	 */
-	public int countByName(String name) throws SystemException {
-		Object[] finderArgs = new Object[] { name };
-
-		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_BY_NAME,
-				finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(2);
-
-			query.append(_SQL_COUNT_COUNTRY_WHERE);
-
-			if (name == null) {
-				query.append(_FINDER_COLUMN_NAME_NAME_1);
-			}
-			else {
-				if (name.equals(StringPool.BLANK)) {
-					query.append(_FINDER_COLUMN_NAME_NAME_3);
-				}
-				else {
-					query.append(_FINDER_COLUMN_NAME_NAME_2);
-				}
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (name != null) {
-					qPos.add(name);
-				}
-
-				count = (Long)q.uniqueResult();
-			}
-			catch (Exception e) {
-				throw processException(e);
-			}
-			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_NAME,
-					finderArgs, count);
-
-				closeSession(session);
-			}
-		}
-
-		return count.intValue();
-	}
-
-	/**
-	 * Returns the number of countries where a2 = &#63;.
-	 *
-	 * @param a2 the a2
-	 * @return the number of matching countries
-	 * @throws SystemException if a system exception occurred
-	 */
-	public int countByA2(String a2) throws SystemException {
-		Object[] finderArgs = new Object[] { a2 };
-
-		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_BY_A2,
-				finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(2);
-
-			query.append(_SQL_COUNT_COUNTRY_WHERE);
-
-			if (a2 == null) {
-				query.append(_FINDER_COLUMN_A2_A2_1);
-			}
-			else {
-				if (a2.equals(StringPool.BLANK)) {
-					query.append(_FINDER_COLUMN_A2_A2_3);
-				}
-				else {
-					query.append(_FINDER_COLUMN_A2_A2_2);
-				}
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (a2 != null) {
-					qPos.add(a2);
-				}
-
-				count = (Long)q.uniqueResult();
-			}
-			catch (Exception e) {
-				throw processException(e);
-			}
-			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_A2, finderArgs,
-					count);
-
-				closeSession(session);
-			}
-		}
-
-		return count.intValue();
-	}
-
-	/**
-	 * Returns the number of countries where a3 = &#63;.
-	 *
-	 * @param a3 the a3
-	 * @return the number of matching countries
-	 * @throws SystemException if a system exception occurred
-	 */
-	public int countByA3(String a3) throws SystemException {
-		Object[] finderArgs = new Object[] { a3 };
-
-		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_BY_A3,
-				finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(2);
-
-			query.append(_SQL_COUNT_COUNTRY_WHERE);
-
-			if (a3 == null) {
-				query.append(_FINDER_COLUMN_A3_A3_1);
-			}
-			else {
-				if (a3.equals(StringPool.BLANK)) {
-					query.append(_FINDER_COLUMN_A3_A3_3);
-				}
-				else {
-					query.append(_FINDER_COLUMN_A3_A3_2);
-				}
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (a3 != null) {
-					qPos.add(a3);
-				}
-
-				count = (Long)q.uniqueResult();
-			}
-			catch (Exception e) {
-				throw processException(e);
-			}
-			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_A3, finderArgs,
-					count);
-
-				closeSession(session);
-			}
-		}
-
-		return count.intValue();
 	}
 
 	/**
@@ -1636,11 +1242,14 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @return the number of matching countries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countByActive(boolean active) throws SystemException {
+		FinderPath finderPath = FINDER_PATH_COUNT_BY_ACTIVE;
+
 		Object[] finderArgs = new Object[] { active };
 
-		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_BY_ACTIVE,
-				finderArgs, this);
+		Long count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs,
+				this);
 
 		if (count == null) {
 			StringBundler query = new StringBundler(2);
@@ -1663,23 +1272,634 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 				qPos.add(active);
 
 				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, count);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_ACTIVE,
-					finderArgs, count);
-
 				closeSession(session);
 			}
 		}
 
 		return count.intValue();
+	}
+
+	private static final String _FINDER_COLUMN_ACTIVE_ACTIVE_2 = "country.active = ?";
+
+	public CountryPersistenceImpl() {
+		setModelClass(Country.class);
+	}
+
+	/**
+	 * Caches the country in the entity cache if it is enabled.
+	 *
+	 * @param country the country
+	 */
+	@Override
+	public void cacheResult(Country country) {
+		EntityCacheUtil.putResult(CountryModelImpl.ENTITY_CACHE_ENABLED,
+			CountryImpl.class, country.getPrimaryKey(), country);
+
+		FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_NAME,
+			new Object[] { country.getName() }, country);
+
+		FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_A2,
+			new Object[] { country.getA2() }, country);
+
+		FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_A3,
+			new Object[] { country.getA3() }, country);
+
+		country.resetOriginalValues();
+	}
+
+	/**
+	 * Caches the countries in the entity cache if it is enabled.
+	 *
+	 * @param countries the countries
+	 */
+	@Override
+	public void cacheResult(List<Country> countries) {
+		for (Country country : countries) {
+			if (EntityCacheUtil.getResult(
+						CountryModelImpl.ENTITY_CACHE_ENABLED,
+						CountryImpl.class, country.getPrimaryKey()) == null) {
+				cacheResult(country);
+			}
+			else {
+				country.resetOriginalValues();
+			}
+		}
+	}
+
+	/**
+	 * Clears the cache for all countries.
+	 *
+	 * <p>
+	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
+	 * </p>
+	 */
+	@Override
+	public void clearCache() {
+		if (_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE) {
+			CacheRegistryUtil.clear(CountryImpl.class.getName());
+		}
+
+		EntityCacheUtil.clearCache(CountryImpl.class.getName());
+
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_ENTITY);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+	}
+
+	/**
+	 * Clears the cache for the country.
+	 *
+	 * <p>
+	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
+	 * </p>
+	 */
+	@Override
+	public void clearCache(Country country) {
+		EntityCacheUtil.removeResult(CountryModelImpl.ENTITY_CACHE_ENABLED,
+			CountryImpl.class, country.getPrimaryKey());
+
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+
+		clearUniqueFindersCache(country);
+	}
+
+	@Override
+	public void clearCache(List<Country> countries) {
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+
+		for (Country country : countries) {
+			EntityCacheUtil.removeResult(CountryModelImpl.ENTITY_CACHE_ENABLED,
+				CountryImpl.class, country.getPrimaryKey());
+
+			clearUniqueFindersCache(country);
+		}
+	}
+
+	protected void cacheUniqueFindersCache(Country country) {
+		if (country.isNew()) {
+			Object[] args = new Object[] { country.getName() };
+
+			FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_NAME, args,
+				Long.valueOf(1));
+			FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_NAME, args, country);
+
+			args = new Object[] { country.getA2() };
+
+			FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_A2, args,
+				Long.valueOf(1));
+			FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_A2, args, country);
+
+			args = new Object[] { country.getA3() };
+
+			FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_A3, args,
+				Long.valueOf(1));
+			FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_A3, args, country);
+		}
+		else {
+			CountryModelImpl countryModelImpl = (CountryModelImpl)country;
+
+			if ((countryModelImpl.getColumnBitmask() &
+					FINDER_PATH_FETCH_BY_NAME.getColumnBitmask()) != 0) {
+				Object[] args = new Object[] { country.getName() };
+
+				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_NAME, args,
+					Long.valueOf(1));
+				FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_NAME, args,
+					country);
+			}
+
+			if ((countryModelImpl.getColumnBitmask() &
+					FINDER_PATH_FETCH_BY_A2.getColumnBitmask()) != 0) {
+				Object[] args = new Object[] { country.getA2() };
+
+				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_A2, args,
+					Long.valueOf(1));
+				FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_A2, args, country);
+			}
+
+			if ((countryModelImpl.getColumnBitmask() &
+					FINDER_PATH_FETCH_BY_A3.getColumnBitmask()) != 0) {
+				Object[] args = new Object[] { country.getA3() };
+
+				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_A3, args,
+					Long.valueOf(1));
+				FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_A3, args, country);
+			}
+		}
+	}
+
+	protected void clearUniqueFindersCache(Country country) {
+		CountryModelImpl countryModelImpl = (CountryModelImpl)country;
+
+		Object[] args = new Object[] { country.getName() };
+
+		FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_NAME, args);
+		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_NAME, args);
+
+		if ((countryModelImpl.getColumnBitmask() &
+				FINDER_PATH_FETCH_BY_NAME.getColumnBitmask()) != 0) {
+			args = new Object[] { countryModelImpl.getOriginalName() };
+
+			FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_NAME, args);
+			FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_NAME, args);
+		}
+
+		args = new Object[] { country.getA2() };
+
+		FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_A2, args);
+		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_A2, args);
+
+		if ((countryModelImpl.getColumnBitmask() &
+				FINDER_PATH_FETCH_BY_A2.getColumnBitmask()) != 0) {
+			args = new Object[] { countryModelImpl.getOriginalA2() };
+
+			FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_A2, args);
+			FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_A2, args);
+		}
+
+		args = new Object[] { country.getA3() };
+
+		FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_A3, args);
+		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_A3, args);
+
+		if ((countryModelImpl.getColumnBitmask() &
+				FINDER_PATH_FETCH_BY_A3.getColumnBitmask()) != 0) {
+			args = new Object[] { countryModelImpl.getOriginalA3() };
+
+			FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_A3, args);
+			FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_A3, args);
+		}
+	}
+
+	/**
+	 * Creates a new country with the primary key. Does not add the country to the database.
+	 *
+	 * @param countryId the primary key for the new country
+	 * @return the new country
+	 */
+	@Override
+	public Country create(long countryId) {
+		Country country = new CountryImpl();
+
+		country.setNew(true);
+		country.setPrimaryKey(countryId);
+
+		return country;
+	}
+
+	/**
+	 * Removes the country with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * @param countryId the primary key of the country
+	 * @return the country that was removed
+	 * @throws com.liferay.portal.NoSuchCountryException if a country with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public Country remove(long countryId)
+		throws NoSuchCountryException, SystemException {
+		return remove((Serializable)countryId);
+	}
+
+	/**
+	 * Removes the country with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * @param primaryKey the primary key of the country
+	 * @return the country that was removed
+	 * @throws com.liferay.portal.NoSuchCountryException if a country with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public Country remove(Serializable primaryKey)
+		throws NoSuchCountryException, SystemException {
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			Country country = (Country)session.get(CountryImpl.class, primaryKey);
+
+			if (country == null) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + primaryKey);
+				}
+
+				throw new NoSuchCountryException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
+					primaryKey);
+			}
+
+			return remove(country);
+		}
+		catch (NoSuchCountryException nsee) {
+			throw nsee;
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	@Override
+	protected Country removeImpl(Country country) throws SystemException {
+		country = toUnwrappedModel(country);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			if (!session.contains(country)) {
+				country = (Country)session.get(CountryImpl.class,
+						country.getPrimaryKeyObj());
+			}
+
+			if (country != null) {
+				session.delete(country);
+			}
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+
+		if (country != null) {
+			clearCache(country);
+		}
+
+		return country;
+	}
+
+	@Override
+	public Country updateImpl(com.liferay.portal.model.Country country)
+		throws SystemException {
+		country = toUnwrappedModel(country);
+
+		boolean isNew = country.isNew();
+
+		CountryModelImpl countryModelImpl = (CountryModelImpl)country;
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			if (country.isNew()) {
+				session.save(country);
+
+				country.setNew(false);
+			}
+			else {
+				session.merge(country);
+			}
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+
+		if (isNew || !CountryModelImpl.COLUMN_BITMASK_ENABLED) {
+			FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		}
+
+		else {
+			if ((countryModelImpl.getColumnBitmask() &
+					FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_ACTIVE.getColumnBitmask()) != 0) {
+				Object[] args = new Object[] {
+						countryModelImpl.getOriginalActive()
+					};
+
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_ACTIVE, args);
+				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_ACTIVE,
+					args);
+
+				args = new Object[] { countryModelImpl.getActive() };
+
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_ACTIVE, args);
+				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_ACTIVE,
+					args);
+			}
+		}
+
+		EntityCacheUtil.putResult(CountryModelImpl.ENTITY_CACHE_ENABLED,
+			CountryImpl.class, country.getPrimaryKey(), country);
+
+		clearUniqueFindersCache(country);
+		cacheUniqueFindersCache(country);
+
+		return country;
+	}
+
+	protected Country toUnwrappedModel(Country country) {
+		if (country instanceof CountryImpl) {
+			return country;
+		}
+
+		CountryImpl countryImpl = new CountryImpl();
+
+		countryImpl.setNew(country.isNew());
+		countryImpl.setPrimaryKey(country.getPrimaryKey());
+
+		countryImpl.setCountryId(country.getCountryId());
+		countryImpl.setName(country.getName());
+		countryImpl.setA2(country.getA2());
+		countryImpl.setA3(country.getA3());
+		countryImpl.setNumber(country.getNumber());
+		countryImpl.setIdd(country.getIdd());
+		countryImpl.setZipRequired(country.isZipRequired());
+		countryImpl.setActive(country.isActive());
+
+		return countryImpl;
+	}
+
+	/**
+	 * Returns the country with the primary key or throws a {@link com.liferay.portal.NoSuchModelException} if it could not be found.
+	 *
+	 * @param primaryKey the primary key of the country
+	 * @return the country
+	 * @throws com.liferay.portal.NoSuchCountryException if a country with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public Country findByPrimaryKey(Serializable primaryKey)
+		throws NoSuchCountryException, SystemException {
+		Country country = fetchByPrimaryKey(primaryKey);
+
+		if (country == null) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + primaryKey);
+			}
+
+			throw new NoSuchCountryException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
+				primaryKey);
+		}
+
+		return country;
+	}
+
+	/**
+	 * Returns the country with the primary key or throws a {@link com.liferay.portal.NoSuchCountryException} if it could not be found.
+	 *
+	 * @param countryId the primary key of the country
+	 * @return the country
+	 * @throws com.liferay.portal.NoSuchCountryException if a country with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public Country findByPrimaryKey(long countryId)
+		throws NoSuchCountryException, SystemException {
+		return findByPrimaryKey((Serializable)countryId);
+	}
+
+	/**
+	 * Returns the country with the primary key or returns <code>null</code> if it could not be found.
+	 *
+	 * @param primaryKey the primary key of the country
+	 * @return the country, or <code>null</code> if a country with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public Country fetchByPrimaryKey(Serializable primaryKey)
+		throws SystemException {
+		Country country = (Country)EntityCacheUtil.getResult(CountryModelImpl.ENTITY_CACHE_ENABLED,
+				CountryImpl.class, primaryKey);
+
+		if (country == _nullCountry) {
+			return null;
+		}
+
+		if (country == null) {
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				country = (Country)session.get(CountryImpl.class, primaryKey);
+
+				if (country != null) {
+					cacheResult(country);
+				}
+				else {
+					EntityCacheUtil.putResult(CountryModelImpl.ENTITY_CACHE_ENABLED,
+						CountryImpl.class, primaryKey, _nullCountry);
+				}
+			}
+			catch (Exception e) {
+				EntityCacheUtil.removeResult(CountryModelImpl.ENTITY_CACHE_ENABLED,
+					CountryImpl.class, primaryKey);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return country;
+	}
+
+	/**
+	 * Returns the country with the primary key or returns <code>null</code> if it could not be found.
+	 *
+	 * @param countryId the primary key of the country
+	 * @return the country, or <code>null</code> if a country with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public Country fetchByPrimaryKey(long countryId) throws SystemException {
+		return fetchByPrimaryKey((Serializable)countryId);
+	}
+
+	/**
+	 * Returns all the countries.
+	 *
+	 * @return the countries
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public List<Country> findAll() throws SystemException {
+		return findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+	}
+
+	/**
+	 * Returns a range of all the countries.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.CountryModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
+	 * </p>
+	 *
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @return the range of countries
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public List<Country> findAll(int start, int end) throws SystemException {
+		return findAll(start, end, null);
+	}
+
+	/**
+	 * Returns an ordered range of all the countries.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portal.model.impl.CountryModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
+	 * </p>
+	 *
+	 * @param start the lower bound of the range of countries
+	 * @param end the upper bound of the range of countries (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of countries
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public List<Country> findAll(int start, int end,
+		OrderByComparator orderByComparator) throws SystemException {
+		boolean pagination = true;
+		FinderPath finderPath = null;
+		Object[] finderArgs = null;
+
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+			pagination = false;
+			finderPath = FINDER_PATH_WITHOUT_PAGINATION_FIND_ALL;
+			finderArgs = FINDER_ARGS_EMPTY;
+		}
+		else {
+			finderPath = FINDER_PATH_WITH_PAGINATION_FIND_ALL;
+			finderArgs = new Object[] { start, end, orderByComparator };
+		}
+
+		List<Country> list = (List<Country>)FinderCacheUtil.getResult(finderPath,
+				finderArgs, this);
+
+		if (list == null) {
+			StringBundler query = null;
+			String sql = null;
+
+			if (orderByComparator != null) {
+				query = new StringBundler(2 +
+						(orderByComparator.getOrderByFields().length * 3));
+
+				query.append(_SQL_SELECT_COUNTRY);
+
+				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
+					orderByComparator);
+
+				sql = query.toString();
+			}
+			else {
+				sql = _SQL_SELECT_COUNTRY;
+
+				if (pagination) {
+					sql = sql.concat(CountryModelImpl.ORDER_BY_JPQL);
+				}
+			}
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query q = session.createQuery(sql);
+
+				if (!pagination) {
+					list = (List<Country>)QueryUtil.list(q, getDialect(),
+							start, end, false);
+
+					Collections.sort(list);
+
+					list = new UnmodifiableList<Country>(list);
+				}
+				else {
+					list = (List<Country>)QueryUtil.list(q, getDialect(),
+							start, end);
+				}
+
+				cacheResult(list);
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, list);
+			}
+			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return list;
+	}
+
+	/**
+	 * Removes all the countries from the database.
+	 *
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public void removeAll() throws SystemException {
+		for (Country country : findAll()) {
+			remove(country);
+		}
 	}
 
 	/**
@@ -1688,11 +1908,10 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	 * @return the number of countries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countAll() throws SystemException {
-		Object[] finderArgs = new Object[0];
-
 		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_ALL,
-				finderArgs, this);
+				FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -1703,23 +1922,27 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 				Query q = session.createQuery(_SQL_COUNT_COUNTRY);
 
 				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(FINDER_PATH_COUNT_ALL,
+					FINDER_ARGS_EMPTY, count);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_ALL,
+					FINDER_ARGS_EMPTY);
+
 				throw processException(e);
 			}
 			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_ALL, finderArgs,
-					count);
-
 				closeSession(session);
 			}
 		}
 
 		return count.intValue();
+	}
+
+	@Override
+	protected Set<String> getBadColumnNames() {
+		return _badColumnNames;
 	}
 
 	/**
@@ -1736,7 +1959,7 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 
 				for (String listenerClassName : listenerClassNames) {
 					listenersList.add((ModelListener<Country>)InstanceFactory.newInstance(
-							listenerClassName));
+							getClassLoader(), listenerClassName));
 				}
 
 				listeners = listenersList.toArray(new ModelListener[listenersList.size()]);
@@ -1750,169 +1973,36 @@ public class CountryPersistenceImpl extends BasePersistenceImpl<Country>
 	public void destroy() {
 		EntityCacheUtil.removeCache(CountryImpl.class.getName());
 		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_ENTITY);
-		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST);
+		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 	}
 
-	@BeanReference(type = AccountPersistence.class)
-	protected AccountPersistence accountPersistence;
-	@BeanReference(type = AddressPersistence.class)
-	protected AddressPersistence addressPersistence;
-	@BeanReference(type = BrowserTrackerPersistence.class)
-	protected BrowserTrackerPersistence browserTrackerPersistence;
-	@BeanReference(type = ClassNamePersistence.class)
-	protected ClassNamePersistence classNamePersistence;
-	@BeanReference(type = ClusterGroupPersistence.class)
-	protected ClusterGroupPersistence clusterGroupPersistence;
-	@BeanReference(type = CompanyPersistence.class)
-	protected CompanyPersistence companyPersistence;
-	@BeanReference(type = ContactPersistence.class)
-	protected ContactPersistence contactPersistence;
-	@BeanReference(type = CountryPersistence.class)
-	protected CountryPersistence countryPersistence;
-	@BeanReference(type = EmailAddressPersistence.class)
-	protected EmailAddressPersistence emailAddressPersistence;
-	@BeanReference(type = GroupPersistence.class)
-	protected GroupPersistence groupPersistence;
-	@BeanReference(type = ImagePersistence.class)
-	protected ImagePersistence imagePersistence;
-	@BeanReference(type = LayoutPersistence.class)
-	protected LayoutPersistence layoutPersistence;
-	@BeanReference(type = LayoutBranchPersistence.class)
-	protected LayoutBranchPersistence layoutBranchPersistence;
-	@BeanReference(type = LayoutPrototypePersistence.class)
-	protected LayoutPrototypePersistence layoutPrototypePersistence;
-	@BeanReference(type = LayoutRevisionPersistence.class)
-	protected LayoutRevisionPersistence layoutRevisionPersistence;
-	@BeanReference(type = LayoutSetPersistence.class)
-	protected LayoutSetPersistence layoutSetPersistence;
-	@BeanReference(type = LayoutSetBranchPersistence.class)
-	protected LayoutSetBranchPersistence layoutSetBranchPersistence;
-	@BeanReference(type = LayoutSetPrototypePersistence.class)
-	protected LayoutSetPrototypePersistence layoutSetPrototypePersistence;
-	@BeanReference(type = ListTypePersistence.class)
-	protected ListTypePersistence listTypePersistence;
-	@BeanReference(type = LockPersistence.class)
-	protected LockPersistence lockPersistence;
-	@BeanReference(type = MembershipRequestPersistence.class)
-	protected MembershipRequestPersistence membershipRequestPersistence;
-	@BeanReference(type = OrganizationPersistence.class)
-	protected OrganizationPersistence organizationPersistence;
-	@BeanReference(type = OrgGroupPermissionPersistence.class)
-	protected OrgGroupPermissionPersistence orgGroupPermissionPersistence;
-	@BeanReference(type = OrgGroupRolePersistence.class)
-	protected OrgGroupRolePersistence orgGroupRolePersistence;
-	@BeanReference(type = OrgLaborPersistence.class)
-	protected OrgLaborPersistence orgLaborPersistence;
-	@BeanReference(type = PasswordPolicyPersistence.class)
-	protected PasswordPolicyPersistence passwordPolicyPersistence;
-	@BeanReference(type = PasswordPolicyRelPersistence.class)
-	protected PasswordPolicyRelPersistence passwordPolicyRelPersistence;
-	@BeanReference(type = PasswordTrackerPersistence.class)
-	protected PasswordTrackerPersistence passwordTrackerPersistence;
-	@BeanReference(type = PermissionPersistence.class)
-	protected PermissionPersistence permissionPersistence;
-	@BeanReference(type = PhonePersistence.class)
-	protected PhonePersistence phonePersistence;
-	@BeanReference(type = PluginSettingPersistence.class)
-	protected PluginSettingPersistence pluginSettingPersistence;
-	@BeanReference(type = PortalPreferencesPersistence.class)
-	protected PortalPreferencesPersistence portalPreferencesPersistence;
-	@BeanReference(type = PortletPersistence.class)
-	protected PortletPersistence portletPersistence;
-	@BeanReference(type = PortletItemPersistence.class)
-	protected PortletItemPersistence portletItemPersistence;
-	@BeanReference(type = PortletPreferencesPersistence.class)
-	protected PortletPreferencesPersistence portletPreferencesPersistence;
-	@BeanReference(type = RegionPersistence.class)
-	protected RegionPersistence regionPersistence;
-	@BeanReference(type = ReleasePersistence.class)
-	protected ReleasePersistence releasePersistence;
-	@BeanReference(type = RepositoryPersistence.class)
-	protected RepositoryPersistence repositoryPersistence;
-	@BeanReference(type = RepositoryEntryPersistence.class)
-	protected RepositoryEntryPersistence repositoryEntryPersistence;
-	@BeanReference(type = ResourcePersistence.class)
-	protected ResourcePersistence resourcePersistence;
-	@BeanReference(type = ResourceActionPersistence.class)
-	protected ResourceActionPersistence resourceActionPersistence;
-	@BeanReference(type = ResourceBlockPersistence.class)
-	protected ResourceBlockPersistence resourceBlockPersistence;
-	@BeanReference(type = ResourceBlockPermissionPersistence.class)
-	protected ResourceBlockPermissionPersistence resourceBlockPermissionPersistence;
-	@BeanReference(type = ResourceCodePersistence.class)
-	protected ResourceCodePersistence resourceCodePersistence;
-	@BeanReference(type = ResourcePermissionPersistence.class)
-	protected ResourcePermissionPersistence resourcePermissionPersistence;
-	@BeanReference(type = ResourceTypePermissionPersistence.class)
-	protected ResourceTypePermissionPersistence resourceTypePermissionPersistence;
-	@BeanReference(type = RolePersistence.class)
-	protected RolePersistence rolePersistence;
-	@BeanReference(type = ServiceComponentPersistence.class)
-	protected ServiceComponentPersistence serviceComponentPersistence;
-	@BeanReference(type = ShardPersistence.class)
-	protected ShardPersistence shardPersistence;
-	@BeanReference(type = SubscriptionPersistence.class)
-	protected SubscriptionPersistence subscriptionPersistence;
-	@BeanReference(type = TeamPersistence.class)
-	protected TeamPersistence teamPersistence;
-	@BeanReference(type = TicketPersistence.class)
-	protected TicketPersistence ticketPersistence;
-	@BeanReference(type = UserPersistence.class)
-	protected UserPersistence userPersistence;
-	@BeanReference(type = UserGroupPersistence.class)
-	protected UserGroupPersistence userGroupPersistence;
-	@BeanReference(type = UserGroupGroupRolePersistence.class)
-	protected UserGroupGroupRolePersistence userGroupGroupRolePersistence;
-	@BeanReference(type = UserGroupRolePersistence.class)
-	protected UserGroupRolePersistence userGroupRolePersistence;
-	@BeanReference(type = UserIdMapperPersistence.class)
-	protected UserIdMapperPersistence userIdMapperPersistence;
-	@BeanReference(type = UserNotificationEventPersistence.class)
-	protected UserNotificationEventPersistence userNotificationEventPersistence;
-	@BeanReference(type = UserTrackerPersistence.class)
-	protected UserTrackerPersistence userTrackerPersistence;
-	@BeanReference(type = UserTrackerPathPersistence.class)
-	protected UserTrackerPathPersistence userTrackerPathPersistence;
-	@BeanReference(type = VirtualHostPersistence.class)
-	protected VirtualHostPersistence virtualHostPersistence;
-	@BeanReference(type = WebDAVPropsPersistence.class)
-	protected WebDAVPropsPersistence webDAVPropsPersistence;
-	@BeanReference(type = WebsitePersistence.class)
-	protected WebsitePersistence websitePersistence;
-	@BeanReference(type = WorkflowDefinitionLinkPersistence.class)
-	protected WorkflowDefinitionLinkPersistence workflowDefinitionLinkPersistence;
-	@BeanReference(type = WorkflowInstanceLinkPersistence.class)
-	protected WorkflowInstanceLinkPersistence workflowInstanceLinkPersistence;
 	private static final String _SQL_SELECT_COUNTRY = "SELECT country FROM Country country";
 	private static final String _SQL_SELECT_COUNTRY_WHERE = "SELECT country FROM Country country WHERE ";
 	private static final String _SQL_COUNT_COUNTRY = "SELECT COUNT(country) FROM Country country";
 	private static final String _SQL_COUNT_COUNTRY_WHERE = "SELECT COUNT(country) FROM Country country WHERE ";
-	private static final String _FINDER_COLUMN_NAME_NAME_1 = "country.name IS NULL";
-	private static final String _FINDER_COLUMN_NAME_NAME_2 = "country.name = ?";
-	private static final String _FINDER_COLUMN_NAME_NAME_3 = "(country.name IS NULL OR country.name = ?)";
-	private static final String _FINDER_COLUMN_A2_A2_1 = "country.a2 IS NULL";
-	private static final String _FINDER_COLUMN_A2_A2_2 = "country.a2 = ?";
-	private static final String _FINDER_COLUMN_A2_A2_3 = "(country.a2 IS NULL OR country.a2 = ?)";
-	private static final String _FINDER_COLUMN_A3_A3_1 = "country.a3 IS NULL";
-	private static final String _FINDER_COLUMN_A3_A3_2 = "country.a3 = ?";
-	private static final String _FINDER_COLUMN_A3_A3_3 = "(country.a3 IS NULL OR country.a3 = ?)";
-	private static final String _FINDER_COLUMN_ACTIVE_ACTIVE_2 = "country.active = ?";
 	private static final String _ORDER_BY_ENTITY_ALIAS = "country.";
 	private static final String _NO_SUCH_ENTITY_WITH_PRIMARY_KEY = "No Country exists with the primary key ";
 	private static final String _NO_SUCH_ENTITY_WITH_KEY = "No Country exists with the key {";
 	private static final boolean _HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE = com.liferay.portal.util.PropsValues.HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE;
 	private static Log _log = LogFactoryUtil.getLog(CountryPersistenceImpl.class);
+	private static Set<String> _badColumnNames = SetUtil.fromArray(new String[] {
+				"number", "idd", "active"
+			});
 	private static Country _nullCountry = new CountryImpl() {
+			@Override
 			public Object clone() {
 				return this;
 			}
 
+			@Override
 			public CacheModel<Country> toCacheModel() {
 				return _nullCountryCacheModel;
 			}
 		};
 
 	private static CacheModel<Country> _nullCountryCacheModel = new CacheModel<Country>() {
+			@Override
 			public Country toEntityModel() {
 				return _nullCountry;
 			}

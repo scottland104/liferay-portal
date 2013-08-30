@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,16 +16,19 @@ package com.liferay.portlet.bookmarks.asset;
 
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.trash.TrashRenderer;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.WebKeys;
+import com.liferay.portlet.asset.model.AssetRendererFactory;
 import com.liferay.portlet.asset.model.BaseAssetRenderer;
 import com.liferay.portlet.bookmarks.model.BookmarksEntry;
 import com.liferay.portlet.bookmarks.service.permission.BookmarksEntryPermission;
 
+import java.util.Date;
 import java.util.Locale;
 
 import javax.portlet.PortletRequest;
@@ -38,26 +41,69 @@ import javax.portlet.RenderResponse;
  * @author Juan Fernández
  * @author Sergio González
  */
-public class BookmarksEntryAssetRenderer extends BaseAssetRenderer {
+public class BookmarksEntryAssetRenderer
+	extends BaseAssetRenderer implements TrashRenderer {
 
 	public BookmarksEntryAssetRenderer(BookmarksEntry entry) {
 		_entry = entry;
 	}
 
+	@Override
+	public String getClassName() {
+		return BookmarksEntry.class.getName();
+	}
+
+	@Override
 	public long getClassPK() {
 		return _entry.getEntryId();
 	}
 
+	@Override
+	public Date getDisplayDate() {
+		return _entry.getModifiedDate();
+	}
+
+	@Override
 	public long getGroupId() {
 		return _entry.getGroupId();
 	}
 
+	@Override
+	public String getIconPath(ThemeDisplay themeDisplay) {
+		return themeDisplay.getPathThemeImages() + "/ratings/star_hover.png";
+	}
+
+	@Override
+	public String getPortletId() {
+		AssetRendererFactory assetRendererFactory = getAssetRendererFactory();
+
+		return assetRendererFactory.getPortletId();
+	}
+
+	@Override
 	public String getSummary(Locale locale) {
 		return HtmlUtil.stripHtml(_entry.getDescription());
 	}
 
+	@Override
+	public String getThumbnailPath(PortletRequest portletRequest)
+		throws Exception {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		return themeDisplay.getPathThemeImages() +
+			"/file_system/large/bookmark.png";
+	}
+
+	@Override
 	public String getTitle(Locale locale) {
 		return _entry.getName();
+	}
+
+	@Override
+	public String getType() {
+		return BookmarksEntryAssetRendererFactory.TYPE;
 	}
 
 	@Override
@@ -73,7 +119,7 @@ public class BookmarksEntryAssetRenderer extends BaseAssetRenderer {
 		portletURL.setParameter("struts_action", "/bookmarks/edit_entry");
 		portletURL.setParameter(
 			"folderId", String.valueOf(_entry.getFolderId()));
- 		portletURL.setParameter("entryId", String.valueOf(_entry.getEntryId()));
+		portletURL.setParameter("entryId", String.valueOf(_entry.getEntryId()));
 
 		return portletURL;
 	}
@@ -84,18 +130,22 @@ public class BookmarksEntryAssetRenderer extends BaseAssetRenderer {
 		LiferayPortletResponse liferayPortletResponse,
 		String noSuchEntryRedirect) {
 
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)liferayPortletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
-
-		return themeDisplay.getPathMain() + "/bookmarks/open_entry?entryId=" +
-			_entry.getEntryId();
+		return getURLViewInContext(
+			liferayPortletRequest, noSuchEntryRedirect, "/bookmarks/find_entry",
+			"entryId", _entry.getEntryId());
 	}
 
+	@Override
 	public long getUserId() {
 		return _entry.getUserId();
 	}
 
+	@Override
+	public String getUserName() {
+		return _entry.getUserName();
+	}
+
+	@Override
 	public String getUuid() {
 		return _entry.getUuid();
 	}
@@ -129,6 +179,7 @@ public class BookmarksEntryAssetRenderer extends BaseAssetRenderer {
 		return true;
 	}
 
+	@Override
 	public String render(
 			RenderRequest renderRequest, RenderResponse renderResponse,
 			String template)
@@ -142,11 +193,6 @@ public class BookmarksEntryAssetRenderer extends BaseAssetRenderer {
 		else {
 			return null;
 		}
-	}
-
-	@Override
-	protected String getIconPath(ThemeDisplay themeDisplay) {
-		return themeDisplay.getPathThemeImages() + "/ratings/star_hover.png";
 	}
 
 	private BookmarksEntry _entry;

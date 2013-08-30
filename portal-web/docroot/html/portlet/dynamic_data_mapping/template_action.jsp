@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,8 +20,6 @@
 ResultRow row = (ResultRow)request.getAttribute(WebKeys.SEARCH_CONTAINER_RESULT_ROW);
 
 DDMTemplate template = (DDMTemplate)row.getObject();
-
-DDMStructure structure = template.getStructure();
 %>
 
 <liferay-ui:icon-menu showExpanded="<%= false %>" showWhenSingleIcon="<%= false %>">
@@ -29,12 +27,10 @@ DDMStructure structure = template.getStructure();
 		<portlet:renderURL var="editURL">
 			<portlet:param name="struts_action" value="/dynamic_data_mapping/edit_template" />
 			<portlet:param name="redirect" value="<%= currentURL %>" />
-			<portlet:param name="backURL" value="<%= currentURL %>" />
 			<portlet:param name="groupId" value="<%= String.valueOf(template.getGroupId()) %>" />
 			<portlet:param name="templateId" value="<%= String.valueOf(template.getTemplateId()) %>" />
-			<portlet:param name="structureId" value="<%= String.valueOf(structure.getStructureId()) %>" />
 			<portlet:param name="type" value="<%= template.getType() %>" />
-			<portlet:param name="structureAvailableFields" value='<%= renderResponse.getNamespace() + "structureAvailableFields" %>' />
+			<portlet:param name="structureAvailableFields" value='<%= renderResponse.getNamespace() + "getAvailableFields" %>' />
 		</portlet:renderURL>
 
 		<liferay-ui:icon
@@ -54,6 +50,30 @@ DDMStructure structure = template.getStructure();
 		<liferay-ui:icon
 			image="permissions"
 			url="<%= permissionsURL %>"
+		/>
+	</c:if>
+
+	<c:if test="<%= DDMPermission.contains(permissionChecker, scopeGroupId, ddmDisplay.getResourceName(template.getClassNameId()), ddmDisplay.getAddTemplateActionId()) %>">
+		<portlet:renderURL var="copyURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
+			<portlet:param name="closeRedirect" value="<%= HttpUtil.encodeURL(currentURL) %>" />
+			<portlet:param name="struts_action" value="/dynamic_data_mapping/copy_template" />
+			<portlet:param name="templateId" value="<%= String.valueOf(template.getTemplateId()) %>" />
+		</portlet:renderURL>
+
+		<%
+		StringBundler sb = new StringBundler(6);
+
+		sb.append("javascript:");
+		sb.append(renderResponse.getNamespace());
+		sb.append("copyTemplate");
+		sb.append("('");
+		sb.append(copyURL);
+		sb.append("');");
+		%>
+
+		<liferay-ui:icon
+			image="copy"
+			url="<%= sb.toString() %>"
 		/>
 	</c:if>
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -13,6 +13,9 @@
  */
 
 package com.liferay.portal.kernel.util;
+
+import com.liferay.portal.kernel.security.pacl.permission.PortalRuntimePermission;
+import com.liferay.portal.kernel.security.pacl.permission.PortalSocketPermission;
 
 import java.io.IOException;
 
@@ -67,6 +70,10 @@ public class HttpUtil {
 		return getHttp().decodeURL(url, unescapeSpaces);
 	}
 
+	public static String encodeParameters(String url) {
+		return getHttp().encodeParameters(url);
+	}
+
 	public static String encodePath(String path) {
 		return getHttp().encodePath(path);
 	}
@@ -101,12 +108,14 @@ public class HttpUtil {
 		return getHttp().getDomain(url);
 	}
 
-	public static String getIpAddress(String url) {
-		return getHttp().getIpAddress(url);
+	public static Http getHttp() {
+		PortalRuntimePermission.checkGetBeanProperty(HttpUtil.class);
+
+		return _http;
 	}
 
-	public static Http getHttp() {
-		return _http;
+	public static String getIpAddress(String url) {
+		return getHttp().getIpAddress(url);
 	}
 
 	public static String getParameter(String url, String name) {
@@ -121,6 +130,10 @@ public class HttpUtil {
 
 	public static Map<String, String[]> getParameterMap(String queryString) {
 		return getHttp().getParameterMap(queryString);
+	}
+
+	public static String getPath(String url) {
+		return getHttp().getPath(url);
 	}
 
 	public static String getProtocol(ActionRequest actionRequest) {
@@ -217,6 +230,10 @@ public class HttpUtil {
 		return getHttp().removeProtocol(url);
 	}
 
+	public static String sanitizeHeader(String header) {
+		return getHttp().sanitizeHeader(header);
+	}
+
 	public static String setParameter(String url, String name, boolean value) {
 		return getHttp().setParameter(url, name, value);
 	}
@@ -244,29 +261,41 @@ public class HttpUtil {
 	public static byte[] URLtoByteArray(Http.Options options)
 		throws IOException {
 
+		PortalSocketPermission.checkConnect(options);
+
 		return getHttp().URLtoByteArray(options);
 	}
 
 	public static byte[] URLtoByteArray(String location) throws IOException {
+		PortalSocketPermission.checkConnect(location);
+
 		return getHttp().URLtoByteArray(location);
 	}
 
 	public static byte[] URLtoByteArray(String location, boolean post)
 		throws IOException {
 
+		PortalSocketPermission.checkConnect(location);
+
 		return getHttp().URLtoByteArray(location, post);
 	}
 
 	public static String URLtoString(Http.Options options) throws IOException {
+		PortalSocketPermission.checkConnect(options);
+
 		return getHttp().URLtoString(options);
 	}
 
 	public static String URLtoString(String location) throws IOException {
+		PortalSocketPermission.checkConnect(location);
+
 		return getHttp().URLtoString(location);
 	}
 
 	public static String URLtoString(String location, boolean post)
 		throws IOException {
+
+		PortalSocketPermission.checkConnect(location);
 
 		return getHttp().URLtoString(location, post);
 	}
@@ -277,14 +306,20 @@ public class HttpUtil {
 	 * represent a file or some JNDI resource. In that case, the default Java
 	 * implementation is used.
 	 *
+	 * @param  url the URL
 	 * @return A string representation of the resource referenced by the URL
 	 *         object
+	 * @throws IOException if an IO Exception occurred
 	 */
 	public static String URLtoString(URL url) throws IOException {
+		PortalSocketPermission.checkConnect(url);
+
 		return getHttp().URLtoString(url);
 	}
 
 	public void setHttp(Http http) {
+		PortalRuntimePermission.checkSetBeanProperty(getClass());
+
 		_http = http;
 	}
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,21 +14,18 @@
 
 package com.liferay.taglib.aui;
 
-import com.liferay.portal.kernel.servlet.BrowserSnifferUtil;
+import com.liferay.portal.kernel.servlet.BodyContentWrapper;
 import com.liferay.portal.kernel.servlet.PortalIncludeUtil;
 import com.liferay.portal.kernel.servlet.taglib.FileAvailabilityUtil;
 import com.liferay.portal.kernel.servlet.taglib.aui.ScriptData;
 import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.StringBundler;
-import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.taglib.util.PositionTagSupport;
-
-import java.util.Set;
+import com.liferay.portal.model.Portlet;
+import com.liferay.taglib.aui.base.BaseScriptTag;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.PageContext;
 import javax.servlet.jsp.tagext.BodyContent;
 
@@ -36,14 +33,22 @@ import javax.servlet.jsp.tagext.BodyContent;
  * @author Brian Wing Shun Chan
  * @author Shuyang Zhou
  */
-public class ScriptTag extends PositionTagSupport {
-
-	public static final String PAGE = "/html/taglib/aui/script/page.jsp";
+public class ScriptTag extends BaseScriptTag {
 
 	public static void doTag(
 			String position, String use, String bodyContentString,
-			PageContext pageContext)
+			BodyContent previousBodyContent, PageContext pageContext)
 		throws Exception {
+
+		String previousBodyContentString = null;
+
+		if ((previousBodyContent != null) &&
+			!(previousBodyContent instanceof BodyContentWrapper)) {
+
+			// LPS-22413
+
+			previousBodyContentString = previousBodyContent.getString();
+		}
 
 		ScriptTag scriptTag = new ScriptTag();
 
@@ -62,6 +67,15 @@ public class ScriptTag extends PositionTagSupport {
 		scriptTag.doEndTag();
 
 		scriptTag.release();
+
+		if (previousBodyContentString != null) {
+
+			// LPS-22413
+
+			previousBodyContent.clear();
+
+			previousBodyContent.append(previousBodyContentString);
+		}
 	}
 
 	public static void flushScriptData(PageContext pageContext)
@@ -71,24 +85,15 @@ public class ScriptTag extends PositionTagSupport {
 			(HttpServletRequest)pageContext.getRequest();
 
 		ScriptData scriptData = (ScriptData)request.getAttribute(
-			ScriptTag.class.getName());
+			WebKeys.AUI_SCRIPT_DATA);
 
 		if (scriptData == null) {
-			scriptData = (ScriptData)request.getAttribute(
-				WebKeys.AUI_SCRIPT_DATA);
-
-			if (scriptData != null) {
-				request.removeAttribute(WebKeys.AUI_SCRIPT_DATA);
-			}
+			return;
 		}
 
-		if (scriptData != null) {
-			ScriptTag scriptTag = new ScriptTag();
+		request.removeAttribute(WebKeys.AUI_SCRIPT_DATA);
 
-			scriptTag.setPageContext(pageContext);
-
-			scriptTag.processEndTag(scriptData);
-		}
+		scriptData.writeTo(request, pageContext.getOut());
 	}
 
 	@Override
@@ -96,25 +101,34 @@ public class ScriptTag extends PositionTagSupport {
 		HttpServletRequest request =
 			(HttpServletRequest)pageContext.getRequest();
 
-		boolean positionInline = isPositionInLine();
-
 		try {
+			String portletId = null;
+
+			Portlet portlet = (Portlet)request.getAttribute(
+				WebKeys.RENDER_PORTLET);
+
+			if (portlet != null) {
+				portletId = portlet.getPortletId();
+			}
+
 			StringBundler bodyContentSB = getBodyContentAsStringBundler();
 
-			if (positionInline) {
+			String use = getUse();
+
+			if (isPositionInLine()) {
 				ScriptData scriptData = new ScriptData();
 
-				request.setAttribute(ScriptTag.class.getName(), scriptData);
+				scriptData.append(portletId, bodyContentSB, use);
 
-				scriptData.append(bodyContentSB, _use);
+				String page = getPage();
 
 				if (FileAvailabilityUtil.isAvailable(
-						pageContext.getServletContext(), PAGE)) {
+						pageContext.getServletContext(), page)) {
 
-					PortalIncludeUtil.include(pageContext, PAGE);
+					PortalIncludeUtil.include(pageContext, page);
 				}
 				else {
-					processEndTag(scriptData);
+					scriptData.writeTo(request, pageContext.getOut());
 				}
 			}
 			else {
@@ -127,7 +141,7 @@ public class ScriptTag extends PositionTagSupport {
 					request.setAttribute(WebKeys.AUI_SCRIPT_DATA, scriptData);
 				}
 
-				scriptData.append(bodyContentSB, _use);
+				scriptData.append(portletId, bodyContentSB, use);
 			}
 
 			return EVAL_PAGE;
@@ -136,73 +150,28 @@ public class ScriptTag extends PositionTagSupport {
 			throw new JspException(e);
 		}
 		finally {
-			if (positionInline) {
-				request.removeAttribute(ScriptTag.class.getName());
-			}
-
 			if (!ServerDetector.isResin()) {
 				cleanUp();
 			}
+
+			request.removeAttribute(WebKeys.JAVASCRIPT_CONTEXT);
 		}
 	}
 
-	public void setUse(String use) {
-		_use = use;
+	@Override
+	public int doStartTag() throws JspException {
+		HttpServletRequest request =
+			(HttpServletRequest)pageContext.getRequest();
+
+		request.setAttribute(WebKeys.JAVASCRIPT_CONTEXT, Boolean.TRUE);
+
+		return super.doStartTag();
 	}
 
 	@Override
 	protected void cleanUp() {
-		super.cleanUp();
-
-		_use = null;
+		setPosition(null);
+		setUse(null);
 	}
-
-	protected void processEndTag(ScriptData scriptData) throws Exception {
-		JspWriter jspWriter = pageContext.getOut();
-
-		jspWriter.write("<script type=\"text/javascript\">\n// <![CDATA[\n");
-
-		StringBundler rawSB = scriptData.getRawSB();
-
-		rawSB.writeTo(jspWriter);
-
-		StringBundler callbackSB = scriptData.getCallbackSB();
-
-		if (callbackSB.index() > 0) {
-			String loadMethod = "use";
-
-			HttpServletRequest request =
-				(HttpServletRequest)pageContext.getRequest();
-
-			if (BrowserSnifferUtil.isIe(request) &&
-				(BrowserSnifferUtil.getMajorVersion(request) < 8)) {
-
-				loadMethod = "ready";
-			}
-
-			jspWriter.write("AUI().");
-			jspWriter.write( loadMethod );
-			jspWriter.write("(");
-
-			Set<String> useSet = scriptData.getUseSet();
-
-			for (String use : useSet) {
-				jspWriter.write(StringPool.APOSTROPHE);
-				jspWriter.write(use);
-				jspWriter.write(StringPool.APOSTROPHE);
-				jspWriter.write(StringPool.COMMA_AND_SPACE);
-			}
-
-			jspWriter.write("function(A) {");
-
-			callbackSB.writeTo(jspWriter);
-
-			jspWriter.write("});");
-		}
-
-		jspWriter.write("\n// ]]>\n</script>");
-	}
-
-	private String _use;
 
 }

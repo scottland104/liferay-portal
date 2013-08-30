@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,9 +20,7 @@ package com.liferay.portal.kernel.messaging;
 public class InvokerMessageListener implements MessageListener {
 
 	public InvokerMessageListener(MessageListener messageListener) {
-		this(
-			messageListener,
-			Thread.currentThread().getContextClassLoader());
+		this(messageListener, Thread.currentThread().getContextClassLoader());
 	}
 
 	public InvokerMessageListener(
@@ -34,6 +32,14 @@ public class InvokerMessageListener implements MessageListener {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof InvokerMessageListener)) {
+			return false;
+		}
+
 		InvokerMessageListener messageListenerInvoker =
 			(InvokerMessageListener)obj;
 
@@ -54,6 +60,7 @@ public class InvokerMessageListener implements MessageListener {
 		return _messageListener.hashCode();
 	}
 
+	@Override
 	public void receive(Message message) throws MessageListenerException {
 		Thread currentThread = Thread.currentThread();
 
@@ -69,7 +76,7 @@ public class InvokerMessageListener implements MessageListener {
 		}
 	}
 
-	private MessageListener _messageListener;
 	private ClassLoader _classLoader;
+	private MessageListener _messageListener;
 
 }

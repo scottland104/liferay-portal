@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,8 +16,10 @@ package com.liferay.portal.model.impl;
 
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.PasswordPolicyRel;
 import com.liferay.portal.model.PasswordPolicyRelModel;
@@ -29,9 +31,10 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the PasswordPolicyRel service. Represents a row in the &quot;PasswordPolicyRel&quot; database table, with each column mapped to a property of this class.
@@ -62,6 +65,8 @@ public class PasswordPolicyRelModelImpl extends BaseModelImpl<PasswordPolicyRel>
 		};
 	public static final String TABLE_SQL_CREATE = "create table PasswordPolicyRel (passwordPolicyRelId LONG not null primary key,passwordPolicyId LONG,classNameId LONG,classPK LONG)";
 	public static final String TABLE_SQL_DROP = "drop table PasswordPolicyRel";
+	public static final String ORDER_BY_JPQL = " ORDER BY passwordPolicyRel.passwordPolicyRelId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY PasswordPolicyRel.passwordPolicyRelId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -71,50 +76,107 @@ public class PasswordPolicyRelModelImpl extends BaseModelImpl<PasswordPolicyRel>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.PasswordPolicyRel"),
 			true);
-
-	public Class<?> getModelClass() {
-		return PasswordPolicyRel.class;
-	}
-
-	public String getModelClassName() {
-		return PasswordPolicyRel.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.PasswordPolicyRel"),
+			true);
+	public static long CLASSNAMEID_COLUMN_BITMASK = 1L;
+	public static long CLASSPK_COLUMN_BITMASK = 2L;
+	public static long PASSWORDPOLICYID_COLUMN_BITMASK = 4L;
+	public static long PASSWORDPOLICYRELID_COLUMN_BITMASK = 8L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.PasswordPolicyRel"));
 
 	public PasswordPolicyRelModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _passwordPolicyRelId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setPasswordPolicyRelId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_passwordPolicyRelId);
+		return _passwordPolicyRelId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return PasswordPolicyRel.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return PasswordPolicyRel.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("passwordPolicyRelId", getPasswordPolicyRelId());
+		attributes.put("passwordPolicyId", getPasswordPolicyId());
+		attributes.put("classNameId", getClassNameId());
+		attributes.put("classPK", getClassPK());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long passwordPolicyRelId = (Long)attributes.get("passwordPolicyRelId");
+
+		if (passwordPolicyRelId != null) {
+			setPasswordPolicyRelId(passwordPolicyRelId);
+		}
+
+		Long passwordPolicyId = (Long)attributes.get("passwordPolicyId");
+
+		if (passwordPolicyId != null) {
+			setPasswordPolicyId(passwordPolicyId);
+		}
+
+		Long classNameId = (Long)attributes.get("classNameId");
+
+		if (classNameId != null) {
+			setClassNameId(classNameId);
+		}
+
+		Long classPK = (Long)attributes.get("classPK");
+
+		if (classPK != null) {
+			setClassPK(classPK);
+		}
+	}
+
+	@Override
 	public long getPasswordPolicyRelId() {
 		return _passwordPolicyRelId;
 	}
 
+	@Override
 	public void setPasswordPolicyRelId(long passwordPolicyRelId) {
 		_passwordPolicyRelId = passwordPolicyRelId;
 	}
 
+	@Override
 	public long getPasswordPolicyId() {
 		return _passwordPolicyId;
 	}
 
+	@Override
 	public void setPasswordPolicyId(long passwordPolicyId) {
+		_columnBitmask |= PASSWORDPOLICYID_COLUMN_BITMASK;
+
 		if (!_setOriginalPasswordPolicyId) {
 			_setOriginalPasswordPolicyId = true;
 
@@ -128,6 +190,7 @@ public class PasswordPolicyRelModelImpl extends BaseModelImpl<PasswordPolicyRel>
 		return _originalPasswordPolicyId;
 	}
 
+	@Override
 	public String getClassName() {
 		if (getClassNameId() <= 0) {
 			return StringPool.BLANK;
@@ -136,11 +199,26 @@ public class PasswordPolicyRelModelImpl extends BaseModelImpl<PasswordPolicyRel>
 		return PortalUtil.getClassName(getClassNameId());
 	}
 
+	@Override
+	public void setClassName(String className) {
+		long classNameId = 0;
+
+		if (Validator.isNotNull(className)) {
+			classNameId = PortalUtil.getClassNameId(className);
+		}
+
+		setClassNameId(classNameId);
+	}
+
+	@Override
 	public long getClassNameId() {
 		return _classNameId;
 	}
 
+	@Override
 	public void setClassNameId(long classNameId) {
+		_columnBitmask |= CLASSNAMEID_COLUMN_BITMASK;
+
 		if (!_setOriginalClassNameId) {
 			_setOriginalClassNameId = true;
 
@@ -154,11 +232,15 @@ public class PasswordPolicyRelModelImpl extends BaseModelImpl<PasswordPolicyRel>
 		return _originalClassNameId;
 	}
 
+	@Override
 	public long getClassPK() {
 		return _classPK;
 	}
 
+	@Override
 	public void setClassPK(long classPK) {
+		_columnBitmask |= CLASSPK_COLUMN_BITMASK;
+
 		if (!_setOriginalClassPK) {
 			_setOriginalClassPK = true;
 
@@ -172,35 +254,31 @@ public class PasswordPolicyRelModelImpl extends BaseModelImpl<PasswordPolicyRel>
 		return _originalClassPK;
 	}
 
-	@Override
-	public PasswordPolicyRel toEscapedModel() {
-		if (isEscapedModel()) {
-			return (PasswordPolicyRel)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (PasswordPolicyRel)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(0,
-					PasswordPolicyRel.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(0,
+			PasswordPolicyRel.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public PasswordPolicyRel toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (PasswordPolicyRel)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -217,6 +295,7 @@ public class PasswordPolicyRelModelImpl extends BaseModelImpl<PasswordPolicyRel>
 		return passwordPolicyRelImpl;
 	}
 
+	@Override
 	public int compareTo(PasswordPolicyRel passwordPolicyRel) {
 		long primaryKey = passwordPolicyRel.getPrimaryKey();
 
@@ -233,18 +312,15 @@ public class PasswordPolicyRelModelImpl extends BaseModelImpl<PasswordPolicyRel>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof PasswordPolicyRel)) {
 			return false;
 		}
 
-		PasswordPolicyRel passwordPolicyRel = null;
-
-		try {
-			passwordPolicyRel = (PasswordPolicyRel)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		PasswordPolicyRel passwordPolicyRel = (PasswordPolicyRel)obj;
 
 		long primaryKey = passwordPolicyRel.getPrimaryKey();
 
@@ -276,6 +352,8 @@ public class PasswordPolicyRelModelImpl extends BaseModelImpl<PasswordPolicyRel>
 		passwordPolicyRelModelImpl._originalClassPK = passwordPolicyRelModelImpl._classPK;
 
 		passwordPolicyRelModelImpl._setOriginalClassPK = false;
+
+		passwordPolicyRelModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -310,6 +388,7 @@ public class PasswordPolicyRelModelImpl extends BaseModelImpl<PasswordPolicyRel>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(16);
 
@@ -340,7 +419,7 @@ public class PasswordPolicyRelModelImpl extends BaseModelImpl<PasswordPolicyRel>
 	}
 
 	private static ClassLoader _classLoader = PasswordPolicyRel.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			PasswordPolicyRel.class
 		};
 	private long _passwordPolicyRelId;
@@ -353,6 +432,6 @@ public class PasswordPolicyRelModelImpl extends BaseModelImpl<PasswordPolicyRel>
 	private long _classPK;
 	private long _originalClassPK;
 	private boolean _setOriginalClassPK;
-	private transient ExpandoBridge _expandoBridge;
-	private PasswordPolicyRel _escapedModelProxy;
+	private long _columnBitmask;
+	private PasswordPolicyRel _escapedModel;
 }

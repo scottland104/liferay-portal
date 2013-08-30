@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,16 +23,15 @@ public interface DestinationNames {
 
 	public static final String AUDIT = "liferay/audit";
 
+	public static final String BACKGROUND_TASK = "liferay/background_task";
+
+	public static final String BACKGROUND_TASK_STATUS =
+		"liferay/background_task_status";
+
 	/**
-	 * @deprecated {@link #SUBSCRIPTION_SENDER}
+	 * @deprecated As of 6.1.0, replaced by {@link #SUBSCRIPTION_SENDER}
 	 */
 	public static final String BLOGS = "liferay/blogs";
-
-	public static final String BUFFERED_INCREMENT_PARALLEL =
-		"liferay/buffered_increment_parallel";
-
-	public static final String BUFFERED_INCREMENT_SERIAL =
-		"liferay/buffered_increment_serial";
 
 	public static final String CONVERT_PROCESS = "liferay/convert_process";
 
@@ -42,17 +41,20 @@ public interface DestinationNames {
 	public static final String DOCUMENT_LIBRARY_AUDIO_PROCESSOR =
 		"liferay/document_library_audio_processor";
 
-	public static final String DOCUMENT_LIBRARY_FOLDER_LAST_POST_DATE =
-		"liferay/document_library_folder_last_post_date";
-
 	public static final String DOCUMENT_LIBRARY_HOOK =
 		"liferay/document_library_hook";
+
+	public static final String DOCUMENT_LIBRARY_IMAGE_PROCESSOR =
+		"liferay/document_library_image_processor";
 
 	public static final String DOCUMENT_LIBRARY_PDF_PROCESSOR =
 		"liferay/document_library_pdf_processor";
 
 	public static final String DOCUMENT_LIBRARY_RAW_METADATA_PROCESSOR =
 		"liferay/document_library_raw_metadata_processor";
+
+	public static final String DOCUMENT_LIBRARY_SYNC_EVENT_PROCESSOR =
+		"liferay/document_library_sync_event_processor";
 
 	public static final String DOCUMENT_LIBRARY_VIDEO_PROCESSOR =
 		"liferay/document_library_video_processor";
@@ -73,7 +75,7 @@ public interface DestinationNames {
 		"liferay/ip_geocoder/response";
 
 	/**
-	 * @deprecated {@link #SUBSCRIPTION_SENDER}
+	 * @deprecated As of 6.1.0, replaced by {@link #SUBSCRIPTION_SENDER}
 	 */
 	public static final String JOURNAL = "liferay/journal";
 
@@ -89,15 +91,17 @@ public interface DestinationNames {
 
 	public static final String MAIL_SYNCHRONIZER = "liferay/mail_synchronizer";
 
+	public static final String MARKETPLACE = "liferay/marketplace";
+
 	/**
-	 * @deprecated {@link #SUBSCRIPTION_SENDER}
+	 * @deprecated As of 6.1.0, replaced by {@link #SUBSCRIPTION_SENDER}
 	 */
 	public static final String MESSAGE_BOARDS = "liferay/message_boards";
 
 	public static final String MESSAGE_BOARDS_MAILING_LIST =
 		"liferay/message_boards_mailing_list";
 
-	public static final String MESSAGE_BUS_DEFAULT_RESPONSE=
+	public static final String MESSAGE_BUS_DEFAULT_RESPONSE =
 		"liferay/message_bus/default_response";
 
 	public static final String MESSAGE_BUS_MESSAGE_STATUS =
@@ -138,7 +142,7 @@ public interface DestinationNames {
 	public static final String TEST_TRANSACTION = "liferay/test_transaction";
 
 	/**
-	 * @deprecated {@link #SUBSCRIPTION_SENDER}
+	 * @deprecated As of 6.1.0, replaced by {@link #SUBSCRIPTION_SENDER}
 	 */
 	public static final String WIKI = "liferay/wiki";
 

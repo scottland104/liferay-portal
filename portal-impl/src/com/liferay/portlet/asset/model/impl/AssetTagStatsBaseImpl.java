@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -38,7 +38,13 @@ public abstract class AssetTagStatsBaseImpl extends AssetTagStatsModelImpl
 	 *
 	 * Never modify or reference this class directly. All methods that expect a asset tag stats model instance should use the {@link AssetTagStats} interface instead.
 	 */
+	@Override
 	public void persist() throws SystemException {
-		AssetTagStatsLocalServiceUtil.updateAssetTagStats(this);
+		if (this.isNew()) {
+			AssetTagStatsLocalServiceUtil.addAssetTagStats(this);
+		}
+		else {
+			AssetTagStatsLocalServiceUtil.updateAssetTagStats(this);
+		}
 	}
 }

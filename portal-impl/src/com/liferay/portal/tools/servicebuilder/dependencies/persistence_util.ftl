@@ -76,24 +76,17 @@ public class ${entity.name}Util {
 	}
 
 	/**
-	 * @see com.liferay.portal.service.persistence.BasePersistence#remove(com.liferay.portal.model.BaseModel)
+	 * @see com.liferay.portal.service.persistence.BasePersistence#update(com.liferay.portal.model.BaseModel)
 	 */
-	public static ${entity.name} remove(${entity.name} ${entity.varName}) throws SystemException {
-		return getPersistence().remove(${entity.varName});
+	public static ${entity.name} update(${entity.name} ${entity.varName}) throws SystemException {
+		return getPersistence().update(${entity.varName});
 	}
 
 	/**
-	 * @see com.liferay.portal.service.persistence.BasePersistence#update(com.liferay.portal.model.BaseModel, boolean)
+	 * @see com.liferay.portal.service.persistence.BasePersistence#update(com.liferay.portal.model.BaseModel, ServiceContext)
 	 */
-	public static ${entity.name} update(${entity.name} ${entity.varName}, boolean merge) throws SystemException {
-		return getPersistence().update(${entity.varName}, merge);
-	}
-
-	/**
-	 * @see com.liferay.portal.service.persistence.BasePersistence#update(com.liferay.portal.model.BaseModel, boolean, ServiceContext)
-	 */
-	public static ${entity.name} update(${entity.name} ${entity.varName}, boolean merge, ServiceContext serviceContext) throws SystemException {
-		return getPersistence().update(${entity.varName}, merge, serviceContext);
+	public static ${entity.name} update(${entity.name} ${entity.varName}, ServiceContext serviceContext) throws SystemException {
+		return getPersistence().update(${entity.varName}, serviceContext);
 	}
 
 	<#list methods as method>
@@ -157,10 +150,10 @@ public class ${entity.name}Util {
 		return _persistence;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setPersistence(${entity.name}Persistence persistence) {
-		_persistence = persistence;
-
-		ReferenceRegistry.registerReference(${entity.name}Util.class, "_persistence");
 	}
 
 	private static ${entity.name}Persistence _persistence;

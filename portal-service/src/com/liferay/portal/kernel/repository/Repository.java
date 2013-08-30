@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,10 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.repository.model.Folder;
+import com.liferay.portal.kernel.search.Hits;
+import com.liferay.portal.kernel.search.Query;
+import com.liferay.portal.kernel.search.SearchContext;
+import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.model.Lock;
 import com.liferay.portal.service.ServiceContext;
@@ -50,7 +54,7 @@ public interface Repository {
 			ServiceContext serviceContext)
 		throws PortalException, SystemException;
 
-	public void cancelCheckOut(long fileEntryId)
+	public FileVersion cancelCheckOut(long fileEntryId)
 		throws PortalException, SystemException;
 
 	public void checkInFileEntry(
@@ -58,14 +62,24 @@ public interface Repository {
 			ServiceContext serviceContext)
 		throws PortalException, SystemException;
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #checkInFileEntry(long,
+	 *             String, ServiceContext)}
+	 */
 	public void checkInFileEntry(long fileEntryId, String lockUuid)
 		throws PortalException, SystemException;
 
-	public FileEntry checkOutFileEntry(long fileEntryId)
+	public void checkInFileEntry(
+			long fileEntryId, String lockUuid, ServiceContext serviceContext)
 		throws PortalException, SystemException;
 
 	public FileEntry checkOutFileEntry(
-			long fileEntryId, String owner, long expirationTime)
+			long fileEntryId, ServiceContext serviceContext)
+		throws PortalException, SystemException;
+
+	public FileEntry checkOutFileEntry(
+			long fileEntryId, String owner, long expirationTime,
+			ServiceContext serviceContext)
 		throws PortalException, SystemException;
 
 	public FileEntry copyFileEntry(
@@ -79,6 +93,9 @@ public interface Repository {
 	public void deleteFileEntry(long folderId, String title)
 		throws PortalException, SystemException;
 
+	public void deleteFileVersion(long fileEntryId, String version)
+		throws PortalException, SystemException;
+
 	public void deleteFolder(long folderId)
 		throws PortalException, SystemException;
 
@@ -87,25 +104,37 @@ public interface Repository {
 
 	public List<FileEntry> getFileEntries(
 			long folderId, int start, int end, OrderByComparator obc)
-		throws SystemException;
+		throws PortalException, SystemException;
 
 	public List<FileEntry> getFileEntries(
 			long folderId, long fileEntryTypeId, int start, int end,
 			OrderByComparator obc)
-		throws SystemException;
+		throws PortalException, SystemException;
+
+	public List<FileEntry> getFileEntries(
+			long folderId, String[] mimeTypes, int start, int end,
+			OrderByComparator obc)
+		throws PortalException, SystemException;
 
 	public List<Object> getFileEntriesAndFileShortcuts(
 			long folderId, int status, int start, int end)
-		throws SystemException;
+		throws PortalException, SystemException;
 
 	public int getFileEntriesAndFileShortcutsCount(long folderId, int status)
 		throws SystemException;
+
+	public int getFileEntriesAndFileShortcutsCount(
+			long folderId, int status, String[] mimeTypes)
+		throws PortalException, SystemException;
 
 	public int getFileEntriesCount(long folderId)
 		throws SystemException;
 
 	public int getFileEntriesCount(long folderId, long fileEntryTypeId)
 		throws SystemException;
+
+	public int getFileEntriesCount(long folderId, String[] mimeTypes)
+		throws PortalException, SystemException;
 
 	public FileEntry getFileEntry(long fileEntryId)
 		throws PortalException, SystemException;
@@ -128,41 +157,88 @@ public interface Repository {
 	public List<Folder> getFolders(
 			long parentFolderId, boolean includeMountFolders, int start,
 			int end, OrderByComparator obc)
-		throws SystemException;
+		throws PortalException, SystemException;
+
+	public List<Folder> getFolders(
+			long parentFolderId, int status, boolean includeMountFolders,
+			int start, int end, OrderByComparator obc)
+		throws PortalException, SystemException;
 
 	public List<Object> getFoldersAndFileEntriesAndFileShortcuts(
 			long folderId, int status, boolean includeMountFolders, int start,
 			int end, OrderByComparator obc)
-		throws SystemException;
+		throws PortalException, SystemException;
+
+	public List<Object> getFoldersAndFileEntriesAndFileShortcuts(
+			long folderId, int status, String[] mimetypes,
+			boolean includeMountFolders, int start, int end,
+			OrderByComparator obc)
+		throws PortalException, SystemException;
 
 	public int getFoldersAndFileEntriesAndFileShortcutsCount(
 			long folderId, int status, boolean includeMountFolders)
-		throws SystemException;
+		throws PortalException, SystemException;
+
+	public int getFoldersAndFileEntriesAndFileShortcutsCount(
+			long folderId, int status, String[] mimetypes,
+			boolean includeMountFolders)
+		throws PortalException, SystemException;
 
 	public int getFoldersCount(long parentFolderId, boolean includeMountfolders)
-		throws SystemException;
+		throws PortalException, SystemException;
+
+	public int getFoldersCount(
+			long parentFolderId, int status, boolean includeMountfolders)
+		throws PortalException, SystemException;
 
 	public int getFoldersFileEntriesCount(List<Long> folderIds, int status)
 		throws SystemException;
 
 	public List<Folder> getMountFolders(
 			long parentFolderId, int start, int end, OrderByComparator obc)
-		throws SystemException;
+		throws PortalException, SystemException;
 
 	public int getMountFoldersCount(long parentFolderId) throws SystemException;
 
 	public List<FileEntry> getRepositoryFileEntries(
 			long userId, long rootFolderId, int start, int end,
 			OrderByComparator obc)
-		throws SystemException;
+		throws PortalException, SystemException;
+
+	public List<FileEntry> getRepositoryFileEntries(
+			long userId, long rootFolderId, String[] mimeTypes, int status,
+			int start, int end, OrderByComparator obc)
+		throws PortalException, SystemException;
 
 	public int getRepositoryFileEntriesCount(long userId, long rootFolderId)
-		throws SystemException;
+		throws PortalException, SystemException;
+
+	public int getRepositoryFileEntriesCount(
+			long userId, long rootFolderId, String[] mimeTypes, int status)
+		throws PortalException, SystemException;
 
 	public long getRepositoryId();
 
+	public void getSubfolderIds(List<Long> folderIds, long folderId)
+		throws PortalException, SystemException;
+
 	public List<Long> getSubfolderIds(long folderId, boolean recurse)
-		throws SystemException;
+		throws PortalException, SystemException;
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #checkOutFileEntry(long,
+	 *             ServiceContext)}
+	 */
+	public Lock lockFileEntry(long fileEntryId)
+		throws PortalException, SystemException;
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #checkOutFileEntry(long,
+	 *             String, long, ServiceContext)}
+	 */
+	public Lock lockFileEntry(
+			long fileEntryId, String owner, long expirationTime)
+		throws PortalException, SystemException;
 
 	public Lock lockFolder(long folderId)
 		throws PortalException, SystemException;
@@ -181,15 +257,30 @@ public interface Repository {
 			ServiceContext serviceContext)
 		throws PortalException, SystemException;
 
-	public Lock refreshFileEntryLock(String lockUuid, long expirationTime)
+	public Lock refreshFileEntryLock(
+			String lockUuid, long companyId, long expirationTime)
 		throws PortalException, SystemException;
 
-	public Lock refreshFolderLock(String lockUuid, long expirationTime)
+	public Lock refreshFolderLock(
+			String lockUuid, long companyId, long expirationTime)
 		throws PortalException, SystemException;
 
 	public void revertFileEntry(
 			long fileEntryId, String version, ServiceContext serviceContext)
 		throws PortalException, SystemException;
+
+	public Hits search(long creatorUserId, int status, int start, int end)
+		throws PortalException, SystemException;
+
+	public Hits search(
+			long creatorUserId, long folderId, String[] mimeTypes, int status,
+			int start, int end)
+		throws PortalException, SystemException;
+
+	public Hits search(SearchContext searchContext) throws SearchException;
+
+	public Hits search(SearchContext searchContext, Query query)
+		throws SearchException;
 
 	public void unlockFolder(long folderId, String lockUuid)
 		throws PortalException, SystemException;
@@ -216,6 +307,9 @@ public interface Repository {
 		throws PortalException, SystemException;
 
 	public boolean verifyFileEntryCheckOut(long fileEntryId, String lockUuid)
+		throws PortalException, SystemException;
+
+	public boolean verifyFileEntryLock(long fileEntryId, String lockUuid)
 		throws PortalException, SystemException;
 
 	public boolean verifyInheritableLock(long folderId, String lockUuid)

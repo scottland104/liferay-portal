@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.LayoutRevision;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -28,7 +33,8 @@ import java.util.Date;
  * @see LayoutRevision
  * @generated
  */
-public class LayoutRevisionCacheModel implements CacheModel<LayoutRevision> {
+public class LayoutRevisionCacheModel implements CacheModel<LayoutRevision>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(63);
@@ -100,6 +106,7 @@ public class LayoutRevisionCacheModel implements CacheModel<LayoutRevision> {
 		return sb.toString();
 	}
 
+	@Override
 	public LayoutRevision toEntityModel() {
 		LayoutRevisionImpl layoutRevisionImpl = new LayoutRevisionImpl();
 
@@ -237,6 +244,159 @@ public class LayoutRevisionCacheModel implements CacheModel<LayoutRevision> {
 		layoutRevisionImpl.resetOriginalValues();
 
 		return layoutRevisionImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		layoutRevisionId = objectInput.readLong();
+		groupId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		userId = objectInput.readLong();
+		userName = objectInput.readUTF();
+		createDate = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
+		layoutSetBranchId = objectInput.readLong();
+		layoutBranchId = objectInput.readLong();
+		parentLayoutRevisionId = objectInput.readLong();
+		head = objectInput.readBoolean();
+		major = objectInput.readBoolean();
+		plid = objectInput.readLong();
+		privateLayout = objectInput.readBoolean();
+		name = objectInput.readUTF();
+		title = objectInput.readUTF();
+		description = objectInput.readUTF();
+		keywords = objectInput.readUTF();
+		robots = objectInput.readUTF();
+		typeSettings = objectInput.readUTF();
+		iconImage = objectInput.readBoolean();
+		iconImageId = objectInput.readLong();
+		themeId = objectInput.readUTF();
+		colorSchemeId = objectInput.readUTF();
+		wapThemeId = objectInput.readUTF();
+		wapColorSchemeId = objectInput.readUTF();
+		css = objectInput.readUTF();
+		status = objectInput.readInt();
+		statusByUserId = objectInput.readLong();
+		statusByUserName = objectInput.readUTF();
+		statusDate = objectInput.readLong();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(layoutRevisionId);
+		objectOutput.writeLong(groupId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(userId);
+
+		if (userName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(userName);
+		}
+
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(modifiedDate);
+		objectOutput.writeLong(layoutSetBranchId);
+		objectOutput.writeLong(layoutBranchId);
+		objectOutput.writeLong(parentLayoutRevisionId);
+		objectOutput.writeBoolean(head);
+		objectOutput.writeBoolean(major);
+		objectOutput.writeLong(plid);
+		objectOutput.writeBoolean(privateLayout);
+
+		if (name == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(name);
+		}
+
+		if (title == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(title);
+		}
+
+		if (description == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(description);
+		}
+
+		if (keywords == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(keywords);
+		}
+
+		if (robots == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(robots);
+		}
+
+		if (typeSettings == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(typeSettings);
+		}
+
+		objectOutput.writeBoolean(iconImage);
+		objectOutput.writeLong(iconImageId);
+
+		if (themeId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(themeId);
+		}
+
+		if (colorSchemeId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(colorSchemeId);
+		}
+
+		if (wapThemeId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(wapThemeId);
+		}
+
+		if (wapColorSchemeId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(wapColorSchemeId);
+		}
+
+		if (css == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(css);
+		}
+
+		objectOutput.writeInt(status);
+		objectOutput.writeLong(statusByUserId);
+
+		if (statusByUserName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(statusByUserName);
+		}
+
+		objectOutput.writeLong(statusDate);
 	}
 
 	public long layoutRevisionId;

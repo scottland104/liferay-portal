@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -35,65 +35,64 @@ PortletURL portletURL = (PortletURL)request.getAttribute("edit_role_assignments.
 	url="<%= portletURL.toString() %>"
 />
 
-<%
-GroupSearch searchContainer = new GroupSearch(renderRequest, portletURL);
+<liferay-ui:search-container
+	rowChecker="<%= new GroupRoleChecker(renderResponse, role) %>"
+	searchContainer="<%= new GroupSearch(renderRequest, portletURL) %>"
+>
 
-searchContainer.setRowChecker(new GroupRoleChecker(renderResponse, role));
-%>
+	<%
+	GroupSearchTerms searchTerms = (GroupSearchTerms)searchContainer.getSearchTerms();
 
-<liferay-ui:search-form
-	page="/html/portlet/users_admin/group_search.jsp"
-	searchContainer="<%= searchContainer %>"
-/>
+	LinkedHashMap<String, Object> groupParams = new LinkedHashMap<String, Object>();
 
-<%
-GroupSearchTerms searchTerms = (GroupSearchTerms)searchContainer.getSearchTerms();
+	groupParams.put("site", Boolean.TRUE);
 
-LinkedHashMap groupParams = new LinkedHashMap();
+	if (tabs3.equals("current")) {
+		groupParams.put("groupsRoles", new Long(role.getRoleId()));
+	}
 
-if (tabs3.equals("current")) {
-	groupParams.put("groupsRoles", new Long(role.getRoleId()));
-}
+	total = GroupLocalServiceUtil.searchCount(company.getCompanyId(), searchTerms.getName(), searchTerms.getDescription(), groupParams, searchTerms.isAndOperator());
 
-int total = GroupLocalServiceUtil.searchCount(company.getCompanyId(), searchTerms.getName(), searchTerms.getDescription(), groupParams);
+	searchContainer.setTotal(total);
+	%>
 
-searchContainer.setTotal(total);
+	<liferay-ui:search-container-results
+		results="<%= GroupLocalServiceUtil.search(company.getCompanyId(), searchTerms.getName(), searchTerms.getDescription(), groupParams, searchTerms.isAndOperator(), searchContainer.getStart(), searchContainer.getEnd(), searchContainer.getOrderByComparator()) %>"
+	/>
 
-List results = GroupLocalServiceUtil.search(company.getCompanyId(), searchTerms.getName(), searchTerms.getDescription(), groupParams, searchContainer.getStart(), searchContainer.getEnd(), searchContainer.getOrderByComparator());
+	<liferay-ui:search-form
+		page="/html/portlet/users_admin/group_search.jsp"
+		searchContainer="<%= searchContainer %>"
+	/>
 
-searchContainer.setResults(results);
-%>
+	<div class="separator"><!-- --></div>
 
-<div class="separator"><!-- --></div>
+	<%
+	String taglibOnClick = renderResponse.getNamespace() + "updateRoleGroups('" + portletURL.toString() + StringPool.AMPERSAND + renderResponse.getNamespace() + "cur=" + cur + "');";
+	%>
 
-<%
-String taglibOnClick = renderResponse.getNamespace() + "updateRoleGroups('" + portletURL.toString() + StringPool.AMPERSAND + renderResponse.getNamespace() + "cur=" + cur + "');";
-%>
+	<aui:button onClick="<%= taglibOnClick %>" value="update-associations" />
 
-<aui:button onClick="<%= taglibOnClick %>" value="update-associations" />
+	<br /><br />
 
-<br /><br />
+	<liferay-ui:search-container-row
+		className="com.liferay.portal.model.Group"
+		escapedModel="<%= true %>"
+		keyProperty="groupId"
+		modelVar="group"
+		rowIdProperty="friendlyURL"
+	>
 
-<%
-List resultRows = searchContainer.getResultRows();
+		<liferay-ui:search-container-column-text
+			name="name"
+			value="<%= HtmlUtil.escape(group.getDescriptiveName(locale)) %>"
+		/>
 
-for (int i = 0; i < results.size(); i++) {
-	Group group = (Group)results.get(i);
+		<liferay-ui:search-container-column-text
+			name="type"
+			value="<%= LanguageUtil.get(pageContext, group.getTypeLabel()) %>"
+		/>
+	</liferay-ui:search-container-row>
 
-	ResultRow row = new ResultRow(group, group.getGroupId(), i);
-
-	// Name
-
-	row.addText(group.getDescriptiveName());
-
-	// Type
-
-	row.addText(LanguageUtil.get(pageContext, group.getTypeLabel()));
-
-	// Add result row
-
-	resultRows.add(row);
-}
-%>
-
-<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
+	<liferay-ui:search-iterator />
+</liferay-ui:search-container>

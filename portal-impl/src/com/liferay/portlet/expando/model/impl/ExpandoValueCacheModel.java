@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,11 @@ import com.liferay.portal.model.CacheModel;
 
 import com.liferay.portlet.expando.model.ExpandoValue;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing ExpandoValue in entity cache.
  *
@@ -27,7 +32,8 @@ import com.liferay.portlet.expando.model.ExpandoValue;
  * @see ExpandoValue
  * @generated
  */
-public class ExpandoValueCacheModel implements CacheModel<ExpandoValue> {
+public class ExpandoValueCacheModel implements CacheModel<ExpandoValue>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(17);
@@ -53,6 +59,7 @@ public class ExpandoValueCacheModel implements CacheModel<ExpandoValue> {
 		return sb.toString();
 	}
 
+	@Override
 	public ExpandoValue toEntityModel() {
 		ExpandoValueImpl expandoValueImpl = new ExpandoValueImpl();
 
@@ -74,6 +81,37 @@ public class ExpandoValueCacheModel implements CacheModel<ExpandoValue> {
 		expandoValueImpl.resetOriginalValues();
 
 		return expandoValueImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		valueId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		tableId = objectInput.readLong();
+		columnId = objectInput.readLong();
+		rowId = objectInput.readLong();
+		classNameId = objectInput.readLong();
+		classPK = objectInput.readLong();
+		data = objectInput.readUTF();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(valueId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(tableId);
+		objectOutput.writeLong(columnId);
+		objectOutput.writeLong(rowId);
+		objectOutput.writeLong(classNameId);
+		objectOutput.writeLong(classPK);
+
+		if (data == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(data);
+		}
 	}
 
 	public long valueId;

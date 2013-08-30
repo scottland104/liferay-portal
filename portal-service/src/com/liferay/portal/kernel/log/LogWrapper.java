@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,10 +23,7 @@ public class LogWrapper implements Log {
 		_log = log;
 	}
 
-	public void setLog(Log log) {
-		_log = log;
-	}
-
+	@Override
 	public void debug(Object msg) {
 		try {
 			_log.debug(msg);
@@ -36,15 +33,7 @@ public class LogWrapper implements Log {
 		}
 	}
 
-	public void debug(Throwable t) {
-		try {
-			_log.debug(t);
-		}
-		catch (Exception e) {
-			printMsg(t.getMessage());
-		}
-	}
-
+	@Override
 	public void debug(Object msg, Throwable t) {
 		try {
 			_log.debug(msg, t);
@@ -54,6 +43,17 @@ public class LogWrapper implements Log {
 		}
 	}
 
+	@Override
+	public void debug(Throwable t) {
+		try {
+			_log.debug(t);
+		}
+		catch (Exception e) {
+			printMsg(t.getMessage());
+		}
+	}
+
+	@Override
 	public void error(Object msg) {
 		try {
 			_log.error(msg);
@@ -63,15 +63,7 @@ public class LogWrapper implements Log {
 		}
 	}
 
-	public void error(Throwable t) {
-		try {
-			_log.error(t);
-		}
-		catch (Exception e) {
-			printMsg(t.getMessage());
-		}
-	}
-
+	@Override
 	public void error(Object msg, Throwable t) {
 		try {
 			_log.error(msg, t);
@@ -81,6 +73,17 @@ public class LogWrapper implements Log {
 		}
 	}
 
+	@Override
+	public void error(Throwable t) {
+		try {
+			_log.error(t);
+		}
+		catch (Exception e) {
+			printMsg(t.getMessage());
+		}
+	}
+
+	@Override
 	public void fatal(Object msg) {
 		try {
 			_log.fatal(msg);
@@ -90,15 +93,7 @@ public class LogWrapper implements Log {
 		}
 	}
 
-	public void fatal(Throwable t) {
-		try {
-			_log.fatal(t);
-		}
-		catch (Exception e) {
-			printMsg(t.getMessage());
-		}
-	}
-
+	@Override
 	public void fatal(Object msg, Throwable t) {
 		try {
 			_log.fatal(msg, t);
@@ -108,6 +103,21 @@ public class LogWrapper implements Log {
 		}
 	}
 
+	@Override
+	public void fatal(Throwable t) {
+		try {
+			_log.fatal(t);
+		}
+		catch (Exception e) {
+			printMsg(t.getMessage());
+		}
+	}
+
+	public Log getWrappedLog() {
+		return _log;
+	}
+
+	@Override
 	public void info(Object msg) {
 		try {
 			_log.info(msg);
@@ -117,15 +127,7 @@ public class LogWrapper implements Log {
 		}
 	}
 
-	public void info(Throwable t) {
-		try {
-			_log.info(t);
-		}
-		catch (Exception e) {
-			printMsg(t.getMessage());
-		}
-	}
-
+	@Override
 	public void info(Object msg, Throwable t) {
 		try {
 			_log.info(msg, t);
@@ -135,30 +137,51 @@ public class LogWrapper implements Log {
 		}
 	}
 
+	@Override
+	public void info(Throwable t) {
+		try {
+			_log.info(t);
+		}
+		catch (Exception e) {
+			printMsg(t.getMessage());
+		}
+	}
+
+	@Override
 	public boolean isDebugEnabled() {
 		return _log.isDebugEnabled();
 	}
 
+	@Override
 	public boolean isErrorEnabled() {
 		return _log.isErrorEnabled();
 	}
 
+	@Override
 	public boolean isFatalEnabled() {
 		return _log.isFatalEnabled();
 	}
 
+	@Override
 	public boolean isInfoEnabled() {
 		return _log.isInfoEnabled();
 	}
 
+	@Override
 	public boolean isTraceEnabled() {
 		return _log.isTraceEnabled();
 	}
 
+	@Override
 	public boolean isWarnEnabled() {
 		return _log.isWarnEnabled();
 	}
 
+	public void setLog(Log log) {
+		_log = log;
+	}
+
+	@Override
 	public void trace(Object msg) {
 		try {
 			_log.trace(msg);
@@ -168,15 +191,7 @@ public class LogWrapper implements Log {
 		}
 	}
 
-	public void trace(Throwable t) {
-		try {
-			_log.trace(t);
-		}
-		catch (Exception e) {
-			printMsg(t.getMessage());
-		}
-	}
-
+	@Override
 	public void trace(Object msg, Throwable t) {
 		try {
 			_log.trace(msg, t);
@@ -186,6 +201,17 @@ public class LogWrapper implements Log {
 		}
 	}
 
+	@Override
+	public void trace(Throwable t) {
+		try {
+			_log.trace(t);
+		}
+		catch (Exception e) {
+			printMsg(t.getMessage());
+		}
+	}
+
+	@Override
 	public void warn(Object msg) {
 		try {
 			_log.warn(msg);
@@ -195,21 +221,23 @@ public class LogWrapper implements Log {
 		}
 	}
 
-	public void warn(Throwable t) {
-		try {
-			_log.warn(t);
-		}
-		catch (Exception e) {
-			printMsg(t.getMessage());
-		}
-	}
-
+	@Override
 	public void warn(Object msg, Throwable t) {
 		try {
 			_log.warn(msg, t);
 		}
 		catch (Exception e) {
 			printMsg(msg);
+		}
+	}
+
+	@Override
+	public void warn(Throwable t) {
+		try {
+			_log.warn(t);
+		}
+		catch (Exception e) {
+			printMsg(t.getMessage());
 		}
 	}
 

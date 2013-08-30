@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,15 +14,17 @@
 
 package com.liferay.portal.security.ntlm;
 
+import com.liferay.portal.kernel.io.BigEndianCodec;
+import com.liferay.portal.kernel.security.SecureRandomUtil;
 import com.liferay.portal.security.ntlm.msrpc.NetlogonAuthenticator;
 import com.liferay.portal.security.ntlm.msrpc.NetrServerAuthenticate3;
 import com.liferay.portal.security.ntlm.msrpc.NetrServerReqChallenge;
+import com.liferay.portal.util.PropsValues;
 
 import java.io.IOException;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 
 import java.util.Arrays;
 
@@ -40,6 +42,20 @@ import jcifs.util.MD4;
  */
 public class NetlogonConnection {
 
+	public NetlogonConnection() {
+		if (_negotiateFlags == 0) {
+			String negotiateFlags = PropsValues.NTLM_AUTH_NEGOTIATE_FLAGS;
+
+			if (negotiateFlags.startsWith("0x")) {
+				_negotiateFlags = Integer.valueOf(
+					negotiateFlags.substring(2), 16);
+			}
+			else {
+				_negotiateFlags = 0x600FFFFF;
+			}
+		}
+	}
+
 	public NetlogonAuthenticator computeNetlogonAuthenticator() {
 		int timestamp = (int)System.currentTimeMillis();
 
@@ -55,8 +71,8 @@ public class NetlogonConnection {
 
 	public void connect(
 			String domainController, String domainControllerName,
-			NtlmServiceAccount ntlmServiceAccount, SecureRandom secureRandom)
-		throws IOException, NtlmLogonException, NoSuchAlgorithmException {
+			NtlmServiceAccount ntlmServiceAccount)
+		throws IOException, NoSuchAlgorithmException, NtlmLogonException {
 
 		NtlmPasswordAuthentication ntlmPasswordAuthentication =
 			new NtlmPasswordAuthentication(
@@ -74,7 +90,7 @@ public class NetlogonConnection {
 
 		byte[] clientChallenge = new byte[8];
 
-		secureRandom.nextBytes(clientChallenge);
+		BigEndianCodec.putLong(clientChallenge, 0, SecureRandomUtil.nextLong());
 
 		NetrServerReqChallenge netrServerReqChallenge =
 			new NetrServerReqChallenge(
@@ -98,7 +114,7 @@ public class NetlogonConnection {
 			new NetrServerAuthenticate3(
 				domainControllerName, ntlmServiceAccount.getAccountName(), 2,
 				ntlmServiceAccount.getComputerName(), clientCredential,
-				new byte[8], 0x600FFFFF);
+				new byte[8], _negotiateFlags);
 
 		dcerpcHandle.sendrecv(netrServerAuthenticate3);
 
@@ -177,6 +193,8 @@ public class NetlogonConnection {
 
 		return hmact64.digest();
 	}
+
+	private static int _negotiateFlags;
 
 	private byte[] _clientCredential;
 	private DcerpcHandle _dcerpcHandle;

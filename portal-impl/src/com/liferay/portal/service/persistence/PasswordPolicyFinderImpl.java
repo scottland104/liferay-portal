@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,7 +21,6 @@ import com.liferay.portal.kernel.dao.orm.Session;
 import com.liferay.portal.kernel.dao.orm.Type;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.model.PasswordPolicy;
 import com.liferay.portal.model.impl.PasswordPolicyImpl;
 import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
@@ -37,14 +36,15 @@ public class PasswordPolicyFinderImpl
 	extends BasePersistenceImpl<PasswordPolicy>
 	implements PasswordPolicyFinder {
 
-	public static String COUNT_BY_C_N =
+	public static final String COUNT_BY_C_N =
 		PasswordPolicyFinder.class.getName() + ".countByC_N";
 
-	public static String FIND_BY_C_N =
+	public static final String FIND_BY_C_N =
 		PasswordPolicyFinder.class.getName() + ".findByC_N";
 
+	@Override
 	public int countByC_N(long companyId, String name) throws SystemException {
-		name = StringUtil.lowerCase(name);
+		name = CustomSQLUtil.keywords(name)[0];
 
 		Session session = null;
 
@@ -63,7 +63,7 @@ public class PasswordPolicyFinderImpl
 			qPos.add(name);
 			qPos.add(name);
 
-			Iterator<Long> itr = q.list().iterator();
+			Iterator<Long> itr = q.iterate();
 
 			if (itr.hasNext()) {
 				Long count = itr.next();
@@ -83,12 +83,13 @@ public class PasswordPolicyFinderImpl
 		}
 	}
 
+	@Override
 	public List<PasswordPolicy> findByC_N(
 			long companyId, String name, int start, int end,
 			OrderByComparator obc)
 		throws SystemException {
 
-		name = StringUtil.lowerCase(name);
+		name = CustomSQLUtil.keywords(name)[0];
 
 		Session session = null;
 

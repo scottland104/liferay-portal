@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -28,34 +28,38 @@ import net.spy.memcached.MemcachedClientIF;
 /**
  * @author Michael C. Han
  */
-public class MemcachePortalCacheManager implements PortalCacheManager {
+public class MemcachePortalCacheManager<V>
+	implements PortalCacheManager<String, V> {
 
+	@Override
 	public void clearAll() {
 		_memcachePortalCaches.clear();
 	}
 
 	public void destroy() throws Exception {
-		for (MemcachePortalCache memcachePortalCache :
+		for (MemcachePortalCache<V> memcachePortalCache :
 				_memcachePortalCaches.values()) {
 
 			memcachePortalCache.destroy();
 		}
 	}
 
-	public PortalCache getCache(String name) {
+	@Override
+	public PortalCache<String, V> getCache(String name) {
 		return getCache(name, false);
 	}
 
-	public PortalCache getCache(String name, boolean blocking) {
-		MemcachePortalCache memcachePortalCache = _memcachePortalCaches.get(
+	@Override
+	public PortalCache<String, V> getCache(String name, boolean blocking) {
+		MemcachePortalCache<V> memcachePortalCache = _memcachePortalCaches.get(
 			name);
 
 		if (memcachePortalCache == null) {
 			try {
-				MemcachedClientIF memcachedClient  =
+				MemcachedClientIF memcachedClient =
 					_memcachedClientFactory.getMemcachedClient();
 
-				memcachePortalCache = new MemcachePortalCache(
+				memcachePortalCache = new MemcachePortalCache<V>(
 					name, memcachedClient, _timeout, _timeoutTimeUnit);
 
 				_memcachePortalCaches.put(name, memcachePortalCache);
@@ -69,9 +73,11 @@ public class MemcachePortalCacheManager implements PortalCacheManager {
 		return memcachePortalCache;
 	}
 
+	@Override
 	public void reconfigureCaches(URL configurationURL) {
 	}
 
+	@Override
 	public void removeCache(String name) {
 		_memcachePortalCaches.remove(name);
 	}
@@ -91,8 +97,8 @@ public class MemcachePortalCacheManager implements PortalCacheManager {
 	}
 
 	private MemcachedClientFactory _memcachedClientFactory;
-	private Map<String, MemcachePortalCache> _memcachePortalCaches =
-		new ConcurrentHashMap<String, MemcachePortalCache>();
+	private Map<String, MemcachePortalCache<V>> _memcachePortalCaches =
+		new ConcurrentHashMap<String, MemcachePortalCache<V>>();
 	private int _timeout;
 	private TimeUnit _timeoutTimeUnit;
 

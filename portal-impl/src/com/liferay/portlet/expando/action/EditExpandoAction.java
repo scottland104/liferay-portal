@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -64,8 +64,9 @@ public class EditExpandoAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
@@ -87,7 +88,7 @@ public class EditExpandoAction extends PortletAction {
 			if (e instanceof NoSuchColumnException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				setForward(actionRequest, "portlet.expando.error");
 			}
@@ -96,7 +97,7 @@ public class EditExpandoAction extends PortletAction {
 					 e instanceof DuplicateColumnNameException ||
 					 e instanceof ValueDataException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 			}
 			else {
 				throw e;
@@ -106,8 +107,9 @@ public class EditExpandoAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -117,16 +119,16 @@ public class EditExpandoAction extends PortletAction {
 			if (e instanceof NoSuchColumnException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(renderRequest, e.getClass().getName());
+				SessionErrors.add(renderRequest, e.getClass());
 
-				return mapping.findForward("portlet.expando.error");
+				return actionMapping.findForward("portlet.expando.error");
 			}
 			else {
 				throw e;
 			}
 		}
 
-		return mapping.findForward(
+		return actionMapping.findForward(
 			getForward(renderRequest, "portlet.expando.edit_expando"));
 	}
 
@@ -268,7 +270,7 @@ public class EditExpandoAction extends PortletAction {
 
 			value = PortalUtil.getDate(
 				valueDateMonth, valueDateDay, valueDateYear, valueDateHour,
-				valueDateMinute, user.getTimeZone(), new ValueDataException());
+				valueDateMinute, user.getTimeZone(), ValueDataException.class);
 		}
 		else if (type == ExpandoColumnConstants.DATE_ARRAY) {
 		}
@@ -327,6 +329,20 @@ public class EditExpandoAction extends PortletAction {
 			String[] values = StringUtil.split(paramValue, delimiter);
 
 			value = GetterUtil.getLongValues(values);
+		}
+		else if (type == ExpandoColumnConstants.NUMBER) {
+			value = ParamUtil.getNumber(portletRequest, name);
+		}
+		else if (type == ExpandoColumnConstants.NUMBER_ARRAY) {
+			String paramValue = ParamUtil.getString(portletRequest, name);
+
+			if (paramValue.contains(StringPool.NEW_LINE)) {
+				delimiter = StringPool.NEW_LINE;
+			}
+
+			String[] values = StringUtil.split(paramValue, delimiter);
+
+			value = GetterUtil.getNumberValues(values);
 		}
 		else if (type == ExpandoColumnConstants.SHORT) {
 			value = ParamUtil.getShort(portletRequest, name);
@@ -396,7 +412,7 @@ public class EditExpandoAction extends PortletAction {
 		while (enu.hasMoreElements()) {
 			String param = enu.nextElement();
 
-			if (param.indexOf("PropertyName--") != -1) {
+			if (param.contains("PropertyName--")) {
 				String propertyName = ParamUtil.getString(actionRequest, param);
 
 				propertyNames.add(propertyName);

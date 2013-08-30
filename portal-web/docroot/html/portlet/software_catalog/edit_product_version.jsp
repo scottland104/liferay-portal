@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -28,24 +28,20 @@ SCProductVersion productVersion = (SCProductVersion)request.getAttribute(WebKeys
 long productEntryId = productEntry.getProductEntryId();
 long productVersionId = BeanParamUtil.getLong(productVersion, request, "productVersionId");
 
-Set frameworkVersionIds = new HashSet();
+Set<Long> frameworkVersionIds = new HashSet<Long>();
 
 String[] frameworkVersions = request.getParameterValues("frameworkVersions");
 
 if ((productVersion != null) && (frameworkVersions == null)) {
-	Iterator itr = productVersion.getFrameworkVersions().iterator();
-
-	while (itr.hasNext()) {
-		SCFrameworkVersion frameworkVersion = (SCFrameworkVersion)itr.next();
-
-		frameworkVersionIds.add(new Long(frameworkVersion.getFrameworkVersionId()));
+	for (SCFrameworkVersion frameworkVersion : productVersion.getFrameworkVersions()) {
+		frameworkVersionIds.add(frameworkVersion.getFrameworkVersionId());
 	}
 }
 else {
 	long[] frameworkVersionIdsArray = GetterUtil.getLongValues(frameworkVersions);
 
 	for (int i = 0; i < frameworkVersionIdsArray.length; i++) {
-		frameworkVersionIds.add(new Long(frameworkVersionIdsArray[i]));
+		frameworkVersionIds.add(frameworkVersionIdsArray[i]);
 	}
 }
 
@@ -70,10 +66,10 @@ editProductEntryURL.setParameter("productEntryId", String.valueOf(productEntryId
 />
 
 <liferay-ui:error exception="<%= DuplicateProductVersionDirectDownloadURLException.class %>" message="please-enter-a-unique-direct-download-url" />
-<liferay-ui:error exception="<%= ProductVersionNameException.class %>" message="please-enter-a-valid-version-name" />
 <liferay-ui:error exception="<%= ProductVersionChangeLogException.class %>" message="please-enter-a-valid-change-log" />
 <liferay-ui:error exception="<%= ProductVersionDownloadURLException.class %>" message="please-enter-a-download-page-url-or-a-direct-download-url" />
 <liferay-ui:error exception="<%= ProductVersionFrameworkVersionException.class %>" message="please-select-at-least-one-framework-version" />
+<liferay-ui:error exception="<%= ProductVersionNameException.class %>" message="please-enter-a-valid-version-name" />
 <liferay-ui:error exception="<%= UnavailableProductVersionDirectDownloadURLException.class %>" message="please-enter-a-valid-direct-download-url" />
 
 <fieldset>
@@ -85,7 +81,7 @@ editProductEntryURL.setParameter("productEntryId", String.valueOf(productEntryId
 			<liferay-ui:message key="version-name" />
 		</td>
 		<td>
-			<liferay-ui:input-field model="<%= SCProductVersion.class %>" bean="<%= productVersion %>" field="version" />
+			<liferay-ui:input-field autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" bean="<%= productVersion %>" field="version" model="<%= SCProductVersion.class %>" />
 		</td>
 	</tr>
 	<tr>
@@ -93,7 +89,7 @@ editProductEntryURL.setParameter("productEntryId", String.valueOf(productEntryId
 			<liferay-ui:message key="change-log" />
 		</td>
 		<td>
-			<liferay-ui:input-field model="<%= SCProductVersion.class %>" bean="<%= productVersion %>" field="changeLog" />
+			<liferay-ui:input-field bean="<%= productVersion %>" field="changeLog" model="<%= SCProductVersion.class %>" />
 		</td>
 	</tr>
 	<tr>
@@ -104,13 +100,10 @@ editProductEntryURL.setParameter("productEntryId", String.valueOf(productEntryId
 			<select multiple="true" name="<portlet:namespace />frameworkVersions">
 
 				<%
-				Iterator itr = SCFrameworkVersionServiceUtil.getFrameworkVersions(scopeGroupId, true).iterator();
-
-				while (itr.hasNext()) {
-					SCFrameworkVersion frameworkVersion = (SCFrameworkVersion)itr.next();
+				for (SCFrameworkVersion frameworkVersion : SCFrameworkVersionServiceUtil.getFrameworkVersions(scopeGroupId, true)) {
 				%>
 
-					<option <%= (frameworkVersionIds.contains(new Long(frameworkVersion.getFrameworkVersionId()))) ? "selected" : "" %> value="<%= frameworkVersion.getFrameworkVersionId() %>"><%= frameworkVersion.getName() %></option>
+					<option <%= (frameworkVersionIds.contains(frameworkVersion.getFrameworkVersionId())) ? "selected" : "" %> value="<%= frameworkVersion.getFrameworkVersionId() %>"><%= HtmlUtil.escape(frameworkVersion.getName()) %></option>
 
 				<%
 				}
@@ -131,7 +124,7 @@ editProductEntryURL.setParameter("productEntryId", String.valueOf(productEntryId
 			<liferay-ui:message key="download-page-url" />
 		</td>
 		<td>
-			<liferay-ui:input-field model="<%= SCProductVersion.class %>" bean="<%= productVersion %>" field="downloadPageURL" />
+			<liferay-ui:input-field bean="<%= productVersion %>" field="downloadPageURL" model="<%= SCProductVersion.class %>" />
 		</td>
 	</tr>
 	<tr>
@@ -139,7 +132,7 @@ editProductEntryURL.setParameter("productEntryId", String.valueOf(productEntryId
 			<liferay-ui:message key="direct-download-url" /> (<liferay-ui:message key="recommended" />)
 		</td>
 		<td>
-			<liferay-ui:input-field model="<%= SCProductVersion.class %>" bean="<%= productVersion %>" field="directDownloadURL" />
+			<liferay-ui:input-field bean="<%= productVersion %>" field="directDownloadURL" model="<%= SCProductVersion.class %>" />
 		</td>
 	</tr>
 	<tr>
@@ -181,13 +174,14 @@ editProductEntryURL.setParameter("productEntryId", String.valueOf(productEntryId
 
 <input type="submit" value="<liferay-ui:message key="save" />" />
 
-<input type="button" value="<liferay-ui:message key="cancel" />" onClick="location.href = '<%= HtmlUtil.escape(PortalUtil.escapeRedirect(redirect)) %>';" />
+<input onClick="location.href = '<%= HtmlUtil.escape(PortalUtil.escapeRedirect(redirect)) %>';" type="button" value="<liferay-ui:message key="cancel" />" />
 
 </form>
 
 <aui:script>
 	function <portlet:namespace />saveEntry() {
 		document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= (productVersion == null) ? Constants.ADD : Constants.UPDATE %>";
+
 		submitForm(document.<portlet:namespace />fm);
 	}
 
@@ -212,10 +206,6 @@ editProductEntryURL.setParameter("productEntryId", String.valueOf(productEntryId
 			}
 		}
 	}
-
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />version);
-	</c:if>
 
 	document.<portlet:namespace />fm.<portlet:namespace />directDownloadURL.onkeyup = <portlet:namespace />toggleSelectBoxes;
 

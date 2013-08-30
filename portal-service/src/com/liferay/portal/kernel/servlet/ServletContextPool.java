@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portal.kernel.servlet;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.util.PortalUtil;
 
 import java.util.Map;
 import java.util.Set;
@@ -59,6 +60,10 @@ public class ServletContextPool {
 	}
 
 	private boolean _containsKey(String servletContextName) {
+		if (servletContextName == null) {
+			return false;
+		}
+
 		boolean value = _servletContexts.containsKey(servletContextName);
 
 		if (_log.isDebugEnabled()) {
@@ -94,6 +99,15 @@ public class ServletContextPool {
 	}
 
 	private ServletContext _remove(String servletContextName) {
+
+		// We should never remove the portal context. See LPS-12683.
+
+		String contextPath = PortalUtil.getPathContext();
+
+		if (contextPath.equals(servletContextName)) {
+			return null;
+		}
+
 		ServletContext servletContext = _servletContexts.remove(
 			servletContextName);
 

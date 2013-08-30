@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,38 +19,59 @@
 <%
 FileEntry fileEntry = (FileEntry)request.getAttribute("view_entries.jsp-fileEntry");
 
+FileVersion fileVersion = fileEntry.getFileVersion();
+
+FileVersion latestFileVersion = fileVersion;
+
+if ((user.getUserId() == fileEntry.getUserId()) || permissionChecker.isCompanyAdmin() || permissionChecker.isGroupAdmin(scopeGroupId) || DLFileEntryPermission.contains(permissionChecker, fileEntry, ActionKeys.UPDATE)) {
+	latestFileVersion = fileEntry.getLatestFileVersion();
+}
+
+DLFileShortcut fileShortcut = (DLFileShortcut)request.getAttribute("view_entries.jsp-fileShortcut");
+
 PortletURL tempRowURL = (PortletURL)request.getAttribute("view_entries.jsp-tempRowURL");
 
-String thumbnailSrc = themeDisplay.getPathThemeImages() + "/file_system/large/" + DLUtil.getGenericName(fileEntry.getExtension()) + ".png";
+long assetClassPK = 0;
 
-if (PDFProcessor.hasImages(fileEntry, fileEntry.getVersion())) {
-	thumbnailSrc = themeDisplay.getPortalURL() + themeDisplay.getPathContext() + "/documents/" + themeDisplay.getScopeGroupId() + StringPool.SLASH + fileEntry.getFolderId() + StringPool.SLASH + HttpUtil.encodeURL(HtmlUtil.unescape(fileEntry.getTitle())) + "?version=" + fileEntry.getVersion() + "&documentThumbnail=1";
+if (!latestFileVersion.getVersion().equals(DLFileEntryConstants.VERSION_DEFAULT) && (latestFileVersion.getStatus() != WorkflowConstants.STATUS_APPROVED)) {
+	assetClassPK = latestFileVersion.getFileVersionId();
 }
-else if (VideoProcessor.hasVideo(fileEntry, fileEntry.getVersion())) {
-	thumbnailSrc = themeDisplay.getPortalURL() + themeDisplay.getPathContext() + "/documents/" + themeDisplay.getScopeGroupId() + StringPool.SLASH + fileEntry.getFolderId() + StringPool.SLASH + HttpUtil.encodeURL(HtmlUtil.unescape(fileEntry.getTitle())) + "?version=" + fileEntry.getVersion() + "&videoThumbnail=1";
+else {
+	assetClassPK = fileEntry.getFileEntryId();
 }
 
-boolean showCheckBox = DLFileEntryPermission.contains(permissionChecker, fileEntry, ActionKeys.DELETE) || DLFileEntryPermission.contains(permissionChecker, fileEntry, ActionKeys.UPDATE);
+String rowCheckerName = FileEntry.class.getSimpleName();
+long rowCheckerId = fileEntry.getFileEntryId();
+
+if (fileShortcut != null) {
+	rowCheckerName = DLFileShortcut.class.getSimpleName();
+	rowCheckerId = fileShortcut.getFileShortcutId();
+}
 %>
 
-<div class="document-display-style descriptive <%= showCheckBox ? "selectable" : StringPool.BLANK %>">
-	<a class="document-link" data-folder="<%= Boolean.FALSE.toString() %>" href="<%= tempRowURL.toString() %>" title="<%= HtmlUtil.escapeAttribute(HtmlUtil.unescape(fileEntry.getTitle()) + " - " + HtmlUtil.unescape(fileEntry.getDescription())) %>">
-		<span class="document-thumbnail">
-			<img alt="" border="no" src="<%= thumbnailSrc %>" style="width: <%= PropsValues.DL_FILE_ENTRY_THUMBNAIL_WIDTH %>;" />
-
-			<c:if test="<%= fileEntry.isCheckedOut() %>">
-				<img alt="<liferay-ui:message key="locked" />" class="locked-icon" src="<%= themeDisplay.getPathThemeImages() %>/file_system/large/overlay_lock.png">
-			</c:if>
-		</span>
-
-		<span class="document-title"><%= fileEntry.getTitle() %></span>
-
-		<span class="document-description"><%= fileEntry.getDescription() %></span>
-	</a>
-
-	<liferay-util:include page="/html/portlet/document_library/file_entry_action.jsp" />
-
-	<c:if test="<%= showCheckBox %>">
-		<aui:input cssClass="overlay document-selector" label="" name="<%= RowChecker.ROW_IDS + StringPool.UNDERLINE + FileEntry.class.getName() %>" type="checkbox" value="<%= fileEntry.getFileEntryId() %>" />
-	</c:if>
-</div>
+<liferay-ui:app-view-entry
+	actionJsp="/html/portlet/document_library/file_entry_action.jsp"
+	assetCategoryClassName="<%= DLFileEntryConstants.getClassName() %>"
+	assetCategoryClassPK="<%= assetClassPK %>"
+	assetTagClassName="<%= DLFileEntryConstants.getClassName() %>"
+	assetTagClassPK="<%= assetClassPK %>"
+	author="<%= latestFileVersion.getUserName() %>"
+	createDate="<%= latestFileVersion.getCreateDate() %>"
+	description="<%= latestFileVersion.getDescription() %>"
+	displayStyle="descriptive"
+	latestApprovedVersion="<%= fileVersion.getVersion().equals(DLFileEntryConstants.VERSION_DEFAULT) ? null : fileVersion.getVersion() %>"
+	latestApprovedVersionAuthor="<%= fileVersion.getVersion().equals(DLFileEntryConstants.VERSION_DEFAULT) ? null : fileVersion.getUserName() %>"
+	locked="<%= fileEntry.isCheckedOut() %>"
+	modifiedDate="<%= latestFileVersion.getModifiedDate() %>"
+	rowCheckerId="<%= String.valueOf(rowCheckerId) %>"
+	rowCheckerName="<%= rowCheckerName %>"
+	shortcut="<%= fileShortcut != null %>"
+	showCheckbox="<%= DLFileEntryPermission.contains(permissionChecker, fileEntry, ActionKeys.DELETE) || DLFileEntryPermission.contains(permissionChecker, fileEntry, ActionKeys.UPDATE) %>"
+	status="<%= latestFileVersion.getStatus() %>"
+	thumbnailDivStyle="<%= DLUtil.getThumbnailStyle(false, 4) %>"
+	thumbnailSrc="<%= DLUtil.getThumbnailSrc(fileEntry, latestFileVersion, fileShortcut, themeDisplay) %>"
+	thumbnailStyle="<%= DLUtil.getThumbnailStyle() %>"
+	title="<%= latestFileVersion.getTitle() %>"
+	url="<%= tempRowURL.toString() %>"
+	version="<%= latestFileVersion.getVersion() %>"
+/>

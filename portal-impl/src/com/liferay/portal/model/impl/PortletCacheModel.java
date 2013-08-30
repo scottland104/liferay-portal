@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.Portlet;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing Portlet in entity cache.
  *
@@ -26,7 +31,7 @@ import com.liferay.portal.model.Portlet;
  * @see Portlet
  * @generated
  */
-public class PortletCacheModel implements CacheModel<Portlet> {
+public class PortletCacheModel implements CacheModel<Portlet>, Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(11);
@@ -46,6 +51,7 @@ public class PortletCacheModel implements CacheModel<Portlet> {
 		return sb.toString();
 	}
 
+	@Override
 	public Portlet toEntityModel() {
 		PortletImpl portletImpl = new PortletImpl();
 
@@ -71,6 +77,38 @@ public class PortletCacheModel implements CacheModel<Portlet> {
 		portletImpl.resetOriginalValues();
 
 		return portletImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		id = objectInput.readLong();
+		companyId = objectInput.readLong();
+		portletId = objectInput.readUTF();
+		roles = objectInput.readUTF();
+		active = objectInput.readBoolean();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(id);
+		objectOutput.writeLong(companyId);
+
+		if (portletId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(portletId);
+		}
+
+		if (roles == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(roles);
+		}
+
+		objectOutput.writeBoolean(active);
 	}
 
 	public long id;

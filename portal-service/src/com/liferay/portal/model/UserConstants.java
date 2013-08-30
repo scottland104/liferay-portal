@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,10 +14,10 @@
 
 package com.liferay.portal.model;
 
-import com.liferay.portal.kernel.servlet.ImageServletTokenUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringBundler;
+import com.liferay.portal.webserver.WebServerServletTokenUtil;
 
 /**
  * @author Amos Fong
@@ -56,7 +56,7 @@ public class UserConstants {
 		sb.append("_portrait?img_id=");
 		sb.append(portraitId);
 		sb.append("&t=");
-		sb.append(ImageServletTokenUtil.getToken(portraitId));
+		sb.append(WebServerServletTokenUtil.getToken(portraitId));
 
 		return sb.toString();
 	}

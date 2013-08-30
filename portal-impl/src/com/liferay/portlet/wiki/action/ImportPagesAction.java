@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.util.NotificationThreadLocal;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.ProgressTracker;
 import com.liferay.portal.kernel.util.ProgressTrackerThreadLocal;
+import com.liferay.portal.kernel.util.StreamUtil;
 import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
@@ -29,7 +30,7 @@ import com.liferay.portlet.wiki.service.WikiNodeServiceUtil;
 import com.liferay.portlet.wiki.util.WikiCacheThreadLocal;
 import com.liferay.portlet.wiki.util.WikiCacheUtil;
 
-import java.io.File;
+import java.io.InputStream;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -48,8 +49,9 @@ public class ImportPagesAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		try {
@@ -61,12 +63,12 @@ public class ImportPagesAction extends PortletAction {
 			if (e instanceof NoSuchNodeException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				setForward(actionRequest, "portlet.wiki.error");
 			}
 			else if (e instanceof PortalException) {
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 			}
 			else {
 				throw e;
@@ -76,8 +78,9 @@ public class ImportPagesAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -87,16 +90,16 @@ public class ImportPagesAction extends PortletAction {
 			if (e instanceof NoSuchNodeException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(renderRequest, e.getClass().getName());
+				SessionErrors.add(renderRequest, e.getClass());
 
-				return mapping.findForward("portlet.wiki.error");
+				return actionMapping.findForward("portlet.wiki.error");
 			}
 			else {
 				throw e;
 			}
 		}
 
-		return mapping.findForward(
+		return actionMapping.findForward(
 			getForward(renderRequest, "portlet.wiki.import_pages"));
 	}
 
@@ -104,39 +107,48 @@ public class ImportPagesAction extends PortletAction {
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
-		UploadPortletRequest uploadRequest = PortalUtil.getUploadPortletRequest(
-			actionRequest);
+		UploadPortletRequest uploadPortletRequest =
+			PortalUtil.getUploadPortletRequest(actionRequest);
 
 		String importProgressId = ParamUtil.getString(
-			uploadRequest, "importProgressId");
+			uploadPortletRequest, "importProgressId");
 
-		ProgressTracker progressTracker = new ProgressTracker(
-			actionRequest, importProgressId);
+		ProgressTracker progressTracker = new ProgressTracker(importProgressId);
 
 		ProgressTrackerThreadLocal.setProgressTracker(progressTracker);
 
-		progressTracker.start();
+		progressTracker.start(actionRequest);
 
-		long nodeId = ParamUtil.getLong(uploadRequest, "nodeId");
-		String importer = ParamUtil.getString(uploadRequest, "importer");
+		long nodeId = ParamUtil.getLong(uploadPortletRequest, "nodeId");
+		String importer = ParamUtil.getString(uploadPortletRequest, "importer");
 
-		int filesCount = ParamUtil.getInteger(uploadRequest, "filesCount", 10);
+		int filesCount = ParamUtil.getInteger(
+			uploadPortletRequest, "filesCount", 10);
 
-		File[] files = new File[filesCount];
+		InputStream[] inputStreams = new InputStream[filesCount];
 
-		for (int i = 0; i < filesCount; i++) {
-			files[i] = uploadRequest.getFile("file" + i);
+		try {
+			for (int i = 0; i < filesCount; i++) {
+				inputStreams[i] = uploadPortletRequest.getFileAsStream(
+					"file" + i);
+			}
+
+			NotificationThreadLocal.setEnabled(false);
+			WikiCacheThreadLocal.setClearCache(false);
+
+			WikiNodeServiceUtil.importPages(
+				nodeId, importer, inputStreams,
+				actionRequest.getParameterMap());
 		}
-
-		NotificationThreadLocal.setEnabled(false);
-		WikiCacheThreadLocal.setClearCache(false);
-
-		WikiNodeServiceUtil.importPages(
-			nodeId, importer, files, actionRequest.getParameterMap());
+		finally {
+			for (InputStream inputStream : inputStreams) {
+				StreamUtil.cleanUp(inputStream);
+			}
+		}
 
 		WikiCacheUtil.clearCache(nodeId);
 
-		progressTracker.finish();
+		progressTracker.finish(actionRequest);
 	}
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,7 +22,7 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.apache.catalina.CometEvent;
+import org.apache.catalina.comet.CometEvent;
 
 /**
  * @author Edward Han
@@ -34,6 +34,7 @@ public class CatalinaCometSession extends BaseCometSession {
 		_cometEvent = cometEvent;
 	}
 
+	@Override
 	public Object getAttribute(String name) {
 		HttpServletRequest request = _cometEvent.getHttpServletRequest();
 
@@ -42,6 +43,7 @@ public class CatalinaCometSession extends BaseCometSession {
 		return session.getAttribute(name);
 	}
 
+	@Override
 	public void setAttribute(String name, Object object) {
 		HttpServletRequest request = _cometEvent.getHttpServletRequest();
 
@@ -57,8 +59,8 @@ public class CatalinaCometSession extends BaseCometSession {
 		}
 		catch (IllegalStateException ise) {
 		}
-		catch (IOException e) {
-			throw new SystemException(e);
+		catch (IOException ioe) {
+			throw new SystemException(ioe);
 		}
 	}
 

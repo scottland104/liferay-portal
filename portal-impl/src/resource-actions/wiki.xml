@@ -1,11 +1,12 @@
 <?xml version="1.0"?>
-<!DOCTYPE resource-action-mapping PUBLIC "-//Liferay//DTD Resource Action Mapping 6.1.0//EN" "http://www.liferay.com/dtd/liferay-resource-action-mapping_6_1_0.dtd">
+<!DOCTYPE resource-action-mapping PUBLIC "-//Liferay//DTD Resource Action Mapping 6.2.0//EN" "http://www.liferay.com/dtd/liferay-resource-action-mapping_6_2_0.dtd">
 
 <resource-action-mapping>
 	<portlet-resource>
 		<portlet-name>36</portlet-name>
 		<permissions>
 			<supports>
+				<action-key>ADD_PORTLET_DISPLAY_TEMPLATE</action-key>
 				<action-key>ADD_TO_PAGE</action-key>
 				<action-key>CONFIGURATION</action-key>
 				<action-key>VIEW</action-key>
@@ -17,6 +18,7 @@
 				<action-key>VIEW</action-key>
 			</guest-defaults>
 			<guest-unsupported>
+				<action-key>ADD_PORTLET_DISPLAY_TEMPLATE</action-key>
 				<action-key>CONFIGURATION</action-key>
 			</guest-unsupported>
 		</permissions>
@@ -42,7 +44,9 @@
 		<model-name>com.liferay.portlet.wiki</model-name>
 		<portlet-ref>
 			<portlet-name>36</portlet-name>
+			<portlet-name>154</portlet-name>
 		</portlet-ref>
+		<weight>1</weight>
 		<permissions>
 			<supports>
 				<action-key>ADD_NODE</action-key>
@@ -60,7 +64,9 @@
 		<model-name>com.liferay.portlet.wiki.model.WikiNode</model-name>
 		<portlet-ref>
 			<portlet-name>36</portlet-name>
+			<portlet-name>154</portlet-name>
 		</portlet-ref>
+		<weight>2</weight>
 		<permissions>
 			<supports>
 				<action-key>ADD_ATTACHMENT</action-key>
@@ -87,21 +93,14 @@
 				<action-key>UPDATE</action-key>
 			</guest-unsupported>
 		</permissions>
-		<social-equity>
-			<social-equity-mapping>
-				<action-key>SUBSCRIBE</action-key>
-				<information-value>2</information-value>
-				<information-lifespan>36500</information-lifespan>
-				<participation-value>2</participation-value>
-				<participation-lifespan>36500</participation-lifespan>
-			</social-equity-mapping>
-		</social-equity>
 	</model-resource>
 	<model-resource>
 		<model-name>com.liferay.portlet.wiki.model.WikiPage</model-name>
 		<portlet-ref>
 			<portlet-name>36</portlet-name>
+			<portlet-name>154</portlet-name>
 		</portlet-ref>
+		<weight>3</weight>
 		<permissions>
 			<supports>
 				<action-key>ADD_DISCUSSION</action-key>
@@ -130,47 +129,5 @@
 				<action-key>UPDATE_DISCUSSION</action-key>
 			</guest-unsupported>
 		</permissions>
-		<social-equity>
-			<social-equity-mapping>
-				<action-key>ADD_ATTACHMENT</action-key>
-				<information-value>2</information-value>
-				<information-lifespan>30</information-lifespan>
-				<participation-value>2</participation-value>
-				<participation-lifespan>30</participation-lifespan>
-			</social-equity-mapping>
-			<social-equity-mapping>
-				<action-key>ADD_DISCUSSION</action-key>
-				<information-value>2</information-value>
-				<information-lifespan>10</information-lifespan>
-				<participation-value>2</participation-value>
-				<participation-lifespan>10</participation-lifespan>
-			</social-equity-mapping>
-			<social-equity-mapping>
-				<action-key>ADD_PAGE</action-key>
-				<information-value>10</information-value>
-				<information-lifespan>30</information-lifespan>
-				<participation-value>5</participation-value>
-				<participation-lifespan>30</participation-lifespan>
-			</social-equity-mapping>
-			<social-equity-mapping>
-				<action-key>SUBSCRIBE</action-key>
-				<information-value>2</information-value>
-				<information-lifespan>36500</information-lifespan>
-				<participation-value>2</participation-value>
-				<participation-lifespan>36500</participation-lifespan>
-			</social-equity-mapping>
-			<social-equity-mapping>
-				<action-key>UPDATE</action-key>
-				<participation-value>2</participation-value>
-				<participation-lifespan>10</participation-lifespan>
-			</social-equity-mapping>
-			<social-equity-mapping>
-				<action-key>VIEW</action-key>
-				<information-value>1</information-value>
-				<information-lifespan>5</information-lifespan>
-				<participation-value>1</participation-value>
-				<participation-lifespan>5</participation-lifespan>
-			</social-equity-mapping>
-		</social-equity>
 	</model-resource>
 </resource-action-mapping>

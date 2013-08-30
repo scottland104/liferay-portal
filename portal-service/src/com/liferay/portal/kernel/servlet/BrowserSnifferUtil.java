@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -13,6 +13,8 @@
  */
 
 package com.liferay.portal.kernel.servlet;
+
+import com.liferay.portal.kernel.security.pacl.permission.PortalRuntimePermission;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -33,6 +35,8 @@ public class BrowserSnifferUtil {
 	}
 
 	public static BrowserSniffer getBrowserSniffer() {
+		PortalRuntimePermission.checkGetBeanProperty(BrowserSnifferUtil.class);
+
 		return _browserSniffer;
 	}
 
@@ -66,6 +70,14 @@ public class BrowserSnifferUtil {
 
 	public static boolean isIe(HttpServletRequest request) {
 		return getBrowserSniffer().isIe(request);
+	}
+
+	public static boolean isIeOnWin32(HttpServletRequest request) {
+		return getBrowserSniffer().isIeOnWin32(request);
+	}
+
+	public static boolean isIeOnWin64(HttpServletRequest request) {
+		return getBrowserSniffer().isIeOnWin64(request);
 	}
 
 	public static boolean isIphone(HttpServletRequest request) {
@@ -125,6 +137,8 @@ public class BrowserSnifferUtil {
 	}
 
 	public void setBrowserSniffer(BrowserSniffer browserSniffer) {
+		PortalRuntimePermission.checkSetBeanProperty(getClass());
+
 		_browserSniffer = browserSniffer;
 	}
 

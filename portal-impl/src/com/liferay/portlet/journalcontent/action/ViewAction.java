@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,11 +17,14 @@ package com.liferay.portlet.journalcontent.action;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.WebKeys;
+import com.liferay.portlet.journal.NoSuchArticleException;
+import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.model.JournalArticleDisplay;
+import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
 import com.liferay.portlet.journalcontent.util.JournalContentUtil;
 import com.liferay.util.portlet.PortletRequestUtil;
 
@@ -42,11 +45,12 @@ public class ViewAction extends WebContentAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
-		PortletPreferences preferences = renderRequest.getPreferences();
+		PortletPreferences portletPreferences = renderRequest.getPreferences();
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)renderRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
@@ -55,17 +59,18 @@ public class ViewAction extends WebContentAction {
 
 		if (groupId <= 0) {
 			groupId = GetterUtil.getLong(
-				preferences.getValue("groupId", StringPool.BLANK));
+				portletPreferences.getValue("groupId", null));
 		}
 
 		String articleId = ParamUtil.getString(renderRequest, "articleId");
-		String templateId = ParamUtil.getString(renderRequest, "templateId");
+		String ddmTemplateKey = ParamUtil.getString(
+			renderRequest, "ddmTemplateKey");
 
 		if (Validator.isNull(articleId)) {
 			articleId = GetterUtil.getString(
-				preferences.getValue("articleId", StringPool.BLANK));
-			templateId = GetterUtil.getString(
-				preferences.getValue("templateId", StringPool.BLANK));
+				portletPreferences.getValue("articleId", null));
+			ddmTemplateKey = GetterUtil.getString(
+				portletPreferences.getValue("ddmTemplateKey", null));
 		}
 
 		String viewMode = ParamUtil.getString(renderRequest, "viewMode");
@@ -74,12 +79,40 @@ public class ViewAction extends WebContentAction {
 		String xmlRequest = PortletRequestUtil.toXML(
 			renderRequest, renderResponse);
 
+		JournalArticle article = null;
 		JournalArticleDisplay articleDisplay = null;
 
 		if ((groupId > 0) && Validator.isNotNull(articleId)) {
-			articleDisplay = JournalContentUtil.getDisplay(
-				groupId, articleId, templateId, viewMode, languageId,
-				themeDisplay, page, xmlRequest);
+			try {
+				article = JournalArticleLocalServiceUtil.getLatestArticle(
+					groupId, articleId, WorkflowConstants.STATUS_APPROVED);
+			}
+			catch (NoSuchArticleException nsae) {
+			}
+
+			try {
+				if (article == null) {
+					article = JournalArticleLocalServiceUtil.getLatestArticle(
+						groupId, articleId, WorkflowConstants.STATUS_ANY);
+				}
+
+				double version = article.getVersion();
+
+				articleDisplay = JournalContentUtil.getDisplay(
+					groupId, articleId, version, ddmTemplateKey, viewMode,
+					languageId, themeDisplay, page, xmlRequest);
+			}
+			catch (Exception e) {
+				renderRequest.removeAttribute(WebKeys.JOURNAL_ARTICLE);
+
+				articleDisplay = JournalContentUtil.getDisplay(
+					groupId, articleId, ddmTemplateKey, viewMode, languageId,
+					themeDisplay, page, xmlRequest);
+			}
+		}
+
+		if (article != null) {
+			renderRequest.setAttribute(WebKeys.JOURNAL_ARTICLE, article);
 		}
 
 		if (articleDisplay != null) {
@@ -90,7 +123,7 @@ public class ViewAction extends WebContentAction {
 			renderRequest.removeAttribute(WebKeys.JOURNAL_ARTICLE_DISPLAY);
 		}
 
-		return mapping.findForward("portlet.journal_content.view");
+		return actionMapping.findForward("portlet.journal_content.view");
 	}
 
 }

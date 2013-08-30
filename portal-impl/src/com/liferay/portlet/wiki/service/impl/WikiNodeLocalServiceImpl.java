@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,39 +21,53 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.InstancePool;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.ResourceConstants;
+import com.liferay.portal.model.SystemEventConstants;
 import com.liferay.portal.model.User;
+import com.liferay.portal.portletfilerepository.PortletFileRepositoryUtil;
 import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
+import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
+import com.liferay.portlet.trash.model.TrashEntry;
+import com.liferay.portlet.trash.util.TrashUtil;
 import com.liferay.portlet.wiki.DuplicateNodeNameException;
 import com.liferay.portlet.wiki.NodeNameException;
 import com.liferay.portlet.wiki.importers.WikiImporter;
 import com.liferay.portlet.wiki.model.WikiNode;
 import com.liferay.portlet.wiki.model.WikiPage;
 import com.liferay.portlet.wiki.service.base.WikiNodeLocalServiceBaseImpl;
+import com.liferay.portlet.wiki.util.WikiCacheThreadLocal;
+import com.liferay.portlet.wiki.util.WikiCacheUtil;
 
-import java.io.File;
+import java.io.InputStream;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
+ * Provides the local service for accessing, adding, deleting, importing,
+ * subscription handling of, trash handling of, and updating wiki nodes.
+ *
  * @author Brian Wing Shun Chan
  * @author Charles May
  * @author Raymond Augé
  */
 public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 
+	@Override
 	public WikiNode addDefaultNode(long userId, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
@@ -62,6 +76,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 			serviceContext);
 	}
 
+	@Override
 	public WikiNode addNode(
 			long userId, String name, String description,
 			ServiceContext serviceContext)
@@ -90,7 +105,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		node.setDescription(description);
 
 		try {
-			wikiNodePersistence.update(node, false);
+			wikiNodePersistence.update(node);
 		}
 		catch (SystemException se) {
 			if (_log.isWarnEnabled()) {
@@ -110,12 +125,12 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 
 		// Resources
 
-		if (serviceContext.getAddGroupPermissions() ||
-			serviceContext.getAddGuestPermissions()) {
+		if (serviceContext.isAddGroupPermissions() ||
+			serviceContext.isAddGuestPermissions()) {
 
 			addNodeResources(
-				node, serviceContext.getAddGroupPermissions(),
-				serviceContext.getAddGuestPermissions());
+				node, serviceContext.isAddGroupPermissions(),
+				serviceContext.isAddGuestPermissions());
 		}
 		else {
 			addNodeResources(
@@ -126,6 +141,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		return node;
 	}
 
+	@Override
 	public void addNodeResources(
 			long nodeId, boolean addGroupPermissions,
 			boolean addGuestPermissions)
@@ -136,17 +152,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		addNodeResources(node, addGroupPermissions, addGuestPermissions);
 	}
 
-	public void addNodeResources(
-			WikiNode node, boolean addGroupPermissions,
-			boolean addGuestPermissions)
-		throws PortalException, SystemException {
-
-		resourceLocalService.addResources(
-			node.getCompanyId(), node.getGroupId(),	node.getUserId(),
-			WikiNode.class.getName(), node.getNodeId(), false,
-			addGroupPermissions, addGuestPermissions);
-	}
-
+	@Override
 	public void addNodeResources(
 			long nodeId, String[] groupPermissions, String[] guestPermissions)
 		throws PortalException, SystemException {
@@ -156,41 +162,52 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		addNodeResources(node, groupPermissions, guestPermissions);
 	}
 
+	@Override
+	public void addNodeResources(
+			WikiNode node, boolean addGroupPermissions,
+			boolean addGuestPermissions)
+		throws PortalException, SystemException {
+
+		resourceLocalService.addResources(
+			node.getCompanyId(), node.getGroupId(), node.getUserId(),
+			WikiNode.class.getName(), node.getNodeId(), false,
+			addGroupPermissions, addGuestPermissions);
+	}
+
+	@Override
 	public void addNodeResources(
 			WikiNode node, String[] groupPermissions, String[] guestPermissions)
 		throws PortalException, SystemException {
 
 		resourceLocalService.addModelResources(
-			node.getCompanyId(), node.getGroupId(),	node.getUserId(),
+			node.getCompanyId(), node.getGroupId(), node.getUserId(),
 			WikiNode.class.getName(), node.getNodeId(), groupPermissions,
 			guestPermissions);
 	}
 
+	@Override
 	public void deleteNode(long nodeId)
 		throws PortalException, SystemException {
 
 		WikiNode node = wikiNodePersistence.findByPrimaryKey(nodeId);
 
-		deleteNode(node);
+		wikiNodeLocalService.deleteNode(node);
 	}
 
+	@Override
+	@SystemEvent(
+		action = SystemEventConstants.ACTION_SKIP,
+		type = SystemEventConstants.TYPE_DELETE)
 	public void deleteNode(WikiNode node)
 		throws PortalException, SystemException {
-
-		// Indexer
-
-		Indexer indexer = IndexerRegistryUtil.getIndexer(WikiPage.class);
-
-		indexer.delete(node);
-
-		// Subscriptions
-
-		subscriptionLocalService.deleteSubscriptions(
-			node.getCompanyId(), WikiNode.class.getName(), node.getNodeId());
 
 		// Pages
 
 		wikiPageLocalService.deletePages(node.getNodeId());
+
+		// Node
+
+		wikiNodePersistence.remove(node);
 
 		// Resources
 
@@ -198,50 +215,126 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 			node.getCompanyId(), WikiNode.class.getName(),
 			ResourceConstants.SCOPE_INDIVIDUAL, node.getNodeId());
 
-		// Node
+		// Attachments
 
-		wikiNodePersistence.remove(node);
+		long folderId = node.getAttachmentsFolderId();
+
+		if (folderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+			PortletFileRepositoryUtil.deleteFolder(folderId);
+		}
+
+		// Subscriptions
+
+		subscriptionLocalService.deleteSubscriptions(
+			node.getCompanyId(), WikiNode.class.getName(), node.getNodeId());
+
+		if (node.isInTrash()) {
+			node.setName(TrashUtil.getOriginalTitle(node.getName()));
+
+			// Trash
+
+			trashEntryLocalService.deleteEntry(
+				WikiNode.class.getName(), node.getNodeId());
+
+			// Indexer
+
+			Indexer wikiNodeIndexer = IndexerRegistryUtil.nullSafeGetIndexer(
+				WikiNode.class);
+
+			wikiNodeIndexer.delete(node);
+		}
+
+		// Indexer
+
+		Indexer wikiPageIndexer = IndexerRegistryUtil.nullSafeGetIndexer(
+			WikiPage.class);
+
+		wikiPageIndexer.delete(node);
 	}
 
+	@Override
 	public void deleteNodes(long groupId)
 		throws PortalException, SystemException {
 
-		Iterator<WikiNode> itr = wikiNodePersistence.findByGroupId(
-			groupId).iterator();
+		List<WikiNode> nodes = wikiNodePersistence.findByGroupId(groupId);
 
-		while (itr.hasNext()) {
-			WikiNode node = itr.next();
-
-			deleteNode(node);
+		for (WikiNode node : nodes) {
+			wikiNodeLocalService.deleteNode(node);
 		}
+
+		PortletFileRepositoryUtil.deletePortletRepository(
+			groupId, PortletKeys.WIKI);
 	}
 
+	@Override
+	public WikiNode fetchNode(long groupId, String name)
+		throws SystemException {
+
+		return wikiNodePersistence.fetchByG_N(groupId, name);
+	}
+
+	@Override
+	public WikiNode fetchNodeByUuidAndGroupId(String uuid, long groupId)
+		throws SystemException {
+
+		return wikiNodePersistence.fetchByUUID_G(uuid, groupId);
+	}
+
+	@Override
 	public List<WikiNode> getCompanyNodes(long companyId, int start, int end)
 		throws SystemException {
 
-		return wikiNodePersistence.findByCompanyId(companyId, start, end);
+		return wikiNodePersistence.findByC_S(
+			companyId, WorkflowConstants.STATUS_APPROVED, start, end);
 	}
 
+	@Override
+	public List<WikiNode> getCompanyNodes(
+			long companyId, int status, int start, int end)
+		throws SystemException {
+
+		return wikiNodePersistence.findByC_S(companyId, status, start, end);
+	}
+
+	@Override
 	public int getCompanyNodesCount(long companyId) throws SystemException {
-		return wikiNodePersistence.countByCompanyId(companyId);
+		return wikiNodePersistence.countByC_S(
+			companyId, WorkflowConstants.STATUS_APPROVED);
 	}
 
+	@Override
+	public int getCompanyNodesCount(long companyId, int status)
+		throws SystemException {
+
+		return wikiNodePersistence.countByC_S(companyId, status);
+	}
+
+	@Override
 	public WikiNode getNode(long nodeId)
 		throws PortalException, SystemException {
 
 		return wikiNodePersistence.findByPrimaryKey(nodeId);
 	}
 
+	@Override
 	public WikiNode getNode(long groupId, String nodeName)
 		throws PortalException, SystemException {
 
 		return wikiNodePersistence.findByG_N(groupId, nodeName);
 	}
 
+	@Override
 	public List<WikiNode> getNodes(long groupId)
 		throws PortalException, SystemException {
 
-		List<WikiNode> nodes = wikiNodePersistence.findByGroupId(groupId);
+		return getNodes(groupId, WorkflowConstants.STATUS_APPROVED);
+	}
+
+	@Override
+	public List<WikiNode> getNodes(long groupId, int status)
+		throws PortalException, SystemException {
+
+		List<WikiNode> nodes = wikiNodePersistence.findByG_S(groupId, status);
 
 		if (nodes.isEmpty()) {
 			nodes = addDefaultNode(groupId);
@@ -250,11 +343,19 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		return nodes;
 	}
 
+	@Override
 	public List<WikiNode> getNodes(long groupId, int start, int end)
 		throws PortalException, SystemException {
 
-		List<WikiNode> nodes = wikiNodePersistence.findByGroupId(
-			groupId, start, end);
+		return getNodes(groupId, WorkflowConstants.STATUS_APPROVED, start, end);
+	}
+
+	@Override
+	public List<WikiNode> getNodes(long groupId, int status, int start, int end)
+		throws PortalException, SystemException {
+
+		List<WikiNode> nodes = wikiNodePersistence.findByG_S(
+			groupId, status, start, end);
 
 		if (nodes.isEmpty()) {
 			nodes = addDefaultNode(groupId);
@@ -263,22 +364,75 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		return nodes;
 	}
 
+	@Override
 	public int getNodesCount(long groupId) throws SystemException {
-		return wikiNodePersistence.countByGroupId(groupId);
+		return wikiNodePersistence.countByG_S(
+			groupId, WorkflowConstants.STATUS_APPROVED);
 	}
 
+	@Override
+	public int getNodesCount(long groupId, int status) throws SystemException {
+		return wikiNodePersistence.countByG_S(groupId, status);
+	}
+
+	@Override
 	public void importPages(
-			long userId, long nodeId, String importer, File[] files,
-			Map<String, String[]> options)
+			long userId, long nodeId, String importer,
+			InputStream[] inputStreams, Map<String, String[]> options)
 		throws PortalException, SystemException {
 
 		WikiNode node = getNode(nodeId);
 
 		WikiImporter wikiImporter = getWikiImporter(importer);
 
-		wikiImporter.importPages(userId, node, files, options);
+		wikiImporter.importPages(userId, node, inputStreams, options);
 	}
 
+	@Override
+	public WikiNode moveNodeToTrash(long userId, long nodeId)
+		throws PortalException, SystemException {
+
+		WikiNode node = wikiNodePersistence.findByPrimaryKey(nodeId);
+
+		return moveNodeToTrash(userId, node);
+	}
+
+	@Override
+	public WikiNode moveNodeToTrash(long userId, WikiNode node)
+		throws PortalException, SystemException {
+
+		node = updateStatus(
+			userId, node, WorkflowConstants.STATUS_IN_TRASH,
+			new ServiceContext());
+
+		TrashEntry trashEntry = trashEntryLocalService.getEntry(
+			WikiNode.class.getName(), node.getNodeId());
+
+		String trashTitle = TrashUtil.getTrashTitle(trashEntry.getEntryId());
+
+		node.setName(trashTitle);
+
+		return wikiNodePersistence.update(node);
+	}
+
+	@Override
+	public void restoreNodeFromTrash(long userId, WikiNode node)
+		throws PortalException, SystemException {
+
+		String name = TrashUtil.getOriginalTitle(node.getName());
+
+		node.setName(name);
+
+		wikiNodePersistence.update(node);
+
+		TrashEntry trashEntry = trashEntryLocalService.getEntry(
+			WikiNode.class.getName(), node.getNodeId());
+
+		updateStatus(
+			userId, node, trashEntry.getStatus(), new ServiceContext());
+	}
+
+	@Override
 	public void subscribeNode(long userId, long nodeId)
 		throws PortalException, SystemException {
 
@@ -288,6 +442,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 			userId, node.getGroupId(), WikiNode.class.getName(), nodeId);
 	}
 
+	@Override
 	public void unsubscribeNode(long userId, long nodeId)
 		throws PortalException, SystemException {
 
@@ -295,6 +450,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 			userId, WikiNode.class.getName(), nodeId);
 	}
 
+	@Override
 	public WikiNode updateNode(
 			long nodeId, String name, String description,
 			ServiceContext serviceContext)
@@ -308,7 +464,63 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		node.setName(name);
 		node.setDescription(description);
 
-		wikiNodePersistence.update(node, false);
+		wikiNodePersistence.update(node);
+
+		return node;
+	}
+
+	@Override
+	public WikiNode updateStatus(
+			long userId, WikiNode node, int status,
+			ServiceContext serviceContext)
+		throws PortalException, SystemException {
+
+		// Node
+
+		int oldStatus = node.getStatus();
+
+		User user = userPersistence.findByPrimaryKey(userId);
+
+		Date now = new Date();
+
+		node.setStatus(status);
+		node.setStatusByUserId(userId);
+		node.setStatusByUserName(user.getFullName());
+		node.setStatusDate(now);
+
+		wikiNodePersistence.update(node);
+
+		// Pages
+
+		updateDependentStatus(node.getNodeId(), status);
+
+		// Trash
+
+		if (oldStatus == WorkflowConstants.STATUS_IN_TRASH) {
+			trashEntryLocalService.deleteEntry(
+				WikiNode.class.getName(), node.getNodeId());
+		}
+		else if (status == WorkflowConstants.STATUS_IN_TRASH) {
+			UnicodeProperties typeSettingsProperties = new UnicodeProperties();
+
+			typeSettingsProperties.put("title", node.getName());
+
+			trashEntryLocalService.addTrashEntry(
+				userId, node.getGroupId(), WikiNode.class.getName(),
+				node.getNodeId(), oldStatus, null, typeSettingsProperties);
+		}
+
+		// Indexer
+
+		Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+			WikiNode.class);
+
+		if (status == WorkflowConstants.STATUS_IN_TRASH) {
+			indexer.reindex(node);
+		}
+		else {
+			indexer.delete(node);
+		}
 
 		return node;
 	}
@@ -327,7 +539,8 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		serviceContext.setAddGuestPermissions(true);
 		serviceContext.setScopeGroupId(groupId);
 
-		WikiNode node = addDefaultNode(defaultUserId, serviceContext);
+		WikiNode node = wikiNodeLocalService.addDefaultNode(
+			defaultUserId, serviceContext);
 
 		List<WikiNode> nodes = new ArrayList<WikiNode>(1);
 
@@ -361,10 +574,60 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		return wikiImporter;
 	}
 
-	protected void validate(long groupId, String name)
+	protected void updateDependentStatus(long nodeId, int status)
 		throws PortalException, SystemException {
 
-		validate(0, groupId, name);
+		List<WikiPage> pages = wikiPagePersistence.findByNodeId(nodeId);
+
+		for (WikiPage page : pages) {
+			if (status == WorkflowConstants.STATUS_IN_TRASH) {
+				if (page.getStatus() == WorkflowConstants.STATUS_APPROVED) {
+					assetEntryLocalService.updateVisible(
+						WikiPage.class.getName(), page.getResourcePrimKey(),
+						false);
+				}
+
+				// Index
+
+				Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+					WikiPage.class);
+
+				indexer.reindex(page);
+
+				// Cache
+
+				if (WikiCacheThreadLocal.isClearCache()) {
+					WikiCacheUtil.clearCache(page.getNodeId());
+				}
+
+				if (page.getStatus() == WorkflowConstants.STATUS_PENDING) {
+					page.setStatus(WorkflowConstants.STATUS_DRAFT);
+
+					wikiPagePersistence.update(page);
+
+					workflowInstanceLinkLocalService.deleteWorkflowInstanceLink(
+						page.getCompanyId(), page.getGroupId(),
+						WikiPage.class.getName(), page.getResourcePrimKey());
+				}
+			}
+			else {
+
+				// Asset
+
+				if (page.getStatus() == WorkflowConstants.STATUS_APPROVED) {
+					assetEntryLocalService.updateVisible(
+						WikiPage.class.getName(), page.getResourcePrimKey(),
+						true);
+				}
+
+				// Index
+
+				Indexer indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+					WikiPage.class);
+
+				indexer.reindex(page);
+			}
+		}
 	}
 
 	protected void validate(long nodeId, long groupId, String name)
@@ -374,7 +637,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 			throw new NodeNameException(name + " is reserved");
 		}
 
-		if (!Validator.isAlphanumericName(name)) {
+		if (Validator.isNull(name)) {
 			throw new NodeNameException();
 		}
 
@@ -383,6 +646,12 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		if ((node != null) && (node.getNodeId() != nodeId)) {
 			throw new DuplicateNodeNameException();
 		}
+	}
+
+	protected void validate(long groupId, String name)
+		throws PortalException, SystemException {
+
+		validate(0, groupId, name);
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(

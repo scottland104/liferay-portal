@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,15 +15,15 @@
 package com.liferay.portal.service;
 
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
-import com.liferay.portal.kernel.util.MethodCache;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the layout template local service. This utility wraps {@link com.liferay.portal.service.impl.LayoutTemplateLocalServiceImpl} and is the primary access point for service operations in application layer code running on the local server.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
+ * Provides the local service utility for LayoutTemplate. This utility wraps
+ * {@link com.liferay.portal.service.impl.LayoutTemplateLocalServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on the local server. Methods of this service will not have security checks
+ * based on the propagated JAAS credentials because this service can only be
+ * accessed from within the same VM.
  *
  * @author Brian Wing Shun Chan
  * @see LayoutTemplateLocalService
@@ -86,13 +86,13 @@ public class LayoutTemplateLocalServiceUtil {
 		return getService().getWapContent(layoutTemplateId, standard, themeId);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.util.ObjectValuePair<java.lang.String, java.lang.Boolean>> init(
+	public static java.util.List<com.liferay.portal.model.LayoutTemplate> init(
 		javax.servlet.ServletContext servletContext, java.lang.String[] xmls,
 		com.liferay.portal.kernel.plugin.PluginPackage pluginPackage) {
 		return getService().init(servletContext, xmls, pluginPackage);
 	}
 
-	public static java.util.List<com.liferay.portal.kernel.util.ObjectValuePair<java.lang.String, java.lang.Boolean>> init(
+	public static java.util.List<com.liferay.portal.model.LayoutTemplate> init(
 		java.lang.String servletContextName,
 		javax.servlet.ServletContext servletContext, java.lang.String[] xmls,
 		com.liferay.portal.kernel.plugin.PluginPackage pluginPackage) {
@@ -102,13 +102,13 @@ public class LayoutTemplateLocalServiceUtil {
 
 	public static void readLayoutTemplate(java.lang.String servletContextName,
 		javax.servlet.ServletContext servletContext,
-		java.util.Set<com.liferay.portal.kernel.util.ObjectValuePair<java.lang.String, java.lang.Boolean>> layoutTemplateIds,
-		com.liferay.portal.kernel.xml.Element el, boolean standard,
+		java.util.Set<com.liferay.portal.model.LayoutTemplate> layoutTemplates,
+		com.liferay.portal.kernel.xml.Element element, boolean standard,
 		java.lang.String themeId,
 		com.liferay.portal.kernel.plugin.PluginPackage pluginPackage) {
 		getService()
 			.readLayoutTemplate(servletContextName, servletContext,
-			layoutTemplateIds, el, standard, themeId, pluginPackage);
+			layoutTemplates, element, standard, themeId, pluginPackage);
 	}
 
 	public static void uninstallLayoutTemplate(
@@ -126,20 +126,15 @@ public class LayoutTemplateLocalServiceUtil {
 
 			ReferenceRegistry.registerReference(LayoutTemplateLocalServiceUtil.class,
 				"_service");
-			MethodCache.remove(LayoutTemplateLocalService.class);
 		}
 
 		return _service;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setService(LayoutTemplateLocalService service) {
-		MethodCache.remove(LayoutTemplateLocalService.class);
-
-		_service = service;
-
-		ReferenceRegistry.registerReference(LayoutTemplateLocalServiceUtil.class,
-			"_service");
-		MethodCache.remove(LayoutTemplateLocalService.class);
 	}
 
 	private static LayoutTemplateLocalService _service;

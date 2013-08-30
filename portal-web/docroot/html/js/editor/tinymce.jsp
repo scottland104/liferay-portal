@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -28,6 +28,7 @@ if (Validator.isNotNull(onChangeMethod)) {
 	onChangeMethod = namespace + onChangeMethod;
 }
 
+boolean resizable = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:input-editor:resizable"));
 boolean skipEditorLoading = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:input-editor:skipEditorLoading"));
 %>
 
@@ -38,7 +39,7 @@ boolean skipEditorLoading = GetterUtil.getBoolean((String)request.getAttribute("
 		long javaScriptLastModified = ServletContextUtil.getLastModified(application, "/html/js/", true);
 		%>
 
-		<script src="<%= HtmlUtil.escape(PortalUtil.getStaticResourceURL(request, themeDisplay.getPathJavaScript() + "/editor/tiny_mce/tiny_mce.js", javaScriptLastModified)) %>" type="text/javascript"></script>
+		<script src="<%= HtmlUtil.escape(PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + themeDisplay.getPathJavaScript() + "/editor/tiny_mce/tiny_mce.js", javaScriptLastModified)) %>" type="text/javascript"></script>
 
 		<script type="text/javascript">
 			Liferay.namespace('EDITORS')['<%= editorImpl %>'] = true;
@@ -57,7 +58,7 @@ boolean skipEditorLoading = GetterUtil.getBoolean((String)request.getAttribute("
 		destroy: function() {
 			tinyMCE.editors['<%= name %>'].destroy();
 
-			delete window['<%= name %>'];
+			window['<%= name %>'] = null;
 		},
 
 		focus: function() {
@@ -75,9 +76,9 @@ boolean skipEditorLoading = GetterUtil.getBoolean((String)request.getAttribute("
 			if (typeof value == 'string') {
 				value = decodeURIComponent(value);
 			}
-			 else {
-				 value = '';
-			 }
+			else {
+				value = '';
+			}
 
 			window['<%= name %>'].setHTML(value);
 		},
@@ -108,7 +109,7 @@ boolean skipEditorLoading = GetterUtil.getBoolean((String)request.getAttribute("
 
 				if (onChangeCallbackCounter > 0) {
 
-					<%= HtmlUtil.escape(onChangeMethod) %>(window['<%= name %>'].getHTML());
+					<%= HtmlUtil.escapeJS(onChangeMethod) %>(window['<%= name %>'].getHTML());
 
 				}
 
@@ -154,6 +155,7 @@ boolean skipEditorLoading = GetterUtil.getBoolean((String)request.getAttribute("
 			theme_advanced_buttons2_add_before: 'cut,copy,paste,search,replace',
 			theme_advanced_buttons3_add_before: 'tablecontrols,separator',
 			theme_advanced_disable: 'formatselect,styleselect,help',
+			theme_advanced_resize_horizontal: '<%= resizable %>',
 			theme_advanced_toolbar_align: 'left',
 			theme_advanced_toolbar_location: 'top'
 		}

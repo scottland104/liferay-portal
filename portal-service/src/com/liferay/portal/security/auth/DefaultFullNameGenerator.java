@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,7 +17,6 @@ package com.liferay.portal.security.auth;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.CharPool;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -29,11 +28,11 @@ import com.liferay.portal.model.UserConstants;
  */
 public class DefaultFullNameGenerator implements FullNameGenerator {
 
+	@Override
 	public String getFullName(
 		String firstName, String middleName, String lastName) {
 
-		String fullName = buildFullName(
-			firstName, middleName, lastName, false);
+		String fullName = buildFullName(firstName, middleName, lastName, false);
 
 		if (fullName.length() <= UserConstants.FULL_NAME_MAX_LENGTH) {
 			return fullName;
@@ -60,35 +59,34 @@ public class DefaultFullNameGenerator implements FullNameGenerator {
 		return fullName.substring(0, UserConstants.FULL_NAME_MAX_LENGTH);
 	}
 
+	@Override
 	public String[] splitFullName(String fullName) {
 		String firstName = StringPool.BLANK;
 		String middleName = StringPool.BLANK;
 		String lastName = StringPool.BLANK;
 
-		if (Validator.isNotNull(fullName)) {
-			String[] name = StringUtil.split(fullName, CharPool.SPACE);
-
-			firstName = name[0];
-			middleName = StringPool.BLANK;
-			lastName = name[name.length - 1];
-
-			if (name.length > 2) {
-				for (int i = 1; i < name.length - 1; i++) {
-					if (Validator.isNull(name[i].trim())) {
-						continue;
-					}
-
-					if (i != 1) {
-						middleName += StringPool.SPACE;
-					}
-
-					middleName += name[i].trim();
-				}
-			}
+		if (Validator.isNull(fullName)) {
+			return new String[] {firstName, middleName, lastName};
 		}
-		else {
-			firstName = GetterUtil.getString(firstName, lastName);
-			lastName = firstName;
+
+		String[] name = StringUtil.split(fullName, CharPool.SPACE);
+
+		firstName = name[0];
+		middleName = StringPool.BLANK;
+		lastName = name[name.length - 1];
+
+		if (name.length > 2) {
+			for (int i = 1; i < name.length - 1; i++) {
+				if (Validator.isNull(name[i].trim())) {
+					continue;
+				}
+
+				if (i != 1) {
+					middleName += StringPool.SPACE;
+				}
+
+				middleName += name[i].trim();
+			}
 		}
 
 		return new String[] {firstName, middleName, lastName};

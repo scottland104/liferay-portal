@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,8 @@
 
 package com.liferay.portal.kernel.cache.cluster;
 
+import com.liferay.portal.kernel.util.Validator;
+
 import java.util.Comparator;
 
 /**
@@ -22,6 +24,7 @@ import java.util.Comparator;
 public class PortalCacheClusterEventCoalesceComparator
 	implements Comparator<PortalCacheClusterEvent> {
 
+	@Override
 	public int compare(
 		PortalCacheClusterEvent portalCacheClusterEvent1,
 		PortalCacheClusterEvent portalCacheClusterEvent2) {
@@ -32,16 +35,22 @@ public class PortalCacheClusterEventCoalesceComparator
 			return 1;
 		}
 
-		if (portalCacheClusterEvent1.getCacheName().equals(
+		if (Validator.equals(
+				portalCacheClusterEvent1.getCacheName(),
 				portalCacheClusterEvent2.getCacheName()) &&
-			portalCacheClusterEvent1.getElementKey().equals(
-				portalCacheClusterEvent2.getElementKey())) {
+			Validator.equals(
+				portalCacheClusterEvent1.getElementKey(),
+				portalCacheClusterEvent2.getElementKey()) &&
+			(portalCacheClusterEvent1.getEventType() ==
+				portalCacheClusterEvent2.getEventType())) {
+
+			portalCacheClusterEvent1.setElementValue(
+				portalCacheClusterEvent2.getElementValue());
 
 			return 0;
 		}
-		else {
-			return -1;
-		}
+
+		return -1;
 	}
 
 }

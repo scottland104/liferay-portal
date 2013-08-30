@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,8 +23,8 @@ import java.util.List;
 /**
  * This class is used by SOAP remote services, specifically {@link com.liferay.portlet.documentlibrary.service.http.DLFolderServiceSoap}.
  *
- * @author    Brian Wing Shun Chan
- * @see       com.liferay.portlet.documentlibrary.service.http.DLFolderServiceSoap
+ * @author Brian Wing Shun Chan
+ * @see com.liferay.portlet.documentlibrary.service.http.DLFolderServiceSoap
  * @generated
  */
 public class DLFolderSoap implements Serializable {
@@ -46,7 +46,12 @@ public class DLFolderSoap implements Serializable {
 		soapModel.setDescription(model.getDescription());
 		soapModel.setLastPostDate(model.getLastPostDate());
 		soapModel.setDefaultFileEntryTypeId(model.getDefaultFileEntryTypeId());
+		soapModel.setHidden(model.getHidden());
 		soapModel.setOverrideFileEntryTypes(model.getOverrideFileEntryTypes());
+		soapModel.setStatus(model.getStatus());
+		soapModel.setStatusByUserId(model.getStatusByUserId());
+		soapModel.setStatusByUserName(model.getStatusByUserName());
+		soapModel.setStatusDate(model.getStatusDate());
 
 		return soapModel;
 	}
@@ -223,6 +228,18 @@ public class DLFolderSoap implements Serializable {
 		_defaultFileEntryTypeId = defaultFileEntryTypeId;
 	}
 
+	public boolean getHidden() {
+		return _hidden;
+	}
+
+	public boolean isHidden() {
+		return _hidden;
+	}
+
+	public void setHidden(boolean hidden) {
+		_hidden = hidden;
+	}
+
 	public boolean getOverrideFileEntryTypes() {
 		return _overrideFileEntryTypes;
 	}
@@ -233,6 +250,38 @@ public class DLFolderSoap implements Serializable {
 
 	public void setOverrideFileEntryTypes(boolean overrideFileEntryTypes) {
 		_overrideFileEntryTypes = overrideFileEntryTypes;
+	}
+
+	public int getStatus() {
+		return _status;
+	}
+
+	public void setStatus(int status) {
+		_status = status;
+	}
+
+	public long getStatusByUserId() {
+		return _statusByUserId;
+	}
+
+	public void setStatusByUserId(long statusByUserId) {
+		_statusByUserId = statusByUserId;
+	}
+
+	public String getStatusByUserName() {
+		return _statusByUserName;
+	}
+
+	public void setStatusByUserName(String statusByUserName) {
+		_statusByUserName = statusByUserName;
+	}
+
+	public Date getStatusDate() {
+		return _statusDate;
+	}
+
+	public void setStatusDate(Date statusDate) {
+		_statusDate = statusDate;
 	}
 
 	private String _uuid;
@@ -250,5 +299,10 @@ public class DLFolderSoap implements Serializable {
 	private String _description;
 	private Date _lastPostDate;
 	private long _defaultFileEntryTypeId;
+	private boolean _hidden;
 	private boolean _overrideFileEntryTypes;
+	private int _status;
+	private long _statusByUserId;
+	private String _statusByUserName;
+	private Date _statusDate;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,8 +20,12 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.mobile.device.Device;
+import com.liferay.portal.kernel.staging.StagingUtil;
 import com.liferay.portal.kernel.util.Http;
+import com.liferay.portal.kernel.util.LocaleThreadLocal;
+import com.liferay.portal.kernel.util.Mergeable;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.TimeZoneThreadLocal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.Account;
 import com.liferay.portal.model.ColorScheme;
@@ -37,6 +41,8 @@ import com.liferay.portal.model.User;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.LayoutLocalServiceUtil;
+import com.liferay.portal.util.PortalUtil;
+import com.liferay.portlet.mobiledevicerules.model.MDRRuleGroupInstance;
 
 import java.io.Serializable;
 
@@ -48,10 +54,13 @@ import java.util.TimeZone;
 
 import javax.portlet.PortletURL;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * @author Brian Wing Shun Chan
  */
-public class ThemeDisplay implements Serializable {
+public class ThemeDisplay
+	implements Cloneable, Mergeable<ThemeDisplay>, Serializable {
 
 	public ThemeDisplay() {
 		if (_log.isDebugEnabled()) {
@@ -61,8 +70,54 @@ public class ThemeDisplay implements Serializable {
 		_portletDisplay.setThemeDisplay(this);
 	}
 
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		ThemeDisplay themeDisplay = (ThemeDisplay)super.clone();
+
+		PortletDisplay portletDisplay = new PortletDisplay();
+
+		_portletDisplay.copyTo(portletDisplay);
+
+		themeDisplay._portletDisplay = portletDisplay;
+
+		portletDisplay.setThemeDisplay(themeDisplay);
+
+		return themeDisplay;
+	}
+
 	public Account getAccount() {
 		return _account;
+	}
+
+	public String getCDNBaseURL() {
+		if (_cdnBaseURL != null) {
+			return _cdnBaseURL;
+		}
+
+		String host = getCDNHost();
+
+		String portalURL = getPortalURL();
+
+		if (getServerName() != null) {
+			try {
+				portalURL = PortalUtil.getPortalURL(getLayout(), this);
+			}
+			catch (Exception e) {
+				_log.error(e, e);
+			}
+		}
+
+		if (Validator.isNull(host)) {
+			host = portalURL;
+		}
+
+		_cdnBaseURL = host;
+
+		return _cdnBaseURL;
+	}
+
+	public String getCDNDynamicResourcesHost() {
+		return _cdnDynamicResourcesHost;
 	}
 
 	public String getCDNHost() {
@@ -181,17 +236,29 @@ public class ThemeDisplay implements Serializable {
 		return _locale;
 	}
 
-	public long getParentGroupId() {
-		return _parentGroupId;
+	public MDRRuleGroupInstance getMDRRuleGroupInstance() {
+		return _mdrRuleGroupInstance;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0 renamed to {@link #getSiteGroup}
+	 */
+	public Group getParentGroup() {
+		return getSiteGroup();
+	}
+
+	/**
+	 * @deprecated As of 6.2.0 renamed to {@link #getSiteGroupId}
+	 */
+	public long getParentGroupId() {
+		return getSiteGroupId();
+	}
+
+	/**
+	 * @deprecated As of 6.2.0 renamed to {@link #getSiteGroupName}
+	 */
 	public String getParentGroupName() throws PortalException, SystemException {
-		if (_parentGroup == null) {
-			return StringPool.BLANK;
-		}
-		else {
-			return _parentGroup.getDescriptiveName();
-		}
+		return getSiteGroupName();
 	}
 
 	public String getPathApplet() {
@@ -247,7 +314,7 @@ public class ThemeDisplay implements Serializable {
 	}
 
 	/**
-	 * @deprecated Use <code>getPathThemeImages</code>.
+	 * @deprecated As of 6.2.0, replaced by {@link #getPathThemeImages}
 	 */
 	public String getPathThemeImage() {
 		return getPathThemeImages();
@@ -286,10 +353,14 @@ public class ThemeDisplay implements Serializable {
 	}
 
 	/**
-	 * @deprecated Use <code>getScopeGroupId</code>.
+	 * @deprecated As of 6.2.0, replaced by {@link #getScopeGroupId}
 	 */
 	public long getPortletGroupId() {
 		return getScopeGroupId();
+	}
+
+	public String getPpid() {
+		return _ppid;
 	}
 
 	public String getRealCompanyLogo() {
@@ -312,8 +383,16 @@ public class ThemeDisplay implements Serializable {
 		return _realUser.getUserId();
 	}
 
+	public long getRefererGroupId() {
+		return _refererGroupId;
+	}
+
 	public long getRefererPlid() {
 		return _refererPlid;
+	}
+
+	public HttpServletRequest getRequest() {
+		return _request;
 	}
 
 	public Group getScopeGroup() {
@@ -324,30 +403,21 @@ public class ThemeDisplay implements Serializable {
 		return _scopeGroupId;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0 renamed to {@link #getSiteGroupIdOrLiveGroupId}
+	 */
+	public long getScopeGroupIdOrLiveGroupId()
+		throws PortalException, SystemException {
+
+		return getSiteGroupIdOrLiveGroupId();
+	}
+
 	public String getScopeGroupName() throws PortalException, SystemException {
 		if (_scopeGroup == null) {
 			return StringPool.BLANK;
 		}
-		else {
-			return _scopeGroup.getDescriptiveName();
-		}
-	}
 
-	public long getScopeGroupIdOrLiveGroupId()
-		throws PortalException, SystemException {
-
-		if (_scopeGroupId == 0) {
-			return _scopeGroupId;
-		}
-
-		Group group = GroupLocalServiceUtil.getGroup(_scopeGroupId);
-
-		if (group.isStagingGroup()) {
-			return group.getLiveGroupId();
-		}
-		else {
-			return _scopeGroupId;
-		}
+		return _scopeGroup.getDescriptiveName();
 	}
 
 	public Layout getScopeLayout() throws PortalException, SystemException {
@@ -372,6 +442,32 @@ public class ThemeDisplay implements Serializable {
 
 	public String getSessionId() {
 		return _sessionId;
+	}
+
+	public Locale getSiteDefaultLocale() {
+		return _siteDefaultLocale;
+	}
+
+	public Group getSiteGroup() {
+		return _siteGroup;
+	}
+
+	public long getSiteGroupId() {
+		return _siteGroupId;
+	}
+
+	public long getSiteGroupIdOrLiveGroupId()
+		throws PortalException, SystemException {
+
+		return StagingUtil.getLiveGroupId(_siteGroupId);
+	}
+
+	public String getSiteGroupName() throws PortalException, SystemException {
+		if (_siteGroup == null) {
+			return StringPool.BLANK;
+		}
+
+		return _siteGroup.getDescriptiveName();
 	}
 
 	public Theme getTheme() {
@@ -452,9 +548,16 @@ public class ThemeDisplay implements Serializable {
 	}
 
 	public String getURLLayoutTemplates() {
+		if (Validator.isNull(_urlLayoutTemplates)) {
+			return _urlPageSettings + "#layout";
+		}
+
 		return _urlLayoutTemplates;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getURLSiteAdministration()}
+	 */
 	public PortletURL getURLManageSiteMemberships() {
 		return _urlManageSiteMemberships;
 	}
@@ -483,14 +586,28 @@ public class ThemeDisplay implements Serializable {
 		return _urlSignOut;
 	}
 
-	public String getURLSiteContent() {
-		return _urlSiteContent;
+	public String getURLSiteAdministration() {
+		return _urlSiteAdministration;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getURLSiteAdministration()}
+	 */
+	public String getURLSiteContent() {
+		return getURLSiteAdministration();
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #isShowSiteAdministrationIcon()}
+	 */
 	public PortletURL getURLSiteMapSettings() {
 		return _urlSiteMapSettings;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #getURLSiteAdministration()}
+	 */
 	public PortletURL getURLSiteSettings() {
 		return _urlSiteSettings;
 	}
@@ -511,6 +628,10 @@ public class ThemeDisplay implements Serializable {
 		return _addSessionIdToURL;
 	}
 
+	public boolean isAjax() {
+		return _ajax;
+	}
+
 	public boolean isFacebook() {
 		return _facebook;
 	}
@@ -527,9 +648,8 @@ public class ThemeDisplay implements Serializable {
 		if (getUserId() == getRealUserId()) {
 			return false;
 		}
-		else {
-			return true;
-		}
+
+		return true;
 	}
 
 	public boolean isIncludedJs(String js) {
@@ -540,22 +660,12 @@ public class ThemeDisplay implements Serializable {
 
 			return true;
 		}
-		else if (isIncludeServiceJs() &&
-				 js.startsWith(path + "/liferay/service.js")) {
 
-			return true;
-		}
-		else {
-			return false;
-		}
+		return false;
 	}
 
 	public boolean isIncludePortletCssJs() {
 		return _includePortletCssJs;
-	}
-
-	public boolean isIncludeServiceJs() {
-		return _includeServiceJs;
 	}
 
 	public boolean isIsolated() {
@@ -564,6 +674,10 @@ public class ThemeDisplay implements Serializable {
 
 	public boolean isLifecycleAction() {
 		return _lifecycleAction;
+	}
+
+	public boolean isLifecycleEvent() {
+		return _lifecycleEvent;
 	}
 
 	public boolean isLifecycleRender() {
@@ -598,6 +712,10 @@ public class ThemeDisplay implements Serializable {
 		return _showLayoutTemplatesIcon;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #isShowSiteAdministrationIcon()}
+	 */
 	public boolean isShowManageSiteMembershipsIcon() {
 		return _showManageSiteMembershipsIcon;
 	}
@@ -626,14 +744,30 @@ public class ThemeDisplay implements Serializable {
 		return _showSignOutIcon;
 	}
 
-	public boolean isShowSiteContentIcon() {
-		return _showSiteContentIcon;
+	public boolean isShowSiteAdministrationIcon() {
+		return _showSiteAdministrationIcon;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #isShowSiteAdministrationIcon()}
+	 */
+	public boolean isShowSiteContentIcon() {
+		return isShowSiteAdministrationIcon();
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #isShowSiteAdministrationIcon()}
+	 */
 	public boolean isShowSiteMapSettingsIcon() {
 		return _showSiteMapSettingsIcon;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #isShowSiteAdministrationIcon()}
+	 */
 	public boolean isShowSiteSettingsIcon() {
 		return _showSiteSettingsIcon;
 	}
@@ -686,12 +820,35 @@ public class ThemeDisplay implements Serializable {
 		return _widget;
 	}
 
+	@Override
+	public ThemeDisplay merge(ThemeDisplay themeDisplay) {
+		if ((themeDisplay == null) || (themeDisplay == this)) {
+			return this;
+		}
+
+		_includePortletCssJs = themeDisplay._includePortletCssJs;
+
+		return this;
+	}
+
 	public void setAccount(Account account) {
 		_account = account;
 	}
 
 	public void setAddSessionIdToURL(boolean addSessionIdToURL) {
 		_addSessionIdToURL = addSessionIdToURL;
+	}
+
+	public void setAjax(boolean ajax) {
+		_ajax = ajax;
+	}
+
+	public void setCDNBaseURL(String cdnBase) {
+		_cdnBaseURL = cdnBase;
+	}
+
+	public void setCDNDynamicResourcesHost(String cdnDynamicResourcesHost) {
+		_cdnDynamicResourcesHost = cdnDynamicResourcesHost;
 	}
 
 	public void setCDNHost(String cdnHost) {
@@ -781,10 +938,6 @@ public class ThemeDisplay implements Serializable {
 		_includePortletCssJs = includePortletCssJs;
 	}
 
-	public void setIncludeServiceJs(boolean includeServiceJs) {
-		_includeServiceJs = includeServiceJs;
-	}
-
 	public void setIsolated(boolean isolated) {
 		_isolated = isolated;
 	}
@@ -821,6 +974,10 @@ public class ThemeDisplay implements Serializable {
 		_lifecycleAction = lifecycleAction;
 	}
 
+	public void setLifecycleEvent(boolean lifecycleEvent) {
+		_lifecycleEvent = lifecycleEvent;
+	}
+
 	public void setLifecycleRender(boolean lifecycleRender) {
 		_lifecycleRender = lifecycleRender;
 	}
@@ -831,54 +988,77 @@ public class ThemeDisplay implements Serializable {
 
 	public void setLocale(Locale locale) {
 		_locale = locale;
-	}
 
-	public void setLookAndFeel(
-		String contextPath, Theme theme, ColorScheme colorScheme) {
-
-		_theme = theme;
-		_colorScheme = colorScheme;
-
-		if ((theme != null) && (colorScheme != null)) {
-			String themeStaticResourcePath = theme.getStaticResourcePath();
-
-			String host = getCDNHost();
-
-			if (Validator.isNull(host) && isFacebook()) {
-				host = getPortalURL();
-			}
-
-			setPathColorSchemeImages(
-				host + themeStaticResourcePath +
-					colorScheme.getColorSchemeImagesPath());
-
-			setPathThemeCss(
-				host + themeStaticResourcePath + theme.getCssPath());
-			setPathThemeImages(
-				host + themeStaticResourcePath + theme.getImagesPath());
-			setPathThemeJavaScript(
-				host + themeStaticResourcePath + theme.getJavaScriptPath());
-			setPathThemeRoot(themeStaticResourcePath + theme.getRootPath());
-			setPathThemeTemplates(
-				host + themeStaticResourcePath + theme.getTemplatesPath());
-		}
+		LocaleThreadLocal.setThemeDisplayLocale(locale);
 	}
 
 	public void setLookAndFeel(Theme theme, ColorScheme colorScheme) {
-		setLookAndFeel(getPathContext(), theme, colorScheme);
+		_theme = theme;
+		_colorScheme = colorScheme;
+
+		if ((theme == null) || (colorScheme == null)) {
+			return;
+		}
+
+		String themeStaticResourcePath = theme.getStaticResourcePath();
+
+		String cdnBaseURL = getCDNBaseURL();
+
+		setPathColorSchemeImages(
+			cdnBaseURL + themeStaticResourcePath +
+				colorScheme.getColorSchemeImagesPath());
+
+		String dynamicResourcesHost = getCDNDynamicResourcesHost();
+
+		if (Validator.isNull(dynamicResourcesHost)) {
+			String portalURL = getPortalURL();
+
+			if (getServerName() != null) {
+				try {
+					portalURL = PortalUtil.getPortalURL(getLayout(), this);
+				}
+				catch (Exception e) {
+					_log.error(e, e);
+				}
+			}
+
+			dynamicResourcesHost = portalURL;
+		}
+
+		setPathThemeCss(
+			dynamicResourcesHost + themeStaticResourcePath +
+				theme.getCssPath());
+
+		setPathThemeImages(
+			cdnBaseURL + themeStaticResourcePath + theme.getImagesPath());
+		setPathThemeJavaScript(
+			cdnBaseURL + themeStaticResourcePath +
+				theme.getJavaScriptPath());
+
+		String rootPath = theme.getRootPath();
+
+		if (rootPath.equals(StringPool.SLASH)) {
+			setPathThemeRoot(themeStaticResourcePath);
+		}
+		else {
+			setPathThemeRoot(themeStaticResourcePath + rootPath);
+		}
+
+		setPathThemeTemplates(
+			cdnBaseURL + themeStaticResourcePath + theme.getTemplatesPath());
 	}
 
-	public void setParentGroupId(long parentGroupId) {
-		_parentGroupId = parentGroupId;
+	public void setMDRRuleGroupInstance(
+		MDRRuleGroupInstance mdrRuleGroupInstance) {
 
-		if (_parentGroupId > 0) {
-			try {
-				_parentGroup = GroupLocalServiceUtil.getGroup(_parentGroupId);
-			}
-			catch (Exception e) {
-				_log.error(e, e);
-			}
-		}
+		_mdrRuleGroupInstance = mdrRuleGroupInstance;
+	}
+
+	/**
+	 * @deprecated As of 6.2.0 renamed to {@link #setSiteGroupId(long)}
+	 */
+	public void setParentGroupId(long parentGroupId) {
+		setSiteGroupId(parentGroupId);
 	}
 
 	public void setPathApplet(String pathApplet) {
@@ -972,6 +1152,10 @@ public class ThemeDisplay implements Serializable {
 		_portalURL = portalURL;
 	}
 
+	public void setPpid(String ppid) {
+		_ppid = ppid;
+	}
+
 	public void setRealCompanyLogo(String realCompanyLogo) {
 		_realCompanyLogo = realCompanyLogo;
 	}
@@ -988,8 +1172,16 @@ public class ThemeDisplay implements Serializable {
 		_realUser = realUser;
 	}
 
+	public void setRefererGroupId(long refererGroupId) {
+		_refererGroupId = refererGroupId;
+	}
+
 	public void setRefererPlid(long refererPlid) {
 		_refererPlid = refererPlid;
+	}
+
+	public void setRequest(HttpServletRequest request) {
+		_request = request;
 	}
 
 	public void setScopeGroupId(long scopeGroupId) {
@@ -1075,8 +1267,18 @@ public class ThemeDisplay implements Serializable {
 		_showSignOutIcon = showSignOutIcon;
 	}
 
+	public void setShowSiteAdministrationIcon(
+		boolean showSiteAdministrationIcon) {
+
+		_showSiteAdministrationIcon = showSiteAdministrationIcon;
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #setShowSiteAdministrationIcon(boolean)}
+	 */
 	public void setShowSiteContentIcon(boolean showSiteContentIcon) {
-		_showSiteContentIcon = showSiteContentIcon;
+		setShowSiteAdministrationIcon(showSiteContentIcon);
 	}
 
 	public void setShowSiteMapSettingsIcon(boolean showSiteMapSettingsIcon) {
@@ -1093,6 +1295,25 @@ public class ThemeDisplay implements Serializable {
 
 	public void setSignedIn(boolean signedIn) {
 		_signedIn = signedIn;
+	}
+
+	public void setSiteDefaultLocale(Locale siteDefaultLocale) {
+		_siteDefaultLocale = siteDefaultLocale;
+
+		LocaleThreadLocal.setSiteDefaultLocale(siteDefaultLocale);
+	}
+
+	public void setSiteGroupId(long siteGroupId) {
+		_siteGroupId = siteGroupId;
+
+		if (_siteGroupId > 0) {
+			try {
+				_siteGroup = GroupLocalServiceUtil.getGroup(_siteGroupId);
+			}
+			catch (Exception e) {
+				_log.error(e, e);
+			}
+		}
 	}
 
 	public void setStateExclusive(boolean stateExclusive) {
@@ -1137,6 +1358,8 @@ public class ThemeDisplay implements Serializable {
 
 	public void setTimeZone(TimeZone timeZone) {
 		_timeZone = timeZone;
+
+		TimeZoneThreadLocal.setThemeDisplayTimeZone(timeZone);
 	}
 
 	public void setUnfilteredLayouts(List<Layout> unfilteredLayouts) {
@@ -1193,8 +1416,16 @@ public class ThemeDisplay implements Serializable {
 		_urlSignOut = urlSignOut;
 	}
 
+	public void setURLSiteAdministration(String urlSiteAdministration) {
+		_urlSiteAdministration = urlSiteAdministration;
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #setURLSiteAdministration(String)}
+	 */
 	public void setURLSiteContent(String urlSiteContent) {
-		_urlSiteContent = urlSiteContent;
+		setURLSiteAdministration(urlSiteContent);
 	}
 
 	public void setURLSiteMapSettings(PortletURL urlSiteMapSettings) {
@@ -1235,6 +1466,9 @@ public class ThemeDisplay implements Serializable {
 
 	private Account _account;
 	private boolean _addSessionIdToURL;
+	private boolean _ajax;
+	private String _cdnBaseURL;
+	private String _cdnDynamicResourcesHost = StringPool.BLANK;
 	private String _cdnHost = StringPool.BLANK;
 	private ColorScheme _colorScheme;
 	private Company _company;
@@ -1256,21 +1490,20 @@ public class ThemeDisplay implements Serializable {
 	private String _i18nLanguageId;
 	private String _i18nPath;
 	private boolean _includePortletCssJs;
-	private boolean _includeServiceJs;
 	private boolean _isolated;
 	private String _languageId;
 	private Layout _layout;
 	private List<Layout> _layouts;
-	private String _layoutSetLogo = StringPool.BLANK;
 	private LayoutSet _layoutSet;
+	private String _layoutSetLogo = StringPool.BLANK;
 	private LayoutTypePortlet _layoutTypePortlet;
 	private String _lifecycle;
 	private boolean _lifecycleAction;
+	private boolean _lifecycleEvent;
 	private boolean _lifecycleRender;
 	private boolean _lifecycleResource;
 	private Locale _locale;
-	private Group _parentGroup;
-	private long _parentGroupId;
+	private MDRRuleGroupInstance _mdrRuleGroupInstance;
 	private String _pathApplet = StringPool.BLANK;
 	private String _pathCms = StringPool.BLANK;
 	private String _pathColorSchemeImages = StringPool.BLANK;
@@ -1292,11 +1525,14 @@ public class ThemeDisplay implements Serializable {
 	private long _plid;
 	private String _portalURL = StringPool.BLANK;
 	private PortletDisplay _portletDisplay = new PortletDisplay();
+	private String _ppid = StringPool.BLANK;
 	private String _realCompanyLogo = StringPool.BLANK;
 	private int _realCompanyLogoHeight;
 	private int _realCompanyLogoWidth;
 	private User _realUser;
+	private long _refererGroupId;
 	private long _refererPlid;
+	private transient HttpServletRequest _request;
 	private Group _scopeGroup;
 	private long _scopeGroupId;
 	private boolean _secure;
@@ -1315,11 +1551,14 @@ public class ThemeDisplay implements Serializable {
 	private boolean _showPortalIcon;
 	private boolean _showSignInIcon;
 	private boolean _showSignOutIcon;
-	private boolean _showSiteContentIcon;
+	private boolean _showSiteAdministrationIcon;
 	private boolean _showSiteMapSettingsIcon;
 	private boolean _showSiteSettingsIcon;
 	private boolean _showStagingIcon;
 	private boolean _signedIn;
+	private Locale _siteDefaultLocale;
+	private Group _siteGroup;
+	private long _siteGroupId;
 	private boolean _stateExclusive;
 	private boolean _stateMaximized;
 	private boolean _statePopUp;
@@ -1345,7 +1584,7 @@ public class ThemeDisplay implements Serializable {
 	private transient PortletURL _urlPublishToLive = null;
 	private String _urlSignIn = StringPool.BLANK;
 	private String _urlSignOut = StringPool.BLANK;
-	private String _urlSiteContent = StringPool.BLANK;
+	private String _urlSiteAdministration = StringPool.BLANK;
 	private transient PortletURL _urlSiteMapSettings = null;
 	private transient PortletURL _urlSiteSettings = null;
 	private transient PortletURL _urlUpdateManager = null;

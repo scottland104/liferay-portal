@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portlet.expando.model.impl;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -28,12 +29,12 @@ import com.liferay.portlet.expando.model.ExpandoColumnSoap;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base model implementation for the ExpandoColumn service. Represents a row in the &quot;ExpandoColumn&quot; database table, with each column mapped to a property of this class.
@@ -79,6 +80,11 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portlet.expando.model.ExpandoColumn"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portlet.expando.model.ExpandoColumn"),
+			true);
+	public static long NAME_COLUMN_BITMASK = 1L;
+	public static long TABLEID_COLUMN_BITMASK = 2L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -87,6 +93,10 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 	 * @return the normal model instance
 	 */
 	public static ExpandoColumn toModel(ExpandoColumnSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		ExpandoColumn model = new ExpandoColumnImpl();
 
 		model.setColumnId(soapModel.getColumnId());
@@ -107,6 +117,10 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 	 * @return the normal model instances
 	 */
 	public static List<ExpandoColumn> toModels(ExpandoColumnSoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<ExpandoColumn> models = new ArrayList<ExpandoColumn>(soapModels.length);
 
 		for (ExpandoColumnSoap soapModel : soapModels) {
@@ -116,60 +130,134 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 		return models;
 	}
 
-	public Class<?> getModelClass() {
-		return ExpandoColumn.class;
-	}
-
-	public String getModelClassName() {
-		return ExpandoColumn.class.getName();
-	}
-
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portlet.expando.model.ExpandoColumn"));
 
 	public ExpandoColumnModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _columnId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setColumnId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_columnId);
+		return _columnId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return ExpandoColumn.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return ExpandoColumn.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("columnId", getColumnId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("tableId", getTableId());
+		attributes.put("name", getName());
+		attributes.put("type", getType());
+		attributes.put("defaultData", getDefaultData());
+		attributes.put("typeSettings", getTypeSettings());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long columnId = (Long)attributes.get("columnId");
+
+		if (columnId != null) {
+			setColumnId(columnId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long tableId = (Long)attributes.get("tableId");
+
+		if (tableId != null) {
+			setTableId(tableId);
+		}
+
+		String name = (String)attributes.get("name");
+
+		if (name != null) {
+			setName(name);
+		}
+
+		Integer type = (Integer)attributes.get("type");
+
+		if (type != null) {
+			setType(type);
+		}
+
+		String defaultData = (String)attributes.get("defaultData");
+
+		if (defaultData != null) {
+			setDefaultData(defaultData);
+		}
+
+		String typeSettings = (String)attributes.get("typeSettings");
+
+		if (typeSettings != null) {
+			setTypeSettings(typeSettings);
+		}
+	}
+
 	@JSON
+	@Override
 	public long getColumnId() {
 		return _columnId;
 	}
 
+	@Override
 	public void setColumnId(long columnId) {
 		_columnId = columnId;
 	}
 
 	@JSON
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
 		_companyId = companyId;
 	}
 
 	@JSON
+	@Override
 	public long getTableId() {
 		return _tableId;
 	}
 
+	@Override
 	public void setTableId(long tableId) {
+		_columnBitmask |= TABLEID_COLUMN_BITMASK;
+
 		if (!_setOriginalTableId) {
 			_setOriginalTableId = true;
 
@@ -184,6 +272,7 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 	}
 
 	@JSON
+	@Override
 	public String getName() {
 		if (_name == null) {
 			return StringPool.BLANK;
@@ -193,7 +282,10 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 		}
 	}
 
+	@Override
 	public void setName(String name) {
+		_columnBitmask = -1L;
+
 		if (_originalName == null) {
 			_originalName = _name;
 		}
@@ -206,15 +298,18 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 	}
 
 	@JSON
+	@Override
 	public int getType() {
 		return _type;
 	}
 
+	@Override
 	public void setType(int type) {
 		_type = type;
 	}
 
 	@JSON
+	@Override
 	public String getDefaultData() {
 		if (_defaultData == null) {
 			return StringPool.BLANK;
@@ -224,11 +319,13 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 		}
 	}
 
+	@Override
 	public void setDefaultData(String defaultData) {
 		_defaultData = defaultData;
 	}
 
 	@JSON
+	@Override
 	public String getTypeSettings() {
 		if (_typeSettings == null) {
 			return StringPool.BLANK;
@@ -238,24 +335,23 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 		}
 	}
 
+	@Override
 	public void setTypeSettings(String typeSettings) {
 		_typeSettings = typeSettings;
 	}
 
+	public long getColumnBitmask() {
+		return _columnBitmask;
+	}
+
 	@Override
 	public ExpandoColumn toEscapedModel() {
-		if (isEscapedModel()) {
-			return (ExpandoColumn)this;
+		if (_escapedModel == null) {
+			_escapedModel = (ExpandoColumn)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
 		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (ExpandoColumn)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
 
-			return _escapedModelProxy;
-		}
+		return _escapedModel;
 	}
 
 	@Override
@@ -275,6 +371,7 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 		return expandoColumnImpl;
 	}
 
+	@Override
 	public int compareTo(ExpandoColumn expandoColumn) {
 		int value = 0;
 
@@ -289,18 +386,15 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof ExpandoColumn)) {
 			return false;
 		}
 
-		ExpandoColumn expandoColumn = null;
-
-		try {
-			expandoColumn = (ExpandoColumn)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		ExpandoColumn expandoColumn = (ExpandoColumn)obj;
 
 		long primaryKey = expandoColumn.getPrimaryKey();
 
@@ -326,6 +420,8 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 		expandoColumnModelImpl._setOriginalTableId = false;
 
 		expandoColumnModelImpl._originalName = expandoColumnModelImpl._name;
+
+		expandoColumnModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -390,6 +486,7 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(25);
 
@@ -432,7 +529,7 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 	}
 
 	private static ClassLoader _classLoader = ExpandoColumn.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			ExpandoColumn.class
 		};
 	private long _columnId;
@@ -445,5 +542,6 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 	private int _type;
 	private String _defaultData;
 	private String _typeSettings;
-	private ExpandoColumn _escapedModelProxy;
+	private long _columnBitmask;
+	private ExpandoColumn _escapedModel;
 }

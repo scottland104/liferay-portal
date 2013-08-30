@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -35,33 +35,10 @@ import org.dom4j.io.XMLWriter;
  */
 public class XMLMergerRunner {
 
-	public static void main(String[] args)
-		throws ClassNotFoundException, DocumentException,
-			   IllegalAccessException, InstantiationException, IOException {
-
-		if ((args != null) && (args.length == 4)) {
-			XMLMergerRunner runner = new XMLMergerRunner(args[3]);
-
-			runner.mergeAndSave(args[0], args[1], args[2]);
-		}
-		else {
-			throw new IllegalArgumentException();
-		}
-	}
-
 	public XMLMergerRunner(String descriptorClassName) {
 		if (Validator.isNotNull(descriptorClassName)) {
 			_descriptorClassName = descriptorClassName;
 		}
-	}
-
-	public void mergeAndSave(
-			String masterFile, String slaveFile, String mergedFile)
-		throws ClassNotFoundException, DocumentException,
-			   IllegalAccessException, InstantiationException, IOException {
-
-		mergeAndSave(
-			new File(masterFile), new File(slaveFile), new File(mergedFile));
 	}
 
 	public void mergeAndSave(File masterFile, File slaveFile, File mergedFile)
@@ -74,6 +51,15 @@ public class XMLMergerRunner {
 		String mergedXml = _merge(xml1, xml2);
 
 		FileUtil.write(mergedFile, mergedXml);
+	}
+
+	public void mergeAndSave(
+			String masterFile, String slaveFile, String mergedFile)
+		throws ClassNotFoundException, DocumentException,
+			   IllegalAccessException, InstantiationException, IOException {
+
+		mergeAndSave(
+			new File(masterFile), new File(slaveFile), new File(mergedFile));
 	}
 
 	private String _documentToString(Document doc, String docType)

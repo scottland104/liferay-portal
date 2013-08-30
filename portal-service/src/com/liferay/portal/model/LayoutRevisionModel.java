@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,7 @@
 
 package com.liferay.portal.model;
 
+import com.liferay.portal.LocaleException;
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.service.ServiceContext;
@@ -80,6 +81,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @return the group ID of this layout revision
 	 */
+	@Override
 	public long getGroupId();
 
 	/**
@@ -87,6 +89,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @param groupId the group ID of this layout revision
 	 */
+	@Override
 	public void setGroupId(long groupId);
 
 	/**
@@ -94,6 +97,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @return the company ID of this layout revision
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -101,6 +105,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @param companyId the company ID of this layout revision
 	 */
+	@Override
 	public void setCompanyId(long companyId);
 
 	/**
@@ -108,6 +113,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @return the user ID of this layout revision
 	 */
+	@Override
 	public long getUserId();
 
 	/**
@@ -115,6 +121,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @param userId the user ID of this layout revision
 	 */
+	@Override
 	public void setUserId(long userId);
 
 	/**
@@ -123,6 +130,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @return the user uuid of this layout revision
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getUserUuid() throws SystemException;
 
 	/**
@@ -130,6 +138,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @param userUuid the user uuid of this layout revision
 	 */
+	@Override
 	public void setUserUuid(String userUuid);
 
 	/**
@@ -138,6 +147,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @return the user name of this layout revision
 	 */
 	@AutoEscape
+	@Override
 	public String getUserName();
 
 	/**
@@ -145,6 +155,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @param userName the user name of this layout revision
 	 */
+	@Override
 	public void setUserName(String userName);
 
 	/**
@@ -152,6 +163,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @return the create date of this layout revision
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -159,6 +171,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @param createDate the create date of this layout revision
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -166,6 +179,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @return the modified date of this layout revision
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -173,6 +187,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @param modifiedDate the modified date of this layout revision
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
@@ -307,6 +322,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param locale the locale of the language
 	 * @return the localized name of this layout revision
 	 */
+	@AutoEscape
 	public String getName(Locale locale);
 
 	/**
@@ -316,6 +332,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized name of this layout revision. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getName(Locale locale, boolean useDefault);
 
 	/**
@@ -324,6 +341,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param languageId the ID of the language
 	 * @return the localized name of this layout revision
 	 */
+	@AutoEscape
 	public String getName(String languageId);
 
 	/**
@@ -333,7 +351,14 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized name of this layout revision
 	 */
+	@AutoEscape
 	public String getName(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getNameCurrentLanguageId();
+
+	@AutoEscape
+	public String getNameCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized names of this layout revision.
@@ -366,6 +391,8 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 */
 	public void setName(String name, Locale locale, Locale defaultLocale);
 
+	public void setNameCurrentLanguageId(String languageId);
+
 	/**
 	 * Sets the localized names of this layout revision from the map of locales and localized names.
 	 *
@@ -394,6 +421,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param locale the locale of the language
 	 * @return the localized title of this layout revision
 	 */
+	@AutoEscape
 	public String getTitle(Locale locale);
 
 	/**
@@ -403,6 +431,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized title of this layout revision. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getTitle(Locale locale, boolean useDefault);
 
 	/**
@@ -411,6 +440,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param languageId the ID of the language
 	 * @return the localized title of this layout revision
 	 */
+	@AutoEscape
 	public String getTitle(String languageId);
 
 	/**
@@ -420,7 +450,14 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized title of this layout revision
 	 */
+	@AutoEscape
 	public String getTitle(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getTitleCurrentLanguageId();
+
+	@AutoEscape
+	public String getTitleCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized titles of this layout revision.
@@ -453,6 +490,8 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 */
 	public void setTitle(String title, Locale locale, Locale defaultLocale);
 
+	public void setTitleCurrentLanguageId(String languageId);
+
 	/**
 	 * Sets the localized titles of this layout revision from the map of locales and localized titles.
 	 *
@@ -481,6 +520,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param locale the locale of the language
 	 * @return the localized description of this layout revision
 	 */
+	@AutoEscape
 	public String getDescription(Locale locale);
 
 	/**
@@ -490,6 +530,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized description of this layout revision. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getDescription(Locale locale, boolean useDefault);
 
 	/**
@@ -498,6 +539,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param languageId the ID of the language
 	 * @return the localized description of this layout revision
 	 */
+	@AutoEscape
 	public String getDescription(String languageId);
 
 	/**
@@ -507,7 +549,14 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized description of this layout revision
 	 */
+	@AutoEscape
 	public String getDescription(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getDescriptionCurrentLanguageId();
+
+	@AutoEscape
+	public String getDescriptionCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized descriptions of this layout revision.
@@ -541,6 +590,8 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	public void setDescription(String description, Locale locale,
 		Locale defaultLocale);
 
+	public void setDescriptionCurrentLanguageId(String languageId);
+
 	/**
 	 * Sets the localized descriptions of this layout revision from the map of locales and localized descriptions.
 	 *
@@ -570,6 +621,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param locale the locale of the language
 	 * @return the localized keywords of this layout revision
 	 */
+	@AutoEscape
 	public String getKeywords(Locale locale);
 
 	/**
@@ -579,6 +631,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized keywords of this layout revision. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getKeywords(Locale locale, boolean useDefault);
 
 	/**
@@ -587,6 +640,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param languageId the ID of the language
 	 * @return the localized keywords of this layout revision
 	 */
+	@AutoEscape
 	public String getKeywords(String languageId);
 
 	/**
@@ -596,7 +650,14 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized keywords of this layout revision
 	 */
+	@AutoEscape
 	public String getKeywords(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getKeywordsCurrentLanguageId();
+
+	@AutoEscape
+	public String getKeywordsCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized keywordses of this layout revision.
@@ -629,6 +690,8 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 */
 	public void setKeywords(String keywords, Locale locale, Locale defaultLocale);
 
+	public void setKeywordsCurrentLanguageId(String languageId);
+
 	/**
 	 * Sets the localized keywordses of this layout revision from the map of locales and localized keywordses.
 	 *
@@ -658,6 +721,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param locale the locale of the language
 	 * @return the localized robots of this layout revision
 	 */
+	@AutoEscape
 	public String getRobots(Locale locale);
 
 	/**
@@ -667,6 +731,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized robots of this layout revision. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getRobots(Locale locale, boolean useDefault);
 
 	/**
@@ -675,6 +740,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param languageId the ID of the language
 	 * @return the localized robots of this layout revision
 	 */
+	@AutoEscape
 	public String getRobots(String languageId);
 
 	/**
@@ -684,7 +750,14 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized robots of this layout revision
 	 */
+	@AutoEscape
 	public String getRobots(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getRobotsCurrentLanguageId();
+
+	@AutoEscape
+	public String getRobotsCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized robotses of this layout revision.
@@ -716,6 +789,8 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @param defaultLocale the default locale
 	 */
 	public void setRobots(String robots, Locale locale, Locale defaultLocale);
+
+	public void setRobotsCurrentLanguageId(String languageId);
 
 	/**
 	 * Sets the localized robotses of this layout revision from the map of locales and localized robotses.
@@ -862,6 +937,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @return the status of this layout revision
 	 */
+	@Override
 	public int getStatus();
 
 	/**
@@ -869,6 +945,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @param status the status of this layout revision
 	 */
+	@Override
 	public void setStatus(int status);
 
 	/**
@@ -876,6 +953,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @return the status by user ID of this layout revision
 	 */
+	@Override
 	public long getStatusByUserId();
 
 	/**
@@ -883,6 +961,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @param statusByUserId the status by user ID of this layout revision
 	 */
+	@Override
 	public void setStatusByUserId(long statusByUserId);
 
 	/**
@@ -891,6 +970,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @return the status by user uuid of this layout revision
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getStatusByUserUuid() throws SystemException;
 
 	/**
@@ -898,6 +978,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @param statusByUserUuid the status by user uuid of this layout revision
 	 */
+	@Override
 	public void setStatusByUserUuid(String statusByUserUuid);
 
 	/**
@@ -906,6 +987,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 * @return the status by user name of this layout revision
 	 */
 	@AutoEscape
+	@Override
 	public String getStatusByUserName();
 
 	/**
@@ -913,6 +995,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @param statusByUserName the status by user name of this layout revision
 	 */
+	@Override
 	public void setStatusByUserName(String statusByUserName);
 
 	/**
@@ -920,6 +1003,7 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @return the status date of this layout revision
 	 */
+	@Override
 	public Date getStatusDate();
 
 	/**
@@ -927,11 +1011,13 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @param statusDate the status date of this layout revision
 	 */
+	@Override
 	public void setStatusDate(Date statusDate);
 
 	/**
-	 * @deprecated Renamed to {@link #isApproved()}
+	 * @deprecated As of 6.1.0, replaced by {@link #isApproved()}
 	 */
+	@Override
 	public boolean getApproved();
 
 	/**
@@ -939,13 +1025,23 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @return <code>true</code> if this layout revision is approved; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isApproved();
+
+	/**
+	 * Returns <code>true</code> if this layout revision is denied.
+	 *
+	 * @return <code>true</code> if this layout revision is denied; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isDenied();
 
 	/**
 	 * Returns <code>true</code> if this layout revision is a draft.
 	 *
 	 * @return <code>true</code> if this layout revision is a draft; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isDraft();
 
 	/**
@@ -953,46 +1049,112 @@ public interface LayoutRevisionModel extends BaseModel<LayoutRevision>,
 	 *
 	 * @return <code>true</code> if this layout revision is expired; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isExpired();
+
+	/**
+	 * Returns <code>true</code> if this layout revision is inactive.
+	 *
+	 * @return <code>true</code> if this layout revision is inactive; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isInactive();
+
+	/**
+	 * Returns <code>true</code> if this layout revision is incomplete.
+	 *
+	 * @return <code>true</code> if this layout revision is incomplete; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isIncomplete();
+
+	/**
+	 * Returns <code>true</code> if this layout revision is in the Recycle Bin.
+	 *
+	 * @return <code>true</code> if this layout revision is in the Recycle Bin; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isInTrash();
 
 	/**
 	 * Returns <code>true</code> if this layout revision is pending.
 	 *
 	 * @return <code>true</code> if this layout revision is pending; <code>false</code> otherwise
 	 */
+	@Override
 	public boolean isPending();
 
+	/**
+	 * Returns <code>true</code> if this layout revision is scheduled.
+	 *
+	 * @return <code>true</code> if this layout revision is scheduled; <code>false</code> otherwise
+	 */
+	@Override
+	public boolean isScheduled();
+
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	public String[] getAvailableLanguageIds();
+
+	public String getDefaultLanguageId();
+
+	public void prepareLocalizedFieldsForImport() throws LocaleException;
+
+	public void prepareLocalizedFieldsForImport(Locale defaultImportLocale)
+		throws LocaleException;
+
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(LayoutRevision layoutRevision);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<LayoutRevision> toCacheModel();
 
+	@Override
 	public LayoutRevision toEscapedModel();
 
+	@Override
+	public LayoutRevision toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

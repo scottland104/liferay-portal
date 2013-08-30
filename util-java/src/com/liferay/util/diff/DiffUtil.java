@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,40 +21,40 @@ import com.liferay.portal.kernel.util.StringPool;
 import java.io.Reader;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.incava.util.diff.Diff;
 import org.incava.util.diff.Difference;
 
 /**
- * <p>
  * This class can compare two different versions of a text. Source refers to the
  * earliest version of the text and target refers to a modified version of
  * source. Changes are considered either as a removal from the source or as an
  * addition to the target. This class detects changes to an entire line and also
  * detects changes within lines, such as, removal or addition of characters.
  * Take a look at <code>DiffTest</code> to see the expected inputs and outputs.
- * </p>
  *
  * @author     Bruno Farache
- * @deprecated Moved to {@link com.liferay.portal.kernel.util.DiffUtil}
+ * @deprecated As of 6.2.0, moved to {@link
+ *             com.liferay.portal.kernel.util.DiffUtil}
  */
 public class DiffUtil {
 
-	public static final String OPEN_INS = "<ins>";
+	public static final String CLOSE_DEL = "</del>";
 
 	public static final String CLOSE_INS = "</ins>";
 
+	public static final String CONTEXT_LINE = "#context#line#";
+
 	public static final String OPEN_DEL = "<del>";
 
-	public static final String CLOSE_DEL = "</del>";
-
-	public static final String CONTEXT_LINE = "#context#line#";
+	public static final String OPEN_INS = "<ins>";
 
 	/**
 	 * This is a diff method with default values.
 	 *
+	 * @param  source the source text
+	 * @param  target the modified version of the source text
 	 * @return an array containing two lists of <code>DiffResults</code>, the
 	 *         first element contains DiffResults related to changes in source
 	 *         and the second element to changes in target
@@ -71,6 +71,18 @@ public class DiffUtil {
 	 * highlight the changes by enclosing them with markers and return a list of
 	 * <code>DiffResults</code>.
 	 *
+	 * @param  source the source text
+	 * @param  target the modified version of the source text
+	 * @param  addedMarkerStart the marker to indicate the start of text added
+	 *         to the source
+	 * @param  addedMarkerEnd the marker to indicate the end of text added to
+	 *         the source
+	 * @param  deletedMarkerStart the marker to indicate the start of text
+	 *         deleted from the source
+	 * @param  deletedMarkerEnd the marker to indicate the end of text deleted
+	 *         from the source
+	 * @param  margin the vertical margin to use in displaying differences
+	 *         between changed line changes
 	 * @return an array containing two lists of <code>DiffResults</code>, the
 	 *         first element contains DiffResults related to changes in source
 	 *         and the second element to changes in target
@@ -96,19 +108,14 @@ public class DiffUtil {
 
 		List<Difference> differences = diff.diff();
 
-		Iterator<Difference> itr = differences.iterator();
-
-		while (itr.hasNext()) {
-			Difference difference = itr.next();
-
+		for (Difference difference : differences) {
 			if (difference.getAddedEnd() == Difference.NONE) {
 
 				// Lines were deleted from source only.
 
 				_highlightLines(
-					sourceStringList, deletedMarkerStart,
-					deletedMarkerEnd, difference.getDeletedStart(),
-					difference.getDeletedEnd());
+					sourceStringList, deletedMarkerStart, deletedMarkerEnd,
+					difference.getDeletedStart(), difference.getDeletedEnd());
 
 				margin = _calculateMargin(
 					sourceResults, targetResults, difference.getDeletedStart(),
@@ -196,7 +203,7 @@ public class DiffUtil {
 
 		List<String> changedLines = new ArrayList<String>();
 
-		if (margin == 0 || startPos == 0) {
+		if ((margin == 0) || (startPos == 0)) {
 			return changedLines;
 		}
 
@@ -221,8 +228,7 @@ public class DiffUtil {
 
 		changedLines.addAll(stringList.subList(start, end + 1));
 
-		DiffResult diffResult = new DiffResult(
-			start, changedLines);
+		DiffResult diffResult = new DiffResult(start, changedLines);
 
 		results.add(diffResult);
 	}
@@ -286,7 +292,7 @@ public class DiffUtil {
 			}
 
 			if (aligned) {
-				 break;
+				break;
 			}
 			else {
 				_highlightLines(
@@ -316,10 +322,10 @@ public class DiffUtil {
 				deletedMarkerStart, deletedMarkerEnd, i, j, true);
 		}
 
-		// After the for loop above, some lines might remained unchecked.
-		// They are considered as deletions or additions.
+		// After the for loop above, some lines might remained unchecked. They
+		// are considered as deletions or additions.
 
-		for (; i <= difference.getDeletedEnd();i++) {
+		for (; i <= difference.getDeletedEnd(); i++) {
 			_highlightLines(
 				sourceStringList, deletedMarkerStart, deletedMarkerEnd, i, i);
 
@@ -347,7 +353,7 @@ public class DiffUtil {
 	private static int _checkOverlapping(
 		List<DiffResult> results, int startPos, int margin) {
 
-		if (results.size() == 0 || (startPos - margin) < 0) {
+		if ((results.size() == 0) || ((startPos - margin) < 0)) {
 			return margin;
 		}
 
@@ -357,13 +363,13 @@ public class DiffUtil {
 			return margin;
 		}
 
-		int lastChangedLine = (lastDiff.getLineNumber() - 1) +
-			lastDiff.getChangedLines().size();
+		int lastChangedLine =
+			(lastDiff.getLineNumber() - 1) + lastDiff.getChangedLines().size();
 
 		int currentChangedLine = startPos - margin;
 
 		if ((lastDiff.getChangedLines().size() == 1) &&
-			(lastDiff.getChangedLines().get(0).equals(CONTEXT_LINE))) {
+			lastDiff.getChangedLines().get(0).equals(CONTEXT_LINE)) {
 
 			currentChangedLine = currentChangedLine + 1;
 		}
@@ -416,28 +422,25 @@ public class DiffUtil {
 
 		List<Difference> differences = diff.diff();
 
-		Iterator<Difference> itr = differences.iterator();
-
 		int deletedChars = 0;
 		int addedChars = 0;
 
-		// The following while loop will calculate how many characters of
-		// the source line need to be changed to be equals to the target line.
+		// The following while loop will calculate how many characters of the
+		// source line need to be changed to be equals to the target line.
 
-		while (itr.hasNext() && !aligned) {
-			Difference difference = itr.next();
+		if (!aligned) {
+			for (Difference difference : differences) {
+				if (difference.getDeletedEnd() != Difference.NONE) {
+					deletedChars +=
+						(difference.getDeletedEnd() -
+							difference.getDeletedStart() + 1);
+				}
 
-			if (difference.getDeletedEnd() != Difference.NONE) {
-				deletedChars =
-					deletedChars +
-					(difference.getDeletedEnd() -
-						difference.getDeletedStart() + 1);
-			}
-
-			if (difference.getAddedEnd() != Difference.NONE) {
-				addedChars =
-					addedChars +
-					(difference.getAddedEnd() - difference.getAddedStart() + 1);
+				if (difference.getAddedEnd() != Difference.NONE) {
+					addedChars +=
+						(difference.getAddedEnd() - difference.getAddedStart() +
+							1);
+				}
 			}
 		}
 
@@ -445,29 +448,24 @@ public class DiffUtil {
 		// length), consider this as not aligned yet.
 
 		if ((deletedChars > (sourceList.size() / 2)) ||
-			(addedChars > sourceList.size() / 2)) {
+			(addedChars > (sourceList.size() / 2))) {
 
 			return false;
 		}
-
-		itr = differences.iterator();
 
 		boolean sourceChanged = false;
 		boolean targetChanged = false;
 
 		// Iterate over Differences between chars of these lines.
 
-		while (itr.hasNext()) {
-			Difference difference = itr.next();
-
+		for (Difference difference : differences) {
 			if (difference.getAddedEnd() == Difference.NONE) {
 
 				// Chars were deleted from source only.
 
 				_highlightChars(
-					sourceList, deletedMarkerStart,
-					deletedMarkerEnd, difference.getDeletedStart(),
-					difference.getDeletedEnd());
+					sourceList, deletedMarkerStart, deletedMarkerEnd,
+					difference.getDeletedStart(), difference.getDeletedEnd());
 
 				sourceChanged = true;
 			}
@@ -486,9 +484,8 @@ public class DiffUtil {
 				// Chars were both deleted and added.
 
 				_highlightChars(
-					sourceList, deletedMarkerStart,
-					deletedMarkerEnd, difference.getDeletedStart(),
-					difference.getDeletedEnd());
+					sourceList, deletedMarkerStart, deletedMarkerEnd,
+					difference.getDeletedStart(), difference.getDeletedEnd());
 
 				sourceChanged = true;
 
@@ -532,12 +529,12 @@ public class DiffUtil {
 	}
 
 	private static List<String> _toList(String line) {
-		String[] stringArray = line.split(StringPool.BLANK);
+		String[] lineParts = line.split(StringPool.BLANK);
 
 		List<String> result = new ArrayList<String>();
 
-		for (int i = 1; i < stringArray.length; i++) {
-			result.add(stringArray[i]);
+		for (int i = 1; i < lineParts.length; i++) {
+			result.add(lineParts[i]);
 		}
 
 		return result;
@@ -550,10 +547,8 @@ public class DiffUtil {
 
 		StringBundler sb = new StringBundler(line.size());
 
-		Iterator<String> itr = line.iterator();
-
-		while (itr.hasNext()) {
-			sb.append(itr.next());
+		for (String linePart : line) {
+			sb.append(linePart);
 		}
 
 		return sb.toString();

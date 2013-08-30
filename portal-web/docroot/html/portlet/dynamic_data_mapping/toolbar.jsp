@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,25 +17,28 @@
 <%@ include file="/html/portlet/dynamic_data_mapping/init.jsp" %>
 
 <%
-String toolbarItem = ParamUtil.getString(request, "toolbarItem", "view-all");
+String toolbarItem = ParamUtil.getString(request, "toolbarItem");
+
+long groupId = ParamUtil.getLong(request, "groupId", scopeGroupId);
 %>
 
-<div class="lfr-portlet-toolbar">
-	<portlet:renderURL var="viewEntriesURL">
-		<portlet:param name="struts_action" value="/dynamic_data_mapping/view" />
-	</portlet:renderURL>
-
-	<span class="lfr-toolbar-button view-button <%= toolbarItem.equals("view-all") ? "current" : StringPool.BLANK %>">
-		<a href="<%= viewEntriesURL %>"><liferay-ui:message key="view-all" /></a>
-	</span>
-
-	<c:if test="<%= DDMPermission.contains(permissionChecker, scopeGroupId, ActionKeys.ADD_STRUCTURE) %>">
-		<portlet:renderURL var="addEntryURL">
-			<portlet:param name="struts_action" value="/dynamic_data_mapping/edit_structure" />
-			<portlet:param name="redirect" value="<%= currentURL %>" />
-			<portlet:param name="backURL" value="<%= currentURL %>" />
+<aui:nav-bar>
+	<aui:nav>
+		<portlet:renderURL var="viewStructuresURL">
+			<portlet:param name="struts_action" value="/dynamic_data_mapping/view" />
+			<portlet:param name="groupId" value="<%= String.valueOf(groupId) %>" />
 		</portlet:renderURL>
 
-		<span class="lfr-toolbar-button add-button <%= toolbarItem.equals("add") ? "current" : StringPool.BLANK %>"><a href="<%= addEntryURL %>"><liferay-ui:message key="add" /></a></span>
-	</c:if>
-</div>
+		<c:if test="<%= ddmDisplay.isShowAddStructureButton(permissionChecker, groupId) %>">
+			<portlet:renderURL var="addStructureURL">
+				<portlet:param name="struts_action" value="/dynamic_data_mapping/edit_structure" />
+				<portlet:param name="redirect" value="<%= viewStructuresURL %>" />
+				<portlet:param name="groupId" value="<%= String.valueOf(groupId) %>" />
+			</portlet:renderURL>
+
+			<aui:nav-item href="<%= addStructureURL %>" iconClass="icon-plus" label="add" selected='<%= toolbarItem.equals("add") %>' />
+		</c:if>
+	</aui:nav>
+
+	<aui:nav-bar-search cssClass="pull-right" file="/html/portlet/dynamic_data_mapping/structure_search.jsp" />
+</aui:nav-bar>

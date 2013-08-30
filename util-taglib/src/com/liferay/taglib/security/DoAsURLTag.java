@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,8 +20,14 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.Company;
+import com.liferay.portal.model.Layout;
+import com.liferay.portal.model.LayoutConstants;
+import com.liferay.portal.service.LayoutLocalServiceUtil;
 import com.liferay.portal.theme.ThemeDisplay;
+import com.liferay.portal.util.PortalUtil;
 import com.liferay.util.Encryptor;
+
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
@@ -49,10 +55,26 @@ public class DoAsURLTag extends TagSupport {
 		String doAsURL = company.getHomeURL();
 
 		if (Validator.isNull(doAsURL)) {
-			doAsURL = _COMPANY_DEFAULT_HOME_URL;
-		}
+			Layout layout = null;
 
-		doAsURL = themeDisplay.getPathContext() + doAsURL;
+			List<Layout> layouts = LayoutLocalServiceUtil.getLayouts(
+				themeDisplay.getScopeGroupId(), false,
+				LayoutConstants.DEFAULT_PARENT_LAYOUT_ID);
+
+			if (!layouts.isEmpty()) {
+				layout = layouts.get(0);
+
+				doAsURL = PortalUtil.getLayoutFriendlyURL(layout, themeDisplay);
+			}
+
+			if (Validator.isNull(doAsURL)) {
+				doAsURL =
+					themeDisplay.getPathContext() + _COMPANY_DEFAULT_HOME_URL;
+			}
+		}
+		else {
+			doAsURL = themeDisplay.getPathContext() + doAsURL;
+		}
 
 		if (doAsUserId <= 0) {
 			doAsUserId = company.getDefaultUser().getUserId();
@@ -61,8 +83,7 @@ public class DoAsURLTag extends TagSupport {
 		String encDoAsUserId = Encryptor.encrypt(
 			company.getKeyObj(), String.valueOf(doAsUserId));
 
-		doAsURL = HttpUtil.addParameter(
-			doAsURL, "doAsUserId", encDoAsUserId);
+		doAsURL = HttpUtil.addParameter(doAsURL, "doAsUserId", encDoAsUserId);
 
 		if (Validator.isNotNull(var)) {
 			pageContext.setAttribute(var, doAsURL);
@@ -94,8 +115,8 @@ public class DoAsURLTag extends TagSupport {
 		_var = var;
 	}
 
-	private static final String _COMPANY_DEFAULT_HOME_URL =
-		PropsUtil.get(PropsKeys.COMPANY_DEFAULT_HOME_URL);
+	private static final String _COMPANY_DEFAULT_HOME_URL = PropsUtil.get(
+		PropsKeys.COMPANY_DEFAULT_HOME_URL);
 
 	private long _doAsUserId;
 	private String _var;

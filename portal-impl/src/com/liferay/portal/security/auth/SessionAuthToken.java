@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,14 +17,11 @@ package com.liferay.portal.security.auth;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.model.PortletConstants;
 import com.liferay.portal.service.permission.PortletPermissionUtil;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.util.Encryptor;
 import com.liferay.util.PwdGenerator;
-
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -34,8 +31,20 @@ import javax.servlet.http.HttpSession;
  */
 public class SessionAuthToken implements AuthToken {
 
+	@Override
 	public void check(HttpServletRequest request) throws PrincipalException {
-		if (isIgnoreAction(request) || isIgnorePortlet(request)) {
+		long companyId = PortalUtil.getCompanyId(request);
+
+		String ppid = ParamUtil.getString(request, "p_p_id");
+
+		String portletNamespace = PortalUtil.getPortletNamespace(ppid);
+
+		String strutsAction = ParamUtil.getString(
+			request, portletNamespace + "struts_action");
+
+		if (AuthTokenWhitelistUtil.isPortletCSRFWhitelisted(
+				companyId, ppid, strutsAction)) {
+
 			return;
 		}
 
@@ -43,7 +52,7 @@ public class SessionAuthToken implements AuthToken {
 			request, "p_auth");
 
 		String sessionAuthenticationToken = getSessionAuthenticationToken(
-			request, _PORTAL);
+			request, _CSRF, false);
 
 		String propertiesAuthenticatonTokenSharedSecret = Encryptor.digest(
 			PropsValues.AUTH_TOKEN_SHARED_SECRET);
@@ -59,19 +68,51 @@ public class SessionAuthToken implements AuthToken {
 		}
 	}
 
+	@Override
 	public String getToken(HttpServletRequest request) {
-		return getSessionAuthenticationToken(request, _PORTAL);
+		return getSessionAuthenticationToken(request, _CSRF, true);
 	}
 
+	@Override
 	public String getToken(
 		HttpServletRequest request, long plid, String portletId) {
 
 		return getSessionAuthenticationToken(
-			request, PortletPermissionUtil.getPrimaryKey(plid, portletId));
+			request, PortletPermissionUtil.getPrimaryKey(plid, portletId),
+			true);
+	}
+
+	@Override
+	public boolean isValidPortletInvocationToken(
+		HttpServletRequest request, long plid, String portletId,
+		String strutsAction, String tokenValue) {
+
+		long companyId = PortalUtil.getCompanyId(request);
+
+		if (AuthTokenWhitelistUtil.isPortletInvocationWhitelisted(
+				companyId, portletId, strutsAction)) {
+
+			return true;
+		}
+
+		if (Validator.isNotNull(tokenValue)) {
+			String key = PortletPermissionUtil.getPrimaryKey(plid, portletId);
+
+			String sessionToken = getSessionAuthenticationToken(
+				request, key, false);
+
+			if (Validator.isNotNull(sessionToken) &&
+				sessionToken.equals(tokenValue)) {
+
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	protected String getSessionAuthenticationToken(
-		HttpServletRequest request, String key) {
+		HttpServletRequest request, String key, boolean createToken) {
 
 		HttpSession session = request.getSession();
 
@@ -80,7 +121,7 @@ public class SessionAuthToken implements AuthToken {
 		String sessionAuthenticationToken = (String)session.getAttribute(
 			tokenKey);
 
-		if (Validator.isNull(sessionAuthenticationToken)) {
+		if (createToken && Validator.isNull(sessionAuthenticationToken)) {
 			sessionAuthenticationToken = PwdGenerator.getPassword();
 
 			session.setAttribute(tokenKey, sessionAuthenticationToken);
@@ -89,39 +130,6 @@ public class SessionAuthToken implements AuthToken {
 		return sessionAuthenticationToken;
 	}
 
-	protected boolean isIgnoreAction(HttpServletRequest request) {
-		String ppid = ParamUtil.getString(request, "p_p_id");
-
-		String portletNamespace = PortalUtil.getPortletNamespace(ppid);
-
-		String strutsAction = ParamUtil.getString(
-			request, portletNamespace + "struts_action");
-
-		return isIgnoreAction(strutsAction);
-	}
-
-	protected boolean isIgnoreAction(String strutsAction) {
-		Set<String> authTokenIgnoreActions =
-			PortalUtil.getAuthTokenIgnoreActions();
-
-		return authTokenIgnoreActions.contains(strutsAction);
-	}
-
-	protected boolean isIgnorePortlet(HttpServletRequest request) {
-		String ppid = ParamUtil.getString(request, "p_p_id");
-
-		return isIgnorePortlet(ppid);
-	}
-
-	protected boolean isIgnorePortlet(String portletId) {
-		String rootPortletId = PortletConstants.getRootPortletId(portletId);
-
-		Set<String> authTokenIgnorePortlets =
-			PortalUtil.getAuthTokenIgnorePortlets();
-
-		return authTokenIgnorePortlets.contains(rootPortletId);
-	}
-
-	private static final String _PORTAL = "PORTAL";
+	private static final String _CSRF = "#CSRF";
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portal.model.impl;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -30,12 +31,12 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base model implementation for the Region service. Represents a row in the &quot;Region&quot; database table, with each column mapped to a property of this class.
@@ -79,6 +80,13 @@ public class RegionModelImpl extends BaseModelImpl<Region>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.Region"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.Region"),
+			true);
+	public static long ACTIVE_COLUMN_BITMASK = 1L;
+	public static long COUNTRYID_COLUMN_BITMASK = 2L;
+	public static long REGIONCODE_COLUMN_BITMASK = 4L;
+	public static long NAME_COLUMN_BITMASK = 8L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -87,6 +95,10 @@ public class RegionModelImpl extends BaseModelImpl<Region>
 	 * @return the normal model instance
 	 */
 	public static Region toModel(RegionSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		Region model = new RegionImpl();
 
 		model.setRegionId(soapModel.getRegionId());
@@ -105,6 +117,10 @@ public class RegionModelImpl extends BaseModelImpl<Region>
 	 * @return the normal model instances
 	 */
 	public static List<Region> toModels(RegionSoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<Region> models = new ArrayList<Region>(soapModels.length);
 
 		for (RegionSoap soapModel : soapModels) {
@@ -114,55 +130,124 @@ public class RegionModelImpl extends BaseModelImpl<Region>
 		return models;
 	}
 
-	public Class<?> getModelClass() {
-		return Region.class;
-	}
-
-	public String getModelClassName() {
-		return Region.class.getName();
-	}
-
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.Region"));
 
 	public RegionModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _regionId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setRegionId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_regionId);
+		return _regionId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return Region.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return Region.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("regionId", getRegionId());
+		attributes.put("countryId", getCountryId());
+		attributes.put("regionCode", getRegionCode());
+		attributes.put("name", getName());
+		attributes.put("active", getActive());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long regionId = (Long)attributes.get("regionId");
+
+		if (regionId != null) {
+			setRegionId(regionId);
+		}
+
+		Long countryId = (Long)attributes.get("countryId");
+
+		if (countryId != null) {
+			setCountryId(countryId);
+		}
+
+		String regionCode = (String)attributes.get("regionCode");
+
+		if (regionCode != null) {
+			setRegionCode(regionCode);
+		}
+
+		String name = (String)attributes.get("name");
+
+		if (name != null) {
+			setName(name);
+		}
+
+		Boolean active = (Boolean)attributes.get("active");
+
+		if (active != null) {
+			setActive(active);
+		}
+	}
+
 	@JSON
+	@Override
 	public long getRegionId() {
 		return _regionId;
 	}
 
+	@Override
 	public void setRegionId(long regionId) {
 		_regionId = regionId;
 	}
 
 	@JSON
+	@Override
 	public long getCountryId() {
 		return _countryId;
 	}
 
+	@Override
 	public void setCountryId(long countryId) {
+		_columnBitmask |= COUNTRYID_COLUMN_BITMASK;
+
+		if (!_setOriginalCountryId) {
+			_setOriginalCountryId = true;
+
+			_originalCountryId = _countryId;
+		}
+
 		_countryId = countryId;
 	}
 
+	public long getOriginalCountryId() {
+		return _originalCountryId;
+	}
+
 	@JSON
+	@Override
 	public String getRegionCode() {
 		if (_regionCode == null) {
 			return StringPool.BLANK;
@@ -172,11 +257,23 @@ public class RegionModelImpl extends BaseModelImpl<Region>
 		}
 	}
 
+	@Override
 	public void setRegionCode(String regionCode) {
+		_columnBitmask |= REGIONCODE_COLUMN_BITMASK;
+
+		if (_originalRegionCode == null) {
+			_originalRegionCode = _regionCode;
+		}
+
 		_regionCode = regionCode;
 	}
 
+	public String getOriginalRegionCode() {
+		return GetterUtil.getString(_originalRegionCode);
+	}
+
 	@JSON
+	@Override
 	public String getName() {
 		if (_name == null) {
 			return StringPool.BLANK;
@@ -186,52 +283,66 @@ public class RegionModelImpl extends BaseModelImpl<Region>
 		}
 	}
 
+	@Override
 	public void setName(String name) {
+		_columnBitmask = -1L;
+
 		_name = name;
 	}
 
 	@JSON
+	@Override
 	public boolean getActive() {
 		return _active;
 	}
 
+	@Override
 	public boolean isActive() {
 		return _active;
 	}
 
+	@Override
 	public void setActive(boolean active) {
+		_columnBitmask |= ACTIVE_COLUMN_BITMASK;
+
+		if (!_setOriginalActive) {
+			_setOriginalActive = true;
+
+			_originalActive = _active;
+		}
+
 		_active = active;
 	}
 
-	@Override
-	public Region toEscapedModel() {
-		if (isEscapedModel()) {
-			return (Region)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (Region)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
+	public boolean getOriginalActive() {
+		return _originalActive;
+	}
 
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(0,
-					Region.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(0,
+			Region.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public Region toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (Region)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -249,6 +360,7 @@ public class RegionModelImpl extends BaseModelImpl<Region>
 		return regionImpl;
 	}
 
+	@Override
 	public int compareTo(Region region) {
 		int value = 0;
 
@@ -263,18 +375,15 @@ public class RegionModelImpl extends BaseModelImpl<Region>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof Region)) {
 			return false;
 		}
 
-		Region region = null;
-
-		try {
-			region = (Region)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		Region region = (Region)obj;
 
 		long primaryKey = region.getPrimaryKey();
 
@@ -293,6 +402,19 @@ public class RegionModelImpl extends BaseModelImpl<Region>
 
 	@Override
 	public void resetOriginalValues() {
+		RegionModelImpl regionModelImpl = this;
+
+		regionModelImpl._originalCountryId = regionModelImpl._countryId;
+
+		regionModelImpl._setOriginalCountryId = false;
+
+		regionModelImpl._originalRegionCode = regionModelImpl._regionCode;
+
+		regionModelImpl._originalActive = regionModelImpl._active;
+
+		regionModelImpl._setOriginalActive = false;
+
+		regionModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -343,6 +465,7 @@ public class RegionModelImpl extends BaseModelImpl<Region>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(19);
 
@@ -377,14 +500,17 @@ public class RegionModelImpl extends BaseModelImpl<Region>
 	}
 
 	private static ClassLoader _classLoader = Region.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
-			Region.class
-		};
+	private static Class<?>[] _escapedModelInterfaces = new Class[] { Region.class };
 	private long _regionId;
 	private long _countryId;
+	private long _originalCountryId;
+	private boolean _setOriginalCountryId;
 	private String _regionCode;
+	private String _originalRegionCode;
 	private String _name;
 	private boolean _active;
-	private transient ExpandoBridge _expandoBridge;
-	private Region _escapedModelProxy;
+	private boolean _originalActive;
+	private boolean _setOriginalActive;
+	private long _columnBitmask;
+	private Region _escapedModel;
 }

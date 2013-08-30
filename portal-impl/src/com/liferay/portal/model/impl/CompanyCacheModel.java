@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.Company;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing Company in entity cache.
  *
@@ -26,7 +31,7 @@ import com.liferay.portal.model.Company;
  * @see Company
  * @generated
  */
-public class CompanyCacheModel implements CacheModel<Company> {
+public class CompanyCacheModel implements CacheModel<Company>, Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(21);
@@ -56,6 +61,7 @@ public class CompanyCacheModel implements CacheModel<Company> {
 		return sb.toString();
 	}
 
+	@Override
 	public Company toEntityModel() {
 		CompanyImpl companyImpl = new CompanyImpl();
 
@@ -97,7 +103,72 @@ public class CompanyCacheModel implements CacheModel<Company> {
 
 		companyImpl.resetOriginalValues();
 
+		companyImpl.setKeyObj(_keyObj);
+
+		companyImpl.setVirtualHostname(_virtualHostname);
+
 		return companyImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput)
+		throws ClassNotFoundException, IOException {
+		companyId = objectInput.readLong();
+		accountId = objectInput.readLong();
+		webId = objectInput.readUTF();
+		key = objectInput.readUTF();
+		mx = objectInput.readUTF();
+		homeURL = objectInput.readUTF();
+		logoId = objectInput.readLong();
+		system = objectInput.readBoolean();
+		maxUsers = objectInput.readInt();
+		active = objectInput.readBoolean();
+
+		_keyObj = (java.security.Key)objectInput.readObject();
+		_virtualHostname = (java.lang.String)objectInput.readObject();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(accountId);
+
+		if (webId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(webId);
+		}
+
+		if (key == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(key);
+		}
+
+		if (mx == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(mx);
+		}
+
+		if (homeURL == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(homeURL);
+		}
+
+		objectOutput.writeLong(logoId);
+		objectOutput.writeBoolean(system);
+		objectOutput.writeInt(maxUsers);
+		objectOutput.writeBoolean(active);
+
+		objectOutput.writeObject(_keyObj);
+		objectOutput.writeObject(_virtualHostname);
 	}
 
 	public long companyId;
@@ -110,4 +181,6 @@ public class CompanyCacheModel implements CacheModel<Company> {
 	public boolean system;
 	public int maxUsers;
 	public boolean active;
+	public java.security.Key _keyObj;
+	public java.lang.String _virtualHostname;
 }

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -49,7 +49,7 @@ Group group = (Group)row.getParameter("group");
 		</portlet:actionURL>
 
 		<liferay-ui:icon
-			image="assign_user_roles"
+			image="unassign_user_group"
 			message="remove-membership"
 			url="<%= removeURL %>"
 		/>

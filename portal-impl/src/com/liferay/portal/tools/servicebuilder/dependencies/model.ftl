@@ -4,14 +4,20 @@ package ${packagePath}.model;
 	import ${packagePath}.service.persistence.${entity.name}PK;
 </#if>
 
+import com.liferay.portal.LocaleException;
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.model.AttachedModel;
 import com.liferay.portal.model.AuditedModel;
 import com.liferay.portal.model.BaseModel;
 import com.liferay.portal.model.CacheModel;
+import com.liferay.portal.model.ContainerModel;
 import com.liferay.portal.model.GroupedModel;
 import com.liferay.portal.model.ResourcedModel;
+import com.liferay.portal.model.TypedModel;
+import com.liferay.portal.model.StagedAuditedModel;
+import com.liferay.portal.model.StagedGroupedModel;
+import com.liferay.portal.model.StagedModel;
 import com.liferay.portal.model.WorkflowedModel;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portlet.expando.model.ExpandoBridge;
@@ -39,26 +45,66 @@ import java.util.Map;
  * @generated
  */
 public interface ${entity.name}Model extends
+	<#assign overrideColumnNames = []>
+
 	<#if entity.isAttachedModel()>
 		AttachedModel,
+
+		<#assign overrideColumnNames = overrideColumnNames + ["className", "classNameId", "classPK"]>
 	</#if>
 
-	<#if entity.isAuditedModel() && !entity.isGroupedModel()>
+	<#if entity.isAuditedModel() && !entity.isGroupedModel() && !entity.isStagedAuditedModel()>
 		AuditedModel,
+
+		<#assign overrideColumnNames = overrideColumnNames + ["companyId", "createDate", "modifiedDate", "userId", "userName", "userUuid"]>
 	</#if>
 
 	BaseModel<${entity.name}>
 
-	<#if entity.isGroupedModel()>
+	<#if entity.isContainerModel()>
+		, ContainerModel
+	</#if>
+
+	<#if entity.isGroupedModel() && !entity.isStagedGroupedModel()>
 		, GroupedModel
+
+		<#assign overrideColumnNames = overrideColumnNames + ["companyId", "createDate", "groupId", "modifiedDate", "userId", "userName", "userUuid"]>
 	</#if>
 
 	<#if entity.isResourcedModel()>
 		, ResourcedModel
+
+		<#assign overrideColumnNames = overrideColumnNames + ["resourcePrimKey"]>
+	</#if>
+
+	<#if entity.isStagedGroupedModel()>
+		, StagedGroupedModel
+
+		<#assign overrideColumnNames = overrideColumnNames + ["companyId", "createDate", "groupId", "modifiedDate", "stagedModelType", "userId", "userName", "userUuid", "uuid"]>
+	</#if>
+
+	<#if entity.isStagedAuditedModel() && !entity.isStagedGroupedModel()>
+		, StagedAuditedModel
+
+		<#assign overrideColumnNames = overrideColumnNames + ["companyId", "createDate", "modifiedDate", "stagedModelType", "userId", "userName", "userUuid", "uuid"]>
+	</#if>
+
+	<#if !entity.isStagedAuditedModel() && !entity.isStagedGroupedModel() && entity.isStagedModel()>
+		, StagedModel
+
+		<#assign overrideColumnNames = overrideColumnNames + ["companyId", "createDate", "modifiedDate", "stagedModelType", "uuid"]>
+	</#if>
+
+	<#if entity.isTypedModel() && !entity.isAttachedModel()>
+		, TypedModel
+
+		<#assign overrideColumnNames = overrideColumnNames + ["className", "classNameId"]>
 	</#if>
 
 	<#if entity.isWorkflowEnabled()>
 		, WorkflowedModel
+
+		<#assign overrideColumnNames = overrideColumnNames + ["status", "statusByUserId", "statusByUserName", "statusByUserUuid", "statusDate"]>
 	</#if>
 
 	{
@@ -90,7 +136,14 @@ public interface ${entity.name}Model extends
 			 *
 			 * @return the fully qualified class name of this ${entity.humanName}
 			 */
+
+			<#if overrideColumnNames?seq_index_of(column.name) != -1>
+				@Override
+			</#if>
+
 			public String getClassName();
+
+			public void setClassName(String className);
 		</#if>
 
 		<#assign autoEscape = true>
@@ -114,8 +167,13 @@ public interface ${entity.name}Model extends
 		 *
 		 * @return the ${column.humanName} of this ${entity.humanName}
 		 */
-		<#if autoEscape && (column.type == "String") && (column.localized == false) >
+
+		<#if autoEscape && (column.type == "String") && (column.localized == false)>
 			@AutoEscape
+		</#if>
+
+		<#if overrideColumnNames?seq_index_of(column.name) != -1>
+			@Override
 		</#if>
 
 		public ${column.type} get${column.methodName}();
@@ -127,7 +185,8 @@ public interface ${entity.name}Model extends
 			 * @param locale the locale of the language
 			 * @return the localized ${column.humanName} of this ${entity.humanName}
 			 */
-			public ${column.type} get${column.methodName}(Locale locale);
+			@AutoEscape
+			public String get${column.methodName}(Locale locale);
 
 			/**
 			 * Returns the localized ${column.humanName} of this ${entity.humanName} in the language, optionally using the default language if no localization exists for the requested language.
@@ -136,7 +195,8 @@ public interface ${entity.name}Model extends
 			 * @param useDefault whether to use the default language if no localization exists for the requested language
 			 * @return the localized ${column.humanName} of this ${entity.humanName}. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 			 */
-			public ${column.type} get${column.methodName}(Locale locale, boolean useDefault);
+			@AutoEscape
+			public String get${column.methodName}(Locale locale, boolean useDefault);
 
 			/**
 			 * Returns the localized ${column.humanName} of this ${entity.humanName} in the language. Uses the default language if no localization exists for the requested language.
@@ -144,7 +204,8 @@ public interface ${entity.name}Model extends
 			 * @param languageId the ID of the language
 			 * @return the localized ${column.humanName} of this ${entity.humanName}
 			 */
-			public ${column.type} get${column.methodName}(String languageId);
+			@AutoEscape
+			public String get${column.methodName}(String languageId);
 
 			/**
 			 * Returns the localized ${column.humanName} of this ${entity.humanName} in the language, optionally using the default language if no localization exists for the requested language.
@@ -153,7 +214,14 @@ public interface ${entity.name}Model extends
 			 * @param useDefault whether to use the default language if no localization exists for the requested language
 			 * @return the localized ${column.humanName} of this ${entity.humanName}
 			 */
+			@AutoEscape
 			public String get${column.methodName}(String languageId, boolean useDefault);
+
+			@AutoEscape
+			public String get${column.methodName}CurrentLanguageId();
+
+			@AutoEscape
+			public String get${column.methodName}CurrentValue();
 
 			/**
 			 * Returns a map of the locales and localized ${column.humanNames} of this ${entity.humanName}.
@@ -181,6 +249,9 @@ public interface ${entity.name}Model extends
 		 *
 		 * @param ${column.name} the ${column.humanName} of this ${entity.humanName}
 		 */
+		<#if overrideColumnNames?seq_index_of(column.name) != -1>
+			@Override
+		</#if>
 		public void set${column.methodName}(${column.type} ${column.name});
 
 		<#if column.localized>
@@ -201,6 +272,8 @@ public interface ${entity.name}Model extends
 			 */
 			public void set${column.methodName}(String ${column.name}, Locale locale, Locale defaultLocale);
 
+			public void set${column.methodName}CurrentLanguageId(String languageId);
+
 			/**
 			 * Sets the localized ${column.humanNames} of this ${entity.humanName} from the map of locales and localized ${column.humanNames}.
 			 *
@@ -218,6 +291,7 @@ public interface ${entity.name}Model extends
 		</#if>
 
 		<#if (column.name == "resourcePrimKey") && entity.isResourcedModel()>
+			@Override
 			public boolean isResourceMain();
 		</#if>
 
@@ -228,6 +302,11 @@ public interface ${entity.name}Model extends
 			 * @return the ${column.userUuidHumanName} of this ${entity.humanName}
 			 * @throws SystemException if a system exception occurred
 			 */
+
+			<#if overrideColumnNames?seq_index_of(column.userUuidName) != -1>
+				@Override
+			</#if>
+
 			public String get${column.methodUserUuidName}() throws SystemException;
 
 			/**
@@ -235,14 +314,20 @@ public interface ${entity.name}Model extends
 			 *
 			 * @param ${column.userUuidName} the ${column.userUuidHumanName} of this ${entity.humanName}
 			 */
+
+			<#if overrideColumnNames?seq_index_of(column.userUuidName) != -1>
+				@Override
+			</#if>
+
 			public void set${column.methodUserUuidName}(String ${column.userUuidName});
 		</#if>
 	</#list>
 
 	<#if entity.isWorkflowEnabled()>
 		/**
-		 * @deprecated Renamed to {@link #isApproved()}
+		 * @deprecated As of 6.1.0, replaced by {@link #isApproved()}
 		 */
+		@Override
 		public boolean getApproved();
 
 		/**
@@ -250,13 +335,23 @@ public interface ${entity.name}Model extends
 		 *
 		 * @return <code>true</code> if this ${entity.humanName} is approved; <code>false</code> otherwise
 		 */
+		@Override
 		public boolean isApproved();
+
+		/**
+		 * Returns <code>true</code> if this ${entity.humanName} is denied.
+		 *
+		 * @return <code>true</code> if this ${entity.humanName} is denied; <code>false</code> otherwise
+		 */
+		@Override
+		public boolean isDenied();
 
 		/**
 		 * Returns <code>true</code> if this ${entity.humanName} is a draft.
 		 *
 		 * @return <code>true</code> if this ${entity.humanName} is a draft; <code>false</code> otherwise
 		 */
+		@Override
 		public boolean isDraft();
 
 		/**
@@ -264,14 +359,94 @@ public interface ${entity.name}Model extends
 		 *
 		 * @return <code>true</code> if this ${entity.humanName} is expired; <code>false</code> otherwise
 		 */
+		@Override
 		public boolean isExpired();
+
+		/**
+		 * Returns <code>true</code> if this ${entity.humanName} is inactive.
+		 *
+		 * @return <code>true</code> if this ${entity.humanName} is inactive; <code>false</code> otherwise
+		 */
+		@Override
+		public boolean isInactive();
+
+		/**
+		 * Returns <code>true</code> if this ${entity.humanName} is incomplete.
+		 *
+		 * @return <code>true</code> if this ${entity.humanName} is incomplete; <code>false</code> otherwise
+		 */
+		@Override
+		public boolean isIncomplete();
+
+		/**
+		 * Returns <code>true</code> if this ${entity.humanName} is in the Recycle Bin.
+		 *
+		 * @return <code>true</code> if this ${entity.humanName} is in the Recycle Bin; <code>false</code> otherwise
+		 */
+		@Override
+		public boolean isInTrash();
 
 		/**
 		 * Returns <code>true</code> if this ${entity.humanName} is pending.
 		 *
 		 * @return <code>true</code> if this ${entity.humanName} is pending; <code>false</code> otherwise
 		 */
+		@Override
 		public boolean isPending();
+
+		/**
+		 * Returns <code>true</code> if this ${entity.humanName} is scheduled.
+		 *
+		 * @return <code>true</code> if this ${entity.humanName} is scheduled; <code>false</code> otherwise
+		 */
+		@Override
+		public boolean isScheduled();
+	</#if>
+
+	<#if entity.isContainerModel()>
+		<#if !entity.hasColumn("containerModelId")>
+			/**
+			 * Returns the container model ID of this ${entity.humanName}.
+			 *
+			 * @return the container model ID of this ${entity.humanName}
+			 */
+			@Override
+			public long getContainerModelId();
+
+			/**
+			 * Sets the container model ID of this ${entity.humanName}.
+			 *
+			 * @param container model ID of this ${entity.humanName}
+			 */
+			@Override
+			public void setContainerModelId(long containerModelId);
+		</#if>
+
+		/**
+		 * Returns the container name of this ${entity.humanName}.
+		 *
+		 * @return the container name of this ${entity.humanName}
+		 */
+		@Override
+		public String getContainerModelName();
+
+		<#if !entity.hasColumn("parentContainerModelId")>
+			/**
+			 * Returns the parent container model ID of this ${entity.humanName}.
+			 *
+			 * @return the parent container model ID of this ${entity.humanName}
+			 */
+			@Override
+			public long getParentContainerModelId();
+
+			/**
+			 * Sets the parent container model ID of this ${entity.humanName}.
+			 *
+			 * @param parent container model ID of this ${entity.humanName}
+			 */
+			@Override
+			public void setParentContainerModelId(long parentContainerModelId);
+		</#if>
 	</#if>
 
 	<#--
@@ -279,38 +454,71 @@ public interface ${entity.name}Model extends
 	correctly generate wrappers.
 	-->
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	<#if entity.hasLocalizedColumn()>
+		public String[] getAvailableLanguageIds();
+
+		public String getDefaultLanguageId();
+
+		public void prepareLocalizedFieldsForImport() throws LocaleException;
+
+		public void prepareLocalizedFieldsForImport(Locale defaultImportLocale) throws LocaleException;
+	</#if>
+
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(${entity.name} ${entity.varName});
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<${entity.name}> toCacheModel();
 
+	@Override
 	public ${entity.name} toEscapedModel();
 
+	@Override
+	public ${entity.name} toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,9 +16,7 @@ package com.liferay.portlet.journal.action;
 
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.PrincipalException;
@@ -53,11 +51,16 @@ public class EditFeedAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
+
+		if (Validator.isNull(cmd)) {
+			return;
+		}
 
 		try {
 			if (cmd.equals(Constants.ADD) || cmd.equals(Constants.UPDATE)) {
@@ -73,7 +76,7 @@ public class EditFeedAction extends PortletAction {
 			if (e instanceof NoSuchFeedException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				setForward(actionRequest, "portlet.journal.error");
 			}
@@ -84,7 +87,7 @@ public class EditFeedAction extends PortletAction {
 					 e instanceof FeedTargetLayoutFriendlyUrlException ||
 					 e instanceof FeedTargetPortletIdException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 			}
 			else {
 				throw e;
@@ -94,8 +97,9 @@ public class EditFeedAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -105,7 +109,7 @@ public class EditFeedAction extends PortletAction {
 				ActionUtil.getFeed(renderRequest);
 			}
 		}
-		catch (NoSuchFeedException nssfe) {
+		catch (NoSuchFeedException nsfe) {
 
 			// Let this slide because the user can manually input a feed id for
 			// a new syndicated feed that does not yet exist.
@@ -113,16 +117,16 @@ public class EditFeedAction extends PortletAction {
 		}
 		catch (Exception e) {
 			if (e instanceof PrincipalException) {
-				SessionErrors.add(renderRequest, e.getClass().getName());
+				SessionErrors.add(renderRequest, e.getClass());
 
-				return mapping.findForward("portlet.journal.error");
+				return actionMapping.findForward("portlet.journal.error");
 			}
 			else {
 				throw e;
 			}
 		}
 
-		return mapping.findForward(
+		return actionMapping.findForward(
 			getForward(renderRequest, "portlet.journal.edit_feed"));
 	}
 
@@ -161,28 +165,11 @@ public class EditFeedAction extends PortletAction {
 			actionRequest, "targetPortletId");
 		String contentField = ParamUtil.getString(
 			actionRequest, "contentField");
+		String feedType = ParamUtil.getString(
+			actionRequest, "feedType", RSSUtil.FEED_TYPE_DEFAULT);
 
-		String feedType = RSSUtil.DEFAULT_TYPE;
-		double feedVersion = RSSUtil.VERSION_DEFAULT;
-
-		String feedTypeAndVersion = ParamUtil.getString(
-			actionRequest, "feedTypeAndVersion");
-
-		if (Validator.isNotNull(feedTypeAndVersion)) {
-			String[] parts = feedTypeAndVersion.split(StringPool.COLON);
-
-			try {
-				feedType = parts[0];
-				feedVersion = GetterUtil.getDouble(parts[1]);
-			}
-			catch (Exception e) {
-			}
-		}
-		else {
-			feedType = ParamUtil.getString(actionRequest, "feedType", feedType);
-			feedVersion = ParamUtil.getDouble(
-				actionRequest, "feedVersion", feedVersion);
-		}
+		String feedFormat = RSSUtil.getFeedTypeFormat(feedType);
+		double feedVersion = RSSUtil.getFeedTypeVersion(feedType);
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			JournalFeed.class.getName(), actionRequest);
@@ -195,7 +182,7 @@ public class EditFeedAction extends PortletAction {
 				groupId, feedId, autoFeedId, name, description, type,
 				structureId, templateId, rendererTemplateId, delta, orderByCol,
 				orderByType, targetLayoutFriendlyUrl, targetPortletId,
-				contentField, feedType, feedVersion, serviceContext);
+				contentField, feedFormat, feedVersion, serviceContext);
 		}
 		else {
 
@@ -205,7 +192,7 @@ public class EditFeedAction extends PortletAction {
 				groupId, feedId, name, description, type, structureId,
 				templateId, rendererTemplateId, delta, orderByCol, orderByType,
 				targetLayoutFriendlyUrl, targetPortletId, contentField,
-				feedType, feedVersion, serviceContext);
+				feedFormat, feedVersion, serviceContext);
 		}
 	}
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,7 +17,10 @@ package com.liferay.portal.kernel.servlet.filters.invoker;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.LiferayFilter;
+import com.liferay.portal.kernel.servlet.PluginContextListener;
 import com.liferay.portal.kernel.util.InstanceFactory;
+import com.liferay.portal.kernel.util.PortalLifecycle;
+import com.liferay.portal.kernel.util.PortalLifecycleUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
@@ -170,29 +173,79 @@ public class InvokerFilterHelper {
 		return invokerFilterChain;
 	}
 
-	protected void initFilter(
-			ServletContext servletContext, String filterName,
-			String filterClassName, Map<String, String> initParameterMap)
-		throws Exception {
+	protected Filter getFilter(
+		ServletContext servletContext, String filterClassName,
+		FilterConfig filterConfig) {
+
+		ClassLoader pluginClassLoader = getPluginClassLoader(servletContext);
 
 		Thread currentThread = Thread.currentThread();
 
 		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
 
-		Filter filter = (Filter)InstanceFactory.newInstance(
-			contextClassLoader, filterClassName);
+		try {
+			if (contextClassLoader != pluginClassLoader) {
+				currentThread.setContextClassLoader(pluginClassLoader);
+			}
+
+			Filter filter = (Filter)InstanceFactory.newInstance(
+				pluginClassLoader, filterClassName);
+
+			filter.init(filterConfig);
+
+			return filter;
+		}
+		catch (Exception e) {
+			_log.error("Unable to initialize filter " + filterClassName, e);
+		}
+		finally {
+			if (contextClassLoader != pluginClassLoader) {
+				currentThread.setContextClassLoader(contextClassLoader);
+			}
+		}
+
+		return null;
+	}
+
+	protected ClassLoader getPluginClassLoader(ServletContext servletContext) {
+		ClassLoader classLoader = (ClassLoader)servletContext.getAttribute(
+			PluginContextListener.PLUGIN_CLASS_LOADER);
+
+		if (classLoader != null) {
+			return classLoader;
+		}
+
+		Thread currentThread = Thread.currentThread();
+
+		return currentThread.getContextClassLoader();
+	}
+
+	protected void initFilter(
+			ServletContext servletContext, String filterName,
+			String filterClassName, Map<String, String> initParameterMap)
+		throws Exception {
 
 		FilterConfig filterConfig = new InvokerFilterConfig(
 			servletContext, filterName, initParameterMap);
 
-		filter.init(filterConfig);
+		Filter filter = getFilter(
+			servletContext, filterClassName, filterConfig);
+
+		if (filter == null) {
+			return;
+		}
 
 		boolean filterEnabled = true;
 
 		if (filter instanceof LiferayFilter) {
-			LiferayFilter liferayFilter = (LiferayFilter)filter;
 
-			filterEnabled = liferayFilter.isFilterEnabled();
+			// We no longer remove disabled filters because they can be enabled
+			// at runtime by a hook. The performance difference is negligible
+			// since most filters are assumed to be enabled.
+
+			//LiferayFilter liferayFilter = (LiferayFilter)filter;
+
+			//filterEnabled = liferayFilter.isFilterEnabled();
 		}
 
 		if (filterEnabled) {
@@ -200,6 +253,12 @@ public class InvokerFilterHelper {
 			_filters.put(filterName, filter);
 		}
 		else {
+			if (filter instanceof PortalLifecycle) {
+				PortalLifecycle portalLifecycle = (PortalLifecycle)filter;
+
+				PortalLifecycleUtil.removeDestroy(portalLifecycle);
+			}
+
 			if (_log.isDebugEnabled()) {
 				_log.debug("Removing disabled filter " + filter.getClass());
 			}
@@ -295,7 +354,7 @@ public class InvokerFilterHelper {
 		}
 	}
 
-	private static Log _log = LogFactoryUtil.getLog(InvokerFilter.class);
+	private static Log _log = LogFactoryUtil.getLog(InvokerFilterHelper.class);
 
 	private Map<String, FilterConfig> _filterConfigs =
 		new HashMap<String, FilterConfig>();

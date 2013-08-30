@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,11 @@ import com.liferay.portal.model.CacheModel;
 
 import com.liferay.portlet.dynamicdatamapping.model.DDMTemplate;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -29,10 +34,11 @@ import java.util.Date;
  * @see DDMTemplate
  * @generated
  */
-public class DDMTemplateCacheModel implements CacheModel<DDMTemplate> {
+public class DDMTemplateCacheModel implements CacheModel<DDMTemplate>,
+	Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(29);
+		StringBundler sb = new StringBundler(43);
 
 		sb.append("{uuid=");
 		sb.append(uuid);
@@ -50,23 +56,38 @@ public class DDMTemplateCacheModel implements CacheModel<DDMTemplate> {
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
-		sb.append(", structureId=");
-		sb.append(structureId);
+		sb.append(", classNameId=");
+		sb.append(classNameId);
+		sb.append(", classPK=");
+		sb.append(classPK);
+		sb.append(", templateKey=");
+		sb.append(templateKey);
 		sb.append(", name=");
 		sb.append(name);
 		sb.append(", description=");
 		sb.append(description);
 		sb.append(", type=");
 		sb.append(type);
+		sb.append(", mode=");
+		sb.append(mode);
 		sb.append(", language=");
 		sb.append(language);
 		sb.append(", script=");
 		sb.append(script);
+		sb.append(", cacheable=");
+		sb.append(cacheable);
+		sb.append(", smallImage=");
+		sb.append(smallImage);
+		sb.append(", smallImageId=");
+		sb.append(smallImageId);
+		sb.append(", smallImageURL=");
+		sb.append(smallImageURL);
 		sb.append("}");
 
 		return sb.toString();
 	}
 
+	@Override
 	public DDMTemplate toEntityModel() {
 		DDMTemplateImpl ddmTemplateImpl = new DDMTemplateImpl();
 
@@ -103,7 +124,15 @@ public class DDMTemplateCacheModel implements CacheModel<DDMTemplate> {
 			ddmTemplateImpl.setModifiedDate(new Date(modifiedDate));
 		}
 
-		ddmTemplateImpl.setStructureId(structureId);
+		ddmTemplateImpl.setClassNameId(classNameId);
+		ddmTemplateImpl.setClassPK(classPK);
+
+		if (templateKey == null) {
+			ddmTemplateImpl.setTemplateKey(StringPool.BLANK);
+		}
+		else {
+			ddmTemplateImpl.setTemplateKey(templateKey);
+		}
 
 		if (name == null) {
 			ddmTemplateImpl.setName(StringPool.BLANK);
@@ -126,6 +155,13 @@ public class DDMTemplateCacheModel implements CacheModel<DDMTemplate> {
 			ddmTemplateImpl.setType(type);
 		}
 
+		if (mode == null) {
+			ddmTemplateImpl.setMode(StringPool.BLANK);
+		}
+		else {
+			ddmTemplateImpl.setMode(mode);
+		}
+
 		if (language == null) {
 			ddmTemplateImpl.setLanguage(StringPool.BLANK);
 		}
@@ -140,9 +176,133 @@ public class DDMTemplateCacheModel implements CacheModel<DDMTemplate> {
 			ddmTemplateImpl.setScript(script);
 		}
 
+		ddmTemplateImpl.setCacheable(cacheable);
+		ddmTemplateImpl.setSmallImage(smallImage);
+		ddmTemplateImpl.setSmallImageId(smallImageId);
+
+		if (smallImageURL == null) {
+			ddmTemplateImpl.setSmallImageURL(StringPool.BLANK);
+		}
+		else {
+			ddmTemplateImpl.setSmallImageURL(smallImageURL);
+		}
+
 		ddmTemplateImpl.resetOriginalValues();
 
 		return ddmTemplateImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		uuid = objectInput.readUTF();
+		templateId = objectInput.readLong();
+		groupId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		userId = objectInput.readLong();
+		userName = objectInput.readUTF();
+		createDate = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
+		classNameId = objectInput.readLong();
+		classPK = objectInput.readLong();
+		templateKey = objectInput.readUTF();
+		name = objectInput.readUTF();
+		description = objectInput.readUTF();
+		type = objectInput.readUTF();
+		mode = objectInput.readUTF();
+		language = objectInput.readUTF();
+		script = objectInput.readUTF();
+		cacheable = objectInput.readBoolean();
+		smallImage = objectInput.readBoolean();
+		smallImageId = objectInput.readLong();
+		smallImageURL = objectInput.readUTF();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		if (uuid == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
+
+		objectOutput.writeLong(templateId);
+		objectOutput.writeLong(groupId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(userId);
+
+		if (userName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(userName);
+		}
+
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(modifiedDate);
+		objectOutput.writeLong(classNameId);
+		objectOutput.writeLong(classPK);
+
+		if (templateKey == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(templateKey);
+		}
+
+		if (name == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(name);
+		}
+
+		if (description == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(description);
+		}
+
+		if (type == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(type);
+		}
+
+		if (mode == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(mode);
+		}
+
+		if (language == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(language);
+		}
+
+		if (script == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(script);
+		}
+
+		objectOutput.writeBoolean(cacheable);
+		objectOutput.writeBoolean(smallImage);
+		objectOutput.writeLong(smallImageId);
+
+		if (smallImageURL == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(smallImageURL);
+		}
 	}
 
 	public String uuid;
@@ -153,10 +313,17 @@ public class DDMTemplateCacheModel implements CacheModel<DDMTemplate> {
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
-	public long structureId;
+	public long classNameId;
+	public long classPK;
+	public String templateKey;
 	public String name;
 	public String description;
 	public String type;
+	public String mode;
 	public String language;
 	public String script;
+	public boolean cacheable;
+	public boolean smallImage;
+	public long smallImageId;
+	public String smallImageURL;
 }

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,9 +26,9 @@ long layoutRevisionId = StagingUtil.getRecentLayoutRevisionId(request, layoutSet
 LayoutRevision currentLayoutRevision = null;
 
 if (layoutRevisionId <= 0) {
-	LayoutBranch layoutBranch =	LayoutBranchLocalServiceUtil.getMasterLayoutBranch(layoutSetBranchId, plid);
+	LayoutBranch layoutBranch = LayoutBranchLocalServiceUtil.getMasterLayoutBranch(layoutSetBranchId, plid);
 
-	currentLayoutRevision =	LayoutRevisionLocalServiceUtil.getLayoutRevision(layoutSetBranchId, layoutBranch.getLayoutBranchId(), plid);
+	currentLayoutRevision = LayoutRevisionLocalServiceUtil.getLayoutRevision(layoutSetBranchId, layoutBranch.getLayoutBranchId(), plid);
 
 	layoutRevisionId = currentLayoutRevision.getLayoutRevisionId();
 }
@@ -39,7 +39,30 @@ else {
 request.setAttribute("view_layout_branches.jsp-currenttLayoutBranchId", String.valueOf(currentLayoutRevision.getLayoutBranchId()));
 %>
 
-<div class="portlet-msg-info">
+<liferay-ui:success key="pageVariationAdded" message="page-variation-was-added" />
+<liferay-ui:success key="pageVariationDeleted" message="page-variation-was-deleted" />
+<liferay-ui:success key="pageVariationUpdated" message="page-variation-was-updated" />
+
+<liferay-ui:error exception="<%= LayoutBranchNameException.class %>">
+
+	<%
+	LayoutBranchNameException lbne = (LayoutBranchNameException)errorException;
+	%>
+
+	<c:if test="<%= lbne.getType() == LayoutBranchNameException.DUPLICATE %>">
+		<liferay-ui:message key="a-page-variation-with-that-name-already-exists" />
+	</c:if>
+
+	<c:if test="<%= lbne.getType() == LayoutBranchNameException.TOO_LONG %>">
+		<liferay-ui:message arguments="<%= new Object[] {4, 100} %>" key="please-enter-a-value-between-x-and-x-characters-long" />
+	</c:if>
+
+	<c:if test="<%= lbne.getType() == LayoutBranchNameException.TOO_SHORT %>">
+		<liferay-ui:message arguments="<%= new Object[] {4, 100} %>" key="please-enter-a-value-between-x-and-x-characters-long" />
+	</c:if>
+</liferay-ui:error>
+
+<div class="alert alert-info">
 	<liferay-ui:message key="page-variations-help" />
 </div>
 
@@ -90,7 +113,7 @@ request.setAttribute("view_layout_branches.jsp-currenttLayoutBranchId", String.v
 					buffer.append("<strong>");
 				}
 
-				buffer.append(LanguageUtil.get(pageContext, layoutBranchName));
+				buffer.append(LanguageUtil.get(pageContext, HtmlUtil.escape(layoutBranchName)));
 
 				if (layoutBranch.isMaster()) {
 					buffer.append(" (*)");
@@ -105,7 +128,7 @@ request.setAttribute("view_layout_branches.jsp-currenttLayoutBranchId", String.v
 
 			<liferay-ui:search-container-column-text
 				name="description"
-				value="<%= layoutBranch.getDescription() %>"
+				value="<%= HtmlUtil.escape(layoutBranch.getDescription()) %>"
 			/>
 
 			<liferay-ui:search-container-column-jsp
@@ -113,26 +136,15 @@ request.setAttribute("view_layout_branches.jsp-currenttLayoutBranchId", String.v
 			/>
 		</liferay-ui:search-container-row>
 
-		<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" paginate="<%= false %>" />
+		<liferay-ui:search-iterator paginate="<%= false %>" searchContainer="<%= searchContainer %>" />
 	</liferay-ui:search-container>
 </div>
 
 <aui:script position="inline" use="liferay-staging-branch">
 	Liferay.StagingBar.init(
 		{
-			namespace: '<portlet:namespace />'
+			namespace: '<portlet:namespace />',
+			portletId: '<%= portletDisplay.getId() %>'
 		}
 	);
-
-	<c:if test='<%= themeDisplay.isStatePopUp() && SessionMessages.contains(renderRequest, portletName + ".doConfigure") %>'>
-		var data = null;
-
-		<c:if test='<%= SessionMessages.contains(renderRequest, portletName + ".notAjaxable") %>'>
-			data = {
-				portletAjaxable: false
-			};
-		</c:if>
-
-		Liferay.Util.getOpener().Liferay.Portlet.refresh(stagingBarPortletBoundaryId, data);
-	</c:if>
 </aui:script>

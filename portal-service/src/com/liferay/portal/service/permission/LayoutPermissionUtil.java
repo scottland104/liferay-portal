@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,19 +16,21 @@ package com.liferay.portal.service.permission;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.security.pacl.permission.PortalRuntimePermission;
 import com.liferay.portal.model.Layout;
 import com.liferay.portal.security.permission.PermissionChecker;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Raymond Augé
  */
 public class LayoutPermissionUtil {
 
 	public static void check(
-			PermissionChecker permissionChecker, long plid, String actionId)
+			PermissionChecker permissionChecker, Layout layout, String actionId)
 		throws PortalException, SystemException {
 
-		getLayoutPermission().check(permissionChecker, plid, actionId);
+		getLayoutPermission().check(permissionChecker, layout, actionId);
 	}
 
 	public static void check(
@@ -41,18 +43,55 @@ public class LayoutPermissionUtil {
 	}
 
 	public static void check(
-			PermissionChecker permissionChecker, Layout layout, String actionId)
-		throws PortalException, SystemException {
-
-		getLayoutPermission().check(permissionChecker, layout, actionId);
-	}
-
-	public static boolean contains(
 			PermissionChecker permissionChecker, long plid, String actionId)
 		throws PortalException, SystemException {
 
+		getLayoutPermission().check(permissionChecker, plid, actionId);
+	}
+
+	public static boolean contains(
+			PermissionChecker permissionChecker, Layout layout,
+			boolean checkViewableGroup, String actionId)
+		throws PortalException, SystemException {
+
 		return getLayoutPermission().contains(
-			permissionChecker, plid, actionId);
+			permissionChecker, layout, checkViewableGroup, actionId);
+	}
+
+	public static boolean contains(
+			PermissionChecker permissionChecker, Layout layout, String actionId)
+		throws PortalException, SystemException {
+
+		return getLayoutPermission().contains(
+			permissionChecker, layout, actionId);
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #contains(PermissionChecker,
+	 *             Layout, boolean, String)}
+	 */
+	public static boolean contains(
+			PermissionChecker permissionChecker, Layout layout,
+			String controlPanelCategory, boolean checkViewableGroup,
+			String actionId)
+		throws PortalException, SystemException {
+
+		return getLayoutPermission().contains(
+			permissionChecker, layout, controlPanelCategory, checkViewableGroup,
+			actionId);
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #contains(PermissionChecker,
+	 *             Layout, String)}
+	 */
+	public static boolean contains(
+			PermissionChecker permissionChecker, Layout layout,
+			String controlPanelCategory, String actionId)
+		throws PortalException, SystemException {
+
+		return getLayoutPermission().contains(
+			permissionChecker, layout, controlPanelCategory, actionId);
 	}
 
 	public static boolean contains(
@@ -64,19 +103,86 @@ public class LayoutPermissionUtil {
 			permissionChecker, groupId, privateLayout, layoutId, actionId);
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #contains(PermissionChecker,
+	 *             long, boolean, long, String)}
+	 */
 	public static boolean contains(
-			PermissionChecker permissionChecker, Layout layout, String actionId)
+			PermissionChecker permissionChecker, long groupId,
+			boolean privateLayout, long layoutId, String controlPanelCategory,
+			String actionId)
 		throws PortalException, SystemException {
 
 		return getLayoutPermission().contains(
-			permissionChecker, layout, actionId);
+			permissionChecker, groupId, privateLayout, layoutId,
+			controlPanelCategory, actionId);
+	}
+
+	public static boolean contains(
+			PermissionChecker permissionChecker, long plid, String actionId)
+		throws PortalException, SystemException {
+
+		return getLayoutPermission().contains(
+			permissionChecker, plid, actionId);
+	}
+
+	public static boolean containsWithoutViewableGroup(
+			PermissionChecker permissionChecker, Layout layout,
+			boolean checkLayoutUpdateable, String actionId)
+		throws PortalException, SystemException {
+
+		return getLayoutPermission().containsWithoutViewableGroup(
+			permissionChecker, layout, checkLayoutUpdateable, actionId);
+	}
+
+	public static boolean containsWithoutViewableGroup(
+			PermissionChecker permissionChecker, Layout layout, String actionId)
+		throws PortalException, SystemException {
+
+		return getLayoutPermission().containsWithoutViewableGroup(
+			permissionChecker, layout, true, actionId);
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #containsWithoutViewableGroup(PermissionChecker, Layout,
+	 *             boolean, String)}
+	 */
+	public static boolean containsWithoutViewableGroup(
+			PermissionChecker permissionChecker, Layout layout,
+			String controlPanelCategory, boolean checkLayoutUpdateable,
+			String actionId)
+		throws PortalException, SystemException {
+
+		return getLayoutPermission().containsWithoutViewableGroup(
+			permissionChecker, layout, controlPanelCategory,
+			checkLayoutUpdateable, actionId);
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link
+	 *             #containsWithoutViewableGroup(PermissionChecker, Layout,
+	 *             String)}
+	 */
+	public static boolean containsWithoutViewableGroup(
+			PermissionChecker permissionChecker, Layout layout,
+			String controlPanelCategory, String actionId)
+		throws PortalException, SystemException {
+
+		return getLayoutPermission().containsWithoutViewableGroup(
+			permissionChecker, layout, controlPanelCategory, true, actionId);
 	}
 
 	public static LayoutPermission getLayoutPermission() {
+		PortalRuntimePermission.checkGetBeanProperty(
+			LayoutPermissionUtil.class);
+
 		return _layoutPermission;
 	}
 
 	public void setLayoutPermission(LayoutPermission layoutPermission) {
+		PortalRuntimePermission.checkSetBeanProperty(getClass());
+
 		_layoutPermission = layoutPermission;
 	}
 

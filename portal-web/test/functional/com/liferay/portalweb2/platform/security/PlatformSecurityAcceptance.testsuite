@@ -1,0 +1,5 @@
+<definition>
+	<execute test-suite="PGAntisamyAcceptance" />
+
+	<execute test-suite="PGBlogsPermissionsAcceptance" />
+</definition>

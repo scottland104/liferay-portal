@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,13 +22,11 @@ import com.liferay.portal.security.auth.HttpPrincipal;
 import com.liferay.portal.service.LayoutRevisionServiceUtil;
 
 /**
- * <p>
- * This class provides a HTTP utility for the
+ * Provides the HTTP utility for the
  * {@link com.liferay.portal.service.LayoutRevisionServiceUtil} service utility. The
  * static methods of this class calls the same methods of the service utility.
  * However, the signatures are different because it requires an additional
  * {@link com.liferay.portal.security.auth.HttpPrincipal} parameter.
- * </p>
  *
  * <p>
  * The benefits of using the HTTP utility is that it is fast and allows for
@@ -45,36 +43,36 @@ import com.liferay.portal.service.LayoutRevisionServiceUtil;
  * The HTTP utility is only generated for remote services.
  * </p>
  *
- * @author    Brian Wing Shun Chan
- * @see       LayoutRevisionServiceSoap
- * @see       com.liferay.portal.security.auth.HttpPrincipal
- * @see       com.liferay.portal.service.LayoutRevisionServiceUtil
+ * @author Brian Wing Shun Chan
+ * @see LayoutRevisionServiceSoap
+ * @see com.liferay.portal.security.auth.HttpPrincipal
+ * @see com.liferay.portal.service.LayoutRevisionServiceUtil
  * @generated
  */
 public class LayoutRevisionServiceHttp {
 	public static com.liferay.portal.model.LayoutRevision addLayoutRevision(
 		HttpPrincipal httpPrincipal, long userId, long layoutSetBranchId,
 		long layoutBranchId, long parentLayoutRevisionId, boolean head,
-		long plid, boolean privateLayout, java.lang.String name,
-		java.lang.String title, java.lang.String description,
-		java.lang.String keywords, java.lang.String robots,
-		java.lang.String typeSettings, boolean iconImage, long iconImageId,
-		java.lang.String themeId, java.lang.String colorSchemeId,
-		java.lang.String wapThemeId, java.lang.String wapColorSchemeId,
-		java.lang.String css,
+		long plid, long portletPreferencesPlid, boolean privateLayout,
+		java.lang.String name, java.lang.String title,
+		java.lang.String description, java.lang.String keywords,
+		java.lang.String robots, java.lang.String typeSettings,
+		boolean iconImage, long iconImageId, java.lang.String themeId,
+		java.lang.String colorSchemeId, java.lang.String wapThemeId,
+		java.lang.String wapColorSchemeId, java.lang.String css,
 		com.liferay.portal.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(LayoutRevisionServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(LayoutRevisionServiceUtil.class,
 					"addLayoutRevision", _addLayoutRevisionParameterTypes0);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey, userId,
 					layoutSetBranchId, layoutBranchId, parentLayoutRevisionId,
-					head, plid, privateLayout, name, title, description,
-					keywords, robots, typeSettings, iconImage, iconImageId,
-					themeId, colorSchemeId, wapThemeId, wapColorSchemeId, css,
-					serviceContext);
+					head, plid, portletPreferencesPlid, privateLayout, name,
+					title, description, keywords, robots, typeSettings,
+					iconImage, iconImageId, themeId, colorSchemeId, wapThemeId,
+					wapColorSchemeId, css, serviceContext);
 
 			Object returnObj = null;
 
@@ -105,7 +103,7 @@ public class LayoutRevisionServiceHttp {
 	private static Log _log = LogFactoryUtil.getLog(LayoutRevisionServiceHttp.class);
 	private static final Class<?>[] _addLayoutRevisionParameterTypes0 = new Class[] {
 			long.class, long.class, long.class, long.class, boolean.class,
-			long.class, boolean.class, java.lang.String.class,
+			long.class, long.class, boolean.class, java.lang.String.class,
 			java.lang.String.class, java.lang.String.class,
 			java.lang.String.class, java.lang.String.class,
 			java.lang.String.class, boolean.class, long.class,

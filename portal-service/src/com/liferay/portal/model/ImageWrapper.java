@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,26 +14,87 @@
 
 package com.liferay.portal.model;
 
+import com.liferay.portal.kernel.util.Validator;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * <p>
  * This class is a wrapper for {@link Image}.
  * </p>
  *
- * @author    Brian Wing Shun Chan
- * @see       Image
+ * @author Brian Wing Shun Chan
+ * @see Image
  * @generated
  */
-public class ImageWrapper implements Image {
+public class ImageWrapper implements Image, ModelWrapper<Image> {
 	public ImageWrapper(Image image) {
 		_image = image;
 	}
 
+	@Override
 	public Class<?> getModelClass() {
 		return Image.class;
 	}
 
+	@Override
 	public String getModelClassName() {
 		return Image.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("imageId", getImageId());
+		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("type", getType());
+		attributes.put("height", getHeight());
+		attributes.put("width", getWidth());
+		attributes.put("size", getSize());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long imageId = (Long)attributes.get("imageId");
+
+		if (imageId != null) {
+			setImageId(imageId);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
+		}
+
+		String type = (String)attributes.get("type");
+
+		if (type != null) {
+			setType(type);
+		}
+
+		Integer height = (Integer)attributes.get("height");
+
+		if (height != null) {
+			setHeight(height);
+		}
+
+		Integer width = (Integer)attributes.get("width");
+
+		if (width != null) {
+			setWidth(width);
+		}
+
+		Integer size = (Integer)attributes.get("size");
+
+		if (size != null) {
+			setSize(size);
+		}
 	}
 
 	/**
@@ -41,6 +102,7 @@ public class ImageWrapper implements Image {
 	*
 	* @return the primary key of this image
 	*/
+	@Override
 	public long getPrimaryKey() {
 		return _image.getPrimaryKey();
 	}
@@ -50,6 +112,7 @@ public class ImageWrapper implements Image {
 	*
 	* @param primaryKey the primary key of this image
 	*/
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		_image.setPrimaryKey(primaryKey);
 	}
@@ -59,6 +122,7 @@ public class ImageWrapper implements Image {
 	*
 	* @return the image ID of this image
 	*/
+	@Override
 	public long getImageId() {
 		return _image.getImageId();
 	}
@@ -68,6 +132,7 @@ public class ImageWrapper implements Image {
 	*
 	* @param imageId the image ID of this image
 	*/
+	@Override
 	public void setImageId(long imageId) {
 		_image.setImageId(imageId);
 	}
@@ -77,6 +142,7 @@ public class ImageWrapper implements Image {
 	*
 	* @return the modified date of this image
 	*/
+	@Override
 	public java.util.Date getModifiedDate() {
 		return _image.getModifiedDate();
 	}
@@ -86,26 +152,9 @@ public class ImageWrapper implements Image {
 	*
 	* @param modifiedDate the modified date of this image
 	*/
+	@Override
 	public void setModifiedDate(java.util.Date modifiedDate) {
 		_image.setModifiedDate(modifiedDate);
-	}
-
-	/**
-	* Returns the text of this image.
-	*
-	* @return the text of this image
-	*/
-	public java.lang.String getText() {
-		return _image.getText();
-	}
-
-	/**
-	* Sets the text of this image.
-	*
-	* @param text the text of this image
-	*/
-	public void setText(java.lang.String text) {
-		_image.setText(text);
 	}
 
 	/**
@@ -113,6 +162,7 @@ public class ImageWrapper implements Image {
 	*
 	* @return the type of this image
 	*/
+	@Override
 	public java.lang.String getType() {
 		return _image.getType();
 	}
@@ -122,6 +172,7 @@ public class ImageWrapper implements Image {
 	*
 	* @param type the type of this image
 	*/
+	@Override
 	public void setType(java.lang.String type) {
 		_image.setType(type);
 	}
@@ -131,6 +182,7 @@ public class ImageWrapper implements Image {
 	*
 	* @return the height of this image
 	*/
+	@Override
 	public int getHeight() {
 		return _image.getHeight();
 	}
@@ -140,6 +192,7 @@ public class ImageWrapper implements Image {
 	*
 	* @param height the height of this image
 	*/
+	@Override
 	public void setHeight(int height) {
 		_image.setHeight(height);
 	}
@@ -149,6 +202,7 @@ public class ImageWrapper implements Image {
 	*
 	* @return the width of this image
 	*/
+	@Override
 	public int getWidth() {
 		return _image.getWidth();
 	}
@@ -158,6 +212,7 @@ public class ImageWrapper implements Image {
 	*
 	* @param width the width of this image
 	*/
+	@Override
 	public void setWidth(int width) {
 		_image.setWidth(width);
 	}
@@ -167,6 +222,7 @@ public class ImageWrapper implements Image {
 	*
 	* @return the size of this image
 	*/
+	@Override
 	public int getSize() {
 		return _image.getSize();
 	}
@@ -176,46 +232,64 @@ public class ImageWrapper implements Image {
 	*
 	* @param size the size of this image
 	*/
+	@Override
 	public void setSize(int size) {
 		_image.setSize(size);
 	}
 
+	@Override
 	public boolean isNew() {
 		return _image.isNew();
 	}
 
+	@Override
 	public void setNew(boolean n) {
 		_image.setNew(n);
 	}
 
+	@Override
 	public boolean isCachedModel() {
 		return _image.isCachedModel();
 	}
 
+	@Override
 	public void setCachedModel(boolean cachedModel) {
 		_image.setCachedModel(cachedModel);
 	}
 
+	@Override
 	public boolean isEscapedModel() {
 		return _image.isEscapedModel();
 	}
 
-	public void setEscapedModel(boolean escapedModel) {
-		_image.setEscapedModel(escapedModel);
-	}
-
+	@Override
 	public java.io.Serializable getPrimaryKeyObj() {
 		return _image.getPrimaryKeyObj();
 	}
 
+	@Override
 	public void setPrimaryKeyObj(java.io.Serializable primaryKeyObj) {
 		_image.setPrimaryKeyObj(primaryKeyObj);
 	}
 
+	@Override
 	public com.liferay.portlet.expando.model.ExpandoBridge getExpandoBridge() {
 		return _image.getExpandoBridge();
 	}
 
+	@Override
+	public void setExpandoBridgeAttributes(
+		com.liferay.portal.model.BaseModel<?> baseModel) {
+		_image.setExpandoBridgeAttributes(baseModel);
+	}
+
+	@Override
+	public void setExpandoBridgeAttributes(
+		com.liferay.portlet.expando.model.ExpandoBridge expandoBridge) {
+		_image.setExpandoBridgeAttributes(expandoBridge);
+	}
+
+	@Override
 	public void setExpandoBridgeAttributes(
 		com.liferay.portal.service.ServiceContext serviceContext) {
 		_image.setExpandoBridgeAttributes(serviceContext);
@@ -226,6 +300,7 @@ public class ImageWrapper implements Image {
 		return new ImageWrapper((Image)_image.clone());
 	}
 
+	@Override
 	public int compareTo(com.liferay.portal.model.Image image) {
 		return _image.compareTo(image);
 	}
@@ -235,12 +310,19 @@ public class ImageWrapper implements Image {
 		return _image.hashCode();
 	}
 
+	@Override
 	public com.liferay.portal.model.CacheModel<com.liferay.portal.model.Image> toCacheModel() {
 		return _image.toCacheModel();
 	}
 
+	@Override
 	public com.liferay.portal.model.Image toEscapedModel() {
 		return new ImageWrapper(_image.toEscapedModel());
+	}
+
+	@Override
+	public com.liferay.portal.model.Image toUnescapedModel() {
+		return new ImageWrapper(_image.toUnescapedModel());
 	}
 
 	@Override
@@ -248,27 +330,59 @@ public class ImageWrapper implements Image {
 		return _image.toString();
 	}
 
+	@Override
 	public java.lang.String toXmlString() {
 		return _image.toXmlString();
 	}
 
+	@Override
 	public void persist()
 		throws com.liferay.portal.kernel.exception.SystemException {
 		_image.persist();
 	}
 
+	@Override
 	public byte[] getTextObj() {
 		return _image.getTextObj();
 	}
 
+	@Override
 	public void setTextObj(byte[] textObj) {
 		_image.setTextObj(textObj);
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof ImageWrapper)) {
+			return false;
+		}
+
+		ImageWrapper imageWrapper = (ImageWrapper)obj;
+
+		if (Validator.equals(_image, imageWrapper._image)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedModel}
+	 */
 	public Image getWrappedImage() {
 		return _image;
 	}
 
+	@Override
+	public Image getWrappedModel() {
+		return _image;
+	}
+
+	@Override
 	public void resetOriginalValues() {
 		_image.resetOriginalValues();
 	}

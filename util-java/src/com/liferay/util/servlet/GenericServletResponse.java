@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,6 +15,7 @@
 package com.liferay.util.servlet;
 
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
+import com.liferay.portal.kernel.servlet.ServletOutputStreamAdapter;
 import com.liferay.portal.kernel.util.UnsyncPrintWriterPool;
 
 import java.io.PrintWriter;
@@ -34,12 +35,28 @@ public class GenericServletResponse extends HttpServletResponseWrapper {
 		_ubaos = new UnsyncByteArrayOutputStream();
 	}
 
+	public int getContentLength() {
+		return _contentLength;
+	}
+
+	@Override
+	public String getContentType() {
+		return _contentType;
+	}
+
 	public byte[] getData() {
 		return _ubaos.toByteArray();
 	}
 
-	public int getContentLength() {
-		return _contentLength;
+	@Override
+	public ServletOutputStream getOutputStream() {
+		return new ServletOutputStreamAdapter(_ubaos);
+	}
+
+	@Override
+	public PrintWriter getWriter() {
+		return UnsyncPrintWriterPool.borrow(
+			getOutputStream(), getCharacterEncoding());
 	}
 
 	@Override
@@ -50,25 +67,10 @@ public class GenericServletResponse extends HttpServletResponseWrapper {
 	}
 
 	@Override
-	public String getContentType() {
-		return _contentType;
-	}
-
-	@Override
 	public void setContentType(String type) {
 		super.setContentType(type);
 
 		_contentType = type;
-	}
-
-	@Override
-	public ServletOutputStream getOutputStream() {
-		return new GenericServletOutputStream(_ubaos);
-	}
-
-	@Override
-	public PrintWriter getWriter() {
-		return UnsyncPrintWriterPool.borrow(getOutputStream());
 	}
 
 	private int _contentLength;

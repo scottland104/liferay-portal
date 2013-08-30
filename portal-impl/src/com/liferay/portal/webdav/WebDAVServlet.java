@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portal.webdav;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.InstancePool;
@@ -76,8 +77,8 @@ public class WebDAVServlet extends HttpServlet {
 				return;
 			}
 
-			// Set the path only if it has not already been set. This works
-			// if and only if the servlet is not mapped to more than one URL.
+			// Set the path only if it has not already been set. This works if
+			// and only if the servlet is not mapped to more than one URL.
 
 			if (storage.getRootPath() == null) {
 				storage.setRootPath(getRootPath(request));
@@ -94,8 +95,7 @@ public class WebDAVServlet extends HttpServlet {
 
 				User user = UserLocalServiceUtil.getUserById(userId);
 
-				permissionChecker = PermissionCheckerFactoryUtil.create(
-					user, true);
+				permissionChecker = PermissionCheckerFactoryUtil.create(user);
 
 				PermissionThreadLocal.setPermissionChecker(permissionChecker);
 			}
@@ -107,10 +107,10 @@ public class WebDAVServlet extends HttpServlet {
 			// Process the method
 
 			try {
-				WebDAVRequest webDavRequest = new WebDAVRequestImpl(
+				WebDAVRequest webDAVRequest = new WebDAVRequestImpl(
 					storage, request, response, userAgent, permissionChecker);
 
-				status = method.process(webDavRequest);
+				status = method.process(webDAVRequest);
 			}
 			catch (WebDAVException wde) {
 				boolean logError = false;
@@ -166,8 +166,12 @@ public class WebDAVServlet extends HttpServlet {
 	}
 
 	protected WebDAVStorage getStorage(HttpServletRequest request) {
-		String[] pathArray = WebDAVUtil.getPathArray(
-			request.getPathInfo(), true);
+		String pathInfo = WebDAVUtil.stripManualCheckInRequiredPath(
+			request.getPathInfo());
+
+		pathInfo = WebDAVUtil.stripOfficeExtension(pathInfo);
+
+		String[] pathArray = WebDAVUtil.getPathArray(pathInfo, true);
 
 		WebDAVStorage storage = null;
 
@@ -190,7 +194,7 @@ public class WebDAVServlet extends HttpServlet {
 		String[] pathArray = WebDAVUtil.getPathArray(
 			request.getPathInfo(), true);
 
-		if ((pathArray == null) || (pathArray.length == 0)) {
+		if (ArrayUtil.isEmpty(pathArray)) {
 			return false;
 		}
 

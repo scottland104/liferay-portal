@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -43,8 +43,9 @@ public class EditTeamAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
@@ -61,7 +62,7 @@ public class EditTeamAction extends PortletAction {
 		}
 		catch (Exception e) {
 			if (e instanceof PrincipalException) {
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				setForward(actionRequest, "portlet.sites_admin.error");
 			}
@@ -69,7 +70,7 @@ public class EditTeamAction extends PortletAction {
 					 e instanceof NoSuchTeamException ||
 					 e instanceof TeamNameException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				if (cmd.equals(Constants.DELETE)) {
 					String redirect = PortalUtil.escapeRedirect(
@@ -88,8 +89,9 @@ public class EditTeamAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -99,30 +101,26 @@ public class EditTeamAction extends PortletAction {
 			if (e instanceof NoSuchTeamException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(renderRequest, e.getClass().getName());
+				SessionErrors.add(renderRequest, e.getClass());
 
-				return mapping.findForward("portlet.sites_admin.error");
+				return actionMapping.findForward("portlet.sites_admin.error");
 			}
 			else {
 				throw e;
 			}
 		}
 
-		return mapping.findForward(getForward(
-			renderRequest, "portlet.sites_admin.edit_team"));
+		return actionMapping.findForward(
+			getForward(renderRequest, "portlet.sites_admin.edit_team"));
 	}
 
-	protected void deleteTeam(ActionRequest actionRequest)
-		throws Exception {
-
+	protected void deleteTeam(ActionRequest actionRequest) throws Exception {
 		long teamId = ParamUtil.getLong(actionRequest, "teamId");
 
 		TeamServiceUtil.deleteTeam(teamId);
 	}
 
-	protected void updateTeam(ActionRequest actionRequest)
-		throws Exception {
-
+	protected void updateTeam(ActionRequest actionRequest) throws Exception {
 		long teamId = ParamUtil.getLong(actionRequest, "teamId");
 
 		long groupId = ParamUtil.getLong(actionRequest, "groupId");

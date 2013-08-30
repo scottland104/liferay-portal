@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,18 +15,21 @@
 package com.liferay.portlet.documentlibrary.store;
 
 import com.liferay.portal.kernel.bean.BeanReference;
-import com.liferay.portal.kernel.bean.IdentifiableBean;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.io.ByteArrayFileInputStream;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.BooleanQuery;
 import com.liferay.portal.kernel.search.BooleanQueryFactoryUtil;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Hits;
+import com.liferay.portal.kernel.search.Indexer;
+import com.liferay.portal.kernel.search.IndexerRegistryUtil;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchEngineUtil;
 import com.liferay.portal.kernel.search.TermQuery;
 import com.liferay.portal.kernel.search.TermQueryFactoryUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringPool;
@@ -45,7 +48,7 @@ import com.liferay.portlet.documentlibrary.FileNameException;
 import com.liferay.portlet.documentlibrary.FileSizeException;
 import com.liferay.portlet.documentlibrary.SourceFileNameException;
 import com.liferay.portlet.documentlibrary.antivirus.AntivirusScannerUtil;
-import com.liferay.portlet.documentlibrary.model.DLFileEntry;
+import com.liferay.portlet.documentlibrary.model.DLFileEntryConstants;
 import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
 import com.liferay.portlet.documentlibrary.service.permission.DLFolderPermission;
 
@@ -56,9 +59,11 @@ import java.io.InputStream;
 /**
  * @author Brian Wing Shun Chan
  * @author Alexander Chow
+ * @author Edward Han
  */
-public class DLStoreImpl implements DLStore, IdentifiableBean {
+public class DLStoreImpl implements DLStore {
 
+	@Override
 	public void addDirectory(long companyId, long repositoryId, String dirName)
 		throws PortalException, SystemException {
 
@@ -69,6 +74,22 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 		store.addDirectory(companyId, repositoryId, dirName);
 	}
 
+	@Override
+	public void addFile(
+			long companyId, long repositoryId, String fileName,
+			boolean validateFileExtension, byte[] bytes)
+		throws PortalException, SystemException {
+
+		validate(fileName, validateFileExtension, bytes);
+
+		if (PropsValues.DL_STORE_ANTIVIRUS_ENABLED) {
+			AntivirusScannerUtil.scan(bytes);
+		}
+
+		store.addFile(companyId, repositoryId, fileName, bytes);
+	}
+
+	@Override
 	public void addFile(
 			long companyId, long repositoryId, String fileName,
 			boolean validateFileExtension, File file)
@@ -76,19 +97,36 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 
 		validate(fileName, validateFileExtension, file);
 
-		AntivirusScannerUtil.scan(file);
+		if (PropsValues.DL_STORE_ANTIVIRUS_ENABLED) {
+			AntivirusScannerUtil.scan(file);
+		}
 
 		store.addFile(companyId, repositoryId, fileName, file);
 	}
 
+	@Override
 	public void addFile(
 			long companyId, long repositoryId, String fileName,
 			boolean validateFileExtension, InputStream is)
 		throws PortalException, SystemException {
 
+		if (is instanceof ByteArrayFileInputStream) {
+			ByteArrayFileInputStream byteArrayFileInputStream =
+				(ByteArrayFileInputStream)is;
+
+			File file = byteArrayFileInputStream.getFile();
+
+			addFile(
+				companyId, repositoryId, fileName, validateFileExtension, file);
+
+			return;
+		}
+
 		validate(fileName, validateFileExtension, is);
 
-		if (!AntivirusScannerUtil.isActive()) {
+		if (!PropsValues.DL_STORE_ANTIVIRUS_ENABLED ||
+			!AntivirusScannerUtil.isActive()) {
+
 			store.addFile(companyId, repositoryId, fileName, is);
 		}
 		else {
@@ -126,43 +164,47 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 		}
 	}
 
+	@Override
 	public void addFile(
 			long companyId, long repositoryId, String fileName, byte[] bytes)
 		throws PortalException, SystemException {
 
-		validate(fileName, true, bytes);
-
-		AntivirusScannerUtil.scan(bytes);
-
-		store.addFile(companyId, repositoryId, fileName, bytes);
+		addFile(companyId, repositoryId, fileName, true, bytes);
 	}
 
+	@Override
 	public void addFile(
 			long companyId, long repositoryId, String fileName, File file)
 		throws PortalException, SystemException {
 
-		validate(fileName, true, file);
-
-		AntivirusScannerUtil.scan(file);
-
-		store.addFile(companyId, repositoryId, fileName, file);
+		addFile(companyId, repositoryId, fileName, true, file);
 	}
 
+	@Override
+	public void addFile(
+			long companyId, long repositoryId, String fileName, InputStream is)
+		throws PortalException, SystemException {
+
+		addFile(companyId, repositoryId, fileName, true, is);
+	}
+
+	@Override
 	public void checkRoot(long companyId) throws SystemException {
 		store.checkRoot(companyId);
 	}
 
+	@Override
 	public void copyFileVersion(
 			long companyId, long repositoryId, String fileName,
-			String fromVersionNumber, String toVersionNumber,
-			String sourceFileName)
+			String fromVersionLabel, String toVersionLabel)
 		throws PortalException, SystemException {
 
 		store.copyFileVersion(
-			companyId, repositoryId, fileName, fromVersionNumber,
-			toVersionNumber, sourceFileName);
+			companyId, repositoryId, fileName, fromVersionLabel,
+			toVersionLabel);
 	}
 
+	@Override
 	public void deleteDirectory(
 			long companyId, long repositoryId, String dirName)
 		throws PortalException, SystemException {
@@ -170,76 +212,144 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 		store.deleteDirectory(companyId, repositoryId, dirName);
 	}
 
+	@Override
 	public void deleteFile(long companyId, long repositoryId, String fileName)
 		throws PortalException, SystemException {
+
+		validate(fileName, false);
 
 		store.deleteFile(companyId, repositoryId, fileName);
 	}
 
+	@Override
 	public void deleteFile(
 			long companyId, long repositoryId, String fileName,
-			String versionNumber)
+			String versionLabel)
 		throws PortalException, SystemException {
 
-		store.deleteFile(companyId, repositoryId, fileName, versionNumber);
+		validate(fileName, false);
+
+		store.deleteFile(companyId, repositoryId, fileName, versionLabel);
 	}
 
-	public String getBeanIdentifier() {
-		return _beanIdentifier;
-	}
-
-	public byte[] getFile(long companyId, long repositoryId, String fileName)
+	@Override
+	public File getFile(long companyId, long repositoryId, String fileName)
 		throws PortalException, SystemException {
+
+		validate(fileName, false);
 
 		return store.getFile(companyId, repositoryId, fileName);
 	}
 
-	public byte[] getFile(
+	@Override
+	public File getFile(
 			long companyId, long repositoryId, String fileName,
-			String versionNumber)
+			String versionLabel)
 		throws PortalException, SystemException {
 
-		return store.getFile(companyId, repositoryId, fileName, versionNumber);
+		validate(fileName, false);
+
+		return store.getFile(companyId, repositoryId, fileName, versionLabel);
 	}
 
+	@Override
+	public byte[] getFileAsBytes(
+			long companyId, long repositoryId, String fileName)
+		throws PortalException, SystemException {
+
+		validate(fileName, false);
+
+		return store.getFileAsBytes(companyId, repositoryId, fileName);
+	}
+
+	@Override
+	public byte[] getFileAsBytes(
+			long companyId, long repositoryId, String fileName,
+			String versionLabel)
+		throws PortalException, SystemException {
+
+		validate(fileName, false);
+
+		return store.getFileAsBytes(
+			companyId, repositoryId, fileName, versionLabel);
+	}
+
+	@Override
 	public InputStream getFileAsStream(
 			long companyId, long repositoryId, String fileName)
 		throws PortalException, SystemException {
+
+		validate(fileName, false);
 
 		return store.getFileAsStream(companyId, repositoryId, fileName);
 	}
 
+	@Override
 	public InputStream getFileAsStream(
 			long companyId, long repositoryId, String fileName,
-			String versionNumber)
+			String versionLabel)
 		throws PortalException, SystemException {
 
+		validate(fileName, false);
+
 		return store.getFileAsStream(
-			companyId, repositoryId, fileName, versionNumber);
+			companyId, repositoryId, fileName, versionLabel);
 	}
 
+	@Override
 	public String[] getFileNames(
 			long companyId, long repositoryId, String dirName)
 		throws PortalException, SystemException {
 
+		if (!isValidName(dirName)) {
+			throw new DirectoryNameException(dirName);
+		}
+
 		return store.getFileNames(companyId, repositoryId, dirName);
 	}
 
-	public long getFileSize(
-			long companyId, long repositoryId, String fileName)
+	@Override
+	public long getFileSize(long companyId, long repositoryId, String fileName)
 		throws PortalException, SystemException {
+
+		validate(fileName, false);
 
 		return store.getFileSize(companyId, repositoryId, fileName);
 	}
 
-	public boolean hasFile(
-			long companyId, long repositoryId, String fileName,
-			String versionNumber)
+	@Override
+	public boolean hasDirectory(
+			long companyId, long repositoryId, String dirName)
 		throws PortalException, SystemException {
 
-		return store.hasFile(companyId, repositoryId, fileName, versionNumber);
+		if (!isValidName(dirName)) {
+			throw new DirectoryNameException(dirName);
+		}
+
+		return store.hasDirectory(companyId, repositoryId, dirName);
 	}
 
+	@Override
+	public boolean hasFile(long companyId, long repositoryId, String fileName)
+		throws PortalException, SystemException {
+
+		validate(fileName, false);
+
+		return store.hasFile(companyId, repositoryId, fileName);
+	}
+
+	@Override
+	public boolean hasFile(
+			long companyId, long repositoryId, String fileName,
+			String versionLabel)
+		throws PortalException, SystemException {
+
+		validate(fileName, false);
+
+		return store.hasFile(companyId, repositoryId, fileName, versionLabel);
+	}
+
+	@Override
 	public void move(String srcDir, String destDir) throws SystemException {
 		store.move(srcDir, destDir);
 	}
@@ -252,7 +362,19 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 		try {
 			SearchContext searchContext = new SearchContext();
 
-			searchContext.setSearchEngineId(SearchEngineUtil.SYSTEM_ENGINE_ID);
+			searchContext.setCompanyId(companyId);
+			searchContext.setEnd(end);
+			searchContext.setEntryClassNames(
+				new String[] {DLFileEntryConstants.getClassName()});
+			searchContext.setGroupIds(new long[] {groupId});
+
+			Indexer indexer = IndexerRegistryUtil.getIndexer(
+				DLFileEntryConstants.getClassName());
+
+			searchContext.setSearchEngineId(indexer.getSearchEngineId());
+
+			searchContext.setStart(start);
+			searchContext.setUserId(userId);
 
 			BooleanQuery contextQuery = BooleanQueryFactoryUtil.create(
 				searchContext);
@@ -271,7 +393,7 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 				contextQuery.addRequiredTerm(Field.GROUP_ID, groupId);
 			}
 
-			if ((repositoryIds != null) && (repositoryIds.length > 0)) {
+			if (ArrayUtil.isNotEmpty(repositoryIds)) {
 				BooleanQuery repositoryIdsQuery =
 					BooleanQueryFactoryUtil.create(searchContext);
 
@@ -319,19 +441,14 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 				fullQuery.add(searchQuery, BooleanClauseOccur.MUST);
 			}
 
-			return SearchEngineUtil.search(
-				companyId, new long[] {groupId}, userId,
-				DLFileEntry.class.getName(), fullQuery, start, end);
+			return SearchEngineUtil.search(searchContext, fullQuery);
 		}
 		catch (Exception e) {
 			throw new SystemException(e);
 		}
 	}
 
-	public void setBeanIdentifier(String beanIdentifier) {
-		_beanIdentifier = beanIdentifier;
-	}
-
+	@Override
 	public void updateFile(
 			long companyId, long repositoryId, long newRepositoryId,
 			String fileName)
@@ -340,6 +457,7 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 		store.updateFile(companyId, repositoryId, newRepositoryId, fileName);
 	}
 
+	@Override
 	public void updateFile(
 			long companyId, long repositoryId, String fileName,
 			String newFileName)
@@ -348,37 +466,52 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 		store.updateFile(companyId, repositoryId, fileName, newFileName);
 	}
 
+	@Override
 	public void updateFile(
 			long companyId, long repositoryId, String fileName,
 			String fileExtension, boolean validateFileExtension,
-			String versionNumber, String sourceFileName, File file)
+			String versionLabel, String sourceFileName, File file)
 		throws PortalException, SystemException {
 
 		validate(
-			fileName, fileExtension, sourceFileName,
-			validateFileExtension, file);
-
-		AntivirusScannerUtil.scan(file);
-
-		store.updateFile(
-			companyId, repositoryId, fileName, versionNumber, sourceFileName,
+			fileName, fileExtension, sourceFileName, validateFileExtension,
 			file);
+
+		if (PropsValues.DL_STORE_ANTIVIRUS_ENABLED) {
+			AntivirusScannerUtil.scan(file);
+		}
+
+		store.updateFile(companyId, repositoryId, fileName, versionLabel, file);
 	}
 
+	@Override
 	public void updateFile(
 			long companyId, long repositoryId, String fileName,
 			String fileExtension, boolean validateFileExtension,
-			String versionNumber, String sourceFileName, InputStream is)
+			String versionLabel, String sourceFileName, InputStream is)
 		throws PortalException, SystemException {
 
-		validate(
-			fileName, fileExtension, sourceFileName,
-			validateFileExtension, is);
+		if (is instanceof ByteArrayFileInputStream) {
+			ByteArrayFileInputStream byteArrayFileInputStream =
+				(ByteArrayFileInputStream)is;
 
-		if (!AntivirusScannerUtil.isActive()) {
+			File file = byteArrayFileInputStream.getFile();
+
+			updateFile(
+				companyId, repositoryId, fileName, fileExtension,
+				validateFileExtension, versionLabel, sourceFileName, file);
+
+			return;
+		}
+
+		validate(
+			fileName, fileExtension, sourceFileName, validateFileExtension, is);
+
+		if (!PropsValues.DL_STORE_ANTIVIRUS_ENABLED ||
+			!AntivirusScannerUtil.isActive()) {
+
 			store.updateFile(
-				companyId, repositoryId, fileName, versionNumber,
-				sourceFileName, is);
+				companyId, repositoryId, fileName, versionLabel, is);
 		}
 		else {
 			File tempFile = null;
@@ -392,8 +525,7 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 					is.reset();
 
 					store.updateFile(
-						companyId, repositoryId, fileName, versionNumber,
-						sourceFileName, is);
+						companyId, repositoryId, fileName, versionLabel, is);
 				}
 				else {
 					tempFile = FileUtil.createTempFile();
@@ -403,8 +535,8 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 					AntivirusScannerUtil.scan(tempFile);
 
 					store.updateFile(
-						companyId, repositoryId, fileName, versionNumber,
-						sourceFileName, tempFile);
+						companyId, repositoryId, fileName, versionLabel,
+						tempFile);
 				}
 			}
 			catch (IOException ioe) {
@@ -419,45 +551,18 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 		}
 	}
 
-	public void updateFile(
-			long companyId, long repositoryId, String fileName,
-			String versionNumber, String sourceFileName, byte[] bytes)
-		throws PortalException, SystemException {
-
-		validate(fileName, true, bytes);
-
-		AntivirusScannerUtil.scan(bytes);
-
-		store.updateFile(
-			companyId, repositoryId, fileName, versionNumber, sourceFileName,
-			bytes);
-	}
-
-	public void updateFile(
-			long companyId, long repositoryId, String fileName,
-			String versionNumber, String sourceFileName, File file)
-		throws PortalException, SystemException {
-
-		validate(fileName, true, file);
-
-		AntivirusScannerUtil.scan(file);
-
-		store.updateFile(
-			companyId, repositoryId, fileName, versionNumber, sourceFileName,
-			file);
-	}
-
+	@Override
 	public void updateFileVersion(
 			long companyId, long repositoryId, String fileName,
-			String fromVersionNumber, String toVersionNumber,
-			String sourceFileName)
+			String fromVersionLabel, String toVersionLabel)
 		throws PortalException, SystemException {
 
 		store.updateFileVersion(
-			companyId, repositoryId, fileName, fromVersionNumber,
-			toVersionNumber, sourceFileName);
+			companyId, repositoryId, fileName, fromVersionLabel,
+			toVersionLabel);
 	}
 
+	@Override
 	public void validate(String fileName, boolean validateFileExtension)
 		throws PortalException, SystemException {
 
@@ -471,9 +576,9 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 			String[] fileExtensions = PrefsPropsUtil.getStringArray(
 				PropsKeys.DL_FILE_EXTENSIONS, StringPool.COMMA);
 
-			for (int i = 0; i < fileExtensions.length; i++) {
-				if (StringPool.STAR.equals(fileExtensions[i]) ||
-					StringUtil.endsWith(fileName, fileExtensions[i])) {
+			for (String fileExtension : fileExtensions) {
+				if (StringPool.STAR.equals(fileExtension) ||
+					StringUtil.endsWith(fileName, fileExtension)) {
 
 					validFileExtension = true;
 
@@ -487,6 +592,7 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 		}
 	}
 
+	@Override
 	public void validate(
 			String fileName, boolean validateFileExtension, byte[] bytes)
 		throws PortalException, SystemException {
@@ -495,13 +601,14 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 
 		if ((PrefsPropsUtil.getLong(PropsKeys.DL_FILE_MAX_SIZE) > 0) &&
 			((bytes == null) ||
-			(bytes.length >
+			 (bytes.length >
 				 PrefsPropsUtil.getLong(PropsKeys.DL_FILE_MAX_SIZE)))) {
 
 			throw new FileSizeException(fileName);
 		}
 	}
 
+	@Override
 	public void validate(
 			String fileName, boolean validateFileExtension, File file)
 		throws PortalException, SystemException {
@@ -517,6 +624,7 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 		}
 	}
 
+	@Override
 	public void validate(
 			String fileName, boolean validateFileExtension, InputStream is)
 		throws PortalException, SystemException {
@@ -526,10 +634,10 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 		// LEP-4851
 
 		try {
-			if ((PrefsPropsUtil.getLong(PropsKeys.DL_FILE_MAX_SIZE) > 0) &&
-				((is == null) ||
-				(is.available() >
-					 PrefsPropsUtil.getLong(PropsKeys.DL_FILE_MAX_SIZE)))) {
+			if ((is == null) ||
+				((PrefsPropsUtil.getLong(PropsKeys.DL_FILE_MAX_SIZE) > 0) &&
+				 (is.available() >
+					PrefsPropsUtil.getLong(PropsKeys.DL_FILE_MAX_SIZE)))) {
 
 				throw new FileSizeException(fileName);
 			}
@@ -539,6 +647,7 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 		}
 	}
 
+	@Override
 	public void validate(
 			String fileName, String fileExtension, String sourceFileName,
 			boolean validateFileExtension, File file)
@@ -556,6 +665,7 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 		}
 	}
 
+	@Override
 	public void validate(
 			String fileName, String fileExtension, String sourceFileName,
 			boolean validateFileExtension, InputStream is)
@@ -580,20 +690,20 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 
 	protected boolean isValidName(String name) {
 		if ((name == null) ||
-			(name.contains("\\")) ||
-			(name.contains("\\\\")) ||
-			(name.contains("//")) ||
-			(name.contains(":")) ||
-			(name.contains("*")) ||
-			(name.contains("?")) ||
-			(name.contains("\"")) ||
-			(name.contains("<")) ||
-			(name.contains(">")) ||
-			(name.contains("|")) ||
-			(name.contains("[")) ||
-			(name.contains("]")) ||
-			(name.contains("../")) ||
-			(name.contains("/.."))) {
+			name.contains("\\") ||
+			name.contains("\\\\") ||
+			name.contains("//") ||
+			name.contains(":") ||
+			name.contains("*") ||
+			name.contains("?") ||
+			name.contains("\"") ||
+			name.contains("<") ||
+			name.contains(">") ||
+			name.contains("|") ||
+			name.contains("[") ||
+			name.contains("]") ||
+			name.contains("../") ||
+			name.contains("/..")) {
 
 			return false;
 		}
@@ -618,16 +728,14 @@ public class DLStoreImpl implements DLStore, IdentifiableBean {
 		validate(fileName, validateFileExtension);
 	}
 
-	private static final String[] _KEYWORDS_FIELDS = {
-		Field.ASSET_TAG_NAMES, Field.CONTENT, Field.PROPERTIES
-	};
-
 	@BeanReference(type = GroupLocalService.class)
 	protected GroupLocalService groupLocalService;
 
 	@BeanReference(type = Store.class)
 	protected Store store;
 
-	private String _beanIdentifier;
+	private static final String[] _KEYWORDS_FIELDS = {
+		Field.ASSET_TAG_NAMES, Field.CONTENT, Field.PROPERTIES
+	};
 
 }

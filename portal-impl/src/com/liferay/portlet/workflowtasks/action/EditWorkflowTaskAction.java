@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,9 +14,13 @@
 
 package com.liferay.portlet.workflowtasks.action;
 
+import com.liferay.portal.kernel.portlet.LiferayPortletConfig;
 import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowException;
 import com.liferay.portal.kernel.workflow.WorkflowTaskDueDateException;
@@ -48,8 +52,9 @@ public class EditWorkflowTaskAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
@@ -65,16 +70,34 @@ public class EditWorkflowTaskAction extends PortletAction {
 				updateTask(actionRequest);
 			}
 
-			sendRedirect(actionRequest, actionResponse);
+			String redirect = ParamUtil.getString(actionRequest, "redirect");
+			String closeRedirect = ParamUtil.getString(
+				actionRequest, "closeRedirect");
+
+			if (Validator.isNotNull(closeRedirect)) {
+				redirect = HttpUtil.setParameter(
+					redirect, "closeRedirect", closeRedirect);
+
+				LiferayPortletConfig liferayPortletConfig =
+					(LiferayPortletConfig)portletConfig;
+
+				SessionMessages.add(
+					actionRequest,
+					liferayPortletConfig.getPortletId() +
+						SessionMessages.KEY_SUFFIX_CLOSE_REDIRECT,
+					closeRedirect);
+			}
+
+			sendRedirect(actionRequest, actionResponse, redirect);
 		}
 		catch (Exception e) {
 			if (e instanceof WorkflowTaskDueDateException) {
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 			}
 			else if (e instanceof PrincipalException ||
 					 e instanceof WorkflowException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				setForward(actionRequest, "portlet.workflow_tasks.error");
 			}
@@ -86,8 +109,9 @@ public class EditWorkflowTaskAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -95,18 +119,19 @@ public class EditWorkflowTaskAction extends PortletAction {
 		}
 		catch (Exception e) {
 			if (e instanceof WorkflowException) {
+				SessionErrors.add(renderRequest, e.getClass());
 
-				SessionErrors.add(renderRequest, e.getClass().getName());
-
-				return mapping.findForward("portlet.workflow_tasks.error");
+				return actionMapping.findForward(
+					"portlet.workflow_tasks.error");
 			}
 			else {
 				throw e;
 			}
 		}
 
-		return mapping.findForward(getForward(
-			renderRequest, "portlet.workflow_tasks.edit_workflow_task"));
+		return actionMapping.findForward(
+			getForward(
+				renderRequest, "portlet.workflow_tasks.edit_workflow_task"));
 	}
 
 	protected void assignTask(ActionRequest actionRequest) throws Exception {
@@ -169,7 +194,7 @@ public class EditWorkflowTaskAction extends PortletAction {
 
 		Date dueDate = PortalUtil.getDate(
 			dueDateMonth, dueDateDay, dueDateYear, dueDateHour, dueDateMinute,
-			new WorkflowTaskDueDateException());
+			WorkflowTaskDueDateException.class);
 
 		WorkflowTaskManagerUtil.updateDueDate(
 			themeDisplay.getCompanyId(), themeDisplay.getUserId(),

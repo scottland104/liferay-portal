@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portlet.blogs.model.impl;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.impl.BaseModelImpl;
@@ -30,11 +31,11 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the BlogsStatsUser service. Represents a row in the &quot;BlogsStatsUser&quot; database table, with each column mapped to a property of this class.
@@ -81,58 +82,155 @@ public class BlogsStatsUserModelImpl extends BaseModelImpl<BlogsStatsUser>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portlet.blogs.model.BlogsStatsUser"),
 			true);
-
-	public Class<?> getModelClass() {
-		return BlogsStatsUser.class;
-	}
-
-	public String getModelClassName() {
-		return BlogsStatsUser.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portlet.blogs.model.BlogsStatsUser"),
+			true);
+	public static long COMPANYID_COLUMN_BITMASK = 1L;
+	public static long ENTRYCOUNT_COLUMN_BITMASK = 2L;
+	public static long GROUPID_COLUMN_BITMASK = 4L;
+	public static long LASTPOSTDATE_COLUMN_BITMASK = 8L;
+	public static long USERID_COLUMN_BITMASK = 16L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portlet.blogs.model.BlogsStatsUser"));
 
 	public BlogsStatsUserModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _statsUserId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setStatsUserId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_statsUserId);
+		return _statsUserId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return BlogsStatsUser.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return BlogsStatsUser.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("statsUserId", getStatsUserId());
+		attributes.put("groupId", getGroupId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("userId", getUserId());
+		attributes.put("entryCount", getEntryCount());
+		attributes.put("lastPostDate", getLastPostDate());
+		attributes.put("ratingsTotalEntries", getRatingsTotalEntries());
+		attributes.put("ratingsTotalScore", getRatingsTotalScore());
+		attributes.put("ratingsAverageScore", getRatingsAverageScore());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long statsUserId = (Long)attributes.get("statsUserId");
+
+		if (statsUserId != null) {
+			setStatsUserId(statsUserId);
+		}
+
+		Long groupId = (Long)attributes.get("groupId");
+
+		if (groupId != null) {
+			setGroupId(groupId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long userId = (Long)attributes.get("userId");
+
+		if (userId != null) {
+			setUserId(userId);
+		}
+
+		Integer entryCount = (Integer)attributes.get("entryCount");
+
+		if (entryCount != null) {
+			setEntryCount(entryCount);
+		}
+
+		Date lastPostDate = (Date)attributes.get("lastPostDate");
+
+		if (lastPostDate != null) {
+			setLastPostDate(lastPostDate);
+		}
+
+		Integer ratingsTotalEntries = (Integer)attributes.get(
+				"ratingsTotalEntries");
+
+		if (ratingsTotalEntries != null) {
+			setRatingsTotalEntries(ratingsTotalEntries);
+		}
+
+		Double ratingsTotalScore = (Double)attributes.get("ratingsTotalScore");
+
+		if (ratingsTotalScore != null) {
+			setRatingsTotalScore(ratingsTotalScore);
+		}
+
+		Double ratingsAverageScore = (Double)attributes.get(
+				"ratingsAverageScore");
+
+		if (ratingsAverageScore != null) {
+			setRatingsAverageScore(ratingsAverageScore);
+		}
+	}
+
+	@Override
 	public long getStatsUserId() {
 		return _statsUserId;
 	}
 
+	@Override
 	public void setStatsUserId(long statsUserId) {
 		_statsUserId = statsUserId;
 	}
 
+	@Override
 	public String getStatsUserUuid() throws SystemException {
 		return PortalUtil.getUserValue(getStatsUserId(), "uuid", _statsUserUuid);
 	}
 
+	@Override
 	public void setStatsUserUuid(String statsUserUuid) {
 		_statsUserUuid = statsUserUuid;
 	}
 
+	@Override
 	public long getGroupId() {
 		return _groupId;
 	}
 
+	@Override
 	public void setGroupId(long groupId) {
+		_columnBitmask |= GROUPID_COLUMN_BITMASK;
+
 		if (!_setOriginalGroupId) {
 			_setOriginalGroupId = true;
 
@@ -146,19 +244,37 @@ public class BlogsStatsUserModelImpl extends BaseModelImpl<BlogsStatsUser>
 		return _originalGroupId;
 	}
 
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
+		_columnBitmask |= COMPANYID_COLUMN_BITMASK;
+
+		if (!_setOriginalCompanyId) {
+			_setOriginalCompanyId = true;
+
+			_originalCompanyId = _companyId;
+		}
+
 		_companyId = companyId;
 	}
 
+	public long getOriginalCompanyId() {
+		return _originalCompanyId;
+	}
+
+	@Override
 	public long getUserId() {
 		return _userId;
 	}
 
+	@Override
 	public void setUserId(long userId) {
+		_columnBitmask |= USERID_COLUMN_BITMASK;
+
 		if (!_setOriginalUserId) {
 			_setOriginalUserId = true;
 
@@ -168,10 +284,12 @@ public class BlogsStatsUserModelImpl extends BaseModelImpl<BlogsStatsUser>
 		_userId = userId;
 	}
 
+	@Override
 	public String getUserUuid() throws SystemException {
 		return PortalUtil.getUserValue(getUserId(), "uuid", _userUuid);
 	}
 
+	@Override
 	public void setUserUuid(String userUuid) {
 		_userUuid = userUuid;
 	}
@@ -180,75 +298,103 @@ public class BlogsStatsUserModelImpl extends BaseModelImpl<BlogsStatsUser>
 		return _originalUserId;
 	}
 
+	@Override
 	public int getEntryCount() {
 		return _entryCount;
 	}
 
+	@Override
 	public void setEntryCount(int entryCount) {
+		_columnBitmask = -1L;
+
+		if (!_setOriginalEntryCount) {
+			_setOriginalEntryCount = true;
+
+			_originalEntryCount = _entryCount;
+		}
+
 		_entryCount = entryCount;
 	}
 
+	public int getOriginalEntryCount() {
+		return _originalEntryCount;
+	}
+
+	@Override
 	public Date getLastPostDate() {
 		return _lastPostDate;
 	}
 
+	@Override
 	public void setLastPostDate(Date lastPostDate) {
+		_columnBitmask |= LASTPOSTDATE_COLUMN_BITMASK;
+
+		if (_originalLastPostDate == null) {
+			_originalLastPostDate = _lastPostDate;
+		}
+
 		_lastPostDate = lastPostDate;
 	}
 
+	public Date getOriginalLastPostDate() {
+		return _originalLastPostDate;
+	}
+
+	@Override
 	public int getRatingsTotalEntries() {
 		return _ratingsTotalEntries;
 	}
 
+	@Override
 	public void setRatingsTotalEntries(int ratingsTotalEntries) {
 		_ratingsTotalEntries = ratingsTotalEntries;
 	}
 
+	@Override
 	public double getRatingsTotalScore() {
 		return _ratingsTotalScore;
 	}
 
+	@Override
 	public void setRatingsTotalScore(double ratingsTotalScore) {
 		_ratingsTotalScore = ratingsTotalScore;
 	}
 
+	@Override
 	public double getRatingsAverageScore() {
 		return _ratingsAverageScore;
 	}
 
+	@Override
 	public void setRatingsAverageScore(double ratingsAverageScore) {
 		_ratingsAverageScore = ratingsAverageScore;
 	}
 
-	@Override
-	public BlogsStatsUser toEscapedModel() {
-		if (isEscapedModel()) {
-			return (BlogsStatsUser)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (BlogsStatsUser)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					BlogsStatsUser.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			BlogsStatsUser.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public BlogsStatsUser toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (BlogsStatsUser)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -270,6 +416,7 @@ public class BlogsStatsUserModelImpl extends BaseModelImpl<BlogsStatsUser>
 		return blogsStatsUserImpl;
 	}
 
+	@Override
 	public int compareTo(BlogsStatsUser blogsStatsUser) {
 		int value = 0;
 
@@ -294,18 +441,15 @@ public class BlogsStatsUserModelImpl extends BaseModelImpl<BlogsStatsUser>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof BlogsStatsUser)) {
 			return false;
 		}
 
-		BlogsStatsUser blogsStatsUser = null;
-
-		try {
-			blogsStatsUser = (BlogsStatsUser)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		BlogsStatsUser blogsStatsUser = (BlogsStatsUser)obj;
 
 		long primaryKey = blogsStatsUser.getPrimaryKey();
 
@@ -330,9 +474,21 @@ public class BlogsStatsUserModelImpl extends BaseModelImpl<BlogsStatsUser>
 
 		blogsStatsUserModelImpl._setOriginalGroupId = false;
 
+		blogsStatsUserModelImpl._originalCompanyId = blogsStatsUserModelImpl._companyId;
+
+		blogsStatsUserModelImpl._setOriginalCompanyId = false;
+
 		blogsStatsUserModelImpl._originalUserId = blogsStatsUserModelImpl._userId;
 
 		blogsStatsUserModelImpl._setOriginalUserId = false;
+
+		blogsStatsUserModelImpl._originalEntryCount = blogsStatsUserModelImpl._entryCount;
+
+		blogsStatsUserModelImpl._setOriginalEntryCount = false;
+
+		blogsStatsUserModelImpl._originalLastPostDate = blogsStatsUserModelImpl._lastPostDate;
+
+		blogsStatsUserModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -394,6 +550,7 @@ public class BlogsStatsUserModelImpl extends BaseModelImpl<BlogsStatsUser>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(31);
 
@@ -444,7 +601,7 @@ public class BlogsStatsUserModelImpl extends BaseModelImpl<BlogsStatsUser>
 	}
 
 	private static ClassLoader _classLoader = BlogsStatsUser.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			BlogsStatsUser.class
 		};
 	private long _statsUserId;
@@ -453,15 +610,20 @@ public class BlogsStatsUserModelImpl extends BaseModelImpl<BlogsStatsUser>
 	private long _originalGroupId;
 	private boolean _setOriginalGroupId;
 	private long _companyId;
+	private long _originalCompanyId;
+	private boolean _setOriginalCompanyId;
 	private long _userId;
 	private String _userUuid;
 	private long _originalUserId;
 	private boolean _setOriginalUserId;
 	private int _entryCount;
+	private int _originalEntryCount;
+	private boolean _setOriginalEntryCount;
 	private Date _lastPostDate;
+	private Date _originalLastPostDate;
 	private int _ratingsTotalEntries;
 	private double _ratingsTotalScore;
 	private double _ratingsAverageScore;
-	private transient ExpandoBridge _expandoBridge;
-	private BlogsStatsUser _escapedModelProxy;
+	private long _columnBitmask;
+	private BlogsStatsUser _escapedModel;
 }

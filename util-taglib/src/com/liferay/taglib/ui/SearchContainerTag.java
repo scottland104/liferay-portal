@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,7 +20,7 @@ import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.util.ServerDetector;
+import com.liferay.portal.kernel.util.SearchContainerReference;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.taglib.util.ParamAndPropertyAncestorTagImpl;
@@ -32,7 +32,6 @@ import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
 import javax.portlet.PortletURL;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
 
 /**
@@ -40,32 +39,33 @@ import javax.servlet.jsp.JspException;
  */
 public class SearchContainerTag<R> extends ParamAndPropertyAncestorTagImpl {
 
-	public static final String DEFAULT_VAR = "searchContainer";
-
 	@Override
 	public int doEndTag() {
-		if (!ServerDetector.isResin()) {
-			_curParam = SearchContainer.DEFAULT_CUR_PARAM;
-			_delta = SearchContainer.DEFAULT_DELTA;
-			_deltaConfigurable = SearchContainer.DEFAULT_DELTA_CONFIGURABLE;
-			_deltaParam = SearchContainer.DEFAULT_DELTA_PARAM;
-			_displayTerms = null;
-			_emptyResultsMessage = null;
-			_hasResults = false;
-			_headerNames = null;
-			_hover = false;
-			_id = null;
-			_iteratorURL = null;
-			_orderByCol = null;
-			_orderByColParam = SearchContainer.DEFAULT_ORDER_BY_COL_PARAM;
-			_orderByComparator = null;
-			_orderByType = null;
-			_orderByTypeParam = SearchContainer.DEFAULT_ORDER_BY_TYPE_PARAM;
-			_rowChecker = null;
-			_searchContainer = null;
-			_searchTerms = null;
-			_var = DEFAULT_VAR;
-		}
+		pageContext.setAttribute(
+			_searchContainer.getTotalVar(), _searchContainer.getTotal());
+
+		_curParam = SearchContainer.DEFAULT_CUR_PARAM;
+		_delta = SearchContainer.DEFAULT_DELTA;
+		_deltaConfigurable = SearchContainer.DEFAULT_DELTA_CONFIGURABLE;
+		_deltaParam = SearchContainer.DEFAULT_DELTA_PARAM;
+		_displayTerms = null;
+		_emptyResultsMessage = null;
+		_hasResults = false;
+		_headerNames = null;
+		_hover = false;
+		_id = null;
+		_iteratorURL = null;
+		_orderByCol = null;
+		_orderByColParam = SearchContainer.DEFAULT_ORDER_BY_COL_PARAM;
+		_orderByComparator = null;
+		_orderByType = null;
+		_orderByTypeParam = SearchContainer.DEFAULT_ORDER_BY_TYPE_PARAM;
+		_rowChecker = null;
+		_searchContainer = null;
+		_searchTerms = null;
+		_total = 0;
+		_totalVar = SearchContainer.DEFAULT_TOTAL_VAR;
+		_var = SearchContainer.DEFAULT_VAR;
 
 		return EVAL_PAGE;
 	}
@@ -73,8 +73,6 @@ public class SearchContainerTag<R> extends ParamAndPropertyAncestorTagImpl {
 	@Override
 	public int doStartTag() throws JspException {
 		try {
-			HttpServletRequest request = getServletRequest();
-
 			PortletRequest portletRequest =
 				(PortletRequest)request.getAttribute(
 					JavaConstants.JAVAX_PORTLET_REQUEST);
@@ -94,39 +92,62 @@ public class SearchContainerTag<R> extends ParamAndPropertyAncestorTagImpl {
 			}
 
 			_searchContainer.setDeltaConfigurable(_deltaConfigurable);
-			_searchContainer.setId(_id);
+
+			if (Validator.isNotNull(_emptyResultsMessage)) {
+				_searchContainer.setEmptyResultsMessage(_emptyResultsMessage);
+			}
 
 			if (_headerNames != null) {
 				_searchContainer.setHeaderNames(_headerNames);
 			}
 
 			_searchContainer.setHover(_hover);
-
-			if (Validator.isNotNull(_orderByColParam)) {
-				_searchContainer.setOrderByColParam(_orderByColParam);
-			}
+			_searchContainer.setId(_id);
 
 			if (Validator.isNotNull(_orderByCol)) {
 				_searchContainer.setOrderByCol(_orderByCol);
+			}
+
+			if (Validator.isNotNull(_orderByColParam)) {
+				_searchContainer.setOrderByColParam(_orderByColParam);
 			}
 
 			if (_orderByComparator != null) {
 				_searchContainer.setOrderByComparator(_orderByComparator);
 			}
 
-			if (Validator.isNotNull(_orderByTypeParam)) {
-				_searchContainer.setOrderByTypeParam(_orderByTypeParam);
-			}
-
 			if (Validator.isNotNull(_orderByType)) {
 				_searchContainer.setOrderByType(_orderByType);
+			}
+
+			if (Validator.isNotNull(_orderByTypeParam)) {
+				_searchContainer.setOrderByTypeParam(_orderByTypeParam);
 			}
 
 			if (_rowChecker != null) {
 				_searchContainer.setRowChecker(_rowChecker);
 			}
 
+			if (_total != 0) {
+				_searchContainer.setTotal(_total);
+			}
+
+			if (Validator.isNotNull(_totalVar)) {
+				_searchContainer.setTotalVar(_totalVar);
+			}
+
+			pageContext.setAttribute(_searchContainer.getTotalVar(), 0);
 			pageContext.setAttribute(_var, _searchContainer);
+
+			SearchContainerReference searchContainerReference =
+				(SearchContainerReference)pageContext.getAttribute(
+					"searchContainerReference");
+
+			if ((searchContainerReference != null) &&
+				!_var.equals(SearchContainer.DEFAULT_VAR)) {
+
+				searchContainerReference.register(_var, _searchContainer);
+			}
 
 			return EVAL_BODY_INCLUDE;
 		}
@@ -189,6 +210,14 @@ public class SearchContainerTag<R> extends ParamAndPropertyAncestorTagImpl {
 
 	public DisplayTerms getSearchTerms() {
 		return _searchTerms;
+	}
+
+	public int getTotal() {
+		return _total;
+	}
+
+	public String getTotalVar() {
+		return _totalVar;
 	}
 
 	public String getVar() {
@@ -283,6 +312,14 @@ public class SearchContainerTag<R> extends ParamAndPropertyAncestorTagImpl {
 		_searchTerms = searchTerms;
 	}
 
+	public void setTotal(int total) {
+		_total = total;
+	}
+
+	public void setTotalVar(String totalVar) {
+		_totalVar = totalVar;
+	}
+
 	public void setVar(String var) {
 		_var = var;
 	}
@@ -299,16 +336,18 @@ public class SearchContainerTag<R> extends ParamAndPropertyAncestorTagImpl {
 	private boolean _hover = true;
 	private String _id;
 	private PortletURL _iteratorURL;
-	private OrderByComparator _orderByComparator;
 	private String _orderByCol;
 	private String _orderByColParam =
 		SearchContainer.DEFAULT_ORDER_BY_COL_PARAM;
+	private OrderByComparator _orderByComparator;
 	private String _orderByType;
 	private String _orderByTypeParam =
 		SearchContainer.DEFAULT_ORDER_BY_TYPE_PARAM;
 	private RowChecker _rowChecker;
 	private SearchContainer<R> _searchContainer;
 	private DisplayTerms _searchTerms;
-	private String _var = DEFAULT_VAR;
+	private int _total;
+	private String _totalVar = SearchContainer.DEFAULT_TOTAL_VAR;
+	private String _var = SearchContainer.DEFAULT_VAR;
 
 }

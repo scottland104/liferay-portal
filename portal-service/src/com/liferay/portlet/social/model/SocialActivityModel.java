@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,6 @@
 
 package com.liferay.portlet.social.model;
 
-import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.model.AttachedModel;
 import com.liferay.portal.model.BaseModel;
@@ -146,6 +145,20 @@ public interface SocialActivityModel extends AttachedModel,
 	public void setCreateDate(long createDate);
 
 	/**
+	 * Returns the activity set ID of this social activity.
+	 *
+	 * @return the activity set ID of this social activity
+	 */
+	public long getActivitySetId();
+
+	/**
+	 * Sets the activity set ID of this social activity.
+	 *
+	 * @param activitySetId the activity set ID of this social activity
+	 */
+	public void setActivitySetId(long activitySetId);
+
+	/**
 	 * Returns the mirror activity ID of this social activity.
 	 *
 	 * @return the mirror activity ID of this social activity
@@ -164,13 +177,17 @@ public interface SocialActivityModel extends AttachedModel,
 	 *
 	 * @return the fully qualified class name of this social activity
 	 */
+	@Override
 	public String getClassName();
+
+	public void setClassName(String className);
 
 	/**
 	 * Returns the class name ID of this social activity.
 	 *
 	 * @return the class name ID of this social activity
 	 */
+	@Override
 	public long getClassNameId();
 
 	/**
@@ -178,6 +195,7 @@ public interface SocialActivityModel extends AttachedModel,
 	 *
 	 * @param classNameId the class name ID of this social activity
 	 */
+	@Override
 	public void setClassNameId(long classNameId);
 
 	/**
@@ -185,6 +203,7 @@ public interface SocialActivityModel extends AttachedModel,
 	 *
 	 * @return the class p k of this social activity
 	 */
+	@Override
 	public long getClassPK();
 
 	/**
@@ -192,7 +211,36 @@ public interface SocialActivityModel extends AttachedModel,
 	 *
 	 * @param classPK the class p k of this social activity
 	 */
+	@Override
 	public void setClassPK(long classPK);
+
+	/**
+	 * Returns the parent class name ID of this social activity.
+	 *
+	 * @return the parent class name ID of this social activity
+	 */
+	public long getParentClassNameId();
+
+	/**
+	 * Sets the parent class name ID of this social activity.
+	 *
+	 * @param parentClassNameId the parent class name ID of this social activity
+	 */
+	public void setParentClassNameId(long parentClassNameId);
+
+	/**
+	 * Returns the parent class p k of this social activity.
+	 *
+	 * @return the parent class p k of this social activity
+	 */
+	public long getParentClassPK();
+
+	/**
+	 * Sets the parent class p k of this social activity.
+	 *
+	 * @param parentClassPK the parent class p k of this social activity
+	 */
+	public void setParentClassPK(long parentClassPK);
 
 	/**
 	 * Returns the type of this social activity.
@@ -213,7 +261,6 @@ public interface SocialActivityModel extends AttachedModel,
 	 *
 	 * @return the extra data of this social activity
 	 */
-	@AutoEscape
 	public String getExtraData();
 
 	/**
@@ -252,37 +299,60 @@ public interface SocialActivityModel extends AttachedModel,
 	 */
 	public void setReceiverUserUuid(String receiverUserUuid);
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(SocialActivity socialActivity);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<SocialActivity> toCacheModel();
 
+	@Override
 	public SocialActivity toEscapedModel();
 
+	@Override
+	public SocialActivity toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

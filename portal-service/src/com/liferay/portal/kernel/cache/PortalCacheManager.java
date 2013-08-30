@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,18 +14,20 @@
 
 package com.liferay.portal.kernel.cache;
 
+import java.io.Serializable;
+
 import java.net.URL;
 
 /**
  * @author Joseph Shum
  */
-public interface PortalCacheManager {
+public interface PortalCacheManager<K extends Serializable, V> {
 
 	public void clearAll() throws PortalCacheException;
 
-	public PortalCache getCache(String name) throws PortalCacheException;
+	public PortalCache<K, V> getCache(String name) throws PortalCacheException;
 
-	public PortalCache getCache(String name, boolean blocking)
+	public PortalCache<K, V> getCache(String name, boolean blocking)
 		throws PortalCacheException;
 
 	public void reconfigureCaches(URL configurationURL);

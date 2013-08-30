@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.model.CacheModel;
 
 import com.liferay.portlet.shopping.model.ShoppingItemPrice;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing ShoppingItemPrice in entity cache.
  *
@@ -26,7 +31,8 @@ import com.liferay.portlet.shopping.model.ShoppingItemPrice;
  * @see ShoppingItemPrice
  * @generated
  */
-public class ShoppingItemPriceCacheModel implements CacheModel<ShoppingItemPrice> {
+public class ShoppingItemPriceCacheModel implements CacheModel<ShoppingItemPrice>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(21);
@@ -56,6 +62,7 @@ public class ShoppingItemPriceCacheModel implements CacheModel<ShoppingItemPrice
 		return sb.toString();
 	}
 
+	@Override
 	public ShoppingItemPrice toEntityModel() {
 		ShoppingItemPriceImpl shoppingItemPriceImpl = new ShoppingItemPriceImpl();
 
@@ -73,6 +80,35 @@ public class ShoppingItemPriceCacheModel implements CacheModel<ShoppingItemPrice
 		shoppingItemPriceImpl.resetOriginalValues();
 
 		return shoppingItemPriceImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		itemPriceId = objectInput.readLong();
+		itemId = objectInput.readLong();
+		minQuantity = objectInput.readInt();
+		maxQuantity = objectInput.readInt();
+		price = objectInput.readDouble();
+		discount = objectInput.readDouble();
+		taxable = objectInput.readBoolean();
+		shipping = objectInput.readDouble();
+		useShippingFormula = objectInput.readBoolean();
+		status = objectInput.readInt();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(itemPriceId);
+		objectOutput.writeLong(itemId);
+		objectOutput.writeInt(minQuantity);
+		objectOutput.writeInt(maxQuantity);
+		objectOutput.writeDouble(price);
+		objectOutput.writeDouble(discount);
+		objectOutput.writeBoolean(taxable);
+		objectOutput.writeDouble(shipping);
+		objectOutput.writeBoolean(useShippingFormula);
+		objectOutput.writeInt(status);
 	}
 
 	public long itemPriceId;

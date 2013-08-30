@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -38,7 +38,13 @@ public abstract class MBCategoryBaseImpl extends MBCategoryModelImpl
 	 *
 	 * Never modify or reference this class directly. All methods that expect a message boards category model instance should use the {@link MBCategory} interface instead.
 	 */
+	@Override
 	public void persist() throws SystemException {
-		MBCategoryLocalServiceUtil.updateMBCategory(this);
+		if (this.isNew()) {
+			MBCategoryLocalServiceUtil.addMBCategory(this);
+		}
+		else {
+			MBCategoryLocalServiceUtil.updateMBCategory(this);
+		}
 	}
 }

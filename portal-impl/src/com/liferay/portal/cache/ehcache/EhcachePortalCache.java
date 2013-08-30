@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -37,61 +37,54 @@ import net.sf.ehcache.event.RegisteredEventListeners;
  * @author Edward Han
  * @author Shuyang Zhou
  */
-public class EhcachePortalCache implements PortalCache {
+public class EhcachePortalCache<K extends Serializable, V>
+	implements PortalCache<K, V> {
 
 	public EhcachePortalCache(Ehcache ehcache) {
 		_ehcache = ehcache;
 	}
 
+	@Override
 	public void destroy() {
 	}
 
-	public Object get(Serializable key) {
-		Element element = _ehcache.get(key);
+	@Override
+	public Collection<V> get(Collection<K> keys) {
+		List<V> values = new ArrayList<V>(keys.size());
 
-		if (element == null) {
-			return null;
-		}
-		else {
-			return element.getObjectValue();
-		}
-	}
-
-	public Collection<Object> get(Collection<Serializable> keys) {
-		List<Object> values = new ArrayList<Object>(keys.size());
-
-		for (Serializable key : keys) {
+		for (K key : keys) {
 			values.add(get(key));
 		}
 
 		return values;
 	}
 
+	@Override
+	public V get(K key) {
+		Element element = _ehcache.get(key);
+
+		if (element == null) {
+			return null;
+		}
+		else {
+			return (V)element.getObjectValue();
+		}
+	}
+
+	@Override
 	public String getName() {
 		return _ehcache.getName();
 	}
 
-	public void put(Serializable key, Object value) {
+	@Override
+	public void put(K key, V value) {
 		Element element = new Element(key, value);
 
 		_ehcache.put(element);
 	}
 
-	public void put(Serializable key, Object value, int timeToLive) {
-		Element element = new Element(key, value);
-
-		element.setTimeToLive(timeToLive);
-
-		_ehcache.put(element);
-	}
-
-	public void put(Serializable key, Serializable value) {
-		Element element = new Element(key, value);
-
-		_ehcache.put(element);
-	}
-
-	public void put(Serializable key, Serializable value, int timeToLive) {
+	@Override
+	public void put(K key, V value, int timeToLive) {
 		Element element = new Element(key, value);
 
 		element.setTimeToLive(timeToLive);
@@ -99,19 +92,22 @@ public class EhcachePortalCache implements PortalCache {
 		_ehcache.put(element);
 	}
 
-	public void registerCacheListener(CacheListener cacheListener) {
+	@Override
+	public void registerCacheListener(CacheListener<K, V> cacheListener) {
 		registerCacheListener(cacheListener, CacheListenerScope.ALL);
 	}
 
+	@Override
 	public void registerCacheListener(
-		CacheListener cacheListener, CacheListenerScope cacheListenerScope) {
+		CacheListener<K, V> cacheListener,
+		CacheListenerScope cacheListenerScope) {
 
 		if (_cacheEventListeners.containsKey(cacheListener)) {
 			return;
 		}
 
 		CacheEventListener cacheEventListener =
-			new PortalCacheCacheEventListener(cacheListener, this);
+			new PortalCacheCacheEventListener<K, V>(cacheListener, this);
 
 		_cacheEventListeners.put(cacheListener, cacheEventListener);
 
@@ -125,10 +121,12 @@ public class EhcachePortalCache implements PortalCache {
 			cacheEventListener, notificationScope);
 	}
 
-	public void remove(Serializable key) {
+	@Override
+	public void remove(K key) {
 		_ehcache.remove(key);
 	}
 
+	@Override
 	public void removeAll() {
 		_ehcache.removeAll();
 	}
@@ -137,7 +135,8 @@ public class EhcachePortalCache implements PortalCache {
 		_ehcache = ehcache;
 	}
 
-	public void unregisterCacheListener(CacheListener cacheListener) {
+	@Override
+	public void unregisterCacheListener(CacheListener<K, V> cacheListener) {
 		CacheEventListener cacheEventListener = _cacheEventListeners.get(
 			cacheListener);
 
@@ -151,6 +150,7 @@ public class EhcachePortalCache implements PortalCache {
 		_cacheEventListeners.remove(cacheListener);
 	}
 
+	@Override
 	public void unregisterCacheListeners() {
 		RegisteredEventListeners registeredEventListeners =
 			_ehcache.getCacheEventNotificationService();
@@ -178,8 +178,8 @@ public class EhcachePortalCache implements PortalCache {
 		}
 	}
 
-	private Map<CacheListener, CacheEventListener> _cacheEventListeners =
-		new ConcurrentHashMap<CacheListener, CacheEventListener>();
+	private Map<CacheListener<K, V>, CacheEventListener> _cacheEventListeners =
+		new ConcurrentHashMap<CacheListener<K, V>, CacheEventListener>();
 	private Ehcache _ehcache;
 
 }

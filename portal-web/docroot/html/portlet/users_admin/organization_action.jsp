@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -42,15 +42,24 @@ Group organizationGroup = organization.getGroup();
 
 long organizationGroupId = organizationGroup.getGroupId();
 
+String cssClass = StringPool.BLANK;
+
 boolean view = false;
 
 if (row == null) {
+	cssClass = "nav nav-list unstyled well";
+
 	view = true;
 }
 %>
 
-<liferay-ui:icon-menu showExpanded="<%= view %>" showWhenSingleIcon="<%= view %>">
-	<c:if test="<%= OrganizationPermissionUtil.contains(permissionChecker, organizationId, ActionKeys.UPDATE) %>">
+<liferay-ui:icon-menu cssClass="<%= cssClass %>" showExpanded="<%= view %>" showWhenSingleIcon="<%= view %>">
+
+	<%
+	boolean hasUpdatePermission = OrganizationPermissionUtil.contains(permissionChecker, organizationId, ActionKeys.UPDATE);
+	%>
+
+	<c:if test="<%= hasUpdatePermission %>">
 		<portlet:renderURL var="editOrganizationURL">
 			<portlet:param name="struts_action" value="/users_admin/edit_organization" />
 			<portlet:param name="redirect" value="<%= redirect %>" />
@@ -69,18 +78,22 @@ if (row == null) {
 			modelResourceDescription="<%= HtmlUtil.escape(organization.getName()) %>"
 			resourcePrimKey="<%= String.valueOf(organization.getOrganizationId()) %>"
 			var="editOrganizationPermissionsURL"
+			windowState="<%= LiferayWindowState.POP_UP.toString() %>"
 		/>
 
 		<liferay-ui:icon
 			image="permissions"
+			method="get"
 			url="<%= editOrganizationPermissionsURL %>"
+			useDialog="<%= true %>"
 		/>
 	</c:if>--%>
 
-	<c:if test="<%= organizationGroup.isSite() && (OrganizationPermissionUtil.contains(permissionChecker, organizationId, ActionKeys.MANAGE_STAGING) || OrganizationPermissionUtil.contains(permissionChecker, organizationId, ActionKeys.UPDATE)) %>">
-		<liferay-portlet:actionURL doAsGroupId="<%= organizationGroupId %>" portletName="<%= PortletKeys.SITE_SETTINGS %>" var="editSettingsURL">
+	<c:if test="<%= organizationGroup.isSite() && (GroupPermissionUtil.contains(permissionChecker, organizationGroup, ActionKeys.MANAGE_STAGING) || hasUpdatePermission) %>">
+		<liferay-portlet:renderURL doAsGroupId="<%= organizationGroupId %>" portletName="<%= PortletKeys.SITE_SETTINGS %>" var="editSettingsURL">
 			<portlet:param name="struts_action" value="/sites_admin/edit_site" />
-		</liferay-portlet:actionURL>
+			<portlet:param name="viewOrganizationsRedirect" value="<%= currentURL %>" />
+		</liferay-portlet:renderURL>
 
 		<liferay-ui:icon
 			image="configuration"
@@ -140,7 +153,7 @@ if (row == null) {
 		for (String childrenType : childrenTypes) {
 		%>
 
-			<c:if test="<%= OrganizationPermissionUtil.contains(permissionChecker, organizationId, ActionKeys.MANAGE_SUBORGANIZATIONS) %>">
+			<c:if test="<%= OrganizationPermissionUtil.contains(permissionChecker, organizationId, ActionKeys.ADD_ORGANIZATION) %>">
 				<portlet:renderURL var="addSuborganizationURL">
 					<portlet:param name="struts_action" value="/users_admin/edit_organization" />
 					<portlet:param name="redirect" value="<%= redirect %>" />
@@ -150,7 +163,7 @@ if (row == null) {
 
 				<liferay-ui:icon
 					image="add_location"
-					message='<%= LanguageUtil.format(pageContext, "add-x", new String []{LanguageUtil.get(pageContext, childrenType)}) %>'
+					message='<%= LanguageUtil.format(pageContext, "add-x", new String [] {LanguageUtil.get(pageContext, childrenType)}) %>'
 					url="<%= addSuborganizationURL %>"
 				/>
 			</c:if>
@@ -158,6 +171,7 @@ if (row == null) {
 		<%
 		}
 		%>
+
 	</c:if>
 
 	<c:if test="<%= OrganizationPermissionUtil.contains(permissionChecker, organizationId, ActionKeys.DELETE) %>">

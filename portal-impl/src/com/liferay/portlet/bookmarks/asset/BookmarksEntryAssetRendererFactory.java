@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -35,8 +35,6 @@ import com.liferay.portlet.bookmarks.service.permission.BookmarksPermission;
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
 
-import javax.servlet.http.HttpServletRequest;
-
 /**
  * @author Julio Camarero
  * @author Juan Fernández
@@ -46,22 +44,28 @@ import javax.servlet.http.HttpServletRequest;
 public class BookmarksEntryAssetRendererFactory
 	extends BaseAssetRendererFactory {
 
-	public static final String CLASS_NAME =BookmarksEntry.class.getName();
-
 	public static final String TYPE = "bookmark";
 
+	@Override
 	public AssetRenderer getAssetRenderer(long classPK, int type)
 		throws PortalException, SystemException {
 
 		BookmarksEntry entry = BookmarksEntryLocalServiceUtil.getEntry(classPK);
 
-		return new BookmarksEntryAssetRenderer(entry);
+		BookmarksEntryAssetRenderer bookmarksEntryAssetRenderer =
+			new BookmarksEntryAssetRenderer(entry);
+
+		bookmarksEntryAssetRenderer.setAssetRendererType(type);
+
+		return bookmarksEntryAssetRenderer;
 	}
 
+	@Override
 	public String getClassName() {
-		return CLASS_NAME;
+		return BookmarksEntry.class.getName();
 	}
 
+	@Override
 	public String getType() {
 		return TYPE;
 	}
@@ -72,11 +76,9 @@ public class BookmarksEntryAssetRendererFactory
 			LiferayPortletResponse liferayPortletResponse)
 		throws PortalException, SystemException {
 
-		HttpServletRequest request =
-			liferayPortletRequest.getHttpServletRequest();
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
-			WebKeys.THEME_DISPLAY);
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)liferayPortletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
 		if (!BookmarksPermission.contains(
 				themeDisplay.getPermissionChecker(),
@@ -86,15 +88,15 @@ public class BookmarksEntryAssetRendererFactory
 		}
 
 		PortletURL portletURL = PortletURLFactoryUtil.create(
-			request, PortletKeys.BOOKMARKS, getControlPanelPlid(themeDisplay),
-			PortletRequest.RENDER_PHASE);
+			liferayPortletRequest, PortletKeys.BOOKMARKS,
+			getControlPanelPlid(themeDisplay), PortletRequest.RENDER_PHASE);
 
 		portletURL.setParameter("struts_action", "/bookmarks/edit_entry");
 		portletURL.setParameter(
 			"folderId",
 			String.valueOf(
 				AssetPublisherUtil.getRecentFolderId(
-					liferayPortletRequest, CLASS_NAME)));
+					liferayPortletRequest, getClassName())));
 
 		return portletURL;
 	}
@@ -109,8 +111,15 @@ public class BookmarksEntryAssetRendererFactory
 	}
 
 	@Override
+	public boolean isLinkable() {
+		return _LINKABLE;
+	}
+
+	@Override
 	protected String getIconPath(ThemeDisplay themeDisplay) {
 		return themeDisplay.getPathThemeImages() + "/ratings/star_hover.png";
 	}
+
+	private static final boolean _LINKABLE = true;
 
 }

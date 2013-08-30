@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -29,6 +29,25 @@ public interface Group extends GroupModel, PersistedModel {
 	 *
 	 * Never modify this interface directly. Add methods to {@link com.liferay.portal.model.impl.GroupImpl} and rerun ServiceBuilder to automatically copy the method declarations to this interface.
 	 */
+	public java.lang.String buildTreePath()
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException;
+
+	public java.util.List<com.liferay.portal.model.Group> getAncestors()
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException;
+
+	public java.util.List<com.liferay.portal.model.Group> getChildren(
+		boolean site)
+		throws com.liferay.portal.kernel.exception.SystemException;
+
+	public java.util.List<com.liferay.portal.model.Group> getChildrenWithLayouts(
+		boolean site, int start, int end)
+		throws com.liferay.portal.kernel.exception.SystemException;
+
+	public int getChildrenWithLayoutsCount(boolean site)
+		throws com.liferay.portal.kernel.exception.SystemException;
+
 	public long getDefaultPrivatePlid();
 
 	public long getDefaultPublicPlid();
@@ -37,9 +56,28 @@ public interface Group extends GroupModel, PersistedModel {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException;
 
+	public java.lang.String getDescriptiveName(java.util.Locale locale)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException;
+
+	public java.lang.String getIconURL(
+		com.liferay.portal.theme.ThemeDisplay themeDisplay);
+
+	public java.lang.String getLayoutRootNodeName(boolean privateLayout,
+		java.util.Locale locale);
+
 	public com.liferay.portal.model.Group getLiveGroup();
 
+	public java.lang.String getLiveParentTypeSettingsProperty(
+		java.lang.String key);
+
 	public long getOrganizationId();
+
+	public com.liferay.portal.model.Group getParentGroup()
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException;
+
+	public com.liferay.portal.kernel.util.UnicodeProperties getParentLiveGroupTypeSettingsProperties();
 
 	public java.lang.String getPathFriendlyURL(boolean privateLayout,
 		com.liferay.portal.theme.ThemeDisplay themeDisplay);
@@ -52,15 +90,25 @@ public interface Group extends GroupModel, PersistedModel {
 
 	public int getPublicLayoutsPageCount();
 
+	public java.lang.String getScopeDescriptiveName(
+		com.liferay.portal.theme.ThemeDisplay themeDisplay)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException;
+
+	public java.lang.String getScopeLabel(
+		com.liferay.portal.theme.ThemeDisplay themeDisplay);
+
 	public com.liferay.portal.model.Group getStagingGroup();
 
 	public java.lang.String getTypeLabel();
 
-	public java.lang.String getTypeSettings();
-
 	public com.liferay.portal.kernel.util.UnicodeProperties getTypeSettingsProperties();
 
 	public java.lang.String getTypeSettingsProperty(java.lang.String key);
+
+	public boolean hasAncestor(long groupId);
+
+	public boolean hasLocalOrRemoteStagingGroup();
 
 	public boolean hasPrivateLayouts();
 
@@ -69,15 +117,19 @@ public interface Group extends GroupModel, PersistedModel {
 	public boolean hasStagingGroup();
 
 	/**
-	* @deprecated As of 6.1, renamed to {@link #isRegularSite}
+	* @deprecated As of 6.1.0, renamed to {@link #isRegularSite}
 	*/
 	public boolean isCommunity();
 
 	public boolean isCompany();
 
+	public boolean isCompanyStagingGroup();
+
 	public boolean isControlPanel();
 
 	public boolean isGuest();
+
+	public boolean isInStagingPortlet(java.lang.String portletId);
 
 	public boolean isLayout();
 
@@ -85,9 +137,19 @@ public interface Group extends GroupModel, PersistedModel {
 
 	public boolean isLayoutSetPrototype();
 
+	public boolean isLimitedToParentSiteMembers();
+
 	public boolean isOrganization();
 
 	public boolean isRegularSite();
+
+	public boolean isRoot();
+
+	public boolean isShowSite(
+		com.liferay.portal.security.permission.PermissionChecker permissionChecker,
+		boolean privateSite)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException;
 
 	public boolean isStaged();
 
@@ -101,7 +163,7 @@ public interface Group extends GroupModel, PersistedModel {
 
 	public boolean isUserGroup();
 
-	public void setTypeSettings(java.lang.String typeSettings);
+	public boolean isUserPersonalSite();
 
 	public void setTypeSettingsProperties(
 		com.liferay.portal.kernel.util.UnicodeProperties typeSettingsProperties);

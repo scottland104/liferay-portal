@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -91,7 +91,14 @@ public class HypersonicDB extends BaseDB {
 						"@nullable@;",
 					REWORD_TEMPLATE, template);
 			}
-			else if (line.indexOf(DROP_INDEX) != -1) {
+			else if (line.startsWith(ALTER_TABLE_NAME)) {
+				String[] template = buildTableNameTokens(line);
+
+				line = StringUtil.replace(
+					"alter table @old-table@ rename to @new-table@;",
+					RENAME_TABLE_TEMPLATE, template);
+			}
+			else if (line.contains(DROP_INDEX)) {
 				String[] tokens = StringUtil.split(line, ' ');
 
 				line = StringUtil.replace(
@@ -107,13 +114,10 @@ public class HypersonicDB extends BaseDB {
 		return sb.toString();
 	}
 
-	private static String[] _HYPERSONIC = {
-		"//", "true", "false",
-		"'1970-01-01 00:00:00'", "now()",
-		" blob", " bit", " timestamp",
-		" double", " int", " bigint",
-		" longvarchar", " longvarchar", " varchar",
-		"", "commit"
+	private static final String[] _HYPERSONIC = {
+		"//", "true", "false", "'1970-01-01 00:00:00'", "now()", " blob",
+		" blob", " bit", " timestamp", " double", " int", " bigint",
+		" longvarchar", " longvarchar", " varchar", "", "commit"
 	};
 
 	private static HypersonicDB _instance = new HypersonicDB();

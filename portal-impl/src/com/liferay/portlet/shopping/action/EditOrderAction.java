@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,8 @@ import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.auth.PrincipalException;
+import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.service.ServiceContextFactory;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.WebKeys;
@@ -43,8 +45,9 @@ public class EditOrderAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
 
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
@@ -66,7 +69,7 @@ public class EditOrderAction extends PortletAction {
 			if (e instanceof NoSuchOrderException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				setForward(actionRequest, "portlet.shopping.error");
 			}
@@ -78,8 +81,9 @@ public class EditOrderAction extends PortletAction {
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
 
 		try {
@@ -89,16 +93,16 @@ public class EditOrderAction extends PortletAction {
 			if (e instanceof NoSuchOrderException ||
 				e instanceof PrincipalException) {
 
-				SessionErrors.add(renderRequest, e.getClass().getName());
+				SessionErrors.add(renderRequest, e.getClass());
 
-				return mapping.findForward("portlet.shopping.error");
+				return actionMapping.findForward("portlet.shopping.error");
 			}
 			else {
 				throw e;
 			}
 		}
 
-		return mapping.findForward(
+		return actionMapping.findForward(
 			getForward(renderRequest, "portlet.shopping.edit_order"));
 	}
 
@@ -123,8 +127,11 @@ public class EditOrderAction extends PortletAction {
 
 		String emailType = ParamUtil.getString(actionRequest, "emailType");
 
+		ServiceContext serviceContext = ServiceContextFactory.getInstance(
+			actionRequest);
+
 		ShoppingOrderServiceUtil.sendEmail(
-			themeDisplay.getScopeGroupId(), orderId, emailType);
+			themeDisplay.getScopeGroupId(), orderId, emailType, serviceContext);
 	}
 
 	protected void updateOrder(ActionRequest actionRequest) throws Exception {
@@ -142,9 +149,12 @@ public class EditOrderAction extends PortletAction {
 		String ppPayerEmail = ParamUtil.getString(
 			actionRequest, "ppPayerEmail");
 
+		ServiceContext serviceContext = ServiceContextFactory.getInstance(
+			actionRequest);
+
 		ShoppingOrderServiceUtil.completeOrder(
 			themeDisplay.getScopeGroupId(), number, ppTxnId, ppPaymentStatus,
-			ppPaymentGross, ppReceiverEmail, ppPayerEmail);
+			ppPaymentGross, ppReceiverEmail, ppPayerEmail, serviceContext);
 	}
 
 }

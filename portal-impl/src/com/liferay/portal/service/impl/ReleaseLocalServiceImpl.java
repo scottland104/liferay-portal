@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,12 +25,12 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.Release;
 import com.liferay.portal.model.ReleaseConstants;
 import com.liferay.portal.service.base.ReleaseLocalServiceBaseImpl;
 import com.liferay.portal.util.PropsUtil;
+import com.liferay.portal.util.PropsValues;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -43,6 +43,7 @@ import java.util.Date;
  */
 public class ReleaseLocalServiceImpl extends ReleaseLocalServiceBaseImpl {
 
+	@Override
 	public Release addRelease(String servletContextName, int buildNumber)
 		throws SystemException {
 
@@ -51,8 +52,7 @@ public class ReleaseLocalServiceImpl extends ReleaseLocalServiceBaseImpl {
 		if (servletContextName.equals(
 				ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME)) {
 
-			release = releasePersistence.create(
-				ReleaseConstants.DEFAULT_ID);
+			release = releasePersistence.create(ReleaseConstants.DEFAULT_ID);
 		}
 		else {
 			long releaseId = counterLocalService.increment();
@@ -73,11 +73,12 @@ public class ReleaseLocalServiceImpl extends ReleaseLocalServiceBaseImpl {
 			release.setTestString(ReleaseConstants.TEST_STRING);
 		}
 
-		releasePersistence.update(release, false);
+		releasePersistence.update(release);
 
 		return release;
 	}
 
+	@Override
 	public void createTablesAndPopulate() throws SystemException {
 		try {
 			if (_log.isInfoEnabled()) {
@@ -90,10 +91,7 @@ public class ReleaseLocalServiceImpl extends ReleaseLocalServiceBaseImpl {
 			db.runSQLTemplate("portal-data-common.sql", false);
 			db.runSQLTemplate("portal-data-counter.sql", false);
 
-			if (!GetterUtil.getBoolean(
-					PropsUtil.get(PropsKeys.SCHEMA_RUN_MINIMAL)) &&
-				!ShardUtil.isEnabled()) {
-
+			if (!PropsValues.SCHEMA_RUN_MINIMAL && !ShardUtil.isEnabled()) {
 				db.runSQLTemplate("portal-data-sample.vm", false);
 			}
 
@@ -108,6 +106,31 @@ public class ReleaseLocalServiceImpl extends ReleaseLocalServiceBaseImpl {
 		}
 	}
 
+	@Override
+	public Release fetchRelease(String servletContextName)
+		throws SystemException {
+
+		if (Validator.isNull(servletContextName)) {
+			throw new IllegalArgumentException("Servlet context name is null");
+		}
+
+		Release release = null;
+
+		if (servletContextName.equals(
+				ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME)) {
+
+			release = releasePersistence.fetchByPrimaryKey(
+				ReleaseConstants.DEFAULT_ID);
+		}
+		else {
+			release = releasePersistence.fetchByServletContextName(
+				servletContextName);
+		}
+
+		return release;
+	}
+
+	@Override
 	public int getBuildNumberOrCreate()
 		throws PortalException, SystemException {
 
@@ -133,6 +156,17 @@ public class ReleaseLocalServiceImpl extends ReleaseLocalServiceBaseImpl {
 					_log.debug("Build number " + buildNumber);
 				}
 
+				DB db = DBFactoryUtil.getDB();
+
+				try {
+					db.runSQL("alter table Release_ add state_ INTEGER");
+				}
+				catch (Exception e) {
+					if (_log.isDebugEnabled()) {
+						_log.debug(e.getMessage());
+					}
+				}
+
 				testSupportsStringCaseSensitiveQuery();
 
 				return buildNumber;
@@ -156,9 +190,8 @@ public class ReleaseLocalServiceImpl extends ReleaseLocalServiceBaseImpl {
 
 			testSupportsStringCaseSensitiveQuery();
 
-			Release release = getRelease(
-				ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME,
-				ReleaseInfo.getBuildNumber());
+			Release release = fetchRelease(
+				ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME);
 
 			return release.getBuildNumber();
 		}
@@ -168,32 +201,7 @@ public class ReleaseLocalServiceImpl extends ReleaseLocalServiceBaseImpl {
 		}
 	}
 
-	public Release getRelease(String servletContextName, int buildNumber)
-		throws PortalException, SystemException {
-
-		if (Validator.isNull(servletContextName)) {
-			throw new IllegalArgumentException(
-				"Servlet context name cannot be null");
-		}
-
-		servletContextName = servletContextName.toLowerCase();
-
-		Release release = null;
-
-		if (servletContextName.equals(
-				ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME)) {
-
-			release = releasePersistence.findByPrimaryKey(
-				ReleaseConstants.DEFAULT_ID);
-		}
-		else {
-			release = releasePersistence.findByServletContextName(
-				servletContextName);
-		}
-
-		return release;
-	}
-
+	@Override
 	public Release updateRelease(
 			long releaseId, int buildNumber, Date buildDate, boolean verified)
 		throws PortalException, SystemException {
@@ -205,7 +213,7 @@ public class ReleaseLocalServiceImpl extends ReleaseLocalServiceBaseImpl {
 		release.setBuildDate(buildDate);
 		release.setVerified(verified);
 
-		releasePersistence.update(release, false);
+		releasePersistence.update(release);
 
 		return release;
 	}

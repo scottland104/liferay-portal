@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,8 +15,6 @@
 --%>
 
 <%
-PortalPreferences portalPreferences = PortletPreferencesFactoryUtil.getPortalPreferences(request);
-
 PortletURL portletURL = renderResponse.createRenderURL();
 
 portletURL.setParameter("struts_action", "/portlet_configuration/edit_configuration");
@@ -42,13 +40,12 @@ ArticleSearch searchContainer = new ArticleSearch(renderRequest, portletURL);
 />
 
 <%
-OrderByComparator orderByComparator = JournalUtil.getArticleOrderByComparator(searchContainer.getOrderByCol(), searchContainer.getOrderByType());
-
 ArticleSearchTerms searchTerms = (ArticleSearchTerms)searchContainer.getSearchTerms();
 
 searchTerms.setVersion(-1);
 
 List<JournalArticle> results = null;
+int total = 0;
 %>
 
 <%@ include file="/html/portlet/journal/article_search_results.jspf" %>
@@ -58,8 +55,6 @@ List resultRows = searchContainer.getResultRows();
 
 for (int i = 0; i < results.size(); i++) {
 	JournalArticle article = results.get(i);
-
-	long articleResourceId = article.getResourcePrimKey();
 
 	ResultRow row = new ResultRow(article, article.getArticleId() + EditArticleAction.VERSION_SEPARATOR + article.getVersion(), i);
 
@@ -91,15 +86,15 @@ for (int i = 0; i < results.size(); i++) {
 
 	// Modified date
 
-	row.addText(dateFormatDate.format(article.getModifiedDate()), rowHREF);
+	row.addDate(article.getModifiedDate(), rowHREF);
 
 	// Display date
 
-	row.addText(dateFormatDate.format(article.getDisplayDate()), rowHREF);
+	row.addDate(article.getDisplayDate(), rowHREF);
 
 	// Author
 
-	row.addText(HtmlUtil.escape(PortalUtil.getUserName(article.getUserId(), article.getUserName())), rowHREF);
+	row.addText(HtmlUtil.escape(PortalUtil.getUserName(article)), rowHREF);
 
 	// Add result row
 

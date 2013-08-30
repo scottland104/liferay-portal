@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,7 +18,9 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.CharPool;
+import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Document;
@@ -26,18 +28,19 @@ import com.liferay.portal.kernel.xml.Node;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.kernel.xml.XPath;
 import com.liferay.portal.model.ResourceConstants;
+import com.liferay.portal.model.SystemEventConstants;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.util.PortalUtil;
-import com.liferay.portlet.expando.model.ExpandoBridge;
+import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
 import com.liferay.portlet.journal.DuplicateFeedIdException;
 import com.liferay.portlet.journal.FeedContentFieldException;
 import com.liferay.portlet.journal.FeedIdException;
 import com.liferay.portlet.journal.FeedNameException;
 import com.liferay.portlet.journal.FeedTargetLayoutFriendlyUrlException;
+import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.model.JournalFeed;
 import com.liferay.portlet.journal.model.JournalFeedConstants;
-import com.liferay.portlet.journal.model.JournalStructure;
 import com.liferay.portlet.journal.service.base.JournalFeedLocalServiceBaseImpl;
 import com.liferay.util.RSSUtil;
 
@@ -50,13 +53,14 @@ import java.util.List;
 public class JournalFeedLocalServiceImpl
 	extends JournalFeedLocalServiceBaseImpl {
 
+	@Override
 	public JournalFeed addFeed(
 			long userId, long groupId, String feedId, boolean autoFeedId,
 			String name, String description, String type, String structureId,
 			String templateId, String rendererTemplateId, int delta,
 			String orderByCol, String orderByType,
 			String targetLayoutFriendlyUrl, String targetPortletId,
-			String contentField, String feedType, double feedVersion,
+			String contentField, String feedFormat, double feedVersion,
 			ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
@@ -99,25 +103,27 @@ public class JournalFeedLocalServiceImpl
 		feed.setTargetPortletId(targetPortletId);
 		feed.setContentField(contentField);
 
-		if (Validator.isNull(feedType)) {
-			feed.setFeedType(RSSUtil.DEFAULT_TYPE);
+		if (Validator.isNull(feedFormat)) {
+			feed.setFeedFormat(RSSUtil.FORMAT_DEFAULT);
 			feed.setFeedVersion(RSSUtil.VERSION_DEFAULT);
 		}
 		else {
-			feed.setFeedType(feedType);
+			feed.setFeedFormat(feedFormat);
 			feed.setFeedVersion(feedVersion);
 		}
 
-		journalFeedPersistence.update(feed, false);
+		feed.setExpandoBridgeAttributes(serviceContext);
+
+		journalFeedPersistence.update(feed);
 
 		// Resources
 
-		if (serviceContext.getAddGroupPermissions() ||
-			serviceContext.getAddGuestPermissions()) {
+		if (serviceContext.isAddGroupPermissions() ||
+			serviceContext.isAddGuestPermissions()) {
 
 			addFeedResources(
-				feed, serviceContext.getAddGroupPermissions(),
-				serviceContext.getAddGuestPermissions());
+				feed, serviceContext.isAddGroupPermissions(),
+				serviceContext.isAddGuestPermissions());
 		}
 		else {
 			addFeedResources(
@@ -125,25 +131,10 @@ public class JournalFeedLocalServiceImpl
 				serviceContext.getGuestPermissions());
 		}
 
-		// Expando
-
-		ExpandoBridge expandoBridge = feed.getExpandoBridge();
-
-		expandoBridge.setAttributes(serviceContext);
-
 		return feed;
 	}
 
-	public void addFeedResources(
-			long feedId, boolean addGroupPermissions,
-			boolean addGuestPermissions)
-		throws PortalException, SystemException {
-
-		JournalFeed feed = journalFeedPersistence.findByPrimaryKey(feedId);
-
-		addFeedResources(feed, addGroupPermissions, addGuestPermissions);
-	}
-
+	@Override
 	public void addFeedResources(
 			JournalFeed feed, boolean addGroupPermissions,
 			boolean addGuestPermissions)
@@ -155,15 +146,7 @@ public class JournalFeedLocalServiceImpl
 			addGroupPermissions, addGuestPermissions);
 	}
 
-	public void addFeedResources(
-			long feedId, String[] groupPermissions, String[] guestPermissions)
-		throws PortalException, SystemException {
-
-		JournalFeed feed = journalFeedPersistence.findByPrimaryKey(feedId);
-
-		addFeedResources(feed, groupPermissions, guestPermissions);
-	}
-
+	@Override
 	public void addFeedResources(
 			JournalFeed feed, String[] groupPermissions,
 			String[] guestPermissions)
@@ -175,29 +158,35 @@ public class JournalFeedLocalServiceImpl
 			guestPermissions);
 	}
 
-	public void deleteFeed(long feedId)
+	@Override
+	public void addFeedResources(
+			long feedId, boolean addGroupPermissions,
+			boolean addGuestPermissions)
 		throws PortalException, SystemException {
 
 		JournalFeed feed = journalFeedPersistence.findByPrimaryKey(feedId);
 
-		deleteFeed(feed);
+		addFeedResources(feed, addGroupPermissions, addGuestPermissions);
 	}
 
-	public void deleteFeed(long groupId, String feedId)
+	@Override
+	public void addFeedResources(
+			long feedId, String[] groupPermissions, String[] guestPermissions)
 		throws PortalException, SystemException {
 
-		JournalFeed feed = journalFeedPersistence.findByG_F(groupId, feedId);
+		JournalFeed feed = journalFeedPersistence.findByPrimaryKey(feedId);
 
-		deleteFeed(feed);
+		addFeedResources(feed, groupPermissions, guestPermissions);
 	}
 
+	@Override
+	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
 	public void deleteFeed(JournalFeed feed)
 		throws PortalException, SystemException {
 
-		// Expando
+		// Feed
 
-		expandoValueLocalService.deleteValues(
-			JournalFeed.class.getName(), feed.getId());
+		journalFeedPersistence.remove(feed);
 
 		// Resources
 
@@ -205,41 +194,74 @@ public class JournalFeedLocalServiceImpl
 			feed.getCompanyId(), JournalFeed.class.getName(),
 			ResourceConstants.SCOPE_INDIVIDUAL, feed.getId());
 
-		// Feed
+		// Expando
 
-		journalFeedPersistence.remove(feed);
+		expandoValueLocalService.deleteValues(
+			JournalFeed.class.getName(), feed.getId());
 	}
 
+	@Override
+	public void deleteFeed(long feedId)
+		throws PortalException, SystemException {
+
+		JournalFeed feed = journalFeedPersistence.findByPrimaryKey(feedId);
+
+		journalFeedLocalService.deleteFeed(feed);
+	}
+
+	@Override
+	public void deleteFeed(long groupId, String feedId)
+		throws PortalException, SystemException {
+
+		JournalFeed feed = journalFeedPersistence.findByG_F(groupId, feedId);
+
+		journalFeedLocalService.deleteFeed(feed);
+	}
+
+	@Override
+	public JournalFeed fetchFeed(long groupId, String feedId)
+		throws SystemException {
+
+		return journalFeedPersistence.fetchByG_F(groupId, feedId);
+	}
+
+	@Override
 	public JournalFeed getFeed(long feedId)
 		throws PortalException, SystemException {
 
 		return journalFeedPersistence.findByPrimaryKey(feedId);
 	}
 
+	@Override
 	public JournalFeed getFeed(long groupId, String feedId)
 		throws PortalException, SystemException {
 
 		return journalFeedPersistence.findByG_F(groupId, feedId);
 	}
 
+	@Override
 	public List<JournalFeed> getFeeds() throws SystemException {
 		return journalFeedPersistence.findAll();
 	}
 
+	@Override
 	public List<JournalFeed> getFeeds(long groupId) throws SystemException {
 		return journalFeedPersistence.findByGroupId(groupId);
 	}
 
+	@Override
 	public List<JournalFeed> getFeeds(long groupId, int start, int end)
 		throws SystemException {
 
 		return journalFeedPersistence.findByGroupId(groupId, start, end);
 	}
 
+	@Override
 	public int getFeedsCount(long groupId) throws SystemException {
 		return journalFeedPersistence.countByGroupId(groupId);
 	}
 
+	@Override
 	public List<JournalFeed> search(
 			long companyId, long groupId, String keywords, int start, int end,
 			OrderByComparator obc)
@@ -249,6 +271,7 @@ public class JournalFeedLocalServiceImpl
 			companyId, groupId, keywords, start, end, obc);
 	}
 
+	@Override
 	public List<JournalFeed> search(
 			long companyId, long groupId, String feedId, String name,
 			String description, boolean andOperator, int start, int end,
@@ -260,13 +283,14 @@ public class JournalFeedLocalServiceImpl
 			end, obc);
 	}
 
+	@Override
 	public int searchCount(long companyId, long groupId, String keywords)
 		throws SystemException {
 
-		return journalFeedFinder.countByKeywords(
-			companyId, groupId, keywords);
+		return journalFeedFinder.countByKeywords(companyId, groupId, keywords);
 	}
 
+	@Override
 	public int searchCount(
 			long companyId, long groupId, String feedId, String name,
 			String description, boolean andOperator)
@@ -276,14 +300,15 @@ public class JournalFeedLocalServiceImpl
 			companyId, groupId, feedId, name, description, andOperator);
 	}
 
+	@Override
 	public JournalFeed updateFeed(
 			long groupId, String feedId, String name, String description,
 			String type, String structureId, String templateId,
 			String rendererTemplateId, int delta, String orderByCol,
 			String orderByType, String targetLayoutFriendlyUrl,
-			String targetPortletId, String contentField, String feedType,
+			String targetPortletId, String contentField, String feedFormat,
 			double feedVersion, ServiceContext serviceContext)
-		throws PortalException, SystemException{
+		throws PortalException, SystemException {
 
 		// Feed
 
@@ -307,22 +332,18 @@ public class JournalFeedLocalServiceImpl
 		feed.setTargetPortletId(targetPortletId);
 		feed.setContentField(contentField);
 
-		if (Validator.isNull(feedType)) {
-			feed.setFeedType(RSSUtil.DEFAULT_TYPE);
+		if (Validator.isNull(feedFormat)) {
+			feed.setFeedFormat(RSSUtil.FORMAT_DEFAULT);
 			feed.setFeedVersion(RSSUtil.VERSION_DEFAULT);
 		}
 		else {
-			feed.setFeedType(feedType);
+			feed.setFeedFormat(feedFormat);
 			feed.setFeedVersion(feedVersion);
 		}
 
-		journalFeedPersistence.update(feed, false);
+		feed.setExpandoBridgeAttributes(serviceContext);
 
-		// Expando
-
-		ExpandoBridge expandoBridge = feed.getExpandoBridge();
-
-		expandoBridge.setAttributes(serviceContext);
+		journalFeedPersistence.update(feed);
 
 		return feed;
 	}
@@ -337,15 +358,20 @@ public class JournalFeedLocalServiceImpl
 		}
 		else {
 			try {
-				JournalStructure structure =
-					journalStructurePersistence.findByG_S(groupId, structureId);
+				DDMStructure ddmStructure =
+					ddmStructureLocalService.getStructure(
+						groupId,
+						PortalUtil.getClassNameId(JournalArticle.class),
+						structureId);
 
-				Document doc = SAXReaderUtil.read(structure.getXsd());
+				Document document = SAXReaderUtil.read(ddmStructure.getXsd());
 
-				XPath xpathSelector = SAXReaderUtil.createXPath(
-					"//dynamic-element[@name='"+ contentField + "']");
+				contentField = HtmlUtil.escapeXPathAttribute(contentField);
 
-				Node node = xpathSelector.selectSingleNode(doc);
+				XPath xPathSelector = SAXReaderUtil.createXPath(
+					"//dynamic-element[@name="+ contentField + "]");
+
+				Node node = xPathSelector.selectSingleNode(document);
 
 				if (node != null) {
 					return true;
@@ -366,7 +392,7 @@ public class JournalFeedLocalServiceImpl
 		throws PortalException, SystemException {
 
 		if (!autoFeedId) {
-			if ((Validator.isNull(feedId)) || (Validator.isNumber(feedId)) ||
+			if (Validator.isNull(feedId) || Validator.isNumber(feedId) ||
 				(feedId.indexOf(CharPool.SPACE) != -1)) {
 
 				throw new FeedIdException();

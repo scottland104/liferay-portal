@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -31,9 +31,10 @@ public class BookmarksEntryFinderImpl
 	extends BasePersistenceImpl<BookmarksEntry>
 	implements BookmarksEntryFinder {
 
-	public static String FIND_BY_NO_ASSETS =
+	public static final String FIND_BY_NO_ASSETS =
 		BookmarksEntryFinder.class.getName() + ".findByNoAssets";
 
+	@Override
 	public List<BookmarksEntry> findByNoAssets() throws SystemException {
 		Session session = null;
 
@@ -46,7 +47,7 @@ public class BookmarksEntryFinderImpl
 
 			q.addEntity("BookmarksEntry", BookmarksEntryImpl.class);
 
-			return q.list();
+			return q.list(true);
 		}
 		catch (Exception e) {
 			throw new SystemException(e);

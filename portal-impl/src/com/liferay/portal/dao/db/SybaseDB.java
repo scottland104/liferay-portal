@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -80,14 +80,10 @@ public class SybaseDB extends BaseDB {
 		sb.append("', ");
 		sb.append("'select into/bulkcopy/pllsort' , true\n");
 		sb.append("go\n\n");
-
 		sb.append("use ");
 		sb.append(databaseName);
 		sb.append("\n\n");
-		sb.append(
-			readFile(
-				sqlDir + "/portal" + suffix + "/portal" + suffix +
-					"-sybase.sql"));
+		sb.append(getCreateTablesContent(sqlDir, suffix));
 		sb.append("\n\n");
 		sb.append(readFile(sqlDir + "/indexes/indexes-sybase.sql"));
 		sb.append("\n\n");
@@ -116,7 +112,7 @@ public class SybaseDB extends BaseDB {
 		String line = null;
 
 		while ((line = unsyncBufferedReader.readLine()) != null) {
-			if (line.indexOf(DROP_COLUMN) != -1) {
+			if (line.contains(DROP_COLUMN)) {
 				line = StringUtil.replace(line, " drop column ", " drop ");
 			}
 
@@ -132,10 +128,18 @@ public class SybaseDB extends BaseDB {
 				String[] template = buildColumnTypeTokens(line);
 
 				line = StringUtil.replace(
-					"alter table @table@ alter column @old-column@ @type@;",
+					"alter table @table@ modify @old-column@ @type@;",
 					REWORD_TEMPLATE, template);
 			}
-			else if (line.indexOf(DROP_INDEX) != -1) {
+
+			else if (line.startsWith(ALTER_TABLE_NAME)) {
+				String[] template = buildTableNameTokens(line);
+
+				line = StringUtil.replace(
+					"exec sp_rename @old-table@, @new-table@;",
+					RENAME_TABLE_TEMPLATE, template);
+			}
+			else if (line.contains(DROP_INDEX)) {
 				String[] tokens = StringUtil.split(line, ' ');
 
 				String tableName = tokens[4];
@@ -158,17 +162,14 @@ public class SybaseDB extends BaseDB {
 		return sb.toString();
 	}
 
-	protected static String DROP_COLUMN = "drop column";
+	protected static final String DROP_COLUMN = "drop column";
 
 	private static final boolean _SUPPORTS_INLINE_DISTINCT = false;
 
-	private static String[] _SYBASE = {
-		"--", "1", "0",
-		"'19700101'", "getdate()",
-		" image", " int", " datetime",
-		" float", " int", " decimal(20,0)",
-		" varchar(1000)", " text", " varchar",
-		"  identity(1,1)", "go"
+	private static final String[] _SYBASE = {
+		"--", "1", "0", "'19700101'", "getdate()", " image", " image", " int",
+		" datetime", " float", " int", " decimal(20,0)", " varchar(1000)",
+		" text", " varchar", "  identity(1,1)", "go"
 	};
 
 	private static SybaseDB _instance = new SybaseDB();

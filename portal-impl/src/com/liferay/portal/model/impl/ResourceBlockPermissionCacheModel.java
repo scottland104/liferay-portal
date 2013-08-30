@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,11 @@ import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.ResourceBlockPermission;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing ResourceBlockPermission in entity cache.
  *
@@ -25,7 +30,8 @@ import com.liferay.portal.model.ResourceBlockPermission;
  * @see ResourceBlockPermission
  * @generated
  */
-public class ResourceBlockPermissionCacheModel implements CacheModel<ResourceBlockPermission> {
+public class ResourceBlockPermissionCacheModel implements CacheModel<ResourceBlockPermission>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(9);
@@ -43,6 +49,7 @@ public class ResourceBlockPermissionCacheModel implements CacheModel<ResourceBlo
 		return sb.toString();
 	}
 
+	@Override
 	public ResourceBlockPermission toEntityModel() {
 		ResourceBlockPermissionImpl resourceBlockPermissionImpl = new ResourceBlockPermissionImpl();
 
@@ -54,6 +61,23 @@ public class ResourceBlockPermissionCacheModel implements CacheModel<ResourceBlo
 		resourceBlockPermissionImpl.resetOriginalValues();
 
 		return resourceBlockPermissionImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		resourceBlockPermissionId = objectInput.readLong();
+		resourceBlockId = objectInput.readLong();
+		roleId = objectInput.readLong();
+		actionIds = objectInput.readLong();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(resourceBlockPermissionId);
+		objectOutput.writeLong(resourceBlockId);
+		objectOutput.writeLong(roleId);
+		objectOutput.writeLong(actionIds);
 	}
 
 	public long resourceBlockPermissionId;

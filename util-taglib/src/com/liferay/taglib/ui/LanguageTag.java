@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,7 +15,10 @@
 package com.liferay.taglib.ui;
 
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.taglib.util.IncludeTag;
 
 import java.util.Locale;
@@ -34,6 +37,10 @@ public class LanguageTag extends IncludeTag {
 	public static final int LIST_SHORT_TEXT = 2;
 
 	public static final int SELECT_BOX = 3;
+
+	public void setDisplayCurrentLocale(boolean displayCurrentLocale) {
+		_displayCurrentLocale = displayCurrentLocale;
+	}
 
 	public void setDisplayStyle(int displayStyle) {
 		_displayStyle = displayStyle;
@@ -57,9 +64,10 @@ public class LanguageTag extends IncludeTag {
 
 	@Override
 	protected void cleanUp() {
+		_displayCurrentLocale = true;
 		_displayStyle = LIST_ICON;
 		_formAction = null;
-		_formName =  "fm";
+		_formName = "fm";
 		_languageIds = null;
 		_name = "languageId";
 	}
@@ -72,14 +80,21 @@ public class LanguageTag extends IncludeTag {
 	@Override
 	protected void setAttributes(HttpServletRequest request) {
 		request.setAttribute(
+			"liferay-ui:language:displayCurrentLocale",
+			String.valueOf(_displayCurrentLocale));
+		request.setAttribute(
 			"liferay-ui:language:displayStyle", String.valueOf(_displayStyle));
 		request.setAttribute("liferay-ui:language:formAction", _formAction);
 		request.setAttribute("liferay-ui:language:formName", _formName);
 
 		Locale[] locales = null;
 
-		if ((_languageIds == null) || (_languageIds.length == 0)) {
-			locales = LanguageUtil.getAvailableLocales();
+		if (ArrayUtil.isEmpty(_languageIds)) {
+			ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+			locales = LanguageUtil.getAvailableLocales(
+				themeDisplay.getSiteGroupId());
 		}
 		else {
 			locales = LocaleUtil.fromLanguageIds(_languageIds);
@@ -91,6 +106,7 @@ public class LanguageTag extends IncludeTag {
 
 	private static final String _PAGE = "/html/taglib/ui/language/page.jsp";
 
+	private boolean _displayCurrentLocale = true;
 	private int _displayStyle = LIST_ICON;
 	private String _formAction;
 	private String _formName = "fm";

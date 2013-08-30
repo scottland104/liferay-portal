@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,20 +16,37 @@ package com.liferay.portal.verify;
 
 import com.liferay.portal.GroupFriendlyURLException;
 import com.liferay.portal.NoSuchShardException;
+import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.dao.shard.ShardUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.model.Company;
 import com.liferay.portal.model.Group;
+import com.liferay.portal.model.GroupConstants;
+import com.liferay.portal.model.LayoutSet;
+import com.liferay.portal.model.Organization;
 import com.liferay.portal.model.Shard;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.CompanyLocalServiceUtil;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.ShardLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
+import com.liferay.portal.service.impl.GroupLocalServiceImpl;
+import com.liferay.portal.util.PortalInstances;
+import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.util.RobotsUtil;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import java.util.List;
 
@@ -42,7 +59,49 @@ public class VerifyGroup extends VerifyProcess {
 	protected void doVerify() throws Exception {
 		verifyCompanyGroups();
 		verifyNullFriendlyURLGroups();
+		verifyOrganizationNames();
+		verifyRobots();
+		verifySites();
 		verifyStagedGroups();
+		verifyTree();
+	}
+
+	protected String getRobots(LayoutSet layoutSet) {
+		if (layoutSet == null) {
+			return RobotsUtil.getDefaultRobots(null);
+		}
+
+		String virtualHostname = StringPool.BLANK;
+
+		try {
+			virtualHostname = layoutSet.getVirtualHostname();
+		}
+		catch (Exception e) {
+		}
+
+		return GetterUtil.get(
+			layoutSet.getSettingsProperty(
+				layoutSet.isPrivateLayout() + "-robots.txt"),
+			RobotsUtil.getDefaultRobots(virtualHostname));
+	}
+
+	protected void updateName(long groupId, String name) throws Exception {
+		Connection con = null;
+		PreparedStatement ps = null;
+
+		try {
+			con = DataAccess.getUpgradeOptimizedConnection();
+
+			ps = con.prepareStatement(
+				"update Group_ set name = ? where groupId= " + groupId);
+
+			ps.setString(1, name);
+
+			ps.executeUpdate();
+		}
+		finally {
+			DataAccess.cleanUp(con, ps);
+		}
 	}
 
 	protected void verifyCompanyGroups() throws Exception {
@@ -66,6 +125,8 @@ public class VerifyGroup extends VerifyProcess {
 
 			if (!ShardUtil.isEnabled() || shardName.equals(currentShardName)) {
 				GroupLocalServiceUtil.checkCompanyGroup(company.getCompanyId());
+
+				GroupLocalServiceUtil.checkSystemGroups(company.getCompanyId());
 			}
 		}
 	}
@@ -78,7 +139,10 @@ public class VerifyGroup extends VerifyProcess {
 
 			User user = null;
 
-			if (group.isUser()) {
+			if (group.isCompany() && !group.isCompanyStagingGroup()) {
+				friendlyURL = GroupConstants.GLOBAL_FRIENDLY_URL;
+			}
+			else if (group.isUser()) {
 				user = UserLocalServiceUtil.getUserById(group.getClassPK());
 
 				friendlyURL = StringPool.SLASH + user.getScreenName();
@@ -115,6 +179,92 @@ public class VerifyGroup extends VerifyProcess {
 		}
 	}
 
+	protected void verifyOrganizationNames() throws Exception {
+		Connection con = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			con = DataAccess.getUpgradeOptimizedConnection();
+
+			StringBundler sb = new StringBundler(5);
+
+			sb.append("select groupId, name from Group_ where name like '%");
+			sb.append(GroupLocalServiceImpl.ORGANIZATION_NAME_SUFFIX);
+			sb.append("%' and name not like '%");
+			sb.append(GroupLocalServiceImpl.ORGANIZATION_NAME_SUFFIX);
+			sb.append("'");
+
+			ps = con.prepareStatement(sb.toString());
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				long groupId = rs.getLong("groupId");
+				String name = rs.getString("name");
+
+				int pos = name.indexOf(
+					GroupLocalServiceImpl.ORGANIZATION_NAME_SUFFIX);
+
+				pos = name.indexOf(" ", pos + 1);
+
+				String newName =
+					name.substring(pos + 1) +
+						GroupLocalServiceImpl.ORGANIZATION_NAME_SUFFIX;
+
+				updateName(groupId, newName);
+			}
+		}
+		finally {
+			DataAccess.cleanUp(con, ps, rs);
+		}
+	}
+
+	protected void verifyRobots() throws Exception {
+		List<Group> groups = GroupLocalServiceUtil.getLiveGroups();
+
+		for (Group group : groups) {
+			LayoutSet privateLayoutSet = group.getPrivateLayoutSet();
+			LayoutSet publicLayoutSet = group.getPublicLayoutSet();
+
+			String privateLayoutSetRobots = getRobots(privateLayoutSet);
+			String publicLayoutSetRobots = getRobots(publicLayoutSet);
+
+			UnicodeProperties typeSettingsProperties =
+				group.getTypeSettingsProperties();
+
+			typeSettingsProperties.setProperty(
+				"true-robots.txt", privateLayoutSetRobots);
+			typeSettingsProperties.setProperty(
+				"false-robots.txt", publicLayoutSetRobots);
+
+			GroupLocalServiceUtil.updateGroup(
+				group.getGroupId(), typeSettingsProperties.toString());
+		}
+	}
+
+	protected void verifySites() throws Exception {
+		DynamicQuery dynamicQuery = DynamicQueryFactoryUtil.forClass(
+			Group.class);
+
+		dynamicQuery.add(
+			RestrictionsFactoryUtil.eq(
+				"classNameId", PortalUtil.getClassNameId(Organization.class)));
+		dynamicQuery.add(RestrictionsFactoryUtil.eq("site", false));
+
+		List<Group> groups = GroupLocalServiceUtil.dynamicQuery(dynamicQuery);
+
+		for (Group group : groups) {
+			if ((group.getPrivateLayoutsPageCount() > 0) ||
+				(group.getPublicLayoutsPageCount() > 0)) {
+
+				group.setSite(true);
+
+				GroupLocalServiceUtil.updateGroup(group);
+			}
+		}
+	}
+
 	protected void verifyStagedGroups() throws Exception {
 		List<Group> groups = GroupLocalServiceUtil.getLiveGroups();
 
@@ -141,6 +291,14 @@ public class VerifyGroup extends VerifyProcess {
 
 				GroupLocalServiceUtil.updateGroup(stagingGroup);
 			}
+		}
+	}
+
+	protected void verifyTree() throws Exception {
+		long[] companyIds = PortalInstances.getCompanyIdsBySQL();
+
+		for (long companyId : companyIds) {
+			GroupLocalServiceUtil.rebuildTree(companyId);
 		}
 	}
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,8 +19,8 @@ import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 
 import java.io.IOException;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -30,23 +30,25 @@ import javax.servlet.http.HttpServletResponse;
 public class CacheResponseUtil {
 
 	public static void setHeaders(
-		HttpServletResponse response, Map<String, List<Header>> headers) {
+		HttpServletResponse response, Map<String, Set<Header>> headers) {
 
-		for (Map.Entry<String, List<Header>> entry : headers.entrySet()) {
-			String headerKey = entry.getKey();
-			List<Header> headerValues = entry.getValue();
+		if (response.isCommitted()) {
+			return;
+		}
 
-			for (Header header : headerValues) {
-				int type = header.getType();
+		for (Map.Entry<String, Set<Header>> entry : headers.entrySet()) {
+			String key = entry.getKey();
 
-				if (type == Header.DATE_TYPE) {
-					response.setDateHeader(headerKey, header.getDateValue());
+			boolean first = true;
+
+			for (Header header : entry.getValue()) {
+				if (first) {
+					header.setToResponse(key, response);
+
+					first = false;
 				}
-				else if (type == Header.INTEGER_TYPE) {
-					response.setIntHeader(headerKey, header.getIntValue());
-				}
-				else if (type == Header.STRING_TYPE) {
-					response.setHeader(headerKey, header.getStringValue());
+				else {
+					header.addToResponse(key, response);
 				}
 			}
 		}

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,24 +17,29 @@ package com.liferay.portal.model;
 import java.io.Serializable;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
  * This class is used by SOAP remote services, specifically {@link com.liferay.portal.service.http.OrganizationServiceSoap}.
  *
- * @author    Brian Wing Shun Chan
- * @see       com.liferay.portal.service.http.OrganizationServiceSoap
+ * @author Brian Wing Shun Chan
+ * @see com.liferay.portal.service.http.OrganizationServiceSoap
  * @generated
  */
 public class OrganizationSoap implements Serializable {
 	public static OrganizationSoap toSoapModel(Organization model) {
 		OrganizationSoap soapModel = new OrganizationSoap();
 
+		soapModel.setUuid(model.getUuid());
 		soapModel.setOrganizationId(model.getOrganizationId());
 		soapModel.setCompanyId(model.getCompanyId());
+		soapModel.setUserId(model.getUserId());
+		soapModel.setUserName(model.getUserName());
+		soapModel.setCreateDate(model.getCreateDate());
+		soapModel.setModifiedDate(model.getModifiedDate());
 		soapModel.setParentOrganizationId(model.getParentOrganizationId());
-		soapModel.setLeftOrganizationId(model.getLeftOrganizationId());
-		soapModel.setRightOrganizationId(model.getRightOrganizationId());
+		soapModel.setTreePath(model.getTreePath());
 		soapModel.setName(model.getName());
 		soapModel.setType(model.getType());
 		soapModel.setRecursable(model.getRecursable());
@@ -94,6 +99,14 @@ public class OrganizationSoap implements Serializable {
 		setOrganizationId(pk);
 	}
 
+	public String getUuid() {
+		return _uuid;
+	}
+
+	public void setUuid(String uuid) {
+		_uuid = uuid;
+	}
+
 	public long getOrganizationId() {
 		return _organizationId;
 	}
@@ -110,6 +123,38 @@ public class OrganizationSoap implements Serializable {
 		_companyId = companyId;
 	}
 
+	public long getUserId() {
+		return _userId;
+	}
+
+	public void setUserId(long userId) {
+		_userId = userId;
+	}
+
+	public String getUserName() {
+		return _userName;
+	}
+
+	public void setUserName(String userName) {
+		_userName = userName;
+	}
+
+	public Date getCreateDate() {
+		return _createDate;
+	}
+
+	public void setCreateDate(Date createDate) {
+		_createDate = createDate;
+	}
+
+	public Date getModifiedDate() {
+		return _modifiedDate;
+	}
+
+	public void setModifiedDate(Date modifiedDate) {
+		_modifiedDate = modifiedDate;
+	}
+
 	public long getParentOrganizationId() {
 		return _parentOrganizationId;
 	}
@@ -118,20 +163,12 @@ public class OrganizationSoap implements Serializable {
 		_parentOrganizationId = parentOrganizationId;
 	}
 
-	public long getLeftOrganizationId() {
-		return _leftOrganizationId;
+	public String getTreePath() {
+		return _treePath;
 	}
 
-	public void setLeftOrganizationId(long leftOrganizationId) {
-		_leftOrganizationId = leftOrganizationId;
-	}
-
-	public long getRightOrganizationId() {
-		return _rightOrganizationId;
-	}
-
-	public void setRightOrganizationId(long rightOrganizationId) {
-		_rightOrganizationId = rightOrganizationId;
+	public void setTreePath(String treePath) {
+		_treePath = treePath;
 	}
 
 	public String getName() {
@@ -194,11 +231,15 @@ public class OrganizationSoap implements Serializable {
 		_comments = comments;
 	}
 
+	private String _uuid;
 	private long _organizationId;
 	private long _companyId;
+	private long _userId;
+	private String _userName;
+	private Date _createDate;
+	private Date _modifiedDate;
 	private long _parentOrganizationId;
-	private long _leftOrganizationId;
-	private long _rightOrganizationId;
+	private String _treePath;
 	private String _name;
 	private String _type;
 	private boolean _recursable;

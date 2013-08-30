@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,8 +17,8 @@ package com.liferay.portal.facebook;
 import com.liferay.portal.NoSuchLayoutException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.servlet.BufferCacheServletResponse;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
-import com.liferay.portal.kernel.servlet.StringServletResponse;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.servlet.filters.gzip.GZipFilter;
@@ -68,12 +68,12 @@ public class FacebookServlet extends HttpServlet {
 				RequestDispatcher requestDispatcher =
 					servletContext.getRequestDispatcher(redirect);
 
-				StringServletResponse stringResponse =
-					new StringServletResponse(response);
+				BufferCacheServletResponse bufferCacheServletResponse =
+					new BufferCacheServletResponse(response);
 
-				requestDispatcher.forward(request, stringResponse);
+				requestDispatcher.forward(request, bufferCacheServletResponse);
 
-				String fbml = stringResponse.getString();
+				String fbml = bufferCacheServletResponse.getString();
 
 				fbml = fixFbml(fbml);
 
@@ -93,12 +93,10 @@ public class FacebookServlet extends HttpServlet {
 		fbml = StringUtil.replace(
 			fbml,
 			new String[] {
-				"<nobr>",
-				"</nobr>"
+				"<nobr>", "</nobr>"
 			},
 			new String[] {
-				StringPool.BLANK,
-				StringPool.BLANK
+				StringPool.BLANK, StringPool.BLANK
 			});
 
 		return fbml;

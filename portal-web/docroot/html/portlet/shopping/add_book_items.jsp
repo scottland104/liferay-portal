@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,12 +34,14 @@ long categoryId = ParamUtil.getLong(request, "categoryId", ShoppingCategoryConst
 		<liferay-util:param name="tabs1" value="categories" />
 	</liferay-util:include>
 
+	<liferay-ui:error exception="<%= AmazonException.class %>" />
+
 	<div class="breadcrumbs">
 		<%= ShoppingUtil.getBreadcrumbs(categoryId, pageContext, renderRequest, renderResponse) %>
 	</div>
 
 	<aui:fieldset>
-		<aui:input cssClass="lfr-textarea-container" label="add-all-isbn-numbers-separated-by-spaces" name="isbns" type="textarea" wrap="soft" />
+		<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" cssClass="lfr-textarea-container" label="add-all-isbn-numbers-separated-by-spaces" name="isbns" type="textarea" wrap="soft" />
 	</aui:fieldset>
 
 	<aui:button-row>
@@ -55,8 +57,4 @@ long categoryId = ParamUtil.getLong(request, "categoryId", ShoppingCategoryConst
 
 		submitForm(this);
 	}
-
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />isbns);
-	</c:if>
 </aui:script>

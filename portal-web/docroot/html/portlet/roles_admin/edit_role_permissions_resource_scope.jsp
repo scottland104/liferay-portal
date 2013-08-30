@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -40,10 +40,14 @@ List groupNames = (List)objArray[8];
 			for (int i = 0; i < groups.size(); i++) {
 				Group group = (Group)groups.get(i);
 
-				String taglibHREF = "javascript:" + renderResponse.getNamespace() + "removeGroup(" + i + ", '" + target + "');";
+				String taglibHREF = "javascript:" + liferayPortletResponse.getNamespace() + "removeGroup(" + i + ", '" + target + "');";
 		%>
 
-				<span class="permission-scope"><%= group.getDescriptiveName() %><aui:a cssClass="permission-scope-delete" href="<%= taglibHREF %>"><span>x</span></aui:a></span>
+				<span class="lfr-token">
+					<span class="lfr-token-text"><%= HtmlUtil.escape(group.getDescriptiveName(locale)) %></span>
+
+					<aui:a cssClass="icon icon-remove lfr-token-close" href="<%= taglibHREF %>" />
+				</span>
 
 		<%
 			}
@@ -51,11 +55,52 @@ List groupNames = (List)objArray[8];
 		else if (role.getType() == RoleConstants.TYPE_REGULAR) {
 		%>
 
-			<%= LanguageUtil.get(pageContext, "portal") %>
+			<%= LanguageUtil.get(pageContext, "all-sites") %>
 
 		<%
 		}
 		%>
 
 	</span>
+
+	<%
+	String targetId = target.replace(".", "");
+	%>
+
+	<c:if test="<%= supportsFilterByGroup %>">
+		<portlet:renderURL var="selectCommunityURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
+			<portlet:param name="struts_action" value="/roles_admin/select_site" />
+			<portlet:param name="includeCompany" value="<%= Boolean.TRUE.toString() %>" />
+			<portlet:param name="includeUserPersonalSite" value="<%= Boolean.TRUE.toString() %>" />
+			<portlet:param name="target" value="<%= target %>" />
+		</portlet:renderURL>
+
+		<liferay-ui:icon
+			id="<%= targetId %>"
+			image="configuration"
+			label="<%= true %>"
+			message="change"
+			url="javascript:;"
+		/>
+
+		<aui:script use="aui-base">
+			A.one('#<portlet:namespace /><%= targetId %>').on(
+				'click',
+				function(event) {
+					Liferay.Util.selectEntity(
+						{
+							dialog: {
+								constrain: true,
+								modal: true,
+								width: 600
+							},
+							id: '<portlet:namespace />selectGroup<%= targetId %>',
+							title: '<liferay-ui:message arguments="site" key="select-x" />',
+							uri: '<%= selectCommunityURL.toString() %>'
+						}
+					);
+				}
+			);
+		</aui:script>
+	</c:if>
 </div>

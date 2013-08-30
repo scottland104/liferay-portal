@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portlet.shopping.model.impl;
 
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.impl.BaseModelImpl;
@@ -28,9 +29,10 @@ import com.liferay.portlet.shopping.model.ShoppingItemPriceModel;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the ShoppingItemPrice service. Represents a row in the &quot;ShoppingItemPrice&quot; database table, with each column mapped to a property of this class.
@@ -78,154 +80,278 @@ public class ShoppingItemPriceModelImpl extends BaseModelImpl<ShoppingItemPrice>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portlet.shopping.model.ShoppingItemPrice"),
 			true);
-
-	public Class<?> getModelClass() {
-		return ShoppingItemPrice.class;
-	}
-
-	public String getModelClassName() {
-		return ShoppingItemPrice.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portlet.shopping.model.ShoppingItemPrice"),
+			true);
+	public static long ITEMID_COLUMN_BITMASK = 1L;
+	public static long ITEMPRICEID_COLUMN_BITMASK = 2L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portlet.shopping.model.ShoppingItemPrice"));
 
 	public ShoppingItemPriceModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _itemPriceId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setItemPriceId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_itemPriceId);
+		return _itemPriceId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return ShoppingItemPrice.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return ShoppingItemPrice.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("itemPriceId", getItemPriceId());
+		attributes.put("itemId", getItemId());
+		attributes.put("minQuantity", getMinQuantity());
+		attributes.put("maxQuantity", getMaxQuantity());
+		attributes.put("price", getPrice());
+		attributes.put("discount", getDiscount());
+		attributes.put("taxable", getTaxable());
+		attributes.put("shipping", getShipping());
+		attributes.put("useShippingFormula", getUseShippingFormula());
+		attributes.put("status", getStatus());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long itemPriceId = (Long)attributes.get("itemPriceId");
+
+		if (itemPriceId != null) {
+			setItemPriceId(itemPriceId);
+		}
+
+		Long itemId = (Long)attributes.get("itemId");
+
+		if (itemId != null) {
+			setItemId(itemId);
+		}
+
+		Integer minQuantity = (Integer)attributes.get("minQuantity");
+
+		if (minQuantity != null) {
+			setMinQuantity(minQuantity);
+		}
+
+		Integer maxQuantity = (Integer)attributes.get("maxQuantity");
+
+		if (maxQuantity != null) {
+			setMaxQuantity(maxQuantity);
+		}
+
+		Double price = (Double)attributes.get("price");
+
+		if (price != null) {
+			setPrice(price);
+		}
+
+		Double discount = (Double)attributes.get("discount");
+
+		if (discount != null) {
+			setDiscount(discount);
+		}
+
+		Boolean taxable = (Boolean)attributes.get("taxable");
+
+		if (taxable != null) {
+			setTaxable(taxable);
+		}
+
+		Double shipping = (Double)attributes.get("shipping");
+
+		if (shipping != null) {
+			setShipping(shipping);
+		}
+
+		Boolean useShippingFormula = (Boolean)attributes.get(
+				"useShippingFormula");
+
+		if (useShippingFormula != null) {
+			setUseShippingFormula(useShippingFormula);
+		}
+
+		Integer status = (Integer)attributes.get("status");
+
+		if (status != null) {
+			setStatus(status);
+		}
+	}
+
+	@Override
 	public long getItemPriceId() {
 		return _itemPriceId;
 	}
 
+	@Override
 	public void setItemPriceId(long itemPriceId) {
+		_columnBitmask = -1L;
+
 		_itemPriceId = itemPriceId;
 	}
 
+	@Override
 	public long getItemId() {
 		return _itemId;
 	}
 
+	@Override
 	public void setItemId(long itemId) {
+		_columnBitmask = -1L;
+
+		if (!_setOriginalItemId) {
+			_setOriginalItemId = true;
+
+			_originalItemId = _itemId;
+		}
+
 		_itemId = itemId;
 	}
 
+	public long getOriginalItemId() {
+		return _originalItemId;
+	}
+
+	@Override
 	public int getMinQuantity() {
 		return _minQuantity;
 	}
 
+	@Override
 	public void setMinQuantity(int minQuantity) {
 		_minQuantity = minQuantity;
 	}
 
+	@Override
 	public int getMaxQuantity() {
 		return _maxQuantity;
 	}
 
+	@Override
 	public void setMaxQuantity(int maxQuantity) {
 		_maxQuantity = maxQuantity;
 	}
 
+	@Override
 	public double getPrice() {
 		return _price;
 	}
 
+	@Override
 	public void setPrice(double price) {
 		_price = price;
 	}
 
+	@Override
 	public double getDiscount() {
 		return _discount;
 	}
 
+	@Override
 	public void setDiscount(double discount) {
 		_discount = discount;
 	}
 
+	@Override
 	public boolean getTaxable() {
 		return _taxable;
 	}
 
+	@Override
 	public boolean isTaxable() {
 		return _taxable;
 	}
 
+	@Override
 	public void setTaxable(boolean taxable) {
 		_taxable = taxable;
 	}
 
+	@Override
 	public double getShipping() {
 		return _shipping;
 	}
 
+	@Override
 	public void setShipping(double shipping) {
 		_shipping = shipping;
 	}
 
+	@Override
 	public boolean getUseShippingFormula() {
 		return _useShippingFormula;
 	}
 
+	@Override
 	public boolean isUseShippingFormula() {
 		return _useShippingFormula;
 	}
 
+	@Override
 	public void setUseShippingFormula(boolean useShippingFormula) {
 		_useShippingFormula = useShippingFormula;
 	}
 
+	@Override
 	public int getStatus() {
 		return _status;
 	}
 
+	@Override
 	public void setStatus(int status) {
 		_status = status;
 	}
 
-	@Override
-	public ShoppingItemPrice toEscapedModel() {
-		if (isEscapedModel()) {
-			return (ShoppingItemPrice)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (ShoppingItemPrice)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(0,
-					ShoppingItemPrice.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(0,
+			ShoppingItemPrice.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public ShoppingItemPrice toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (ShoppingItemPrice)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -248,6 +374,7 @@ public class ShoppingItemPriceModelImpl extends BaseModelImpl<ShoppingItemPrice>
 		return shoppingItemPriceImpl;
 	}
 
+	@Override
 	public int compareTo(ShoppingItemPrice shoppingItemPrice) {
 		int value = 0;
 
@@ -284,18 +411,15 @@ public class ShoppingItemPriceModelImpl extends BaseModelImpl<ShoppingItemPrice>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof ShoppingItemPrice)) {
 			return false;
 		}
 
-		ShoppingItemPrice shoppingItemPrice = null;
-
-		try {
-			shoppingItemPrice = (ShoppingItemPrice)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		ShoppingItemPrice shoppingItemPrice = (ShoppingItemPrice)obj;
 
 		long primaryKey = shoppingItemPrice.getPrimaryKey();
 
@@ -314,6 +438,13 @@ public class ShoppingItemPriceModelImpl extends BaseModelImpl<ShoppingItemPrice>
 
 	@Override
 	public void resetOriginalValues() {
+		ShoppingItemPriceModelImpl shoppingItemPriceModelImpl = this;
+
+		shoppingItemPriceModelImpl._originalItemId = shoppingItemPriceModelImpl._itemId;
+
+		shoppingItemPriceModelImpl._setOriginalItemId = false;
+
+		shoppingItemPriceModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -372,6 +503,7 @@ public class ShoppingItemPriceModelImpl extends BaseModelImpl<ShoppingItemPrice>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(34);
 
@@ -426,11 +558,13 @@ public class ShoppingItemPriceModelImpl extends BaseModelImpl<ShoppingItemPrice>
 	}
 
 	private static ClassLoader _classLoader = ShoppingItemPrice.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			ShoppingItemPrice.class
 		};
 	private long _itemPriceId;
 	private long _itemId;
+	private long _originalItemId;
+	private boolean _setOriginalItemId;
 	private int _minQuantity;
 	private int _maxQuantity;
 	private double _price;
@@ -439,6 +573,6 @@ public class ShoppingItemPriceModelImpl extends BaseModelImpl<ShoppingItemPrice>
 	private double _shipping;
 	private boolean _useShippingFormula;
 	private int _status;
-	private transient ExpandoBridge _expandoBridge;
-	private ShoppingItemPrice _escapedModelProxy;
+	private long _columnBitmask;
+	private ShoppingItemPrice _escapedModel;
 }

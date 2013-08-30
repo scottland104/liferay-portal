@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,128 +21,45 @@
 <%
 Role role = (Role)request.getAttribute("edit_role_permissions.jsp-role");
 
-PortletURL permissionsSummaryURL = renderResponse.createRenderURL();
+PortletURL permissionsAllURL = liferayPortletResponse.createRenderURL();
 
-permissionsSummaryURL.setParameter("struts_action", "/roles_admin/edit_role_permissions");
-permissionsSummaryURL.setParameter(Constants.CMD, Constants.VIEW);
-permissionsSummaryURL.setParameter("tabs1", "roles");
-permissionsSummaryURL.setParameter("roleId", String.valueOf(role.getRoleId()));
+permissionsAllURL.setParameter("struts_action", "/roles_admin/edit_role_permissions");
+permissionsAllURL.setParameter(Constants.CMD, Constants.VIEW);
+permissionsAllURL.setParameter("tabs1", "roles");
+permissionsAllURL.setParameter("roleId", String.valueOf(role.getRoleId()));
 
 List<String> headerNames = new ArrayList<String>();
 
-headerNames.add("resource-set");
-headerNames.add("resource");
-headerNames.add("action");
+headerNames.add("permissions");
 
 if (role.getType() == RoleConstants.TYPE_REGULAR) {
-	headerNames.add("scope");
+	headerNames.add("sites");
 }
 
 headerNames.add(StringPool.BLANK);
 
-SearchContainer searchContainer = new SearchContainer(renderRequest, null, null, SearchContainer.DEFAULT_CUR_PARAM, SearchContainer.DEFAULT_DELTA, permissionsSummaryURL, headerNames, "this-role-does-not-have-any-permissions");
+SearchContainer searchContainer = new SearchContainer(liferayPortletRequest, null, null, SearchContainer.DEFAULT_CUR_PARAM, 50, permissionsAllURL, headerNames, "this-role-does-not-have-any-permissions");
 
-List<Permission> permissions = null;
+List<Permission> permissions = PermissionConverterUtil.convertPermissions(role);
 
-if (PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM == 6) {
-	permissions = new ArrayList<Permission>();
-
-	int[] scopes = new int[0];
-
-	if (role.getType() == RoleConstants.TYPE_REGULAR) {
-		scopes = new int[] {ResourceConstants.SCOPE_COMPANY, ResourceConstants.SCOPE_GROUP};
-	}
-	else if ((role.getType() == RoleConstants.TYPE_ORGANIZATION) || (role.getType() == RoleConstants.TYPE_PROVIDER) || (role.getType() == RoleConstants.TYPE_SITE)) {
-		scopes = new int[] {ResourceConstants.SCOPE_GROUP_TEMPLATE};
-	}
-
-	List<ResourcePermission> resourcePermissions = ResourcePermissionLocalServiceUtil.getRoleResourcePermissions(role.getRoleId(), scopes, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
-
-	for (ResourcePermission resourcePermission : resourcePermissions) {
-		List<ResourceAction> resourceActions = ResourceActionLocalServiceUtil.getResourceActions(resourcePermission.getName());
-
-		for (ResourceAction resourceAction : resourceActions) {
-			if (ResourcePermissionLocalServiceUtil.hasActionId(resourcePermission, resourceAction)) {
-				Permission permission = new PermissionImpl();
-
-				permission.setName(resourcePermission.getName());
-				permission.setScope(resourcePermission.getScope());
-				permission.setPrimKey(resourcePermission.getPrimKey());
-				permission.setActionId(resourceAction.getActionId());
-
-				permissions.add(permission);
-			}
-		}
-	}
-
-	List<ResourceTypePermission> resourceTypePermissions = ResourceTypePermissionLocalServiceUtil.getRoleResourceTypePermissions(role.getRoleId());
-
-	for (ResourceTypePermission resourceTypePermission : resourceTypePermissions) {
-		List<String> actionIds = ResourceBlockLocalServiceUtil.getActionIds(resourceTypePermission.getName(), resourceTypePermission.getActionIds());
-
-		for (String actionId : actionIds) {
-			Permission permission = new PermissionImpl();
-
-			permission.setName(resourceTypePermission.getName());
-
-			if (role.getType() == RoleConstants.TYPE_REGULAR) {
-				if (resourceTypePermission.isCompanyScope()) {
-					permission.setScope(ResourceConstants.SCOPE_COMPANY);
-				}
-				else {
-					permission.setScope(ResourceConstants.SCOPE_GROUP);
-				}
-			}
-			else {
-				permission.setScope(ResourceConstants.SCOPE_GROUP_TEMPLATE);
-			}
-
-			permission.setPrimKey(String.valueOf(resourceTypePermission.getGroupId()));
-			permission.setActionId(actionId);
-
-			permissions.add(permission);
-		}
-	}
-}
-else {
-	permissions = PermissionLocalServiceUtil.getRolePermissions(role.getRoleId());
-}
-
-List<PermissionDisplay> permissionsDisplay = new ArrayList<PermissionDisplay>(permissions.size());
+List<PermissionDisplay> permissionDisplays = new ArrayList<PermissionDisplay>(permissions.size());
 
 for (int i = 0; i < permissions.size(); i++) {
 	Permission permission = permissions.get(i);
 
-	Resource resource = null;
+	Resource resource = new ResourceImpl();
 
-	if (PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM == 6) {
-		resource = new ResourceImpl();
-
-		resource.setCompanyId(themeDisplay.getCompanyId());
-		resource.setName(permission.getName());
-		resource.setScope(permission.getScope());
-		resource.setPrimKey(permission.getPrimKey());
-
-		if (permission.getScope() == ResourceConstants.SCOPE_INDIVIDUAL) {
-			continue;
-		}
-	}
-	else {
-		resource = ResourceLocalServiceUtil.getResource(permission.getResourceId());
-
-		ResourceCode resourceCode = ResourceCodeLocalServiceUtil.getResourceCode(resource.getCodeId());
-
-		if (resourceCode.getScope() == ResourceConstants.SCOPE_INDIVIDUAL) {
-			continue;
-		}
-	}
+	resource.setCompanyId(themeDisplay.getCompanyId());
+	resource.setName(permission.getName());
+	resource.setScope(permission.getScope());
+	resource.setPrimKey(permission.getPrimKey());
 
 	String curPortletName = null;
 	String curPortletLabel = null;
 	String curModelName = null;
 	String curModelLabel = null;
 	String actionId = permission.getActionId();
-	String actionLabel = ResourceActionsUtil.getAction(pageContext, actionId);
+	String actionLabel = _getActionLabel(pageContext, themeDisplay, resource.getName(), actionId);
 
 	if (PortletLocalServiceUtil.hasPortlet(company.getCompanyId(), resource.getName())) {
 		curPortletName = resource.getName();
@@ -166,27 +83,22 @@ for (int i = 0; i < permissions.size(); i++) {
 
 	Portlet portlet = PortletLocalServiceUtil.getPortletById(company.getCompanyId(), curPortletName);
 
-	if (portlet.getPortletId().equals(PortletKeys.PORTAL)) {
-		curPortletLabel = LanguageUtil.get(pageContext, "general");
-	}
-	else {
-		curPortletLabel = PortalUtil.getPortletTitle(portlet, application, locale);
-	}
+	curPortletLabel = PortalUtil.getPortletLongTitle(portlet, application, locale);
 
 	PermissionDisplay permissionDisplay = new PermissionDisplay(permission, resource, curPortletName, curPortletLabel, curModelName, curModelLabel, actionId, actionLabel);
 
-	if (!permissionsDisplay.contains(permissionDisplay)) {
-		permissionsDisplay.add(permissionDisplay);
+	if (!permissionDisplays.contains(permissionDisplay)) {
+		permissionDisplays.add(permissionDisplay);
 	}
 }
 
-permissionsDisplay = ListUtil.sort(permissionsDisplay);
+permissionDisplays = ListUtil.sort(permissionDisplays);
 
-int total = permissionsDisplay.size();
+int total = permissionDisplays.size();
 
 searchContainer.setTotal(total);
 
-List results = ListUtil.subList(permissionsDisplay, searchContainer.getStart(), searchContainer.getEnd());
+List results = ListUtil.subList(permissionDisplays, searchContainer.getStart(), searchContainer.getEnd());
 
 searchContainer.setResults(results);
 
@@ -211,7 +123,7 @@ for (int i = 0; i < results.size(); i++) {
 	int scope;
 
 	if (role.getType() == RoleConstants.TYPE_REGULAR) {
-		LinkedHashMap groupParams = new LinkedHashMap();
+		LinkedHashMap<String, Object> groupParams = new LinkedHashMap<String, Object>();
 
 		List rolePermissions = new ArrayList();
 
@@ -222,7 +134,7 @@ for (int i = 0; i < results.size(); i++) {
 
 		groupParams.put("rolePermissions", rolePermissions);
 
-		groups = GroupLocalServiceUtil.search(company.getCompanyId(), new long[] {PortalUtil.getClassNameId(Company.class), PortalUtil.getClassNameId(Group.class), PortalUtil.getClassNameId(Organization.class), PortalUtil.getClassNameId(UserPersonalSite.class)}, null, null, groupParams, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+		groups = GroupLocalServiceUtil.search(company.getCompanyId(), new long[] {PortalUtil.getClassNameId(Company.class), PortalUtil.getClassNameId(Group.class), PortalUtil.getClassNameId(Organization.class), PortalUtil.getClassNameId(UserPersonalSite.class)}, null, null, groupParams, true, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 
 		if (groups.isEmpty()) {
 			scope = ResourceConstants.SCOPE_COMPANY;
@@ -237,56 +149,62 @@ for (int i = 0; i < results.size(); i++) {
 
 	boolean selected = false;
 
-	if (PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM == 6) {
-		if (ResourceBlockLocalServiceUtil.isSupported(curResource)) {
-			selected = ResourceTypePermissionLocalServiceUtil.hasEitherScopePermission(company.getCompanyId(), curResource, role.getRoleId(), actionId);
-		}
-		else {
-			selected = ResourcePermissionLocalServiceUtil.hasScopeResourcePermission(company.getCompanyId(), curResource, scope, role.getRoleId(), actionId);
-		}
+	if (ResourceBlockLocalServiceUtil.isSupported(curResource)) {
+		selected = ResourceTypePermissionLocalServiceUtil.hasEitherScopePermission(company.getCompanyId(), curResource, role.getRoleId(), actionId);
 	}
 	else {
-		selected = PermissionLocalServiceUtil.hasRolePermission(role.getRoleId(), company.getCompanyId(), curResource, scope, actionId);
+		selected = ResourcePermissionLocalServiceUtil.hasScopeResourcePermission(company.getCompanyId(), curResource, scope, role.getRoleId(), actionId);
 	}
 
 	if (!selected) {
 		continue;
 	}
 
-	PortletURL editPermissionsURL = renderResponse.createRenderURL();
+	ResourceURL editPermissionsURL = liferayPortletResponse.createResourceURL();
 
 	editPermissionsURL.setParameter("struts_action", "/roles_admin/edit_role_permissions");
 	editPermissionsURL.setParameter(Constants.CMD, Constants.EDIT);
 	editPermissionsURL.setParameter("tabs1", "roles");
 	editPermissionsURL.setParameter("roleId", String.valueOf(role.getRoleId()));
-	editPermissionsURL.setParameter("redirect", permissionsSummaryURL.toString());
+	editPermissionsURL.setParameter("redirect", permissionsAllURL.toString());
 	editPermissionsURL.setParameter("portletResource", curPortletName);
 
-	if (curPortletName.equals(PortletKeys.PORTAL) || curPortletName.equals(curResource)) {
-		editPermissionsURL.setParameter("showModelResources", "0");
-	}
-	else {
-		editPermissionsURL.setParameter("showModelResources", "1");
+	StringBundler sb = new StringBundler();
+
+	sb.append("<a class=\"permission-navigation-link\" href=\"");
+	sb.append(editPermissionsURL);
+	sb.append(StringPool.POUND);
+	sb.append(_getResourceHtmlId(curResource));
+	sb.append("\">");
+	sb.append(curPortletLabel);
+
+	if (Validator.isNotNull(curModelLabel)) {
+		sb.append(StringPool.SPACE);
+		sb.append(StringPool.GREATER_THAN);
+		sb.append(StringPool.SPACE);
+		sb.append(curModelLabel);
 	}
 
-	row.addText(curPortletLabel, editPermissionsURL);
-	row.addText(curModelLabel);
-	row.addText(actionLabel);
+	sb.append("</a>: <strong>");
+	sb.append(actionLabel);
+	sb.append("</strong>");
+
+	row.addText(sb.toString());
 
 	if (scope == ResourceConstants.SCOPE_COMPANY) {
-		row.addText(LanguageUtil.get(pageContext, "portal"));
+		row.addText(LanguageUtil.get(pageContext, _isShowScope(role, curResource, curPortletName)? "all-sites" : StringPool.BLANK));
 	}
 	else if (scope == ResourceConstants.SCOPE_GROUP_TEMPLATE) {
 	}
 	else if (scope == ResourceConstants.SCOPE_GROUP) {
-		StringBundler sb = new StringBundler(groups.size() * 3 - 2);
+		sb = new StringBundler(groups.size() * 3 - 2);
 
 		for (int j = 0; j < groups.size(); j++) {
 			Group group = (Group)groups.get(j);
 
-			sb.append(group.getDescriptiveName());
+			sb.append(HtmlUtil.escape(group.getDescriptiveName(locale)));
 
-			if (j < groups.size() - 1) {
+			if (j < (groups.size() - 1)) {
 				sb.append(StringPool.COMMA);
 				sb.append(StringPool.SPACE);
 			}

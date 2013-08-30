@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -78,6 +78,7 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 *
 	 * @return the group ID of this layout set branch
 	 */
+	@Override
 	public long getGroupId();
 
 	/**
@@ -85,6 +86,7 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 *
 	 * @param groupId the group ID of this layout set branch
 	 */
+	@Override
 	public void setGroupId(long groupId);
 
 	/**
@@ -92,6 +94,7 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 *
 	 * @return the company ID of this layout set branch
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -99,6 +102,7 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 *
 	 * @param companyId the company ID of this layout set branch
 	 */
+	@Override
 	public void setCompanyId(long companyId);
 
 	/**
@@ -106,6 +110,7 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 *
 	 * @return the user ID of this layout set branch
 	 */
+	@Override
 	public long getUserId();
 
 	/**
@@ -113,6 +118,7 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 *
 	 * @param userId the user ID of this layout set branch
 	 */
+	@Override
 	public void setUserId(long userId);
 
 	/**
@@ -121,6 +127,7 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 * @return the user uuid of this layout set branch
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getUserUuid() throws SystemException;
 
 	/**
@@ -128,6 +135,7 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 *
 	 * @param userUuid the user uuid of this layout set branch
 	 */
+	@Override
 	public void setUserUuid(String userUuid);
 
 	/**
@@ -136,6 +144,7 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 * @return the user name of this layout set branch
 	 */
 	@AutoEscape
+	@Override
 	public String getUserName();
 
 	/**
@@ -143,6 +152,7 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 *
 	 * @param userName the user name of this layout set branch
 	 */
+	@Override
 	public void setUserName(String userName);
 
 	/**
@@ -150,6 +160,7 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 *
 	 * @return the create date of this layout set branch
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -157,6 +168,7 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 *
 	 * @param createDate the create date of this layout set branch
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -164,6 +176,7 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 *
 	 * @return the modified date of this layout set branch
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -171,6 +184,7 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 *
 	 * @param modifiedDate the modified date of this layout set branch
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
@@ -245,37 +259,222 @@ public interface LayoutSetBranchModel extends BaseModel<LayoutSetBranch>,
 	 */
 	public void setMaster(boolean master);
 
+	/**
+	 * Returns the logo of this layout set branch.
+	 *
+	 * @return the logo of this layout set branch
+	 */
+	public boolean getLogo();
+
+	/**
+	 * Returns <code>true</code> if this layout set branch is logo.
+	 *
+	 * @return <code>true</code> if this layout set branch is logo; <code>false</code> otherwise
+	 */
+	public boolean isLogo();
+
+	/**
+	 * Sets whether this layout set branch is logo.
+	 *
+	 * @param logo the logo of this layout set branch
+	 */
+	public void setLogo(boolean logo);
+
+	/**
+	 * Returns the logo ID of this layout set branch.
+	 *
+	 * @return the logo ID of this layout set branch
+	 */
+	public long getLogoId();
+
+	/**
+	 * Sets the logo ID of this layout set branch.
+	 *
+	 * @param logoId the logo ID of this layout set branch
+	 */
+	public void setLogoId(long logoId);
+
+	/**
+	 * Returns the theme ID of this layout set branch.
+	 *
+	 * @return the theme ID of this layout set branch
+	 */
+	@AutoEscape
+	public String getThemeId();
+
+	/**
+	 * Sets the theme ID of this layout set branch.
+	 *
+	 * @param themeId the theme ID of this layout set branch
+	 */
+	public void setThemeId(String themeId);
+
+	/**
+	 * Returns the color scheme ID of this layout set branch.
+	 *
+	 * @return the color scheme ID of this layout set branch
+	 */
+	@AutoEscape
+	public String getColorSchemeId();
+
+	/**
+	 * Sets the color scheme ID of this layout set branch.
+	 *
+	 * @param colorSchemeId the color scheme ID of this layout set branch
+	 */
+	public void setColorSchemeId(String colorSchemeId);
+
+	/**
+	 * Returns the wap theme ID of this layout set branch.
+	 *
+	 * @return the wap theme ID of this layout set branch
+	 */
+	@AutoEscape
+	public String getWapThemeId();
+
+	/**
+	 * Sets the wap theme ID of this layout set branch.
+	 *
+	 * @param wapThemeId the wap theme ID of this layout set branch
+	 */
+	public void setWapThemeId(String wapThemeId);
+
+	/**
+	 * Returns the wap color scheme ID of this layout set branch.
+	 *
+	 * @return the wap color scheme ID of this layout set branch
+	 */
+	@AutoEscape
+	public String getWapColorSchemeId();
+
+	/**
+	 * Sets the wap color scheme ID of this layout set branch.
+	 *
+	 * @param wapColorSchemeId the wap color scheme ID of this layout set branch
+	 */
+	public void setWapColorSchemeId(String wapColorSchemeId);
+
+	/**
+	 * Returns the css of this layout set branch.
+	 *
+	 * @return the css of this layout set branch
+	 */
+	@AutoEscape
+	public String getCss();
+
+	/**
+	 * Sets the css of this layout set branch.
+	 *
+	 * @param css the css of this layout set branch
+	 */
+	public void setCss(String css);
+
+	/**
+	 * Returns the settings of this layout set branch.
+	 *
+	 * @return the settings of this layout set branch
+	 */
+	@AutoEscape
+	public String getSettings();
+
+	/**
+	 * Sets the settings of this layout set branch.
+	 *
+	 * @param settings the settings of this layout set branch
+	 */
+	public void setSettings(String settings);
+
+	/**
+	 * Returns the layout set prototype uuid of this layout set branch.
+	 *
+	 * @return the layout set prototype uuid of this layout set branch
+	 */
+	@AutoEscape
+	public String getLayoutSetPrototypeUuid();
+
+	/**
+	 * Sets the layout set prototype uuid of this layout set branch.
+	 *
+	 * @param layoutSetPrototypeUuid the layout set prototype uuid of this layout set branch
+	 */
+	public void setLayoutSetPrototypeUuid(String layoutSetPrototypeUuid);
+
+	/**
+	 * Returns the layout set prototype link enabled of this layout set branch.
+	 *
+	 * @return the layout set prototype link enabled of this layout set branch
+	 */
+	public boolean getLayoutSetPrototypeLinkEnabled();
+
+	/**
+	 * Returns <code>true</code> if this layout set branch is layout set prototype link enabled.
+	 *
+	 * @return <code>true</code> if this layout set branch is layout set prototype link enabled; <code>false</code> otherwise
+	 */
+	public boolean isLayoutSetPrototypeLinkEnabled();
+
+	/**
+	 * Sets whether this layout set branch is layout set prototype link enabled.
+	 *
+	 * @param layoutSetPrototypeLinkEnabled the layout set prototype link enabled of this layout set branch
+	 */
+	public void setLayoutSetPrototypeLinkEnabled(
+		boolean layoutSetPrototypeLinkEnabled);
+
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(LayoutSetBranch layoutSetBranch);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<LayoutSetBranch> toCacheModel();
 
+	@Override
 	public LayoutSetBranch toEscapedModel();
 
+	@Override
+	public LayoutSetBranch toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

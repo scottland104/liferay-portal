@@ -1,4 +1,4 @@
-AUI().add(
+AUI.add(
 	'liferay-history-html5',
 	function(A) {
 		var AObject = A.Object;
@@ -19,6 +19,8 @@ AUI().add(
 		A.mix(
 			History.prototype,
 			{
+				PROTECTED_HASH_KEYS: [ /^tab$/, /^_\d+_tab$/ ],
+
 				add: function(state, options) {
 					var instance = this;
 
@@ -32,26 +34,22 @@ AUI().add(
 				_init: function(config) {
 					var instance = this;
 
-					if (LOCATION.hash) {
+					var hash = LOCATION.hash;
+
+					var locationHashValid = (hash.indexOf(History.VALUE_SEPARATOR) != -1);
+
+					if (locationHashValid) {
 						HISTORY.replaceState(null, null, instance._updateURI());
 					}
 
 					config = config || {};
 
 					if (!owns(config, 'initialState')) {
-						var bookmarkedState = HISTORY && HISTORY.state;
-
-						var initialState = instance._parse(LOCATION.hash.substr(1));
-
-						if (bookmarkedState) {
-							initialState = A.merge(initialState, bookmarkedState);
+						if (locationHashValid) {
+							config.initialState = instance._parse(hash.substr(1));
 						}
 
-						if (!isEmpty(initialState)) {
-							config.initialState = initialState;
-						}
-
-						History.superclass._init.apply(instance, arguments);
+						History.superclass._init.call(instance, config);
 					}
 				},
 
@@ -66,15 +64,38 @@ AUI().add(
 					var hash = uriData[1];
 					var query = uriData[0];
 
-					var queryMap = instance._parse(query);
+					var queryMap = {};
+
+					if (query) {
+						queryMap = instance._parse(query);
+					}
 
 					if (!state && hash) {
 						var hashMap = instance._parse(hash);
 
 						if (!isEmpty(hashMap)) {
+							var protectedHashMap = {};
+
 							state = hashMap;
 
+							A.each(
+								state,
+								function(value1, key1, collection1) {
+									A.Array.each(
+										instance.PROTECTED_HASH_KEYS,
+										function(value2, key2, collection2) {
+											if (value2.test(key1)) {
+												delete state[key1];
+												protectedHashMap[key1] = value1;
+											}
+										}
+									);
+								}
+							);
+
 							uriData.pop();
+
+							uriData.push('#', QueryString.stringify(protectedHashMap));
 						}
 					}
 
@@ -89,7 +110,13 @@ AUI().add(
 						}
 					);
 
-					uriData[0] = QueryString.stringify(queryMap);
+					uriData[0] = QueryString.stringify(
+						queryMap,
+						{
+							eq: History.VALUE_SEPARATOR,
+							sep: History.PAIR_SEPARATOR
+						}
+					);
 
 					uriData.unshift(LOCATION.protocol, '//', LOCATION.host, LOCATION.pathname, '?');
 

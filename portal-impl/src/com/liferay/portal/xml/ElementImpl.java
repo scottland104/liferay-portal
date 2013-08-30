@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author Brian Wing Shun Chan
@@ -48,36 +49,42 @@ public class ElementImpl extends BranchImpl implements Element {
 		return visitor.visitElement(this);
 	}
 
+	@Override
 	public void add(Attribute attribute) {
 		AttributeImpl attributeImpl = (AttributeImpl)attribute;
 
 		_element.add(attributeImpl.getWrappedAttribute());
 	}
 
+	@Override
 	public void add(CDATA cdata) {
 		CDATAImpl cdataImpl = (CDATAImpl)cdata;
 
 		_element.add(cdataImpl.getWrappedCDATA());
 	}
 
+	@Override
 	public void add(Entity entity) {
 		EntityImpl entityImpl = (EntityImpl)entity;
 
 		_element.add(entityImpl.getWrappedEntity());
 	}
 
+	@Override
 	public void add(Namespace namespace) {
 		NamespaceImpl namespaceImpl = (NamespaceImpl)namespace;
 
 		_element.add(namespaceImpl.getWrappedNamespace());
 	}
 
+	@Override
 	public void add(Text text) {
 		TextImpl textImpl = (TextImpl)text;
 
 		_element.add(textImpl.getWrappedText());
 	}
 
+	@Override
 	public Element addAttribute(QName qName, String value) {
 		QNameImpl qNameImpl = (QNameImpl)qName;
 
@@ -85,52 +92,63 @@ public class ElementImpl extends BranchImpl implements Element {
 			_element.addAttribute(qNameImpl.getWrappedQName(), value));
 	}
 
+	@Override
 	public Element addAttribute(String name, String value) {
 		return new ElementImpl(_element.addAttribute(name, value));
 	}
 
+	@Override
 	public Element addCDATA(String cdata) {
 		cdata = StringUtil.replace(cdata, "]]>", "]]]]><![CDATA[>");
 
 		return new ElementImpl(_element.addCDATA(cdata));
 	}
 
+	@Override
 	public Element addComment(String comment) {
 		return new ElementImpl(_element.addComment(comment));
 	}
 
+	@Override
 	public Element addEntity(String name, String text) {
 		return new ElementImpl(_element.addEntity(name, text));
 	}
 
+	@Override
+	public List<Namespace> additionalNamespaces() {
+		return SAXReaderImpl.toNewNamespaces(_element.additionalNamespaces());
+	}
+
+	@Override
 	public Element addNamespace(String prefix, String uri) {
 		return new ElementImpl(_element.addNamespace(prefix, uri));
 	}
 
+	@Override
 	public Element addProcessingInstruction(
 		String target, Map<String, String> data) {
 
 		return new ElementImpl(_element.addProcessingInstruction(target, data));
 	}
 
+	@Override
 	public Element addProcessingInstruction(String target, String data) {
 		return new ElementImpl(_element.addProcessingInstruction(target, data));
 	}
 
+	@Override
 	public Element addText(String text) {
 		return new ElementImpl(_element.addText(text));
 	}
 
-	public List<Namespace> additionalNamespaces() {
-		return SAXReaderImpl.toNewNamespaces(_element.additionalNamespaces());
-	}
-
+	@Override
 	public void appendAttributes(Element element) {
 		ElementImpl elementImpl = (ElementImpl)element;
 
 		_element.appendAttributes(elementImpl.getWrappedElement());
 	}
 
+	@Override
 	public Attribute attribute(int index) {
 		org.dom4j.Attribute attribute = _element.attribute(index);
 
@@ -142,6 +160,7 @@ public class ElementImpl extends BranchImpl implements Element {
 		}
 	}
 
+	@Override
 	public Attribute attribute(QName qName) {
 		QNameImpl qNameImpl = (QNameImpl)qName;
 
@@ -156,6 +175,7 @@ public class ElementImpl extends BranchImpl implements Element {
 		}
 	}
 
+	@Override
 	public Attribute attribute(String name) {
 		org.dom4j.Attribute attribute = _element.attribute(name);
 
@@ -167,20 +187,29 @@ public class ElementImpl extends BranchImpl implements Element {
 		}
 	}
 
+	@Override
 	public int attributeCount() {
 		return _element.attributeCount();
 	}
 
+	@Override
 	public Iterator<Attribute> attributeIterator() {
 		return attributes().iterator();
 	}
 
+	@Override
+	public List<Attribute> attributes() {
+		return SAXReaderImpl.toNewAttributes(_element.attributes());
+	}
+
+	@Override
 	public String attributeValue(QName qName) {
 		QNameImpl qNameImpl = (QNameImpl)qName;
 
 		return _element.attributeValue(qNameImpl.getWrappedQName());
 	}
 
+	@Override
 	public String attributeValue(QName qName, String defaultValue) {
 		QNameImpl qNameImpl = (QNameImpl)qName;
 
@@ -188,22 +217,22 @@ public class ElementImpl extends BranchImpl implements Element {
 			qNameImpl.getWrappedQName(), defaultValue);
 	}
 
+	@Override
 	public String attributeValue(String name) {
 		return _element.attributeValue(name);
 	}
 
+	@Override
 	public String attributeValue(String name, String defaultValue) {
 		return _element.attributeValue(name, defaultValue);
 	}
 
-	public List<Attribute> attributes() {
-		return SAXReaderImpl.toNewAttributes(_element.attributes());
-	}
-
+	@Override
 	public Element createCopy() {
 		return new ElementImpl(_element.createCopy());
 	}
 
+	@Override
 	public Element createCopy(QName qName) {
 		QNameImpl qNameImpl = (QNameImpl)qName;
 
@@ -211,14 +240,17 @@ public class ElementImpl extends BranchImpl implements Element {
 			_element.createCopy(qNameImpl.getWrappedQName()));
 	}
 
+	@Override
 	public Element createCopy(String name) {
 		return new ElementImpl(_element.createCopy(name));
 	}
 
+	@Override
 	public List<Namespace> declaredNamespaces() {
 		return SAXReaderImpl.toNewNamespaces(_element.declaredNamespaces());
 	}
 
+	@Override
 	public Element element(QName qName) {
 		QNameImpl qNameImpl = (QNameImpl)qName;
 
@@ -233,6 +265,7 @@ public class ElementImpl extends BranchImpl implements Element {
 		}
 	}
 
+	@Override
 	public Element element(String name) {
 		org.dom4j.Element element = _element.element(name);
 
@@ -244,42 +277,27 @@ public class ElementImpl extends BranchImpl implements Element {
 		}
 	}
 
+	@Override
 	public Iterator<Element> elementIterator() {
 		return elements().iterator();
 	}
 
+	@Override
 	public Iterator<Element> elementIterator(QName qName) {
 		return elements(qName).iterator();
 	}
 
+	@Override
 	public Iterator<Element> elementIterator(String name) {
 		return elements(name).iterator();
 	}
 
-	public String elementText(QName qName) {
-		QNameImpl qNameImpl = (QNameImpl)qName;
-
-		return _element.elementText(qNameImpl.getWrappedQName());
-	}
-
-	public String elementText(String name) {
-		return _element.elementText(name);
-	}
-
-	public String elementTextTrim(QName qName) {
-		QNameImpl qNameImpl = (QNameImpl)qName;
-
-		return _element.elementTextTrim(qNameImpl.getWrappedQName());
-	}
-
-	public String elementTextTrim(String name) {
-		return _element.elementTextTrim(name);
-	}
-
+	@Override
 	public List<Element> elements() {
 		return SAXReaderImpl.toNewElements(_element.elements());
 	}
 
+	@Override
 	public List<Element> elements(QName qName) {
 		QNameImpl qNameImpl = (QNameImpl)qName;
 
@@ -287,12 +305,56 @@ public class ElementImpl extends BranchImpl implements Element {
 			_element.elements(qNameImpl.getWrappedQName()));
 	}
 
+	@Override
 	public List<Element> elements(String name) {
 		return SAXReaderImpl.toNewElements(_element.elements(name));
 	}
 
 	@Override
+	public String elementText(QName qName) {
+		QNameImpl qNameImpl = (QNameImpl)qName;
+
+		return _element.elementText(qNameImpl.getWrappedQName());
+	}
+
+	@Override
+	public String elementText(String name) {
+		return _element.elementText(name);
+	}
+
+	@Override
+	public String elementTextTrim(QName qName) {
+		QNameImpl qNameImpl = (QNameImpl)qName;
+
+		return _element.elementTextTrim(qNameImpl.getWrappedQName());
+	}
+
+	@Override
+	public String elementTextTrim(String name) {
+		return _element.elementTextTrim(name);
+	}
+
+	@Override
 	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (obj instanceof NodeImpl) {
+			NodeImpl nodeImpl = (NodeImpl)obj;
+
+			if (nodeImpl.getWrappedNode() instanceof org.dom4j.Element) {
+				obj = new ElementImpl(
+					(org.dom4j.Element)nodeImpl.getWrappedNode());
+			}
+			else {
+				return false;
+			}
+		}
+		else if (!(obj instanceof ElementImpl)) {
+			return false;
+		}
+
 		org.dom4j.Element element = ((ElementImpl)obj).getWrappedElement();
 
 		return _element.equals(element);
@@ -315,10 +377,12 @@ public class ElementImpl extends BranchImpl implements Element {
 		return XMLFormatter.toString(_element, indent, expandEmptyElements);
 	}
 
+	@Override
 	public Object getData() {
 		return _element.getData();
 	}
 
+	@Override
 	public Namespace getNamespace() {
 		org.dom4j.Namespace namespace = _element.getNamespace();
 
@@ -330,6 +394,7 @@ public class ElementImpl extends BranchImpl implements Element {
 		}
 	}
 
+	@Override
 	public Namespace getNamespaceForPrefix(String prefix) {
 		org.dom4j.Namespace namespace = _element.getNamespaceForPrefix(prefix);
 
@@ -341,6 +406,7 @@ public class ElementImpl extends BranchImpl implements Element {
 		}
 	}
 
+	@Override
 	public Namespace getNamespaceForURI(String uri) {
 		org.dom4j.Namespace namespace = _element.getNamespaceForURI(uri);
 
@@ -352,18 +418,22 @@ public class ElementImpl extends BranchImpl implements Element {
 		}
 	}
 
+	@Override
 	public String getNamespacePrefix() {
 		return _element.getNamespacePrefix();
 	}
 
-	public String getNamespaceURI() {
-		return _element.getNamespaceURI();
-	}
-
+	@Override
 	public List<Namespace> getNamespacesForURI(String uri) {
 		return SAXReaderImpl.toNewNamespaces(_element.getNamespacesForURI(uri));
 	}
 
+	@Override
+	public String getNamespaceURI() {
+		return _element.getNamespaceURI();
+	}
+
+	@Override
 	public QName getQName() {
 		org.dom4j.QName qName = _element.getQName();
 
@@ -375,6 +445,7 @@ public class ElementImpl extends BranchImpl implements Element {
 		}
 	}
 
+	@Override
 	public QName getQName(String qualifiedName) {
 		org.dom4j.QName qName = _element.getQName(qualifiedName);
 
@@ -386,10 +457,12 @@ public class ElementImpl extends BranchImpl implements Element {
 		}
 	}
 
+	@Override
 	public String getQualifiedName() {
 		return _element.getQualifiedName();
 	}
 
+	@Override
 	public String getTextTrim() {
 		return _element.getTextTrim();
 	}
@@ -398,6 +471,7 @@ public class ElementImpl extends BranchImpl implements Element {
 		return _element;
 	}
 
+	@Override
 	public Node getXPathResult(int index) {
 		org.dom4j.Node node = _element.getXPathResult(index);
 
@@ -414,60 +488,209 @@ public class ElementImpl extends BranchImpl implements Element {
 		return _element.hashCode();
 	}
 
+	@Override
 	public boolean hasMixedContent() {
 		return _element.hasMixedContent();
 	}
 
+	@Override
 	public boolean isRootElement() {
 		return _element.isRootElement();
 	}
 
+	@Override
 	public boolean isTextOnly() {
 		return _element.isTextOnly();
 	}
 
+	@Override
 	public boolean remove(Attribute attribute) {
 		AttributeImpl attributeImpl = (AttributeImpl)attribute;
 
 		return _element.remove(attributeImpl.getWrappedAttribute());
 	}
 
+	@Override
 	public boolean remove(CDATA cdata) {
 		CDATAImpl cdataImpl = (CDATAImpl)cdata;
 
 		return _element.remove(cdataImpl.getWrappedCDATA());
 	}
 
+	@Override
 	public boolean remove(Entity entity) {
 		EntityImpl entityImpl = (EntityImpl)entity;
 
 		return _element.remove(entityImpl.getWrappedEntity());
 	}
 
+	@Override
 	public boolean remove(Namespace namespace) {
 		NamespaceImpl namespaceImpl = (NamespaceImpl)namespace;
 
 		return _element.remove(namespaceImpl.getWrappedNamespace());
 	}
 
+	@Override
 	public boolean remove(Text text) {
 		TextImpl textImpl = (TextImpl)text;
 
 		return _element.remove(textImpl.getWrappedText());
 	}
 
+	@Override
 	public void setAttributes(List<Attribute> attributes) {
 		_element.setAttributes(SAXReaderImpl.toOldAttributes(attributes));
 	}
 
+	@Override
 	public void setData(Object data) {
 		_element.setData(data);
 	}
 
+	@Override
 	public void setQName(QName qName) {
 		QNameImpl qNameImpl = (QNameImpl)qName;
 
 		_element.setQName(qNameImpl.getWrappedQName());
+	}
+
+	@Override
+	public void sortAttributes(boolean recursive) {
+		Map<String, Attribute> attributesMap = new TreeMap<String, Attribute>();
+
+		List<Attribute> attributes = attributes();
+
+		for (Attribute attribute : attributes) {
+			attribute.detach();
+
+			attributesMap.put(attribute.getName(), attribute);
+		}
+
+		for (Map.Entry<String, Attribute> entry : attributesMap.entrySet()) {
+			Attribute attribute = entry.getValue();
+
+			add(attribute);
+		}
+
+		if (!recursive) {
+			return;
+		}
+
+		List<Element> elements = elements();
+
+		for (Element element : elements) {
+			element.sortAttributes(true);
+		}
+	}
+
+	@Override
+	public void sortElementsByAttribute(
+		String elementName, String attributeName) {
+
+		Map<String, Element> elementsMap = new TreeMap<String, Element>();
+
+		List<Element> elements = elements();
+
+		for (Element element : elements) {
+			element.detach();
+
+			if (elementName.equals(element.getName())) {
+				String attributeValue = element.attributeValue(attributeName);
+
+				elementsMap.put(attributeValue, element);
+			}
+		}
+
+		for (Element element : elements) {
+			if (elementName.equals(element.getName())) {
+				break;
+			}
+
+			add(element);
+		}
+
+		for (Map.Entry<String, Element> entry : elementsMap.entrySet()) {
+			Element element = entry.getValue();
+
+			add(element);
+		}
+
+		boolean foundLastElementWithElementName = false;
+
+		for (int i = 0; i < elements.size(); i++) {
+			Element element = elements.get(i);
+
+			if (!foundLastElementWithElementName) {
+				if (elementName.equals(element.getName())) {
+					if ((i + 1) < elements.size()) {
+						Element nextElement = elements.get(i + 1);
+
+						if (!elementName.equals(nextElement.getName())) {
+							foundLastElementWithElementName = true;
+						}
+					}
+				}
+			}
+			else {
+				add(element);
+			}
+		}
+	}
+
+	@Override
+	public void sortElementsByChildElement(
+		String elementName, String childElementName) {
+
+		Map<String, Element> elementsMap = new TreeMap<String, Element>();
+
+		List<Element> elements = elements();
+
+		for (Element element : elements) {
+			element.detach();
+
+			if (elementName.equals(element.getName())) {
+				String childElementValue = element.elementText(
+					childElementName);
+
+				elementsMap.put(childElementValue, element);
+			}
+		}
+
+		for (Element element : elements) {
+			if (elementName.equals(element.getName())) {
+				break;
+			}
+
+			add(element);
+		}
+
+		for (Map.Entry<String, Element> entry : elementsMap.entrySet()) {
+			Element element = entry.getValue();
+
+			add(element);
+		}
+
+		boolean foundLastElementWithElementName = false;
+
+		for (int i = 0; i < elements.size(); i++) {
+			Element element = elements.get(i);
+
+			if (!foundLastElementWithElementName) {
+				if (elementName.equals(element.getName())) {
+					if ((i + 1) < elements.size()) {
+						Element nextElement = elements.get(i + 1);
+
+						if (!elementName.equals(nextElement.getName())) {
+							foundLastElementWithElementName = true;
+						}
+					}
+				}
+			}
+			else {
+				add(element);
+			}
+		}
 	}
 
 	@Override

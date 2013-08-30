@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,24 +15,45 @@
 package com.liferay.portal.service;
 
 /**
- * <p>
- * This class is a wrapper for {@link LayoutRevisionService}.
- * </p>
+ * Provides a wrapper for {@link LayoutRevisionService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       LayoutRevisionService
+ * @author Brian Wing Shun Chan
+ * @see LayoutRevisionService
  * @generated
  */
-public class LayoutRevisionServiceWrapper implements LayoutRevisionService {
+public class LayoutRevisionServiceWrapper implements LayoutRevisionService,
+	ServiceWrapper<LayoutRevisionService> {
 	public LayoutRevisionServiceWrapper(
 		LayoutRevisionService layoutRevisionService) {
 		_layoutRevisionService = layoutRevisionService;
 	}
 
+	/**
+	* Returns the Spring bean ID for this bean.
+	*
+	* @return the Spring bean ID for this bean
+	*/
+	@Override
+	public java.lang.String getBeanIdentifier() {
+		return _layoutRevisionService.getBeanIdentifier();
+	}
+
+	/**
+	* Sets the Spring bean ID for this bean.
+	*
+	* @param beanIdentifier the Spring bean ID for this bean
+	*/
+	@Override
+	public void setBeanIdentifier(java.lang.String beanIdentifier) {
+		_layoutRevisionService.setBeanIdentifier(beanIdentifier);
+	}
+
+	@Override
 	public com.liferay.portal.model.LayoutRevision addLayoutRevision(
 		long userId, long layoutSetBranchId, long layoutBranchId,
 		long parentLayoutRevisionId, boolean head, long plid,
-		boolean privateLayout, java.lang.String name, java.lang.String title,
+		long portletPreferencesPlid, boolean privateLayout,
+		java.lang.String name, java.lang.String title,
 		java.lang.String description, java.lang.String keywords,
 		java.lang.String robots, java.lang.String typeSettings,
 		boolean iconImage, long iconImageId, java.lang.String themeId,
@@ -43,17 +64,34 @@ public class LayoutRevisionServiceWrapper implements LayoutRevisionService {
 			com.liferay.portal.kernel.exception.SystemException {
 		return _layoutRevisionService.addLayoutRevision(userId,
 			layoutSetBranchId, layoutBranchId, parentLayoutRevisionId, head,
-			plid, privateLayout, name, title, description, keywords, robots,
-			typeSettings, iconImage, iconImageId, themeId, colorSchemeId,
-			wapThemeId, wapColorSchemeId, css, serviceContext);
+			plid, portletPreferencesPlid, privateLayout, name, title,
+			description, keywords, robots, typeSettings, iconImage,
+			iconImageId, themeId, colorSchemeId, wapThemeId, wapColorSchemeId,
+			css, serviceContext);
 	}
 
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
+	 */
 	public LayoutRevisionService getWrappedLayoutRevisionService() {
 		return _layoutRevisionService;
 	}
 
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
+	 */
 	public void setWrappedLayoutRevisionService(
 		LayoutRevisionService layoutRevisionService) {
+		_layoutRevisionService = layoutRevisionService;
+	}
+
+	@Override
+	public LayoutRevisionService getWrappedService() {
+		return _layoutRevisionService;
+	}
+
+	@Override
+	public void setWrappedService(LayoutRevisionService layoutRevisionService) {
 		_layoutRevisionService = layoutRevisionService;
 	}
 

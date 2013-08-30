@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,15 +15,15 @@
 package com.liferay.portlet.calendar.service;
 
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
-import com.liferay.portal.kernel.util.MethodCache;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the cal event local service. This utility wraps {@link com.liferay.portlet.calendar.service.impl.CalEventLocalServiceImpl} and is the primary access point for service operations in application layer code running on the local server.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
+ * Provides the local service utility for CalEvent. This utility wraps
+ * {@link com.liferay.portlet.calendar.service.impl.CalEventLocalServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on the local server. Methods of this service will not have security checks
+ * based on the propagated JAAS credentials because this service can only be
+ * accessed from within the same VM.
  *
  * @author Brian Wing Shun Chan
  * @see CalEventLocalService
@@ -66,25 +66,32 @@ public class CalEventLocalServiceUtil {
 	* Deletes the cal event with the primary key from the database. Also notifies the appropriate model listeners.
 	*
 	* @param eventId the primary key of the cal event
+	* @return the cal event that was removed
 	* @throws PortalException if a cal event with the primary key could not be found
 	* @throws SystemException if a system exception occurred
 	*/
-	public static void deleteCalEvent(long eventId)
+	public static com.liferay.portlet.calendar.model.CalEvent deleteCalEvent(
+		long eventId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		getService().deleteCalEvent(eventId);
+		return getService().deleteCalEvent(eventId);
 	}
 
 	/**
 	* Deletes the cal event from the database. Also notifies the appropriate model listeners.
 	*
 	* @param calEvent the cal event
+	* @return the cal event that was removed
 	* @throws SystemException if a system exception occurred
 	*/
-	public static void deleteCalEvent(
+	public static com.liferay.portlet.calendar.model.CalEvent deleteCalEvent(
 		com.liferay.portlet.calendar.model.CalEvent calEvent)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		getService().deleteCalEvent(calEvent);
+		return getService().deleteCalEvent(calEvent);
+	}
+
+	public static com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery() {
+		return getService().dynamicQuery();
 	}
 
 	/**
@@ -105,7 +112,7 @@ public class CalEventLocalServiceUtil {
 	* Performs a dynamic query on the database and returns a range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.calendar.model.impl.CalEventModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -125,7 +132,7 @@ public class CalEventLocalServiceUtil {
 	* Performs a dynamic query on the database and returns an ordered range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.calendar.model.impl.CalEventModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -159,6 +166,55 @@ public class CalEventLocalServiceUtil {
 	}
 
 	/**
+	* Returns the number of rows that match the dynamic query.
+	*
+	* @param dynamicQuery the dynamic query
+	* @param projection the projection to apply to the query
+	* @return the number of rows that match the dynamic query
+	* @throws SystemException if a system exception occurred
+	*/
+	public static long dynamicQueryCount(
+		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		com.liferay.portal.kernel.dao.orm.Projection projection)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().dynamicQueryCount(dynamicQuery, projection);
+	}
+
+	public static com.liferay.portlet.calendar.model.CalEvent fetchCalEvent(
+		long eventId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().fetchCalEvent(eventId);
+	}
+
+	/**
+	* Returns the cal event with the matching UUID and company.
+	*
+	* @param uuid the cal event's UUID
+	* @param companyId the primary key of the company
+	* @return the matching cal event, or <code>null</code> if a matching cal event could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portlet.calendar.model.CalEvent fetchCalEventByUuidAndCompanyId(
+		java.lang.String uuid, long companyId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().fetchCalEventByUuidAndCompanyId(uuid, companyId);
+	}
+
+	/**
+	* Returns the cal event matching the UUID and group.
+	*
+	* @param uuid the cal event's UUID
+	* @param groupId the primary key of the group
+	* @return the matching cal event, or <code>null</code> if a matching cal event could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portlet.calendar.model.CalEvent fetchCalEventByUuidAndGroupId(
+		java.lang.String uuid, long groupId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().fetchCalEventByUuidAndGroupId(uuid, groupId);
+	}
+
+	/**
 	* Returns the cal event with the primary key.
 	*
 	* @param eventId the primary key of the cal event
@@ -181,12 +237,28 @@ public class CalEventLocalServiceUtil {
 	}
 
 	/**
-	* Returns the cal event with the UUID in the group.
+	* Returns the cal event with the matching UUID and company.
 	*
-	* @param uuid the UUID of cal event
-	* @param groupId the group id of the cal event
-	* @return the cal event
-	* @throws PortalException if a cal event with the UUID in the group could not be found
+	* @param uuid the cal event's UUID
+	* @param companyId the primary key of the company
+	* @return the matching cal event
+	* @throws PortalException if a matching cal event could not be found
+	* @throws SystemException if a system exception occurred
+	*/
+	public static com.liferay.portlet.calendar.model.CalEvent getCalEventByUuidAndCompanyId(
+		java.lang.String uuid, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService().getCalEventByUuidAndCompanyId(uuid, companyId);
+	}
+
+	/**
+	* Returns the cal event matching the UUID and group.
+	*
+	* @param uuid the cal event's UUID
+	* @param groupId the primary key of the group
+	* @return the matching cal event
+	* @throws PortalException if a matching cal event could not be found
 	* @throws SystemException if a system exception occurred
 	*/
 	public static com.liferay.portlet.calendar.model.CalEvent getCalEventByUuidAndGroupId(
@@ -200,7 +272,7 @@ public class CalEventLocalServiceUtil {
 	* Returns a range of all the cal events.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.calendar.model.impl.CalEventModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param start the lower bound of the range of cal events
@@ -239,20 +311,6 @@ public class CalEventLocalServiceUtil {
 	}
 
 	/**
-	* Updates the cal event in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
-	*
-	* @param calEvent the cal event
-	* @param merge whether to merge the cal event with the current session. See {@link com.liferay.portal.service.persistence.BatchSession#update(com.liferay.portal.kernel.dao.orm.Session, com.liferay.portal.model.BaseModel, boolean)} for an explanation.
-	* @return the cal event that was updated
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portlet.calendar.model.CalEvent updateCalEvent(
-		com.liferay.portlet.calendar.model.CalEvent calEvent, boolean merge)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getService().updateCalEvent(calEvent, merge);
-	}
-
-	/**
 	* Returns the Spring bean ID for this bean.
 	*
 	* @return the Spring bean ID for this bean
@@ -270,6 +328,31 @@ public class CalEventLocalServiceUtil {
 		getService().setBeanIdentifier(beanIdentifier);
 	}
 
+	public static com.liferay.portlet.calendar.model.CalEvent addEvent(
+		long userId, java.lang.String title, java.lang.String description,
+		java.lang.String location, int startDateMonth, int startDateDay,
+		int startDateYear, int startDateHour, int startDateMinute,
+		int durationHour, int durationMinute, boolean allDay,
+		boolean timeZoneSensitive, java.lang.String type, boolean repeating,
+		com.liferay.portal.kernel.cal.TZSRecurrence recurrence, int remindBy,
+		int firstReminder, int secondReminder,
+		com.liferay.portal.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .addEvent(userId, title, description, location,
+			startDateMonth, startDateDay, startDateYear, startDateHour,
+			startDateMinute, durationHour, durationMinute, allDay,
+			timeZoneSensitive, type, repeating, recurrence, remindBy,
+			firstReminder, secondReminder, serviceContext);
+	}
+
+	/**
+	* @deprecated As of 6.2.0, replaced by {@link #addEvent(long, String,
+	String, String, int, int, int, int, int, int, int, boolean,
+	boolean, String, boolean, TZSRecurrence, int, int, int,
+	ServiceContext)}
+	*/
 	public static com.liferay.portlet.calendar.model.CalEvent addEvent(
 		long userId, java.lang.String title, java.lang.String description,
 		java.lang.String location, int startDateMonth, int startDateDay,
@@ -325,22 +408,22 @@ public class CalEventLocalServiceUtil {
 	}
 
 	public static void checkEvents()
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
+		throws com.liferay.portal.kernel.exception.SystemException {
 		getService().checkEvents();
 	}
 
-	public static void deleteEvent(
+	public static com.liferay.portlet.calendar.model.CalEvent deleteEvent(
 		com.liferay.portlet.calendar.model.CalEvent event)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		getService().deleteEvent(event);
+		return getService().deleteEvent(event);
 	}
 
-	public static void deleteEvent(long eventId)
+	public static com.liferay.portlet.calendar.model.CalEvent deleteEvent(
+		long eventId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		getService().deleteEvent(eventId);
+		return getService().deleteEvent(eventId);
 	}
 
 	public static void deleteEvents(long groupId)
@@ -353,6 +436,14 @@ public class CalEventLocalServiceUtil {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return getService().exportEvent(userId, eventId);
+	}
+
+	public static java.io.File exportEvents(long userId,
+		java.util.List<com.liferay.portlet.calendar.model.CalEvent> events,
+		java.lang.String fileName)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService().exportEvents(userId, events, fileName);
 	}
 
 	public static java.io.File exportGroupEvents(long userId, long groupId,
@@ -454,10 +545,11 @@ public class CalEventLocalServiceUtil {
 		return getService().hasEvents(groupId, cal, types);
 	}
 
-	public static void importICal4j(long userId, long groupId, java.io.File file)
+	public static void importICal4j(long userId, long groupId,
+		java.io.InputStream inputStream)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		getService().importICal4j(userId, groupId, file);
+		getService().importICal4j(userId, groupId, inputStream);
 	}
 
 	public static void updateAsset(long userId,
@@ -471,6 +563,32 @@ public class CalEventLocalServiceUtil {
 			assetLinkEntryIds);
 	}
 
+	public static com.liferay.portlet.calendar.model.CalEvent updateEvent(
+		long userId, long eventId, java.lang.String title,
+		java.lang.String description, java.lang.String location,
+		int startDateMonth, int startDateDay, int startDateYear,
+		int startDateHour, int startDateMinute, int durationHour,
+		int durationMinute, boolean allDay, boolean timeZoneSensitive,
+		java.lang.String type, boolean repeating,
+		com.liferay.portal.kernel.cal.TZSRecurrence recurrence, int remindBy,
+		int firstReminder, int secondReminder,
+		com.liferay.portal.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .updateEvent(userId, eventId, title, description, location,
+			startDateMonth, startDateDay, startDateYear, startDateHour,
+			startDateMinute, durationHour, durationMinute, allDay,
+			timeZoneSensitive, type, repeating, recurrence, remindBy,
+			firstReminder, secondReminder, serviceContext);
+	}
+
+	/**
+	* @deprecated As of 6.2.0, replaced by {@link #updateEvent(long, long,
+	String, String, String, int, int, int, int, int, int, int,
+	boolean, boolean, String, boolean, TZSRecurrence, int, int,
+	int, ServiceContext)}
+	*/
 	public static com.liferay.portlet.calendar.model.CalEvent updateEvent(
 		long userId, long eventId, java.lang.String title,
 		java.lang.String description, java.lang.String location,
@@ -499,20 +617,15 @@ public class CalEventLocalServiceUtil {
 
 			ReferenceRegistry.registerReference(CalEventLocalServiceUtil.class,
 				"_service");
-			MethodCache.remove(CalEventLocalService.class);
 		}
 
 		return _service;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setService(CalEventLocalService service) {
-		MethodCache.remove(CalEventLocalService.class);
-
-		_service = service;
-
-		ReferenceRegistry.registerReference(CalEventLocalServiceUtil.class,
-			"_service");
-		MethodCache.remove(CalEventLocalService.class);
 	}
 
 	private static CalEventLocalService _service;

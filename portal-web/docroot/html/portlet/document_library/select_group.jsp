@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,7 +16,11 @@
 
 <%@ include file="/html/portlet/document_library/init.jsp" %>
 
-<aui:form method="post" name="fm">
+<%
+String eventName = ParamUtil.getString(request, "eventName", liferayPortletResponse.getNamespace() + "selectGroup");
+%>
+
+<aui:form method="post" name="selectGroupFm">
 	<liferay-ui:header
 		title="sites"
 	/>
@@ -25,75 +29,138 @@
 	PortletURL portletURL = renderResponse.createRenderURL();
 
 	portletURL.setParameter("struts_action", "/document_library/select_group");
-
-	GroupSearch searchContainer = new GroupSearch(renderRequest, portletURL);
 	%>
 
-	<liferay-ui:search-form
-		page="/html/portlet/users_admin/group_search.jsp"
-		searchContainer="<%= searchContainer %>"
-	/>
+	<liferay-ui:search-container
+		searchContainer="<%= new GroupSearch(renderRequest, portletURL) %>"
+	>
+		<liferay-ui:search-form
+			page="/html/portlet/users_admin/group_search.jsp"
+			searchContainer="<%= searchContainer %>"
+		/>
 
-	<div class="separator"><!-- --></div>
+		<div class="separator"><!-- --></div>
 
-	<%
-	GroupSearchTerms searchTerms = (GroupSearchTerms)searchContainer.getSearchTerms();
+		<%
+		GroupSearchTerms searchTerms = (GroupSearchTerms)searchContainer.getSearchTerms();
 
-	List<Group> mySites = user.getMySites();
+		LinkedHashMap<String, Object> groupParams = new LinkedHashMap<String, Object>();
 
-	if (PortalUtil.isCompanyControlPanelPortlet(portletId, themeDisplay)) {
-		mySites = ListUtil.copy(mySites);
+		groupParams.put("active", true);
+		groupParams.put("usersGroups", user.getUserId());
+		%>
 
-		mySites.add(0, GroupLocalServiceUtil.getGroup(themeDisplay.getCompanyGroupId()));
-	}
+		<liferay-ui:search-container-results>
 
-	int total = mySites.size();
+			<%
+			int additionalSites = 0;
 
-	searchContainer.setTotal(total);
+			if (!searchTerms.hasSearchTerms() && PortalUtil.isCompanyControlPanelPortlet(PortletKeys.DOCUMENT_LIBRARY, themeDisplay)) {
+				if (searchContainer.getStart() == 0) {
+					results.add(company.getGroup());
+				}
 
-	searchContainer.setResults(mySites);
+				additionalSites++;
 
-	List resultRows = searchContainer.getResultRows();
+				if (searchContainer.getStart() == 0) {
+					Group userPersonalSite = GroupLocalServiceUtil.getGroup(company.getCompanyId(), GroupConstants.USER_PERSONAL_SITE);
 
-	for (int i = 0; i < mySites.size(); i++) {
-		Group group = mySites.get(i);
+					results.add(userPersonalSite);
+				}
 
-		ResultRow row = new ResultRow(group, group.getGroupId(), i);
+				additionalSites++;
+			}
 
-		String groupName = HtmlUtil.escape(group.getDescriptiveName());
+			if (searchTerms.isAdvancedSearch()) {
+				total = GroupLocalServiceUtil.searchCount(company.getCompanyId(), null, searchTerms.getName(), searchTerms.getDescription(), groupParams, searchTerms.isAndOperator());
+			}
+			else {
+				total = GroupLocalServiceUtil.searchCount(company.getCompanyId(), null, searchTerms.getKeywords(), groupParams);
+			}
 
-		if (group.isCompany()) {
-			groupName = LanguageUtil.get(pageContext, "global");
-		}
-		else if (group.isUser()) {
-			groupName = LanguageUtil.get(pageContext, "my-site");
-		}
+			total += additionalSites;
 
-		StringBundler sb = new StringBundler(7);
+			searchContainer.setTotal(total);
 
-		sb.append("javascript:opener.");
-		sb.append(renderResponse.getNamespace());
-		sb.append("selectGroup('");
-		sb.append(group.getGroupId());
-		sb.append("', '");
-		sb.append(UnicodeFormatter.toString(groupName));
-		sb.append("'); window.close();");
+			int start = searchContainer.getStart();
 
-		String rowHREF = sb.toString();
+			if (searchContainer.getStart() > additionalSites) {
+				start = searchContainer.getStart() - additionalSites;
+			}
 
-		// Name
+			int end = searchContainer.getEnd() - additionalSites;
 
-		row.addText(groupName, rowHREF);
+			List<Group> sites = null;
 
-		// Type
+			if (searchTerms.isAdvancedSearch()) {
+				sites = GroupLocalServiceUtil.search(company.getCompanyId(), null, searchTerms.getName(), searchTerms.getDescription(), groupParams, searchTerms.isAndOperator(), start, end, searchContainer.getOrderByComparator());
+			}
+			else {
+				sites = GroupLocalServiceUtil.search(company.getCompanyId(), null, searchTerms.getKeywords(), groupParams, start, end, searchContainer.getOrderByComparator());
+			}
 
-		row.addText(LanguageUtil.get(pageContext, group.getTypeLabel()), rowHREF);
+			results.addAll(sites);
 
-		// Add result row
+			searchContainer.setResults(results);
+			%>
 
-		resultRows.add(row);
-	}
-	%>
+		</liferay-ui:search-container-results>
 
-	<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
+		<liferay-ui:search-container-row
+			className="com.liferay.portal.model.Group"
+			escapedModel="<%= true %>"
+			keyProperty="groupId"
+			modelVar="group"
+			rowIdProperty="friendlyURL"
+		>
+
+			<%
+			String groupDescriptiveName = HtmlUtil.escape(group.getDescriptiveName(locale));
+
+			if (group.isUser()) {
+				groupDescriptiveName = LanguageUtil.get(pageContext, "my-site");
+			}
+			%>
+
+			<liferay-ui:search-container-column-text
+				name="name"
+				value="<%= groupDescriptiveName %>"
+			/>
+
+			<liferay-ui:search-container-column-text
+				name="type"
+				value="<%= LanguageUtil.get(pageContext, group.getTypeLabel()) %>"
+			/>
+
+			<liferay-ui:search-container-column-text>
+
+				<%
+				Map<String, Object> data = new HashMap<String, Object>();
+
+				data.put("groupdescriptivename", HtmlUtil.escape(groupDescriptiveName));
+				data.put("groupid", group.getGroupId());
+				%>
+
+				<aui:button cssClass="selector-button" data="<%= data %>" value="choose" />
+			</liferay-ui:search-container-column-text>
+		</liferay-ui:search-container-row>
+
+		<liferay-ui:search-iterator />
+	</liferay-ui:search-container>
 </aui:form>
+
+<aui:script use="aui-base">
+	var Util = Liferay.Util;
+
+	A.one('#<portlet:namespace />selectGroupFm').delegate(
+		'click',
+		function(event) {
+			var result = Util.getAttributes(event.currentTarget, 'data-');
+
+			Util.getOpener().Liferay.fire('<%= HtmlUtil.escapeJS(eventName) %>', result);
+
+			Util.getWindow().hide();
+		},
+		'.selector-button'
+	);
+</aui:script>

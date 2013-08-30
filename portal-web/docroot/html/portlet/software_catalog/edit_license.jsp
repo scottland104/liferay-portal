@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -36,6 +36,7 @@ long licenseId = BeanParamUtil.getLong(license, request, "licenseId");
 />
 
 <liferay-ui:error exception="<%= LicenseNameException.class %>" message="please-enter-a-valid-name" />
+<liferay-ui:error exception="<%= RequiredLicenseException.class %>" message="the-selected-license-is-used-by-at-least-one-product" />
 
 <table class="lfr-table">
 <tr>
@@ -43,7 +44,7 @@ long licenseId = BeanParamUtil.getLong(license, request, "licenseId");
 		<liferay-ui:message key="name" />
 	</td>
 	<td>
-		<liferay-ui:input-field model="<%= SCLicense.class %>" bean="<%= license %>" field="name" />
+		<liferay-ui:input-field autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" bean="<%= license %>" field="name" model="<%= SCLicense.class %>" />
 	</td>
 </tr>
 <tr>
@@ -51,7 +52,7 @@ long licenseId = BeanParamUtil.getLong(license, request, "licenseId");
 		<liferay-ui:message key="url" />
 	</td>
 	<td>
-		<liferay-ui:input-field model="<%= SCLicense.class %>" bean="<%= license %>" field="url" />
+		<liferay-ui:input-field bean="<%= license %>" field="url" model="<%= SCLicense.class %>" />
 	</td>
 </tr>
 <tr>
@@ -59,7 +60,7 @@ long licenseId = BeanParamUtil.getLong(license, request, "licenseId");
 		<liferay-ui:message key="open-source" />
 	</td>
 	<td>
-		<liferay-ui:input-field model="<%= SCLicense.class %>" bean="<%= license %>" field="openSource" defaultValue="<%= Boolean.TRUE %>" />
+		<liferay-ui:input-field bean="<%= license %>" defaultValue="<%= Boolean.TRUE %>" field="openSource" model="<%= SCLicense.class %>" />
 	</td>
 </tr>
 <tr>
@@ -67,7 +68,7 @@ long licenseId = BeanParamUtil.getLong(license, request, "licenseId");
 		<liferay-ui:message key="active" />
 	</td>
 	<td>
-		<liferay-ui:input-field model="<%= SCLicense.class %>" bean="<%= license %>" field="active" defaultValue="<%= Boolean.TRUE %>" />
+		<liferay-ui:input-field bean="<%= license %>" defaultValue="<%= Boolean.TRUE %>" field="active" model="<%= SCLicense.class %>" />
 	</td>
 </tr>
 <tr>
@@ -75,7 +76,7 @@ long licenseId = BeanParamUtil.getLong(license, request, "licenseId");
 		<liferay-ui:message key="recommended" />
 	</td>
 	<td>
-		<liferay-ui:input-field model="<%= SCLicense.class %>" bean="<%= license %>" field="recommended" defaultValue="<%= Boolean.TRUE %>" />
+		<liferay-ui:input-field bean="<%= license %>" defaultValue="<%= Boolean.TRUE %>" field="recommended" model="<%= SCLicense.class %>" />
 	</td>
 </tr>
 </table>
@@ -84,19 +85,16 @@ long licenseId = BeanParamUtil.getLong(license, request, "licenseId");
 
 <input type="submit" value="<liferay-ui:message key="save" />" />
 
-<input type="button" value="<liferay-ui:message key="cancel" />" onClick="location.href = '<%= HtmlUtil.escape(PortalUtil.escapeRedirect(redirect)) %>';" />
+<input onClick="location.href = '<%= HtmlUtil.escape(PortalUtil.escapeRedirect(redirect)) %>';" type="button" value="<liferay-ui:message key="cancel" />" />
 
 </form>
 
 <aui:script>
 	function <portlet:namespace />saveLicense() {
 		document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= (license == null) ? Constants.ADD : Constants.UPDATE %>";
+
 		submitForm(document.<portlet:namespace />fm);
 	}
-
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />name);
-	</c:if>
 </aui:script>
 
 <%

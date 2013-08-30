@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,15 +26,19 @@ if (!ServerDetector.isWebSphere()) {
 String jUserName = (String)session.getAttribute("j_username");
 String jPassword = (String)session.getAttribute("j_password");
 
-if (PropsValues.PORTAL_JAAS_ENABLE && (user != null)) {
+if (PropsValues.PORTAL_JAAS_ENABLE && (jUserName != null)) {
+	long jUserId = GetterUtil.getLong(jUserName);
+
+	User jUser = UserLocalServiceUtil.getUser(jUserId);
+
 	if (PropsValues.PORTAL_JAAS_AUTH_TYPE.equals("emailAddress")) {
-		jUserName = user.getEmailAddress();
+		jUserName = jUser.getEmailAddress();
 	}
 	else if (PropsValues.PORTAL_JAAS_AUTH_TYPE.equals("screenName")) {
-		jUserName = user.getScreenName();
+		jUserName = jUser.getScreenName();
 	}
 	else if (PropsValues.PORTAL_JAAS_AUTH_TYPE.equals("login")) {
-		jUserName = user.getLogin();
+		jUserName = jUser.getLogin();
 	}
 }
 %>
@@ -48,7 +52,7 @@ if (PropsValues.PORTAL_JAAS_ENABLE && (user != null)) {
 			<meta content="no-cache" http-equiv="Cache-Control" />
 			<meta content="no-cache" http-equiv="Pragma" />
 			<meta content="0" http-equiv="Expires" />
-			<script src="<%= themeDisplay.getPathJavaScript() %>/misc/xp_progress.js" type="text/javascript"></script>
+			<script src="<%= themeDisplay.getCDNHost() + themeDisplay.getPathJavaScript() %>/misc/xp_progress.js" type="text/javascript"></script>
 		</head>
 
 		<body onLoad="setTimeout('document.fm.submit()', 100);">
@@ -84,6 +88,7 @@ if (PropsValues.PORTAL_JAAS_ENABLE && (user != null)) {
 		session.removeAttribute("j_username");
 		session.removeAttribute("j_password");
 
+		PortalMessages.clear(request);
 		SessionMessages.clear(request);
 		SessionErrors.clear(request);
 		%>

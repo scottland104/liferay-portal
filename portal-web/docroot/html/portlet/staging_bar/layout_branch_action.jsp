@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -28,7 +28,7 @@ long currentLayoutBranchId = GetterUtil.getLong((String)request.getAttribute("vi
 
 <liferay-ui:icon-menu>
 	<c:if test="<%= LayoutBranchPermissionUtil.contains(permissionChecker, layoutBranch, ActionKeys.UPDATE) %>">
-		<portlet:renderURL var="editURL">
+		<portlet:renderURL var="editURL" windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
 			<portlet:param name="struts_action" value="/staging_bar/edit_layout_branch" />
 			<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.UPDATE %>" />
 			<portlet:param name="redirect" value="<%= currentURL %>" />
@@ -37,7 +37,7 @@ long currentLayoutBranchId = GetterUtil.getLong((String)request.getAttribute("vi
 		</portlet:renderURL>
 
 		<%
-		String taglibURL = "javascript:Liferay.StagingBar.updateBranch({uri: '" + HtmlUtil.escapeJS(editURL) +  "', dialogTitle: '" + UnicodeLanguageUtil.get(pageContext, "update-page-variation") + "'});";
+		String taglibURL = "javascript:Liferay.StagingBar.updateBranch({uri: '" + HtmlUtil.escapeJS(editURL) + "', dialogTitle: '" + UnicodeLanguageUtil.get(pageContext, "update-page-variation") + "'});";
 		%>
 
 		<liferay-ui:icon

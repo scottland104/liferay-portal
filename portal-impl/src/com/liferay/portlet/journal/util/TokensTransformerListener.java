@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -39,30 +39,26 @@ public class TokensTransformerListener extends BaseTransformerListener {
 		"[$TEMP_ESCAPED_AT_OPEN$]";
 
 	@Override
-	public String onOutput(String s) {
+	public String onOutput(
+		String output, String languageId, Map<String, String> tokens) {
+
 		if (_log.isDebugEnabled()) {
 			_log.debug("onOutput");
 		}
 
-		return replace(s);
+		return replace(output, tokens);
 	}
 
 	@Override
-	public String onScript(String s) {
+	public String onScript(
+		String script, String xml, String languageId,
+		Map<String, String> tokens) {
+
 		if (_log.isDebugEnabled()) {
 			_log.debug("onScript");
 		}
 
-		return replace(s);
-	}
-
-	@Override
-	public String onXml(String s) {
-		if (_log.isDebugEnabled()) {
-			_log.debug("onXml");
-		}
-
-		return s;
+		return replace(script, tokens);
 	}
 
 	/**
@@ -70,9 +66,7 @@ public class TokensTransformerListener extends BaseTransformerListener {
 	 *
 	 * @return the processed string
 	 */
-	protected String replace(String s) {
-		Map<String, String> tokens = getTokens();
-
+	protected String replace(String s, Map<String, String> tokens) {
 		Set<Map.Entry<String, String>> tokensSet = tokens.entrySet();
 
 		if (tokensSet.size() == 0) {
@@ -114,13 +108,11 @@ public class TokensTransformerListener extends BaseTransformerListener {
 		}
 
 		s = StringUtil.replace(
-			s,
-			escapedKeysList.toArray(new String[escapedKeysList.size()]),
+			s, escapedKeysList.toArray(new String[escapedKeysList.size()]),
 			escapedValuesList.toArray(new String[escapedValuesList.size()]));
 
 		s = StringUtil.replace(
-			s,
-			keysList.toArray(new String[keysList.size()]),
+			s, keysList.toArray(new String[keysList.size()]),
 			valuesList.toArray(new String[valuesList.size()]));
 
 		s = StringUtil.replace(

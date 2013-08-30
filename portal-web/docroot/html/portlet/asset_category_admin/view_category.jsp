@@ -1,7 +1,6 @@
-<%@ page import="com.liferay.portlet.asset.service.AssetCategoryServiceUtil" %>
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,15 +31,15 @@ List<AssetCategoryProperty> categoryProperties = AssetCategoryPropertyServiceUti
 	/>
 
 	<c:if test="<%= category != null %>">
-		<c:if test="<%= permissionChecker.hasPermission(scopeGroupId, AssetCategory.class.getName(), category.getCategoryId(), ActionKeys.UPDATE) %>">
+		<c:if test="<%= AssetCategoryPermission.contains(permissionChecker, category, ActionKeys.UPDATE) %>">
 			<aui:button id="editCategoryButton" value="edit" />
 		</c:if>
 
-		<c:if test="<%= permissionChecker.hasPermission(scopeGroupId, AssetCategory.class.getName(), category.getCategoryId(), ActionKeys.DELETE) %>">
+		<c:if test="<%= AssetCategoryPermission.contains(permissionChecker, category, ActionKeys.DELETE) %>">
 			<aui:button id="deleteCategoryButton" value="delete" />
 		</c:if>
 
-		<c:if test="<%= permissionChecker.hasPermission(scopeGroupId, AssetCategory.class.getName(), category.getCategoryId(), ActionKeys.PERMISSIONS) %>">
+		<c:if test="<%= AssetCategoryPermission.contains(permissionChecker, category, ActionKeys.PERMISSIONS) %>">
 			<liferay-security:permissionsURL
 				modelResource="<%= AssetCategory.class.getName() %>"
 				modelResourceDescription="<%= category.getTitle(locale) %>"
@@ -51,11 +50,15 @@ List<AssetCategoryProperty> categoryProperties = AssetCategoryPropertyServiceUti
 
 			<aui:button data-url="<%= permissionsURL %>" id="updateCategoryPermissions" value="permissions" />
 		</c:if>
+
+		<c:if test="<%= AssetCategoryPermission.contains(permissionChecker, category, ActionKeys.ADD_CATEGORY) %>">
+			<aui:button id="addSubCategoryButton" value="add-subcategory" />
+		</c:if>
 	</c:if>
 
 	<c:if test="<%= Validator.isNotNull(category.getDescription(locale)) %>">
 		<div class="category-field">
-			<label><liferay-ui:message key="description" />:</label> <%= category.getDescription(locale) %>
+			<label><liferay-ui:message key="description" />:</label> <%= HtmlUtil.escape(category.getDescription(locale)) %>
 		</div>
 	</c:if>
 

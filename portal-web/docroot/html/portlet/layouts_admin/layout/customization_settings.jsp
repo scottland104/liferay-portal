@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,11 +19,18 @@
 <%
 Layout selLayout = (Layout)request.getAttribute("edit_pages.jsp-selLayout");
 
-String content = StringPool.BLANK;
-
 boolean curFreeformLayout = false;
+boolean prototypeGroup = false;
+
+String velocityTemplateId = null;
+
+String velocityTemplateContent = null;
+
+Group group = null;
 
 if (selLayout != null) {
+	group = selLayout.getGroup();
+
 	Theme curTheme = selLayout.getTheme();
 
 	String themeId = curTheme.getThemeId();
@@ -38,20 +45,20 @@ if (selLayout != null) {
 
 	curFreeformLayout = layoutTemplateId.equals("freeform");
 
-	if (!curFreeformLayout) {
+	if (group.isLayoutPrototype() || group.isLayoutSetPrototype()) {
+		prototypeGroup = true;
+	}
+
+	if (!curFreeformLayout && !prototypeGroup) {
 		LayoutTemplate layoutTemplate = LayoutTemplateLocalServiceUtil.getLayoutTemplate(layoutTemplateId, false, themeId);
 
 		if (layoutTemplate != null) {
 			themeId = layoutTemplate.getThemeId();
+
+			velocityTemplateId = themeId + LayoutTemplateConstants.CUSTOM_SEPARATOR + curLayoutTypePortlet.getLayoutTemplateId();
+
+			velocityTemplateContent = LayoutTemplateLocalServiceUtil.getContent(curLayoutTypePortlet.getLayoutTemplateId(), false, themeId);
 		}
-
-		String velocityTemplateId = themeId + LayoutTemplateConstants.CUSTOM_SEPARATOR + curLayoutTypePortlet.getLayoutTemplateId();
-
-		String velocityTemplateContent = LayoutTemplateLocalServiceUtil.getContent(curLayoutTypePortlet.getLayoutTemplateId(), false, themeId);
-
-		ServletContext layoutTemplateServletContext = ServletContextPool.get(layoutTemplate.getServletContextName());
-
-		content = RuntimePortletUtil.processCustomizationSettings(layoutTemplateServletContext, request, response, pageContext, velocityTemplateId, velocityTemplateContent);
 	}
 }
 %>
@@ -64,17 +71,51 @@ if (selLayout != null) {
 
 <c:choose>
 	<c:when test="<%= curFreeformLayout %>">
-		<div class="portlet-msg-alert">
+		<div class="alert alert-block">
 			<liferay-ui:message key="it-is-not-possible-to-specify-customization-settings-for-freeform-layouts" />
 		</div>
 	</c:when>
+	<c:when test="<%= prototypeGroup %>">
+		<div class="alert alert-block">
+			<liferay-ui:message key="it-is-not-possible-to-specify-customization-settings-for-pages-in-site-templates-or-page-templates" />
+		</div>
+	</c:when>
 	<c:otherwise>
-		<div class="portlet-msg-info">
+		<div class="alert alert-info">
 			<liferay-ui:message key="customizable-help" />
 		</div>
 	</c:otherwise>
 </c:choose>
 
 <div class="customization-settings">
-	<%= content %>
+	<c:choose>
+		<c:when test="<%= themeDisplay.isStateExclusive() %>">
+			<aui:button name="manageCustomization" value="show-customizable-sections" />
+
+			<div class="hide layout-customizable-controls" id="<portlet:namespace />layoutCustomizableControls">
+				<span title="<liferay-ui:message key="customizable-help" />">
+					<aui:input cssClass="layout-customizable-checkbox" helpMessage='<%= group.isLayoutPrototype() ? "modifiable-help" : "customizable-help" %>' id="TypeSettingsProperties--[COLUMN_ID]-customizable--" label='<%= (group.isLayoutSetPrototype() || group.isLayoutPrototype()) ? "modifiable" : "customizable" %>' name="TypeSettingsProperties--[COLUMN_ID]-customizable--" type="checkbox" useNamespace="<%= false %>" />
+				</span>
+			</div>
+		</c:when>
+		<c:otherwise>
+
+			<%
+			if (Validator.isNotNull(velocityTemplateId) && Validator.isNotNull(velocityTemplateContent)) {
+				RuntimePageUtil.processCustomizationSettings(pageContext, new StringTemplateResource(velocityTemplateId, velocityTemplateContent));
+			}
+			%>
+
+		</c:otherwise>
+	</c:choose>
 </div>
+
+<c:if test="<%= themeDisplay.isStateExclusive() %>">
+	<aui:script use="liferay-layout-customization-settings">
+		new Liferay.LayoutCustomizationSettings(
+			{
+				namespace: '<portlet:namespace />'
+			}
+		);
+	</aui:script>
+</c:if>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,7 +32,7 @@ public class ModuleId implements Serializable {
 		ModuleId moduleIdObj = _moduleIds.get(moduleId);
 
 		if (moduleIdObj == null) {
-			moduleIdObj =  new ModuleId(moduleId);
+			moduleIdObj = new ModuleId(moduleId);
 
 			_moduleIds.put(moduleId, moduleIdObj);
 		}
@@ -47,24 +47,23 @@ public class ModuleId implements Serializable {
 			version + StringPool.SLASH + type;
 	}
 
-	public String getGroupId() {
-		return _groupId;
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof ModuleId)) {
+			return false;
+		}
+
+		ModuleId moduleId = (ModuleId)obj;
+
+		return toString().equals(moduleId.toString());
 	}
 
 	public String getArtifactId() {
 		return _artifactId;
-	}
-
-	public String getPackageId() {
-		return _groupId + StringPool.SLASH + _artifactId;
-	}
-
-	public String getVersion() {
-		return _pluginVersion.toString();
-	}
-
-	public String getType() {
-		return _type;
 	}
 
 	public String getArtifactPath() {
@@ -76,6 +75,27 @@ public class ModuleId implements Serializable {
 	public String getArtifactWARName() {
 		return _artifactId + StringPool.DASH + _pluginVersion +
 			StringPool.PERIOD + _type;
+	}
+
+	public String getGroupId() {
+		return _groupId;
+	}
+
+	public String getPackageId() {
+		return _groupId + StringPool.SLASH + _artifactId;
+	}
+
+	public String getType() {
+		return _type;
+	}
+
+	public String getVersion() {
+		return _pluginVersion.toString();
+	}
+
+	@Override
+	public int hashCode() {
+		return toString().hashCode();
 	}
 
 	public boolean isLaterVersionThan(String version) {
@@ -91,34 +111,9 @@ public class ModuleId implements Serializable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof ModuleId)) {
-			return false;
-		}
-
-		ModuleId moduleId = (ModuleId)obj;
-
-		return toString().equals(moduleId.toString());
-	}
-
-	@Override
-	public int hashCode() {
-		return toString().hashCode();
-	}
-
-	@Override
 	public String toString() {
 		return toString(
 			_groupId, _artifactId, _pluginVersion.toString(), _type);
-	}
-
-	protected ModuleId(
-		String groupId, String artifactId, Version pluginVersion, String type) {
-
-		_groupId = groupId;
-		_artifactId = artifactId;
-		_pluginVersion = pluginVersion;
-		_type = type;
 	}
 
 	protected ModuleId(String moduleId) {
@@ -133,6 +128,15 @@ public class ModuleId implements Serializable {
 		_artifactId = st.nextToken();
 		_pluginVersion = Version.getInstance(st.nextToken());
 		_type = st.nextToken();
+	}
+
+	protected ModuleId(
+		String groupId, String artifactId, Version pluginVersion, String type) {
+
+		_groupId = groupId;
+		_artifactId = artifactId;
+		_pluginVersion = pluginVersion;
+		_type = type;
 	}
 
 	private static Map<String, ModuleId> _moduleIds =

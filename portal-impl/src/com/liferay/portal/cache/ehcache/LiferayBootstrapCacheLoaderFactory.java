@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -27,19 +27,26 @@ import net.sf.ehcache.bootstrap.BootstrapCacheLoaderFactory;
 /**
  * @author Brian Wing Shun Chan
  */
-public class LiferayBootstrapCacheLoaderFactory
-	extends BootstrapCacheLoaderFactory {
+public class LiferayBootstrapCacheLoaderFactory<T extends BootstrapCacheLoader>
+	extends BootstrapCacheLoaderFactory<T> {
 
 	public LiferayBootstrapCacheLoaderFactory() {
 		String className = PropsValues.EHCACHE_BOOTSTRAP_CACHE_LOADER_FACTORY;
 
+		if (PropsValues.CLUSTER_LINK_ENABLED &&
+			PropsValues.EHCACHE_CLUSTER_LINK_REPLICATION_ENABLED) {
+
+			className =
+				EhcacheStreamBootstrapCacheLoaderFactory.class.getName();
+		}
+
 		if (_log.isDebugEnabled()) {
-			_log.debug("Instantiating " + className + " " + this.hashCode());
+			_log.debug("Instantiating " + className + " " + hashCode());
 		}
 
 		try {
 			_bootstrapCacheLoaderFactory =
-				(BootstrapCacheLoaderFactory)InstanceFactory.newInstance(
+				(BootstrapCacheLoaderFactory<T>)InstanceFactory.newInstance(
 					className);
 		}
 		catch (Exception e) {
@@ -48,9 +55,7 @@ public class LiferayBootstrapCacheLoaderFactory
 	}
 
 	@Override
-	public BootstrapCacheLoader createBootstrapCacheLoader(
-		Properties properties) {
-
+	public T createBootstrapCacheLoader(Properties properties) {
 		return _bootstrapCacheLoaderFactory.createBootstrapCacheLoader(
 			properties);
 	}
@@ -58,6 +63,6 @@ public class LiferayBootstrapCacheLoaderFactory
 	private static Log _log = LogFactoryUtil.getLog(
 		LiferayBootstrapCacheLoaderFactory.class);
 
-	private BootstrapCacheLoaderFactory _bootstrapCacheLoaderFactory;
+	private BootstrapCacheLoaderFactory<T> _bootstrapCacheLoaderFactory;
 
 }

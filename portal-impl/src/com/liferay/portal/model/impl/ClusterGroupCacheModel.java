@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.ClusterGroup;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing ClusterGroup in entity cache.
  *
@@ -26,7 +31,8 @@ import com.liferay.portal.model.ClusterGroup;
  * @see ClusterGroup
  * @generated
  */
-public class ClusterGroupCacheModel implements CacheModel<ClusterGroup> {
+public class ClusterGroupCacheModel implements CacheModel<ClusterGroup>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(9);
@@ -44,6 +50,7 @@ public class ClusterGroupCacheModel implements CacheModel<ClusterGroup> {
 		return sb.toString();
 	}
 
+	@Override
 	public ClusterGroup toEntityModel() {
 		ClusterGroupImpl clusterGroupImpl = new ClusterGroupImpl();
 
@@ -68,6 +75,36 @@ public class ClusterGroupCacheModel implements CacheModel<ClusterGroup> {
 		clusterGroupImpl.resetOriginalValues();
 
 		return clusterGroupImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		clusterGroupId = objectInput.readLong();
+		name = objectInput.readUTF();
+		clusterNodeIds = objectInput.readUTF();
+		wholeCluster = objectInput.readBoolean();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(clusterGroupId);
+
+		if (name == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(name);
+		}
+
+		if (clusterNodeIds == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(clusterNodeIds);
+		}
+
+		objectOutput.writeBoolean(wholeCluster);
 	}
 
 	public long clusterGroupId;

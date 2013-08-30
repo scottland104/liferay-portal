@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,26 +14,286 @@
 
 package com.liferay.portlet.shopping.model;
 
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.model.ModelWrapper;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * <p>
  * This class is a wrapper for {@link ShoppingItem}.
  * </p>
  *
- * @author    Brian Wing Shun Chan
- * @see       ShoppingItem
+ * @author Brian Wing Shun Chan
+ * @see ShoppingItem
  * @generated
  */
-public class ShoppingItemWrapper implements ShoppingItem {
+public class ShoppingItemWrapper implements ShoppingItem,
+	ModelWrapper<ShoppingItem> {
 	public ShoppingItemWrapper(ShoppingItem shoppingItem) {
 		_shoppingItem = shoppingItem;
 	}
 
+	@Override
 	public Class<?> getModelClass() {
 		return ShoppingItem.class;
 	}
 
+	@Override
 	public String getModelClassName() {
 		return ShoppingItem.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("itemId", getItemId());
+		attributes.put("groupId", getGroupId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("userId", getUserId());
+		attributes.put("userName", getUserName());
+		attributes.put("createDate", getCreateDate());
+		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("categoryId", getCategoryId());
+		attributes.put("sku", getSku());
+		attributes.put("name", getName());
+		attributes.put("description", getDescription());
+		attributes.put("properties", getProperties());
+		attributes.put("fields", getFields());
+		attributes.put("fieldsQuantities", getFieldsQuantities());
+		attributes.put("minQuantity", getMinQuantity());
+		attributes.put("maxQuantity", getMaxQuantity());
+		attributes.put("price", getPrice());
+		attributes.put("discount", getDiscount());
+		attributes.put("taxable", getTaxable());
+		attributes.put("shipping", getShipping());
+		attributes.put("useShippingFormula", getUseShippingFormula());
+		attributes.put("requiresShipping", getRequiresShipping());
+		attributes.put("stockQuantity", getStockQuantity());
+		attributes.put("featured", getFeatured());
+		attributes.put("sale", getSale());
+		attributes.put("smallImage", getSmallImage());
+		attributes.put("smallImageId", getSmallImageId());
+		attributes.put("smallImageURL", getSmallImageURL());
+		attributes.put("mediumImage", getMediumImage());
+		attributes.put("mediumImageId", getMediumImageId());
+		attributes.put("mediumImageURL", getMediumImageURL());
+		attributes.put("largeImage", getLargeImage());
+		attributes.put("largeImageId", getLargeImageId());
+		attributes.put("largeImageURL", getLargeImageURL());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long itemId = (Long)attributes.get("itemId");
+
+		if (itemId != null) {
+			setItemId(itemId);
+		}
+
+		Long groupId = (Long)attributes.get("groupId");
+
+		if (groupId != null) {
+			setGroupId(groupId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long userId = (Long)attributes.get("userId");
+
+		if (userId != null) {
+			setUserId(userId);
+		}
+
+		String userName = (String)attributes.get("userName");
+
+		if (userName != null) {
+			setUserName(userName);
+		}
+
+		Date createDate = (Date)attributes.get("createDate");
+
+		if (createDate != null) {
+			setCreateDate(createDate);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
+		}
+
+		Long categoryId = (Long)attributes.get("categoryId");
+
+		if (categoryId != null) {
+			setCategoryId(categoryId);
+		}
+
+		String sku = (String)attributes.get("sku");
+
+		if (sku != null) {
+			setSku(sku);
+		}
+
+		String name = (String)attributes.get("name");
+
+		if (name != null) {
+			setName(name);
+		}
+
+		String description = (String)attributes.get("description");
+
+		if (description != null) {
+			setDescription(description);
+		}
+
+		String properties = (String)attributes.get("properties");
+
+		if (properties != null) {
+			setProperties(properties);
+		}
+
+		Boolean fields = (Boolean)attributes.get("fields");
+
+		if (fields != null) {
+			setFields(fields);
+		}
+
+		String fieldsQuantities = (String)attributes.get("fieldsQuantities");
+
+		if (fieldsQuantities != null) {
+			setFieldsQuantities(fieldsQuantities);
+		}
+
+		Integer minQuantity = (Integer)attributes.get("minQuantity");
+
+		if (minQuantity != null) {
+			setMinQuantity(minQuantity);
+		}
+
+		Integer maxQuantity = (Integer)attributes.get("maxQuantity");
+
+		if (maxQuantity != null) {
+			setMaxQuantity(maxQuantity);
+		}
+
+		Double price = (Double)attributes.get("price");
+
+		if (price != null) {
+			setPrice(price);
+		}
+
+		Double discount = (Double)attributes.get("discount");
+
+		if (discount != null) {
+			setDiscount(discount);
+		}
+
+		Boolean taxable = (Boolean)attributes.get("taxable");
+
+		if (taxable != null) {
+			setTaxable(taxable);
+		}
+
+		Double shipping = (Double)attributes.get("shipping");
+
+		if (shipping != null) {
+			setShipping(shipping);
+		}
+
+		Boolean useShippingFormula = (Boolean)attributes.get(
+				"useShippingFormula");
+
+		if (useShippingFormula != null) {
+			setUseShippingFormula(useShippingFormula);
+		}
+
+		Boolean requiresShipping = (Boolean)attributes.get("requiresShipping");
+
+		if (requiresShipping != null) {
+			setRequiresShipping(requiresShipping);
+		}
+
+		Integer stockQuantity = (Integer)attributes.get("stockQuantity");
+
+		if (stockQuantity != null) {
+			setStockQuantity(stockQuantity);
+		}
+
+		Boolean featured = (Boolean)attributes.get("featured");
+
+		if (featured != null) {
+			setFeatured(featured);
+		}
+
+		Boolean sale = (Boolean)attributes.get("sale");
+
+		if (sale != null) {
+			setSale(sale);
+		}
+
+		Boolean smallImage = (Boolean)attributes.get("smallImage");
+
+		if (smallImage != null) {
+			setSmallImage(smallImage);
+		}
+
+		Long smallImageId = (Long)attributes.get("smallImageId");
+
+		if (smallImageId != null) {
+			setSmallImageId(smallImageId);
+		}
+
+		String smallImageURL = (String)attributes.get("smallImageURL");
+
+		if (smallImageURL != null) {
+			setSmallImageURL(smallImageURL);
+		}
+
+		Boolean mediumImage = (Boolean)attributes.get("mediumImage");
+
+		if (mediumImage != null) {
+			setMediumImage(mediumImage);
+		}
+
+		Long mediumImageId = (Long)attributes.get("mediumImageId");
+
+		if (mediumImageId != null) {
+			setMediumImageId(mediumImageId);
+		}
+
+		String mediumImageURL = (String)attributes.get("mediumImageURL");
+
+		if (mediumImageURL != null) {
+			setMediumImageURL(mediumImageURL);
+		}
+
+		Boolean largeImage = (Boolean)attributes.get("largeImage");
+
+		if (largeImage != null) {
+			setLargeImage(largeImage);
+		}
+
+		Long largeImageId = (Long)attributes.get("largeImageId");
+
+		if (largeImageId != null) {
+			setLargeImageId(largeImageId);
+		}
+
+		String largeImageURL = (String)attributes.get("largeImageURL");
+
+		if (largeImageURL != null) {
+			setLargeImageURL(largeImageURL);
+		}
 	}
 
 	/**
@@ -41,6 +301,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the primary key of this shopping item
 	*/
+	@Override
 	public long getPrimaryKey() {
 		return _shoppingItem.getPrimaryKey();
 	}
@@ -50,6 +311,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param primaryKey the primary key of this shopping item
 	*/
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		_shoppingItem.setPrimaryKey(primaryKey);
 	}
@@ -59,6 +321,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the item ID of this shopping item
 	*/
+	@Override
 	public long getItemId() {
 		return _shoppingItem.getItemId();
 	}
@@ -68,6 +331,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param itemId the item ID of this shopping item
 	*/
+	@Override
 	public void setItemId(long itemId) {
 		_shoppingItem.setItemId(itemId);
 	}
@@ -77,6 +341,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the group ID of this shopping item
 	*/
+	@Override
 	public long getGroupId() {
 		return _shoppingItem.getGroupId();
 	}
@@ -86,6 +351,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param groupId the group ID of this shopping item
 	*/
+	@Override
 	public void setGroupId(long groupId) {
 		_shoppingItem.setGroupId(groupId);
 	}
@@ -95,6 +361,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the company ID of this shopping item
 	*/
+	@Override
 	public long getCompanyId() {
 		return _shoppingItem.getCompanyId();
 	}
@@ -104,6 +371,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param companyId the company ID of this shopping item
 	*/
+	@Override
 	public void setCompanyId(long companyId) {
 		_shoppingItem.setCompanyId(companyId);
 	}
@@ -113,6 +381,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the user ID of this shopping item
 	*/
+	@Override
 	public long getUserId() {
 		return _shoppingItem.getUserId();
 	}
@@ -122,6 +391,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param userId the user ID of this shopping item
 	*/
+	@Override
 	public void setUserId(long userId) {
 		_shoppingItem.setUserId(userId);
 	}
@@ -132,6 +402,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	* @return the user uuid of this shopping item
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.lang.String getUserUuid()
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _shoppingItem.getUserUuid();
@@ -142,6 +413,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param userUuid the user uuid of this shopping item
 	*/
+	@Override
 	public void setUserUuid(java.lang.String userUuid) {
 		_shoppingItem.setUserUuid(userUuid);
 	}
@@ -151,6 +423,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the user name of this shopping item
 	*/
+	@Override
 	public java.lang.String getUserName() {
 		return _shoppingItem.getUserName();
 	}
@@ -160,6 +433,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param userName the user name of this shopping item
 	*/
+	@Override
 	public void setUserName(java.lang.String userName) {
 		_shoppingItem.setUserName(userName);
 	}
@@ -169,6 +443,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the create date of this shopping item
 	*/
+	@Override
 	public java.util.Date getCreateDate() {
 		return _shoppingItem.getCreateDate();
 	}
@@ -178,6 +453,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param createDate the create date of this shopping item
 	*/
+	@Override
 	public void setCreateDate(java.util.Date createDate) {
 		_shoppingItem.setCreateDate(createDate);
 	}
@@ -187,6 +463,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the modified date of this shopping item
 	*/
+	@Override
 	public java.util.Date getModifiedDate() {
 		return _shoppingItem.getModifiedDate();
 	}
@@ -196,6 +473,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param modifiedDate the modified date of this shopping item
 	*/
+	@Override
 	public void setModifiedDate(java.util.Date modifiedDate) {
 		_shoppingItem.setModifiedDate(modifiedDate);
 	}
@@ -205,6 +483,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the category ID of this shopping item
 	*/
+	@Override
 	public long getCategoryId() {
 		return _shoppingItem.getCategoryId();
 	}
@@ -214,6 +493,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param categoryId the category ID of this shopping item
 	*/
+	@Override
 	public void setCategoryId(long categoryId) {
 		_shoppingItem.setCategoryId(categoryId);
 	}
@@ -223,6 +503,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the sku of this shopping item
 	*/
+	@Override
 	public java.lang.String getSku() {
 		return _shoppingItem.getSku();
 	}
@@ -232,6 +513,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param sku the sku of this shopping item
 	*/
+	@Override
 	public void setSku(java.lang.String sku) {
 		_shoppingItem.setSku(sku);
 	}
@@ -241,6 +523,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the name of this shopping item
 	*/
+	@Override
 	public java.lang.String getName() {
 		return _shoppingItem.getName();
 	}
@@ -250,6 +533,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param name the name of this shopping item
 	*/
+	@Override
 	public void setName(java.lang.String name) {
 		_shoppingItem.setName(name);
 	}
@@ -259,6 +543,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the description of this shopping item
 	*/
+	@Override
 	public java.lang.String getDescription() {
 		return _shoppingItem.getDescription();
 	}
@@ -268,6 +553,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param description the description of this shopping item
 	*/
+	@Override
 	public void setDescription(java.lang.String description) {
 		_shoppingItem.setDescription(description);
 	}
@@ -277,6 +563,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the properties of this shopping item
 	*/
+	@Override
 	public java.lang.String getProperties() {
 		return _shoppingItem.getProperties();
 	}
@@ -286,6 +573,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param properties the properties of this shopping item
 	*/
+	@Override
 	public void setProperties(java.lang.String properties) {
 		_shoppingItem.setProperties(properties);
 	}
@@ -295,6 +583,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the fields of this shopping item
 	*/
+	@Override
 	public boolean getFields() {
 		return _shoppingItem.getFields();
 	}
@@ -304,6 +593,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return <code>true</code> if this shopping item is fields; <code>false</code> otherwise
 	*/
+	@Override
 	public boolean isFields() {
 		return _shoppingItem.isFields();
 	}
@@ -313,6 +603,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param fields the fields of this shopping item
 	*/
+	@Override
 	public void setFields(boolean fields) {
 		_shoppingItem.setFields(fields);
 	}
@@ -322,6 +613,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the fields quantities of this shopping item
 	*/
+	@Override
 	public java.lang.String getFieldsQuantities() {
 		return _shoppingItem.getFieldsQuantities();
 	}
@@ -331,6 +623,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param fieldsQuantities the fields quantities of this shopping item
 	*/
+	@Override
 	public void setFieldsQuantities(java.lang.String fieldsQuantities) {
 		_shoppingItem.setFieldsQuantities(fieldsQuantities);
 	}
@@ -340,6 +633,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the min quantity of this shopping item
 	*/
+	@Override
 	public int getMinQuantity() {
 		return _shoppingItem.getMinQuantity();
 	}
@@ -349,6 +643,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param minQuantity the min quantity of this shopping item
 	*/
+	@Override
 	public void setMinQuantity(int minQuantity) {
 		_shoppingItem.setMinQuantity(minQuantity);
 	}
@@ -358,6 +653,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the max quantity of this shopping item
 	*/
+	@Override
 	public int getMaxQuantity() {
 		return _shoppingItem.getMaxQuantity();
 	}
@@ -367,6 +663,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param maxQuantity the max quantity of this shopping item
 	*/
+	@Override
 	public void setMaxQuantity(int maxQuantity) {
 		_shoppingItem.setMaxQuantity(maxQuantity);
 	}
@@ -376,6 +673,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the price of this shopping item
 	*/
+	@Override
 	public double getPrice() {
 		return _shoppingItem.getPrice();
 	}
@@ -385,6 +683,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param price the price of this shopping item
 	*/
+	@Override
 	public void setPrice(double price) {
 		_shoppingItem.setPrice(price);
 	}
@@ -394,6 +693,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the discount of this shopping item
 	*/
+	@Override
 	public double getDiscount() {
 		return _shoppingItem.getDiscount();
 	}
@@ -403,6 +703,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param discount the discount of this shopping item
 	*/
+	@Override
 	public void setDiscount(double discount) {
 		_shoppingItem.setDiscount(discount);
 	}
@@ -412,6 +713,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the taxable of this shopping item
 	*/
+	@Override
 	public boolean getTaxable() {
 		return _shoppingItem.getTaxable();
 	}
@@ -421,6 +723,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return <code>true</code> if this shopping item is taxable; <code>false</code> otherwise
 	*/
+	@Override
 	public boolean isTaxable() {
 		return _shoppingItem.isTaxable();
 	}
@@ -430,6 +733,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param taxable the taxable of this shopping item
 	*/
+	@Override
 	public void setTaxable(boolean taxable) {
 		_shoppingItem.setTaxable(taxable);
 	}
@@ -439,6 +743,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the shipping of this shopping item
 	*/
+	@Override
 	public double getShipping() {
 		return _shoppingItem.getShipping();
 	}
@@ -448,6 +753,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param shipping the shipping of this shopping item
 	*/
+	@Override
 	public void setShipping(double shipping) {
 		_shoppingItem.setShipping(shipping);
 	}
@@ -457,6 +763,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the use shipping formula of this shopping item
 	*/
+	@Override
 	public boolean getUseShippingFormula() {
 		return _shoppingItem.getUseShippingFormula();
 	}
@@ -466,6 +773,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return <code>true</code> if this shopping item is use shipping formula; <code>false</code> otherwise
 	*/
+	@Override
 	public boolean isUseShippingFormula() {
 		return _shoppingItem.isUseShippingFormula();
 	}
@@ -475,6 +783,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param useShippingFormula the use shipping formula of this shopping item
 	*/
+	@Override
 	public void setUseShippingFormula(boolean useShippingFormula) {
 		_shoppingItem.setUseShippingFormula(useShippingFormula);
 	}
@@ -484,6 +793,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the requires shipping of this shopping item
 	*/
+	@Override
 	public boolean getRequiresShipping() {
 		return _shoppingItem.getRequiresShipping();
 	}
@@ -493,6 +803,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return <code>true</code> if this shopping item is requires shipping; <code>false</code> otherwise
 	*/
+	@Override
 	public boolean isRequiresShipping() {
 		return _shoppingItem.isRequiresShipping();
 	}
@@ -502,6 +813,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param requiresShipping the requires shipping of this shopping item
 	*/
+	@Override
 	public void setRequiresShipping(boolean requiresShipping) {
 		_shoppingItem.setRequiresShipping(requiresShipping);
 	}
@@ -511,6 +823,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the stock quantity of this shopping item
 	*/
+	@Override
 	public int getStockQuantity() {
 		return _shoppingItem.getStockQuantity();
 	}
@@ -520,6 +833,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param stockQuantity the stock quantity of this shopping item
 	*/
+	@Override
 	public void setStockQuantity(int stockQuantity) {
 		_shoppingItem.setStockQuantity(stockQuantity);
 	}
@@ -529,6 +843,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the featured of this shopping item
 	*/
+	@Override
 	public boolean getFeatured() {
 		return _shoppingItem.getFeatured();
 	}
@@ -538,6 +853,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return <code>true</code> if this shopping item is featured; <code>false</code> otherwise
 	*/
+	@Override
 	public boolean isFeatured() {
 		return _shoppingItem.isFeatured();
 	}
@@ -547,6 +863,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param featured the featured of this shopping item
 	*/
+	@Override
 	public void setFeatured(boolean featured) {
 		_shoppingItem.setFeatured(featured);
 	}
@@ -556,6 +873,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the sale of this shopping item
 	*/
+	@Override
 	public boolean getSale() {
 		return _shoppingItem.getSale();
 	}
@@ -565,6 +883,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return <code>true</code> if this shopping item is sale; <code>false</code> otherwise
 	*/
+	@Override
 	public boolean isSale() {
 		return _shoppingItem.isSale();
 	}
@@ -574,6 +893,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param sale the sale of this shopping item
 	*/
+	@Override
 	public void setSale(boolean sale) {
 		_shoppingItem.setSale(sale);
 	}
@@ -583,6 +903,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the small image of this shopping item
 	*/
+	@Override
 	public boolean getSmallImage() {
 		return _shoppingItem.getSmallImage();
 	}
@@ -592,6 +913,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return <code>true</code> if this shopping item is small image; <code>false</code> otherwise
 	*/
+	@Override
 	public boolean isSmallImage() {
 		return _shoppingItem.isSmallImage();
 	}
@@ -601,6 +923,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param smallImage the small image of this shopping item
 	*/
+	@Override
 	public void setSmallImage(boolean smallImage) {
 		_shoppingItem.setSmallImage(smallImage);
 	}
@@ -610,6 +933,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the small image ID of this shopping item
 	*/
+	@Override
 	public long getSmallImageId() {
 		return _shoppingItem.getSmallImageId();
 	}
@@ -619,6 +943,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param smallImageId the small image ID of this shopping item
 	*/
+	@Override
 	public void setSmallImageId(long smallImageId) {
 		_shoppingItem.setSmallImageId(smallImageId);
 	}
@@ -628,6 +953,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the small image u r l of this shopping item
 	*/
+	@Override
 	public java.lang.String getSmallImageURL() {
 		return _shoppingItem.getSmallImageURL();
 	}
@@ -637,6 +963,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param smallImageURL the small image u r l of this shopping item
 	*/
+	@Override
 	public void setSmallImageURL(java.lang.String smallImageURL) {
 		_shoppingItem.setSmallImageURL(smallImageURL);
 	}
@@ -646,6 +973,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the medium image of this shopping item
 	*/
+	@Override
 	public boolean getMediumImage() {
 		return _shoppingItem.getMediumImage();
 	}
@@ -655,6 +983,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return <code>true</code> if this shopping item is medium image; <code>false</code> otherwise
 	*/
+	@Override
 	public boolean isMediumImage() {
 		return _shoppingItem.isMediumImage();
 	}
@@ -664,6 +993,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param mediumImage the medium image of this shopping item
 	*/
+	@Override
 	public void setMediumImage(boolean mediumImage) {
 		_shoppingItem.setMediumImage(mediumImage);
 	}
@@ -673,6 +1003,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the medium image ID of this shopping item
 	*/
+	@Override
 	public long getMediumImageId() {
 		return _shoppingItem.getMediumImageId();
 	}
@@ -682,6 +1013,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param mediumImageId the medium image ID of this shopping item
 	*/
+	@Override
 	public void setMediumImageId(long mediumImageId) {
 		_shoppingItem.setMediumImageId(mediumImageId);
 	}
@@ -691,6 +1023,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the medium image u r l of this shopping item
 	*/
+	@Override
 	public java.lang.String getMediumImageURL() {
 		return _shoppingItem.getMediumImageURL();
 	}
@@ -700,6 +1033,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param mediumImageURL the medium image u r l of this shopping item
 	*/
+	@Override
 	public void setMediumImageURL(java.lang.String mediumImageURL) {
 		_shoppingItem.setMediumImageURL(mediumImageURL);
 	}
@@ -709,6 +1043,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the large image of this shopping item
 	*/
+	@Override
 	public boolean getLargeImage() {
 		return _shoppingItem.getLargeImage();
 	}
@@ -718,6 +1053,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return <code>true</code> if this shopping item is large image; <code>false</code> otherwise
 	*/
+	@Override
 	public boolean isLargeImage() {
 		return _shoppingItem.isLargeImage();
 	}
@@ -727,6 +1063,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param largeImage the large image of this shopping item
 	*/
+	@Override
 	public void setLargeImage(boolean largeImage) {
 		_shoppingItem.setLargeImage(largeImage);
 	}
@@ -736,6 +1073,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the large image ID of this shopping item
 	*/
+	@Override
 	public long getLargeImageId() {
 		return _shoppingItem.getLargeImageId();
 	}
@@ -745,6 +1083,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param largeImageId the large image ID of this shopping item
 	*/
+	@Override
 	public void setLargeImageId(long largeImageId) {
 		_shoppingItem.setLargeImageId(largeImageId);
 	}
@@ -754,6 +1093,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @return the large image u r l of this shopping item
 	*/
+	@Override
 	public java.lang.String getLargeImageURL() {
 		return _shoppingItem.getLargeImageURL();
 	}
@@ -763,46 +1103,64 @@ public class ShoppingItemWrapper implements ShoppingItem {
 	*
 	* @param largeImageURL the large image u r l of this shopping item
 	*/
+	@Override
 	public void setLargeImageURL(java.lang.String largeImageURL) {
 		_shoppingItem.setLargeImageURL(largeImageURL);
 	}
 
+	@Override
 	public boolean isNew() {
 		return _shoppingItem.isNew();
 	}
 
+	@Override
 	public void setNew(boolean n) {
 		_shoppingItem.setNew(n);
 	}
 
+	@Override
 	public boolean isCachedModel() {
 		return _shoppingItem.isCachedModel();
 	}
 
+	@Override
 	public void setCachedModel(boolean cachedModel) {
 		_shoppingItem.setCachedModel(cachedModel);
 	}
 
+	@Override
 	public boolean isEscapedModel() {
 		return _shoppingItem.isEscapedModel();
 	}
 
-	public void setEscapedModel(boolean escapedModel) {
-		_shoppingItem.setEscapedModel(escapedModel);
-	}
-
+	@Override
 	public java.io.Serializable getPrimaryKeyObj() {
 		return _shoppingItem.getPrimaryKeyObj();
 	}
 
+	@Override
 	public void setPrimaryKeyObj(java.io.Serializable primaryKeyObj) {
 		_shoppingItem.setPrimaryKeyObj(primaryKeyObj);
 	}
 
+	@Override
 	public com.liferay.portlet.expando.model.ExpandoBridge getExpandoBridge() {
 		return _shoppingItem.getExpandoBridge();
 	}
 
+	@Override
+	public void setExpandoBridgeAttributes(
+		com.liferay.portal.model.BaseModel<?> baseModel) {
+		_shoppingItem.setExpandoBridgeAttributes(baseModel);
+	}
+
+	@Override
+	public void setExpandoBridgeAttributes(
+		com.liferay.portlet.expando.model.ExpandoBridge expandoBridge) {
+		_shoppingItem.setExpandoBridgeAttributes(expandoBridge);
+	}
+
+	@Override
 	public void setExpandoBridgeAttributes(
 		com.liferay.portal.service.ServiceContext serviceContext) {
 		_shoppingItem.setExpandoBridgeAttributes(serviceContext);
@@ -813,6 +1171,7 @@ public class ShoppingItemWrapper implements ShoppingItem {
 		return new ShoppingItemWrapper((ShoppingItem)_shoppingItem.clone());
 	}
 
+	@Override
 	public int compareTo(
 		com.liferay.portlet.shopping.model.ShoppingItem shoppingItem) {
 		return _shoppingItem.compareTo(shoppingItem);
@@ -823,12 +1182,19 @@ public class ShoppingItemWrapper implements ShoppingItem {
 		return _shoppingItem.hashCode();
 	}
 
+	@Override
 	public com.liferay.portal.model.CacheModel<com.liferay.portlet.shopping.model.ShoppingItem> toCacheModel() {
 		return _shoppingItem.toCacheModel();
 	}
 
+	@Override
 	public com.liferay.portlet.shopping.model.ShoppingItem toEscapedModel() {
 		return new ShoppingItemWrapper(_shoppingItem.toEscapedModel());
+	}
+
+	@Override
+	public com.liferay.portlet.shopping.model.ShoppingItem toUnescapedModel() {
+		return new ShoppingItemWrapper(_shoppingItem.toUnescapedModel());
 	}
 
 	@Override
@@ -836,38 +1202,72 @@ public class ShoppingItemWrapper implements ShoppingItem {
 		return _shoppingItem.toString();
 	}
 
+	@Override
 	public java.lang.String toXmlString() {
 		return _shoppingItem.toXmlString();
 	}
 
+	@Override
 	public void persist()
 		throws com.liferay.portal.kernel.exception.SystemException {
 		_shoppingItem.persist();
 	}
 
+	@Override
 	public com.liferay.portlet.shopping.model.ShoppingCategory getCategory() {
 		return _shoppingItem.getCategory();
 	}
 
+	@Override
 	public java.lang.String[] getFieldsQuantitiesArray() {
 		return _shoppingItem.getFieldsQuantitiesArray();
 	}
 
+	@Override
 	public java.util.List<com.liferay.portlet.shopping.model.ShoppingItemPrice> getItemPrices()
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return _shoppingItem.getItemPrices();
 	}
 
+	@Override
 	public void setFieldsQuantitiesArray(
 		java.lang.String[] fieldsQuantitiesArray) {
 		_shoppingItem.setFieldsQuantitiesArray(fieldsQuantitiesArray);
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof ShoppingItemWrapper)) {
+			return false;
+		}
+
+		ShoppingItemWrapper shoppingItemWrapper = (ShoppingItemWrapper)obj;
+
+		if (Validator.equals(_shoppingItem, shoppingItemWrapper._shoppingItem)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedModel}
+	 */
 	public ShoppingItem getWrappedShoppingItem() {
 		return _shoppingItem;
 	}
 
+	@Override
+	public ShoppingItem getWrappedModel() {
+		return _shoppingItem;
+	}
+
+	@Override
 	public void resetOriginalValues() {
 		_shoppingItem.resetOriginalValues();
 	}

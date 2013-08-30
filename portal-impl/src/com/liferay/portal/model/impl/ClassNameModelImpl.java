@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,8 +17,10 @@ package com.liferay.portal.model.impl;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.ClassName;
 import com.liferay.portal.model.ClassNameModel;
@@ -31,12 +33,12 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base model implementation for the ClassName service. Represents a row in the &quot;ClassName_&quot; database table, with each column mapped to a property of this class.
@@ -66,6 +68,8 @@ public class ClassNameModelImpl extends BaseModelImpl<ClassName>
 		};
 	public static final String TABLE_SQL_CREATE = "create table ClassName_ (classNameId LONG not null primary key,value VARCHAR(200) null)";
 	public static final String TABLE_SQL_DROP = "drop table ClassName_";
+	public static final String ORDER_BY_JPQL = " ORDER BY className.classNameId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY ClassName_.classNameId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -75,6 +79,11 @@ public class ClassNameModelImpl extends BaseModelImpl<ClassName>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.ClassName"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.ClassName"),
+			true);
+	public static long VALUE_COLUMN_BITMASK = 1L;
+	public static long CLASSNAMEID_COLUMN_BITMASK = 2L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -83,6 +92,10 @@ public class ClassNameModelImpl extends BaseModelImpl<ClassName>
 	 * @return the normal model instance
 	 */
 	public static ClassName toModel(ClassNameSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		ClassName model = new ClassNameImpl();
 
 		model.setClassNameId(soapModel.getClassNameId());
@@ -98,6 +111,10 @@ public class ClassNameModelImpl extends BaseModelImpl<ClassName>
 	 * @return the normal model instances
 	 */
 	public static List<ClassName> toModels(ClassNameSoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<ClassName> models = new ArrayList<ClassName>(soapModels.length);
 
 		for (ClassNameSoap soapModel : soapModels) {
@@ -107,36 +124,68 @@ public class ClassNameModelImpl extends BaseModelImpl<ClassName>
 		return models;
 	}
 
-	public Class<?> getModelClass() {
-		return ClassName.class;
-	}
-
-	public String getModelClassName() {
-		return ClassName.class.getName();
-	}
-
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.ClassName"));
 
 	public ClassNameModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _classNameId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setClassNameId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_classNameId);
+		return _classNameId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return ClassName.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return ClassName.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("classNameId", getClassNameId());
+		attributes.put("value", getValue());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long classNameId = (Long)attributes.get("classNameId");
+
+		if (classNameId != null) {
+			setClassNameId(classNameId);
+		}
+
+		String value = (String)attributes.get("value");
+
+		if (value != null) {
+			setValue(value);
+		}
+	}
+
+	@Override
 	public String getClassName() {
 		if (getClassNameId() <= 0) {
 			return StringPool.BLANK;
@@ -145,16 +194,30 @@ public class ClassNameModelImpl extends BaseModelImpl<ClassName>
 		return PortalUtil.getClassName(getClassNameId());
 	}
 
+	@Override
+	public void setClassName(String className) {
+		long classNameId = 0;
+
+		if (Validator.isNotNull(className)) {
+			classNameId = PortalUtil.getClassNameId(className);
+		}
+
+		setClassNameId(classNameId);
+	}
+
 	@JSON
+	@Override
 	public long getClassNameId() {
 		return _classNameId;
 	}
 
+	@Override
 	public void setClassNameId(long classNameId) {
 		_classNameId = classNameId;
 	}
 
 	@JSON
+	@Override
 	public String getValue() {
 		if (_value == null) {
 			return StringPool.BLANK;
@@ -164,7 +227,10 @@ public class ClassNameModelImpl extends BaseModelImpl<ClassName>
 		}
 	}
 
+	@Override
 	public void setValue(String value) {
+		_columnBitmask |= VALUE_COLUMN_BITMASK;
+
 		if (_originalValue == null) {
 			_originalValue = _value;
 		}
@@ -176,35 +242,31 @@ public class ClassNameModelImpl extends BaseModelImpl<ClassName>
 		return GetterUtil.getString(_originalValue);
 	}
 
-	@Override
-	public ClassName toEscapedModel() {
-		if (isEscapedModel()) {
-			return (ClassName)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (ClassName)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(0,
-					ClassName.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(0,
+			ClassName.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public ClassName toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (ClassName)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -219,6 +281,7 @@ public class ClassNameModelImpl extends BaseModelImpl<ClassName>
 		return classNameImpl;
 	}
 
+	@Override
 	public int compareTo(ClassName className) {
 		long primaryKey = className.getPrimaryKey();
 
@@ -235,18 +298,15 @@ public class ClassNameModelImpl extends BaseModelImpl<ClassName>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof ClassName)) {
 			return false;
 		}
 
-		ClassName className = null;
-
-		try {
-			className = (ClassName)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		ClassName className = (ClassName)obj;
 
 		long primaryKey = className.getPrimaryKey();
 
@@ -268,6 +328,8 @@ public class ClassNameModelImpl extends BaseModelImpl<ClassName>
 		ClassNameModelImpl classNameModelImpl = this;
 
 		classNameModelImpl._originalValue = classNameModelImpl._value;
+
+		classNameModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -300,6 +362,7 @@ public class ClassNameModelImpl extends BaseModelImpl<ClassName>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(10);
 
@@ -322,12 +385,12 @@ public class ClassNameModelImpl extends BaseModelImpl<ClassName>
 	}
 
 	private static ClassLoader _classLoader = ClassName.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			ClassName.class
 		};
 	private long _classNameId;
 	private String _value;
 	private String _originalValue;
-	private transient ExpandoBridge _expandoBridge;
-	private ClassName _escapedModelProxy;
+	private long _columnBitmask;
+	private ClassName _escapedModel;
 }

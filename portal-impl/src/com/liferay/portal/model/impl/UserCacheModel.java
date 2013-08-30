@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.User;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -28,10 +33,10 @@ import java.util.Date;
  * @see User
  * @generated
  */
-public class UserCacheModel implements CacheModel<User> {
+public class UserCacheModel implements CacheModel<User>, Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(79);
+		StringBundler sb = new StringBundler(81);
 
 		sb.append("{uuid=");
 		sb.append(uuid);
@@ -69,6 +74,8 @@ public class UserCacheModel implements CacheModel<User> {
 		sb.append(emailAddress);
 		sb.append(", facebookId=");
 		sb.append(facebookId);
+		sb.append(", ldapServerId=");
+		sb.append(ldapServerId);
 		sb.append(", openId=");
 		sb.append(openId);
 		sb.append(", portraitId=");
@@ -116,6 +123,7 @@ public class UserCacheModel implements CacheModel<User> {
 		return sb.toString();
 	}
 
+	@Override
 	public User toEntityModel() {
 		UserImpl userImpl = new UserImpl();
 
@@ -201,6 +209,7 @@ public class UserCacheModel implements CacheModel<User> {
 		}
 
 		userImpl.setFacebookId(facebookId);
+		userImpl.setLdapServerId(ldapServerId);
 
 		if (openId == null) {
 			userImpl.setOpenId(StringPool.BLANK);
@@ -321,6 +330,210 @@ public class UserCacheModel implements CacheModel<User> {
 		return userImpl;
 	}
 
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		uuid = objectInput.readUTF();
+		userId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		createDate = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
+		defaultUser = objectInput.readBoolean();
+		contactId = objectInput.readLong();
+		password = objectInput.readUTF();
+		passwordEncrypted = objectInput.readBoolean();
+		passwordReset = objectInput.readBoolean();
+		passwordModifiedDate = objectInput.readLong();
+		digest = objectInput.readUTF();
+		reminderQueryQuestion = objectInput.readUTF();
+		reminderQueryAnswer = objectInput.readUTF();
+		graceLoginCount = objectInput.readInt();
+		screenName = objectInput.readUTF();
+		emailAddress = objectInput.readUTF();
+		facebookId = objectInput.readLong();
+		ldapServerId = objectInput.readLong();
+		openId = objectInput.readUTF();
+		portraitId = objectInput.readLong();
+		languageId = objectInput.readUTF();
+		timeZoneId = objectInput.readUTF();
+		greeting = objectInput.readUTF();
+		comments = objectInput.readUTF();
+		firstName = objectInput.readUTF();
+		middleName = objectInput.readUTF();
+		lastName = objectInput.readUTF();
+		jobTitle = objectInput.readUTF();
+		loginDate = objectInput.readLong();
+		loginIP = objectInput.readUTF();
+		lastLoginDate = objectInput.readLong();
+		lastLoginIP = objectInput.readUTF();
+		lastFailedLoginDate = objectInput.readLong();
+		failedLoginAttempts = objectInput.readInt();
+		lockout = objectInput.readBoolean();
+		lockoutDate = objectInput.readLong();
+		agreedToTermsOfUse = objectInput.readBoolean();
+		emailAddressVerified = objectInput.readBoolean();
+		status = objectInput.readInt();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		if (uuid == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
+
+		objectOutput.writeLong(userId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(modifiedDate);
+		objectOutput.writeBoolean(defaultUser);
+		objectOutput.writeLong(contactId);
+
+		if (password == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(password);
+		}
+
+		objectOutput.writeBoolean(passwordEncrypted);
+		objectOutput.writeBoolean(passwordReset);
+		objectOutput.writeLong(passwordModifiedDate);
+
+		if (digest == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(digest);
+		}
+
+		if (reminderQueryQuestion == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(reminderQueryQuestion);
+		}
+
+		if (reminderQueryAnswer == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(reminderQueryAnswer);
+		}
+
+		objectOutput.writeInt(graceLoginCount);
+
+		if (screenName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(screenName);
+		}
+
+		if (emailAddress == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(emailAddress);
+		}
+
+		objectOutput.writeLong(facebookId);
+		objectOutput.writeLong(ldapServerId);
+
+		if (openId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(openId);
+		}
+
+		objectOutput.writeLong(portraitId);
+
+		if (languageId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(languageId);
+		}
+
+		if (timeZoneId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(timeZoneId);
+		}
+
+		if (greeting == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(greeting);
+		}
+
+		if (comments == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(comments);
+		}
+
+		if (firstName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(firstName);
+		}
+
+		if (middleName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(middleName);
+		}
+
+		if (lastName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(lastName);
+		}
+
+		if (jobTitle == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(jobTitle);
+		}
+
+		objectOutput.writeLong(loginDate);
+
+		if (loginIP == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(loginIP);
+		}
+
+		objectOutput.writeLong(lastLoginDate);
+
+		if (lastLoginIP == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(lastLoginIP);
+		}
+
+		objectOutput.writeLong(lastFailedLoginDate);
+		objectOutput.writeInt(failedLoginAttempts);
+		objectOutput.writeBoolean(lockout);
+		objectOutput.writeLong(lockoutDate);
+		objectOutput.writeBoolean(agreedToTermsOfUse);
+		objectOutput.writeBoolean(emailAddressVerified);
+		objectOutput.writeInt(status);
+	}
+
 	public String uuid;
 	public long userId;
 	public long companyId;
@@ -339,6 +552,7 @@ public class UserCacheModel implements CacheModel<User> {
 	public String screenName;
 	public String emailAddress;
 	public long facebookId;
+	public long ldapServerId;
 	public String openId;
 	public long portraitId;
 	public String languageId;

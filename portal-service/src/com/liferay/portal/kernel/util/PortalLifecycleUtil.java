@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,6 +15,7 @@
 package com.liferay.portal.kernel.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,7 +26,9 @@ public class PortalLifecycleUtil {
 	public static void flushDestroys() {
 		_inFlushDestroys = true;
 
-		for (PortalLifecycle portalLifecycle : _portalLifecyclesDestroy) {
+		for (int i = _portalLifecyclesDestroy.size() - 1; i >= 0; i--) {
+			PortalLifecycle portalLifecycle = _portalLifecyclesDestroy.get(i);
+
 			portalLifecycle.portalDestroy();
 		}
 
@@ -78,10 +81,24 @@ public class PortalLifecycleUtil {
 		}
 	}
 
+	public static void reset() {
+		_inFlushDestroys = false;
+
+		if (_portalLifecyclesInit == null) {
+			_portalLifecyclesInit = Collections.synchronizedList(
+				new ArrayList<PortalLifecycle>());
+		}
+		else {
+			_portalLifecyclesInit.clear();
+		}
+
+		_portalLifecyclesDestroy.clear();
+	}
+
 	private static boolean _inFlushDestroys;
 	private static List<PortalLifecycle> _portalLifecyclesDestroy =
-		new ArrayList<PortalLifecycle>();
+		Collections.synchronizedList(new ArrayList<PortalLifecycle>());
 	private static List<PortalLifecycle> _portalLifecyclesInit =
-		new ArrayList<PortalLifecycle>();
+		Collections.synchronizedList(new ArrayList<PortalLifecycle>());
 
 }

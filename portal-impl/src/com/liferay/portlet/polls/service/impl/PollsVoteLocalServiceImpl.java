@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -31,9 +31,11 @@ import java.util.List;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Mate Thurzo
  */
 public class PollsVoteLocalServiceImpl extends PollsVoteLocalServiceBaseImpl {
 
+	@Override
 	public PollsVote addVote(
 			long userId, long questionId, long choiceId,
 			ServiceContext serviceContext)
@@ -60,7 +62,7 @@ public class PollsVoteLocalServiceImpl extends PollsVoteLocalServiceBaseImpl {
 
 		question.setLastVoteDate(serviceContext.getCreateDate(now));
 
-		pollsQuestionPersistence.update(question, false);
+		pollsQuestionPersistence.update(question);
 
 		// Vote
 
@@ -70,47 +72,63 @@ public class PollsVoteLocalServiceImpl extends PollsVoteLocalServiceBaseImpl {
 			throw new DuplicateVoteException();
 		}
 		else {
-			User user = userPersistence.findByPrimaryKey(userId);
+			String userName = null;
+
+			User user = userPersistence.fetchByPrimaryKey(userId);
+
+			if (user != null) {
+				userName = user.getFullName();
+			}
+			else {
+				userName = serviceContext.translate("anonymous");
+			}
 
 			long voteId = counterLocalService.increment();
 
 			vote = pollsVotePersistence.create(voteId);
 
-			vote.setCompanyId(user.getCompanyId());
-			vote.setUserId(user.getUserId());
-			vote.setUserName(user.getFullName());
+			vote.setUuid(serviceContext.getUuid());
+			vote.setGroupId(serviceContext.getScopeGroupId());
+			vote.setCompanyId(serviceContext.getCompanyId());
+			vote.setUserId(userId);
+			vote.setUserName(userName);
 			vote.setCreateDate(serviceContext.getCreateDate(now));
 			vote.setModifiedDate(serviceContext.getModifiedDate(now));
 			vote.setQuestionId(questionId);
 			vote.setChoiceId(choiceId);
 			vote.setVoteDate(serviceContext.getCreateDate(now));
 
-			pollsVotePersistence.update(vote, false);
+			pollsVotePersistence.update(vote);
 		}
 
 		return vote;
 	}
 
+	@Override
 	public List<PollsVote> getChoiceVotes(long choiceId, int start, int end)
 		throws SystemException {
 
-		return pollsVotePersistence.findByChoiceId(choiceId,  start, end);
+		return pollsVotePersistence.findByChoiceId(choiceId, start, end);
 	}
 
+	@Override
 	public int getChoiceVotesCount(long choiceId) throws SystemException {
 		return pollsVotePersistence.countByChoiceId(choiceId);
 	}
 
+	@Override
 	public List<PollsVote> getQuestionVotes(long questionId, int start, int end)
 		throws SystemException {
 
 		return pollsVotePersistence.findByQuestionId(questionId, start, end);
 	}
 
+	@Override
 	public int getQuestionVotesCount(long questionId) throws SystemException {
 		return pollsVotePersistence.countByQuestionId(questionId);
 	}
 
+	@Override
 	public PollsVote getVote(long questionId, long userId)
 		throws PortalException, SystemException {
 

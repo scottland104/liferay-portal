@@ -1,54 +1,25 @@
-<#setting number_format = "0">
+<#assign groupIds = dataFactory.getNewUserGroupIds(groupModel.groupId)>
+<#assign roleIds = [dataFactory.administratorRoleModel.roleId, dataFactory.powerUserRoleModel.roleId, dataFactory.userRoleModel.roleId]>
 
-<#assign groupIds = dataFactory.addUserToGroupIds(group.groupId)>
-<#assign organizationIds = []>
-<#assign roleIds = [dataFactory.administratorRole.roleId]>
+<#assign userModels = dataFactory.newUserModels()>
 
-<#assign firstNames = dataFactory.userNames?first>
-<#assign lastNames = dataFactory.userNames?last>
+<#list userModels as userModel>
+	<#assign userGroupModel = dataFactory.newGroupModel(userModel)>
 
-<#assign userCounter = dataFactory.newInteger()>
+	<#assign layoutModel = dataFactory.newLayoutModel(userGroupModel.groupId, "home", "", "33,")>
 
-<#list lastNames as lastName>
-	<#list firstNames as firstName>
-		<#assign userCounterIncrement = userCounter.increment()>
+	<@insertLayout
+		_layoutModel = layoutModel
+	/>
 
-		<#assign contact = dataFactory.addContact(firstName, lastName)>
-		<#assign user = dataFactory.addUser(false, "test" + userScreenNameIncrementer.get())>
+	<@insertGroup
+		_groupModel = userGroupModel
+		_publicPageCount = 1
+	/>
 
-		<#assign userGroup = dataFactory.addGroup(counter.get(), dataFactory.userClassName.classNameId, user.userId, stringUtil.valueOf(user.userId), "/" + user.screenName, false)>
-
-		<#include "users_user_private_layouts.ftl">
-		<#include "users_user_public_layouts.ftl">
-
-		${sampleSQLBuilder.insertUser(contact, userGroup, groupIds, organizationIds, privateLayouts, publicLayouts, roleIds, user)}
-
-		<#assign blogsStatsUser = dataFactory.addBlogsStatsUser(groupId, user.userId)>
-
-		${sampleSQLBuilder.insertBlogsStatsUser(blogsStatsUser)}
-
-		<#assign mbStatsUser = dataFactory.addMBStatsUser(groupId, user.userId)>
-
-		${sampleSQLBuilder.insertMBStatsUser(mbStatsUser)}
-
-		${usersCsvWriter.write(user.getScreenName() + "," + userGroup.groupId + ",")}
-
-		<#if (userCounter.value < maxUserCount)>
-			${usersCsvWriter.write("\n")}
-		</#if>
-
-		<#if (lastName_index = 0) && (firstName_index = 0)>
-			<#assign firstUserId = user.userId>
-		</#if>
-
-		<#if (userCounter.value >= maxUserCount)>
-			${usersCsvWriter.write("\n")}
-
-			<#break>
-		</#if>
-	</#list>
-
-	<#if (userCounter.value >= maxUserCount)>
-		<#break>
-	</#if>
+	<@insertUser
+		_groupIds = groupIds
+		_roleIds = roleIds
+		_userModel = userModel
+	/>
 </#list>

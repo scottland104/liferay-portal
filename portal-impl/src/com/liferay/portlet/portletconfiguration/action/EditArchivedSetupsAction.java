@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portlet.portletconfiguration.action;
 
 import com.liferay.portal.NoSuchPortletItemException;
 import com.liferay.portal.PortletItemNameException;
+import com.liferay.portal.kernel.portlet.LiferayPortletConfig;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.util.Constants;
@@ -24,10 +25,10 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.Portlet;
 import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.service.PortletPreferencesServiceUtil;
+import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portal.util.WebKeys;
-import com.liferay.portlet.PortletPreferencesFactoryUtil;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -44,18 +45,21 @@ import org.apache.struts.action.ActionMapping;
  * @author Jorge Ferrer
  * @author Raymond Augé
  */
-public class EditArchivedSetupsAction extends EditConfigurationAction {
+public class EditArchivedSetupsAction extends PortletAction {
 
 	@Override
 	public void processAction(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ActionRequest actionRequest, ActionResponse actionResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ActionRequest actionRequest,
+			ActionResponse actionResponse)
 		throws Exception {
+
+		actionRequest = ActionUtil.getWrappedActionRequest(actionRequest, null);
 
 		Portlet portlet = null;
 
 		try {
-			portlet = getPortlet(actionRequest);
+			portlet = ActionUtil.getPortlet(actionRequest);
 		}
 		catch (PrincipalException pe) {
 			SessionErrors.add(
@@ -81,12 +85,12 @@ public class EditArchivedSetupsAction extends EditConfigurationAction {
 			if (e instanceof NoSuchPortletItemException ||
 				e instanceof PortletItemNameException) {
 
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				sendRedirect(actionRequest, actionResponse);
 			}
 			else if (e instanceof PrincipalException) {
-				SessionErrors.add(actionRequest, e.getClass().getName());
+				SessionErrors.add(actionRequest, e.getClass());
 
 				setForward(
 					actionRequest, "portlet.portlet_configuration.error");
@@ -96,52 +100,72 @@ public class EditArchivedSetupsAction extends EditConfigurationAction {
 			}
 		}
 
-		if (SessionErrors.isEmpty(actionRequest)) {
-			SessionMessages.add(
-				actionRequest,
-				portletConfig.getPortletName() + ".doConfigure");
+		if (!SessionErrors.isEmpty(actionRequest)) {
+			return;
+		}
 
-			String redirect = PortalUtil.escapeRedirect(
-				ParamUtil.getString(actionRequest, "redirect"));
+		LiferayPortletConfig liferayPortletConfig =
+			(LiferayPortletConfig)portletConfig;
 
-			if (Validator.isNotNull(redirect)) {
-				actionResponse.sendRedirect(redirect);
-			}
+		String portletResource = ParamUtil.getString(
+			actionRequest, "portletResource");
+
+		SessionMessages.add(
+			actionRequest,
+			liferayPortletConfig.getPortletId() +
+				SessionMessages.KEY_SUFFIX_REFRESH_PORTLET,
+			portletResource);
+
+		SessionMessages.add(
+			actionRequest,
+			liferayPortletConfig.getPortletId() +
+				SessionMessages.KEY_SUFFIX_UPDATED_CONFIGURATION);
+
+		String redirect = PortalUtil.escapeRedirect(
+			ParamUtil.getString(actionRequest, "redirect"));
+
+		if (Validator.isNotNull(redirect)) {
+			actionResponse.sendRedirect(redirect);
 		}
 	}
 
 	@Override
 	public ActionForward render(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			RenderRequest renderRequest, RenderResponse renderResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, RenderRequest renderRequest,
+			RenderResponse renderResponse)
 		throws Exception {
+
+		renderRequest = ActionUtil.getWrappedRenderRequest(renderRequest, null);
 
 		Portlet portlet = null;
 
 		try {
-			portlet = getPortlet(renderRequest);
+			portlet = ActionUtil.getPortlet(renderRequest);
 		}
 		catch (PrincipalException pe) {
 			SessionErrors.add(
 				renderRequest, PrincipalException.class.getName());
 
-			return mapping.findForward("portlet.portlet_configuration.error");
+			return actionMapping.findForward(
+				"portlet.portlet_configuration.error");
 		}
 
-		renderResponse.setTitle(getTitle(portlet, renderRequest));
+		renderResponse.setTitle(ActionUtil.getTitle(portlet, renderRequest));
 
-		return mapping.findForward(getForward(
-			renderRequest,
-			"portlet.portlet_configuration.edit_archived_setups"));
+		return actionMapping.findForward(
+			getForward(
+				renderRequest,
+				"portlet.portlet_configuration.edit_archived_setups"));
 	}
 
-	private void deleteSetup(ActionRequest actionRequest) throws Exception {
+	protected void deleteSetup(ActionRequest actionRequest) throws Exception {
 		long portletItemId = ParamUtil.getLong(actionRequest, "portletItemId");
 
 		PortletPreferencesServiceUtil.deleteArchivedPreferences(portletItemId);
 	}
 
-	private void restoreSetup(ActionRequest actionRequest, Portlet portlet)
+	protected void restoreSetup(ActionRequest actionRequest, Portlet portlet)
 		throws Exception {
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
@@ -149,13 +173,11 @@ public class EditArchivedSetupsAction extends EditConfigurationAction {
 
 		String name = ParamUtil.getString(actionRequest, "name");
 
-		PortletPreferences setup =
-			PortletPreferencesFactoryUtil.getPortletSetup(
-				actionRequest, portlet.getPortletId());
+		PortletPreferences portletPreferences = actionRequest.getPreferences();
 
 		PortletPreferencesServiceUtil.restoreArchivedPreferences(
 			themeDisplay.getScopeGroupId(), name, themeDisplay.getLayout(),
-			portlet.getRootPortletId(), setup);
+			portlet.getRootPortletId(), portletPreferences);
 	}
 
 	protected void updateSetup(ActionRequest actionRequest, Portlet portlet)
@@ -166,13 +188,11 @@ public class EditArchivedSetupsAction extends EditConfigurationAction {
 
 		String name = ParamUtil.getString(actionRequest, "name");
 
-		PortletPreferences setup =
-			PortletPreferencesFactoryUtil.getPortletSetup(
-				actionRequest, portlet.getPortletId());
+		PortletPreferences portletPreferences = actionRequest.getPreferences();
 
 		PortletPreferencesServiceUtil.updateArchivePreferences(
-			themeDisplay.getUserId(), themeDisplay.getScopeGroupId(),
-			name, portlet.getRootPortletId(), setup);
+			themeDisplay.getUserId(), themeDisplay.getScopeGroupId(), name,
+			portlet.getRootPortletId(), portletPreferences);
 	}
 
 }

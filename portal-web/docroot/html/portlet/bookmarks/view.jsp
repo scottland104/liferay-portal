@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,15 +17,19 @@
 <%@ include file="/html/portlet/bookmarks/init.jsp" %>
 
 <%
-String topLink = ParamUtil.getString(request, "topLink", "bookmarks-home");
+String topLink = ParamUtil.getString(request, "topLink", "home");
 
 BookmarksFolder folder = (BookmarksFolder)request.getAttribute(WebKeys.BOOKMARKS_FOLDER);
 
-long defaultFolderId = GetterUtil.getLong(preferences.getValue("rootFolderId", StringPool.BLANK), BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID);
+long folderId = BeanParamUtil.getLong(folder, request, "folderId", rootFolderId);
 
-long folderId = BeanParamUtil.getLong(folder, request, "folderId", defaultFolderId);
+boolean defaultFolderView = false;
 
-if ((folder == null) && (defaultFolderId != BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID)) {
+if ((folder == null) && (folderId != BookmarksFolderConstants.DEFAULT_PARENT_FOLDER_ID)) {
+	defaultFolderView = true;
+}
+
+if (defaultFolderView) {
 	try {
 		folder = BookmarksFolderServiceUtil.getFolder(folderId);
 	}
@@ -37,27 +41,10 @@ if ((folder == null) && (defaultFolderId != BookmarksFolderConstants.DEFAULT_PAR
 int foldersCount = BookmarksFolderServiceUtil.getFoldersCount(scopeGroupId, folderId);
 int entriesCount = BookmarksEntryServiceUtil.getEntriesCount(scopeGroupId, folderId);
 
-long categoryId = ParamUtil.getLong(request, "categoryId");
-String tagName = ParamUtil.getString(request, "tag");
+long assetCategoryId = ParamUtil.getLong(request, "categoryId");
+String assetTagName = ParamUtil.getString(request, "tag");
 
-String categoryName = null;
-String vocabularyName = null;
-
-if (categoryId != 0) {
-	AssetCategory assetCategory = AssetCategoryLocalServiceUtil.getAssetCategory(categoryId);
-
-	assetCategory = assetCategory.toEscapedModel();
-
-	categoryName = assetCategory.getName();
-
-	AssetVocabulary assetVocabulary = AssetVocabularyLocalServiceUtil.getAssetVocabulary(assetCategory.getVocabularyId());
-
-	assetVocabulary = assetVocabulary.toEscapedModel();
-
-	vocabularyName = assetVocabulary.getName();
-}
-
-boolean useAssetEntryQuery = (categoryId > 0) || Validator.isNotNull(tagName);
+boolean useAssetEntryQuery = (assetCategoryId > 0) || Validator.isNotNull(assetTagName);
 
 PortletURL portletURL = renderResponse.createRenderURL();
 
@@ -72,45 +59,64 @@ request.setAttribute("view.jsp-folderId", String.valueOf(folderId));
 request.setAttribute("view.jsp-viewFolder", Boolean.TRUE.toString());
 
 request.setAttribute("view.jsp-useAssetEntryQuery", String.valueOf(useAssetEntryQuery));
+
+if (folder != null) {
+	BookmarksUtil.addPortletBreadcrumbEntries(folder, request, renderResponse);
+}
 %>
+
+<portlet:actionURL var="undoTrashURL">
+	<portlet:param name="struts_action" value="/bookmarks/edit_entry" />
+	<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.RESTORE %>" />
+</portlet:actionURL>
+
+<liferay-ui:trash-undo portletURL="<%= undoTrashURL %>" />
 
 <liferay-util:include page="/html/portlet/bookmarks/top_links.jsp" />
 
 <c:choose>
 	<c:when test="<%= useAssetEntryQuery %>">
-		<c:if test="<%= Validator.isNotNull(categoryName) %>">
-			<h1 class="entry-title">
-				<%= LanguageUtil.format(pageContext, "bookmarks-with-x-x", new String[] {vocabularyName, categoryName}) %>
-			</h1>
-		</c:if>
-
-		<c:if test="<%= Validator.isNotNull(tagName) %>">
-			<h1 class="entry-title">
-				<%= LanguageUtil.format(pageContext, "bookmarks-with-tag-x", tagName) %>
-			</h1>
-		</c:if>
+		<liferay-ui:categorization-filter
+			assetType="bookmarks"
+			portletURL="<%= portletURL %>"
+		/>
 
 		<%@ include file="/html/portlet/bookmarks/view_entries.jspf" %>
 
-		<%
-		if (portletName.equals(PortletKeys.BOOKMARKS)) {
-			PortalUtil.addPageKeywords(tagName, request);
-			PortalUtil.addPageKeywords(categoryName, request);
-		}
-		%>
-
 	</c:when>
-	<c:when test='<%= topLink.equals("bookmarks-home") %>'>
-		<aui:layout>
+	<c:when test='<%= topLink.equals("home") %>'>
+		<aui:row>
 			<c:if test="<%= folder != null %>">
+
+				<%
+				long parentFolderId = folder.getParentFolderId();
+				String parentFolderName = LanguageUtil.get(pageContext, "home");
+
+				if (!folder.isRoot()) {
+					BookmarksFolder parentFolder = BookmarksFolderLocalServiceUtil.getBookmarksFolder(parentFolderId);
+
+					parentFolderId = parentFolder.getFolderId();
+					parentFolderName = parentFolder.getName();
+				}
+				%>
+
+				<portlet:renderURL var="backURL">
+					<portlet:param name="struts_action" value="/bookmarks/view" />
+					<portlet:param name="folderId" value="<%= String.valueOf(parentFolderId) %>" />
+				</portlet:renderURL>
+
 				<liferay-ui:header
+					backLabel="<%= parentFolderName %>"
+					backURL="<%= backURL.toString() %>"
 					localizeTitle="<%= false %>"
 					title="<%= folder.getName() %>"
 				/>
 			</c:if>
+		</aui:row>
 
-			<aui:column columnWidth="<%= 75 %>" cssClass="lfr-asset-column lfr-asset-column-details" first="<%= true %>">
-				<liferay-ui:panel-container extended="<%= false %>" persistState="<%= true %>">
+		<aui:row>
+			<aui:col cssClass="lfr-asset-column lfr-asset-column-details" width="<%= 75 %>">
+				<liferay-ui:panel-container extended="<%= false %>" id="bookmarksInfoPanelContainer" persistState="<%= true %>">
 					<c:if test="<%= folder != null %>">
 						<div class="lfr-asset-description">
 							<%= HtmlUtil.escape(folder.getDescription()) %>
@@ -141,17 +147,17 @@ request.setAttribute("view.jsp-useAssetEntryQuery", String.valueOf(useAssetEntry
 					</c:if>
 
 					<c:if test="<%= foldersCount > 0 %>">
-						<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" persistState="<%= true %>" title='<%= (folder != null) ? "subfolders" : "folders" %>'>
+						<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id="bookmarksEntriesFoldersListingPanel" persistState="<%= true %>" title='<%= (folder != null) ? "subfolders" : "folders" %>'>
 							<liferay-ui:search-container
 								curParam="cur1"
 								delta="<%= foldersPerPage %>"
 								deltaConfigurable="<%= false %>"
 								headerNames="<%= StringUtil.merge(folderColumns) %>"
 								iteratorURL="<%= portletURL %>"
+								total="<%= BookmarksFolderServiceUtil.getFoldersCount(scopeGroupId, folderId) %>"
 							>
 								<liferay-ui:search-container-results
 									results="<%= BookmarksFolderServiceUtil.getFolders(scopeGroupId, folderId, searchContainer.getStart(), searchContainer.getEnd()) %>"
-									total="<%= BookmarksFolderServiceUtil.getFoldersCount(scopeGroupId, folderId) %>"
 								/>
 
 								<liferay-ui:search-container-row
@@ -174,22 +180,22 @@ request.setAttribute("view.jsp-useAssetEntryQuery", String.valueOf(useAssetEntry
 						</liferay-ui:panel>
 					</c:if>
 
-					<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" persistState="<%= true %>" title="bookmarks">
+					<liferay-ui:panel collapsible="<%= true %>" extended="<%= true %>" id="bookmarksEntriesListingPanel" persistState="<%= true %>" title="bookmarks">
 						<%@ include file="/html/portlet/bookmarks/view_entries.jspf" %>
 					</liferay-ui:panel>
 				</liferay-ui:panel-container>
-			</aui:column>
+			</aui:col>
 
-			<aui:column columnWidth="<%= 25 %>" cssClass="lfr-asset-column lfr-asset-column-actions" last="<%= true %>">
+			<aui:col cssClass="lfr-asset-column lfr-asset-column-actions" last="<%= true %>" width="<%= 25 %>">
 				<div class="lfr-asset-summary">
 					<liferay-ui:icon
 						cssClass="lfr-asset-avatar"
-						image='<%= "../file_system/large/" + (((foldersCount + entriesCount) > 0) ? "folder_full_bookmark" : "folder_empty") %>'
-						message='<%= (folder != null) ? folder.getName() : LanguageUtil.get(pageContext, "bookmarks-home") %>'
+						image='<%= "../file_system/large/" + (((foldersCount + entriesCount) > 0) ? "folder_full_bookmark" : "folder_empty_bookmark") %>'
+						message='<%= (folder != null) ? HtmlUtil.escapeAttribute(folder.getName()) : "home" %>'
 					/>
 
 					<div class="lfr-asset-name">
-						<h4><%= (folder != null) ? folder.getName() : LanguageUtil.get(pageContext, "bookmarks-home") %></h4>
+						<h4><%= (folder != null) ? HtmlUtil.escape(folder.getName()) : LanguageUtil.get(pageContext, "home") %></h4>
 					</div>
 				</div>
 
@@ -198,45 +204,40 @@ request.setAttribute("view.jsp-useAssetEntryQuery", String.valueOf(useAssetEntry
 				%>
 
 				<liferay-util:include page="/html/portlet/bookmarks/folder_action.jsp" />
-			</aui:column>
-		</aui:layout>
+			</aui:col>
+		</aui:row>
 
 		<%
-		if (folder != null) {
-			BookmarksUtil.addPortletBreadcrumbEntries(folder, request, renderResponse);
-
-			if (portletName.equals(PortletKeys.BOOKMARKS)) {
-				PortalUtil.setPageSubtitle(folder.getName(), request);
-				PortalUtil.setPageDescription(folder.getDescription(), request);
-			}
+		if (!defaultFolderView && (folder != null) && portletName.equals(PortletKeys.BOOKMARKS)) {
+			PortalUtil.setPageSubtitle(folder.getName(), request);
+			PortalUtil.setPageDescription(folder.getDescription(), request);
 		}
 		%>
 
 	</c:when>
-	<c:when test='<%= topLink.equals("my-entries") || topLink.equals("recent-entries") %>'>
-		<aui:layout>
+	<c:when test='<%= topLink.equals("mine") || topLink.equals("recent") %>'>
+		<aui:row>
 			<liferay-ui:header
 				title="<%= topLink %>"
 			/>
+
+			<%
+			long groupEntriesUserId = 0;
+
+			if (topLink.equals("mine") && themeDisplay.isSignedIn()) {
+				groupEntriesUserId = user.getUserId();
+			}
+			%>
 
 			<liferay-ui:search-container
 				delta="<%= entriesPerPage %>"
 				deltaConfigurable="<%= false %>"
 				emptyResultsMessage="there-are-no-entries"
 				iteratorURL="<%= portletURL %>"
+				total="<%= BookmarksEntryServiceUtil.getGroupEntriesCount(scopeGroupId, groupEntriesUserId) %>"
 			>
-
-				<%
-				long groupEntriesUserId = 0;
-
-				if (topLink.equals("my-entries") && themeDisplay.isSignedIn()) {
-					groupEntriesUserId = user.getUserId();
-				}
-				%>
-
 				<liferay-ui:search-container-results
 					results="<%= BookmarksEntryServiceUtil.getGroupEntries(scopeGroupId, groupEntriesUserId, searchContainer.getStart(), searchContainer.getEnd()) %>"
-					total="<%= BookmarksEntryServiceUtil.getGroupEntriesCount(scopeGroupId, groupEntriesUserId) %>"
 				/>
 
 				<liferay-ui:search-container-row
@@ -265,10 +266,12 @@ request.setAttribute("view.jsp-useAssetEntryQuery", String.valueOf(useAssetEntry
 
 				<liferay-ui:search-iterator />
 			</liferay-ui:search-container>
-		</aui:layout>
+		</aui:row>
 
 		<%
-		PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, topLink), currentURL);
+		if (!layout.isTypeControlPanel()) {
+			PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, topLink), currentURL);
+		}
 
 		PortalUtil.setPageSubtitle(LanguageUtil.get(pageContext, StringUtil.replace(topLink, StringPool.UNDERLINE, StringPool.DASH)), request);
 		%>

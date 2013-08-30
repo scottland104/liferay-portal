@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,20 +15,22 @@
 package com.liferay.portlet.journal.service;
 
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
-import com.liferay.portal.kernel.util.MethodCache;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the journal structure remote service. This utility wraps {@link com.liferay.portlet.journal.service.impl.JournalStructureServiceImpl} and is the primary access point for service operations in application layer code running on a remote server.
- *
- * <p>
- * This is a remote service. Methods of this service are expected to have security checks based on the propagated JAAS credentials because this service can be accessed remotely.
- * </p>
+ * Provides the remote service utility for JournalStructure. This utility wraps
+ * {@link com.liferay.portlet.journal.service.impl.JournalStructureServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on a remote server. Methods of this service are expected to have security
+ * checks based on the propagated JAAS credentials because this service can be
+ * accessed remotely.
  *
  * @author Brian Wing Shun Chan
  * @see JournalStructureService
  * @see com.liferay.portlet.journal.service.base.JournalStructureServiceBaseImpl
  * @see com.liferay.portlet.journal.service.impl.JournalStructureServiceImpl
+ * @deprecated As of 6.2.0, since Web Content Administration now uses the
+Dynamic Data Mapping framework to handle templates
  * @generated
  */
 public class JournalStructureServiceUtil {
@@ -37,16 +39,37 @@ public class JournalStructureServiceUtil {
 	 *
 	 * Never modify this class directly. Add custom service methods to {@link com.liferay.portlet.journal.service.impl.JournalStructureServiceImpl} and rerun ServiceBuilder to regenerate this class.
 	 */
+
+	/**
+	* Returns the Spring bean ID for this bean.
+	*
+	* @return the Spring bean ID for this bean
+	*/
+	public static java.lang.String getBeanIdentifier() {
+		return getService().getBeanIdentifier();
+	}
+
+	/**
+	* Sets the Spring bean ID for this bean.
+	*
+	* @param beanIdentifier the Spring bean ID for this bean
+	*/
+	public static void setBeanIdentifier(java.lang.String beanIdentifier) {
+		getService().setBeanIdentifier(beanIdentifier);
+	}
+
 	public static com.liferay.portlet.journal.model.JournalStructure addStructure(
 		long groupId, java.lang.String structureId, boolean autoStructureId,
-		java.lang.String parentStructureId, java.lang.String name,
-		java.lang.String description, java.lang.String xsd,
+		java.lang.String parentStructureId,
+		java.util.Map<java.util.Locale, java.lang.String> nameMap,
+		java.util.Map<java.util.Locale, java.lang.String> descriptionMap,
+		java.lang.String xsd,
 		com.liferay.portal.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return getService()
 				   .addStructure(groupId, structureId, autoStructureId,
-			parentStructureId, name, description, xsd, serviceContext);
+			parentStructureId, nameMap, descriptionMap, xsd, serviceContext);
 	}
 
 	public static com.liferay.portlet.journal.model.JournalStructure copyStructure(
@@ -73,10 +96,25 @@ public class JournalStructureServiceUtil {
 		return getService().getStructure(groupId, structureId);
 	}
 
+	public static com.liferay.portlet.journal.model.JournalStructure getStructure(
+		long groupId, java.lang.String structureId,
+		boolean includeGlobalStructures)
+		throws com.liferay.portal.kernel.exception.PortalException,
+			com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .getStructure(groupId, structureId, includeGlobalStructures);
+	}
+
 	public static java.util.List<com.liferay.portlet.journal.model.JournalStructure> getStructures(
 		long groupId)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getService().getStructures(groupId);
+	}
+
+	public static java.util.List<com.liferay.portlet.journal.model.JournalStructure> getStructures(
+		long[] groupIds)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().getStructures(groupIds);
 	}
 
 	public static java.util.List<com.liferay.portlet.journal.model.JournalStructure> search(
@@ -115,14 +153,16 @@ public class JournalStructureServiceUtil {
 
 	public static com.liferay.portlet.journal.model.JournalStructure updateStructure(
 		long groupId, java.lang.String structureId,
-		java.lang.String parentStructureId, java.lang.String name,
-		java.lang.String description, java.lang.String xsd,
+		java.lang.String parentStructureId,
+		java.util.Map<java.util.Locale, java.lang.String> nameMap,
+		java.util.Map<java.util.Locale, java.lang.String> descriptionMap,
+		java.lang.String xsd,
 		com.liferay.portal.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return getService()
 				   .updateStructure(groupId, structureId, parentStructureId,
-			name, description, xsd, serviceContext);
+			nameMap, descriptionMap, xsd, serviceContext);
 	}
 
 	public static JournalStructureService getService() {
@@ -131,20 +171,15 @@ public class JournalStructureServiceUtil {
 
 			ReferenceRegistry.registerReference(JournalStructureServiceUtil.class,
 				"_service");
-			MethodCache.remove(JournalStructureService.class);
 		}
 
 		return _service;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setService(JournalStructureService service) {
-		MethodCache.remove(JournalStructureService.class);
-
-		_service = service;
-
-		ReferenceRegistry.registerReference(JournalStructureServiceUtil.class,
-			"_service");
-		MethodCache.remove(JournalStructureService.class);
 	}
 
 	private static JournalStructureService _service;

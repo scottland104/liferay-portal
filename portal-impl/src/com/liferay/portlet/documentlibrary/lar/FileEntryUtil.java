@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portlet.documentlibrary.lar;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.repository.liferayrepository.model.LiferayFileEntry;
 import com.liferay.portal.repository.liferayrepository.util.LiferayBase;
@@ -33,6 +34,19 @@ import java.util.List;
  * @author Alexander Chow
  */
 public class FileEntryUtil extends LiferayBase {
+
+	public static FileEntry fetchByPrimaryKey(long fileEntryId)
+		throws SystemException {
+
+		DLFileEntry dlFileEntry = DLFileEntryUtil.fetchByPrimaryKey(
+			fileEntryId);
+
+		if (dlFileEntry == null) {
+			return null;
+		}
+
+		return new LiferayFileEntry(dlFileEntry);
+	}
 
 	public static FileEntry fetchByR_F_T(
 			long repositoryId, long folderId, String title)
@@ -88,10 +102,15 @@ public class FileEntryUtil extends LiferayBase {
 
 		String name = ((DLFileEntry)fileEntry.getModel()).getName();
 
-		return DLStoreUtil.getFileAsStream(
+		InputStream is = DLStoreUtil.getFileAsStream(
 			fileEntry.getCompanyId(), repositoryId, name,
 			fileEntry.getVersion());
 
+		if (is == null) {
+			is = new UnsyncByteArrayInputStream(new byte[0]);
+		}
+
+		return is;
 	}
 
 	private static FileEntryUtil _instance = new FileEntryUtil();

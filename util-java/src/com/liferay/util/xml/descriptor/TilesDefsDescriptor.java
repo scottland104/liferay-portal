@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,17 +25,7 @@ public class TilesDefsDescriptor extends SimpleXMLDescriptor {
 
 	@Override
 	public boolean canHandleType(String doctype, Document root) {
-		if (doctype.indexOf("tiles-config") != -1) {
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-
-	@Override
-	public String[] getRootChildrenOrder() {
-		return _ROOT_CHILDREN_ORDER;
+		return doctype.contains("tiles-config");
 	}
 
 	@Override
@@ -44,16 +34,21 @@ public class TilesDefsDescriptor extends SimpleXMLDescriptor {
 	}
 
 	@Override
+	public String[] getRootChildrenOrder() {
+		return _ROOT_CHILDREN_ORDER;
+	}
+
+	@Override
 	public String[] getUniqueElements() {
 		return _UNIQUE_ELEMENTS;
 	}
 
-	private static final String[] _ROOT_CHILDREN_ORDER ={
-		"definition"
-	};
-
 	private static final ElementIdentifier[] _ELEMENTS_IDENTIFIED_BY_ATTR = {
 		new ElementIdentifier("definition", "name")
+	};
+
+	private static final String[] _ROOT_CHILDREN_ORDER = {
+		"definition"
 	};
 
 	private static final String[] _UNIQUE_ELEMENTS = {

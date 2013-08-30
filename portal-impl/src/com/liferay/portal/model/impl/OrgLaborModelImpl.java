@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portal.model.impl;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.OrgLabor;
@@ -29,12 +30,12 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base model implementation for the OrgLabor service. Represents a row in the &quot;OrgLabor&quot; database table, with each column mapped to a property of this class.
@@ -90,6 +91,11 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.OrgLabor"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.OrgLabor"),
+			true);
+	public static long ORGANIZATIONID_COLUMN_BITMASK = 1L;
+	public static long TYPEID_COLUMN_BITMASK = 2L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -98,6 +104,10 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 	 * @return the normal model instance
 	 */
 	public static OrgLabor toModel(OrgLaborSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		OrgLabor model = new OrgLaborImpl();
 
 		model.setOrgLaborId(soapModel.getOrgLaborId());
@@ -128,6 +138,10 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 	 * @return the normal model instances
 	 */
 	public static List<OrgLabor> toModels(OrgLaborSoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<OrgLabor> models = new ArrayList<OrgLabor>(soapModels.length);
 
 		for (OrgLaborSoap soapModel : soapModels) {
@@ -137,218 +151,398 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 		return models;
 	}
 
-	public Class<?> getModelClass() {
-		return OrgLabor.class;
-	}
-
-	public String getModelClassName() {
-		return OrgLabor.class.getName();
-	}
-
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.OrgLabor"));
 
 	public OrgLaborModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _orgLaborId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setOrgLaborId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_orgLaborId);
+		return _orgLaborId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return OrgLabor.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return OrgLabor.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("orgLaborId", getOrgLaborId());
+		attributes.put("organizationId", getOrganizationId());
+		attributes.put("typeId", getTypeId());
+		attributes.put("sunOpen", getSunOpen());
+		attributes.put("sunClose", getSunClose());
+		attributes.put("monOpen", getMonOpen());
+		attributes.put("monClose", getMonClose());
+		attributes.put("tueOpen", getTueOpen());
+		attributes.put("tueClose", getTueClose());
+		attributes.put("wedOpen", getWedOpen());
+		attributes.put("wedClose", getWedClose());
+		attributes.put("thuOpen", getThuOpen());
+		attributes.put("thuClose", getThuClose());
+		attributes.put("friOpen", getFriOpen());
+		attributes.put("friClose", getFriClose());
+		attributes.put("satOpen", getSatOpen());
+		attributes.put("satClose", getSatClose());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long orgLaborId = (Long)attributes.get("orgLaborId");
+
+		if (orgLaborId != null) {
+			setOrgLaborId(orgLaborId);
+		}
+
+		Long organizationId = (Long)attributes.get("organizationId");
+
+		if (organizationId != null) {
+			setOrganizationId(organizationId);
+		}
+
+		Integer typeId = (Integer)attributes.get("typeId");
+
+		if (typeId != null) {
+			setTypeId(typeId);
+		}
+
+		Integer sunOpen = (Integer)attributes.get("sunOpen");
+
+		if (sunOpen != null) {
+			setSunOpen(sunOpen);
+		}
+
+		Integer sunClose = (Integer)attributes.get("sunClose");
+
+		if (sunClose != null) {
+			setSunClose(sunClose);
+		}
+
+		Integer monOpen = (Integer)attributes.get("monOpen");
+
+		if (monOpen != null) {
+			setMonOpen(monOpen);
+		}
+
+		Integer monClose = (Integer)attributes.get("monClose");
+
+		if (monClose != null) {
+			setMonClose(monClose);
+		}
+
+		Integer tueOpen = (Integer)attributes.get("tueOpen");
+
+		if (tueOpen != null) {
+			setTueOpen(tueOpen);
+		}
+
+		Integer tueClose = (Integer)attributes.get("tueClose");
+
+		if (tueClose != null) {
+			setTueClose(tueClose);
+		}
+
+		Integer wedOpen = (Integer)attributes.get("wedOpen");
+
+		if (wedOpen != null) {
+			setWedOpen(wedOpen);
+		}
+
+		Integer wedClose = (Integer)attributes.get("wedClose");
+
+		if (wedClose != null) {
+			setWedClose(wedClose);
+		}
+
+		Integer thuOpen = (Integer)attributes.get("thuOpen");
+
+		if (thuOpen != null) {
+			setThuOpen(thuOpen);
+		}
+
+		Integer thuClose = (Integer)attributes.get("thuClose");
+
+		if (thuClose != null) {
+			setThuClose(thuClose);
+		}
+
+		Integer friOpen = (Integer)attributes.get("friOpen");
+
+		if (friOpen != null) {
+			setFriOpen(friOpen);
+		}
+
+		Integer friClose = (Integer)attributes.get("friClose");
+
+		if (friClose != null) {
+			setFriClose(friClose);
+		}
+
+		Integer satOpen = (Integer)attributes.get("satOpen");
+
+		if (satOpen != null) {
+			setSatOpen(satOpen);
+		}
+
+		Integer satClose = (Integer)attributes.get("satClose");
+
+		if (satClose != null) {
+			setSatClose(satClose);
+		}
+	}
+
 	@JSON
+	@Override
 	public long getOrgLaborId() {
 		return _orgLaborId;
 	}
 
+	@Override
 	public void setOrgLaborId(long orgLaborId) {
 		_orgLaborId = orgLaborId;
 	}
 
 	@JSON
+	@Override
 	public long getOrganizationId() {
 		return _organizationId;
 	}
 
+	@Override
 	public void setOrganizationId(long organizationId) {
+		_columnBitmask = -1L;
+
+		if (!_setOriginalOrganizationId) {
+			_setOriginalOrganizationId = true;
+
+			_originalOrganizationId = _organizationId;
+		}
+
 		_organizationId = organizationId;
 	}
 
+	public long getOriginalOrganizationId() {
+		return _originalOrganizationId;
+	}
+
 	@JSON
+	@Override
 	public int getTypeId() {
 		return _typeId;
 	}
 
+	@Override
 	public void setTypeId(int typeId) {
+		_columnBitmask = -1L;
+
 		_typeId = typeId;
 	}
 
 	@JSON
+	@Override
 	public int getSunOpen() {
 		return _sunOpen;
 	}
 
+	@Override
 	public void setSunOpen(int sunOpen) {
 		_sunOpen = sunOpen;
 	}
 
 	@JSON
+	@Override
 	public int getSunClose() {
 		return _sunClose;
 	}
 
+	@Override
 	public void setSunClose(int sunClose) {
 		_sunClose = sunClose;
 	}
 
 	@JSON
+	@Override
 	public int getMonOpen() {
 		return _monOpen;
 	}
 
+	@Override
 	public void setMonOpen(int monOpen) {
 		_monOpen = monOpen;
 	}
 
 	@JSON
+	@Override
 	public int getMonClose() {
 		return _monClose;
 	}
 
+	@Override
 	public void setMonClose(int monClose) {
 		_monClose = monClose;
 	}
 
 	@JSON
+	@Override
 	public int getTueOpen() {
 		return _tueOpen;
 	}
 
+	@Override
 	public void setTueOpen(int tueOpen) {
 		_tueOpen = tueOpen;
 	}
 
 	@JSON
+	@Override
 	public int getTueClose() {
 		return _tueClose;
 	}
 
+	@Override
 	public void setTueClose(int tueClose) {
 		_tueClose = tueClose;
 	}
 
 	@JSON
+	@Override
 	public int getWedOpen() {
 		return _wedOpen;
 	}
 
+	@Override
 	public void setWedOpen(int wedOpen) {
 		_wedOpen = wedOpen;
 	}
 
 	@JSON
+	@Override
 	public int getWedClose() {
 		return _wedClose;
 	}
 
+	@Override
 	public void setWedClose(int wedClose) {
 		_wedClose = wedClose;
 	}
 
 	@JSON
+	@Override
 	public int getThuOpen() {
 		return _thuOpen;
 	}
 
+	@Override
 	public void setThuOpen(int thuOpen) {
 		_thuOpen = thuOpen;
 	}
 
 	@JSON
+	@Override
 	public int getThuClose() {
 		return _thuClose;
 	}
 
+	@Override
 	public void setThuClose(int thuClose) {
 		_thuClose = thuClose;
 	}
 
 	@JSON
+	@Override
 	public int getFriOpen() {
 		return _friOpen;
 	}
 
+	@Override
 	public void setFriOpen(int friOpen) {
 		_friOpen = friOpen;
 	}
 
 	@JSON
+	@Override
 	public int getFriClose() {
 		return _friClose;
 	}
 
+	@Override
 	public void setFriClose(int friClose) {
 		_friClose = friClose;
 	}
 
 	@JSON
+	@Override
 	public int getSatOpen() {
 		return _satOpen;
 	}
 
+	@Override
 	public void setSatOpen(int satOpen) {
 		_satOpen = satOpen;
 	}
 
 	@JSON
+	@Override
 	public int getSatClose() {
 		return _satClose;
 	}
 
+	@Override
 	public void setSatClose(int satClose) {
 		_satClose = satClose;
 	}
 
-	@Override
-	public OrgLabor toEscapedModel() {
-		if (isEscapedModel()) {
-			return (OrgLabor)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (OrgLabor)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(0,
-					OrgLabor.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(0,
+			OrgLabor.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public OrgLabor toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (OrgLabor)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -378,6 +572,7 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 		return orgLaborImpl;
 	}
 
+	@Override
 	public int compareTo(OrgLabor orgLabor) {
 		int value = 0;
 
@@ -414,18 +609,15 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof OrgLabor)) {
 			return false;
 		}
 
-		OrgLabor orgLabor = null;
-
-		try {
-			orgLabor = (OrgLabor)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		OrgLabor orgLabor = (OrgLabor)obj;
 
 		long primaryKey = orgLabor.getPrimaryKey();
 
@@ -444,6 +636,13 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 
 	@Override
 	public void resetOriginalValues() {
+		OrgLaborModelImpl orgLaborModelImpl = this;
+
+		orgLaborModelImpl._originalOrganizationId = orgLaborModelImpl._organizationId;
+
+		orgLaborModelImpl._setOriginalOrganizationId = false;
+
+		orgLaborModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -530,6 +729,7 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(55);
 
@@ -612,11 +812,13 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 	}
 
 	private static ClassLoader _classLoader = OrgLabor.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			OrgLabor.class
 		};
 	private long _orgLaborId;
 	private long _organizationId;
+	private long _originalOrganizationId;
+	private boolean _setOriginalOrganizationId;
 	private int _typeId;
 	private int _sunOpen;
 	private int _sunClose;
@@ -632,6 +834,6 @@ public class OrgLaborModelImpl extends BaseModelImpl<OrgLabor>
 	private int _friClose;
 	private int _satOpen;
 	private int _satClose;
-	private transient ExpandoBridge _expandoBridge;
-	private OrgLabor _escapedModelProxy;
+	private long _columnBitmask;
+	private OrgLabor _escapedModel;
 }

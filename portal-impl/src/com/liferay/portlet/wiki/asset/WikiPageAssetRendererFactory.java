@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,7 +20,6 @@ import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portlet.asset.model.AssetRenderer;
 import com.liferay.portlet.asset.model.BaseAssetRendererFactory;
-import com.liferay.portlet.wiki.NoSuchPageException;
 import com.liferay.portlet.wiki.model.WikiPage;
 import com.liferay.portlet.wiki.model.WikiPageResource;
 import com.liferay.portlet.wiki.service.WikiPageLocalServiceUtil;
@@ -36,40 +35,41 @@ import com.liferay.portlet.wiki.service.permission.WikiPagePermission;
  */
 public class WikiPageAssetRendererFactory extends BaseAssetRendererFactory {
 
-	public static final String CLASS_NAME =	WikiPage.class.getName();
-
 	public static final String TYPE = "wiki";
 
+	@Override
 	public AssetRenderer getAssetRenderer(long classPK, int type)
 		throws PortalException, SystemException {
 
-		WikiPage page = null;
+		WikiPage page = WikiPageLocalServiceUtil.fetchWikiPage(classPK);
 
-		try {
-			page = WikiPageLocalServiceUtil.getWikiPage(classPK);
-		}
-		catch (NoSuchPageException nspe) {
+		if (page == null) {
 			if (type == TYPE_LATEST_APPROVED) {
 				page = WikiPageLocalServiceUtil.getPage(classPK);
 			}
 			else {
-				WikiPageResource wikiPageResource =
-					WikiPageResourceLocalServiceUtil.getPageResource(
-						classPK);
+				WikiPageResource pageResource =
+					WikiPageResourceLocalServiceUtil.getPageResource(classPK);
 
 				page = WikiPageLocalServiceUtil.getPage(
-					wikiPageResource.getNodeId(),
-					wikiPageResource.getTitle(), null);
+					pageResource.getNodeId(), pageResource.getTitle(), null);
 			}
 		}
 
-		return new WikiPageAssetRenderer(page);
+		WikiPageAssetRenderer wikiPageAssetRenderer = new WikiPageAssetRenderer(
+			page);
+
+		wikiPageAssetRenderer.setAssetRendererType(type);
+
+		return wikiPageAssetRenderer;
 	}
 
+	@Override
 	public String getClassName() {
-		return CLASS_NAME;
+		return WikiPage.class.getName();
 	}
 
+	@Override
 	public String getType() {
 		return TYPE;
 	}
@@ -84,8 +84,15 @@ public class WikiPageAssetRendererFactory extends BaseAssetRendererFactory {
 	}
 
 	@Override
+	public boolean isLinkable() {
+		return _LINKABLE;
+	}
+
+	@Override
 	protected String getIconPath(ThemeDisplay themeDisplay) {
 		return themeDisplay.getPathThemeImages() + "/common/pages.png";
 	}
+
+	private static final boolean _LINKABLE = true;
 
 }

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -28,8 +28,8 @@ String redirect = ParamUtil.getString(request, "redirect");
 
 	<aui:fieldset>
 		<aui:select label="vocabularies" name="preferences--allAssetVocabularies--">
-			<aui:option selected='<%= allAssetVocabularies %>' label="all" value="<%= true %>" />
-			<aui:option selected='<%= !allAssetVocabularies %>' label="filter[action]" value="<%= false %>" />
+			<aui:option label="all" selected="<%= allAssetVocabularies %>" value="<%= true %>" />
+			<aui:option label="filter[action]" selected="<%= !allAssetVocabularies %>" value="<%= false %>" />
 		</aui:select>
 
 		<aui:input name="preferences--assetVocabularyIds--" type="hidden" />
@@ -41,11 +41,13 @@ String redirect = ParamUtil.getString(request, "redirect");
 
 		List<KeyValuePair> typesLeftList = new ArrayList<KeyValuePair>();
 
-		for (long vocabularyId : assetVocabularyIds) {
+		for (long assetVocabularyId : assetVocabularyIds) {
 			try {
-				AssetVocabulary vocabulary = AssetVocabularyLocalServiceUtil.getVocabulary(vocabularyId);
+				AssetVocabulary assetVocabulary = AssetVocabularyLocalServiceUtil.getVocabulary(assetVocabularyId);
 
-				typesLeftList.add(new KeyValuePair(String.valueOf(vocabularyId), _getName(vocabulary, themeDisplay)));
+				assetVocabulary = assetVocabulary.toEscapedModel();
+
+				typesLeftList.add(new KeyValuePair(String.valueOf(assetVocabularyId), _getTitle(assetVocabulary, themeDisplay)));
 			}
 			catch (NoSuchVocabularyException nsve) {
 			}
@@ -57,28 +59,43 @@ String redirect = ParamUtil.getString(request, "redirect");
 
 		Arrays.sort(assetVocabularyIds);
 
-		for (long vocabularyId : availableAssetVocabularyIdsSet) {
-			if (Arrays.binarySearch(assetVocabularyIds, vocabularyId) < 0) {
-				AssetVocabulary vocabulary = AssetVocabularyLocalServiceUtil.getVocabulary(vocabularyId);
+		for (long assetVocabularyId : availableAssetVocabularyIdsSet) {
+			if (Arrays.binarySearch(assetVocabularyIds, assetVocabularyId) < 0) {
+				AssetVocabulary assetVocabulary = AssetVocabularyLocalServiceUtil.getVocabulary(assetVocabularyId);
 
-				vocabulary = vocabulary.toEscapedModel();
+				assetVocabulary = assetVocabulary.toEscapedModel();
 
-				typesRightList.add(new KeyValuePair(String.valueOf(vocabularyId), _getName(vocabulary, themeDisplay)));
+				typesRightList.add(new KeyValuePair(String.valueOf(assetVocabularyId), _getTitle(assetVocabulary, themeDisplay)));
 			}
 		}
 
 		typesRightList = ListUtil.sort(typesRightList, new KeyValuePairComparator(false, true));
 		%>
 
-		<div class="<%= allAssetVocabularies ? "aui-helper-hidden" : "" %>" id="<portlet:namespace />assetVocabulariesBoxes">
+		<div class="<%= allAssetVocabularies ? "hide" : "" %>" id="<portlet:namespace />assetVocabulariesBoxes">
 			<liferay-ui:input-move-boxes
-				leftTitle="current"
-				rightTitle="available"
 				leftBoxName="currentAssetVocabularyIds"
-				rightBoxName="availableAssetVocabularyIds"
-				leftReorder="true"
 				leftList="<%= typesLeftList %>"
+				leftReorder="true"
+				leftTitle="current"
+				rightBoxName="availableAssetVocabularyIds"
 				rightList="<%= typesRightList %>"
+				rightTitle="available"
+			/>
+		</div>
+
+		<div class="display-template">
+
+			<%
+			TemplateHandler templateHandler = TemplateHandlerRegistryUtil.getTemplateHandler(AssetCategory.class.getName());
+			%>
+
+			<liferay-ui:ddm-template-selector
+				classNameId="<%= PortalUtil.getClassNameId(templateHandler.getClassName()) %>"
+				displayStyle="<%= displayStyle %>"
+				displayStyleGroupId="<%= displayStyleGroupId %>"
+				refreshURL="<%= currentURL %>"
+				showEmptyOption="<%= true %>"
 			/>
 		</div>
 	</aui:fieldset>
@@ -92,7 +109,7 @@ String redirect = ParamUtil.getString(request, "redirect");
 	Liferay.provide(
 		window,
 		'<portlet:namespace />saveConfiguration',
-		function(){
+		function() {
 			if (document.<portlet:namespace />fm.<portlet:namespace />assetVocabularyIds) {
 				document.<portlet:namespace />fm.<portlet:namespace />assetVocabularyIds.value = Liferay.Util.listSelect(document.<portlet:namespace />fm.<portlet:namespace />currentAssetVocabularyIds);
 			}
@@ -106,13 +123,13 @@ String redirect = ParamUtil.getString(request, "redirect");
 </aui:script>
 
 <%!
-private String _getName(AssetVocabulary vocabulary, ThemeDisplay themeDisplay) {
-	String name = vocabulary.getName();
+private String _getTitle(AssetVocabulary assetVocabulary, ThemeDisplay themeDisplay) {
+	String title = assetVocabulary.getTitle(themeDisplay.getLanguageId());
 
-	if (vocabulary.getGroupId() == themeDisplay.getCompanyGroupId()) {
-		name += " (" + LanguageUtil.get(themeDisplay.getLocale(), "global") + ")";
+	if (assetVocabulary.getGroupId() == themeDisplay.getCompanyGroupId()) {
+		title += " (" + LanguageUtil.get(themeDisplay.getLocale(), "global") + ")";
 	}
 
-	return name;
+	return title;
 }
 %>

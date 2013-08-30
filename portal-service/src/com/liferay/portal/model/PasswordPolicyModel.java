@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -37,8 +37,8 @@ import java.util.Date;
  * @see com.liferay.portal.model.impl.PasswordPolicyModelImpl
  * @generated
  */
-public interface PasswordPolicyModel extends AuditedModel,
-	BaseModel<PasswordPolicy> {
+public interface PasswordPolicyModel extends BaseModel<PasswordPolicy>,
+	StagedAuditedModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -60,6 +60,23 @@ public interface PasswordPolicyModel extends AuditedModel,
 	public void setPrimaryKey(long primaryKey);
 
 	/**
+	 * Returns the uuid of this password policy.
+	 *
+	 * @return the uuid of this password policy
+	 */
+	@AutoEscape
+	@Override
+	public String getUuid();
+
+	/**
+	 * Sets the uuid of this password policy.
+	 *
+	 * @param uuid the uuid of this password policy
+	 */
+	@Override
+	public void setUuid(String uuid);
+
+	/**
 	 * Returns the password policy ID of this password policy.
 	 *
 	 * @return the password policy ID of this password policy
@@ -78,6 +95,7 @@ public interface PasswordPolicyModel extends AuditedModel,
 	 *
 	 * @return the company ID of this password policy
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -85,6 +103,7 @@ public interface PasswordPolicyModel extends AuditedModel,
 	 *
 	 * @param companyId the company ID of this password policy
 	 */
+	@Override
 	public void setCompanyId(long companyId);
 
 	/**
@@ -92,6 +111,7 @@ public interface PasswordPolicyModel extends AuditedModel,
 	 *
 	 * @return the user ID of this password policy
 	 */
+	@Override
 	public long getUserId();
 
 	/**
@@ -99,6 +119,7 @@ public interface PasswordPolicyModel extends AuditedModel,
 	 *
 	 * @param userId the user ID of this password policy
 	 */
+	@Override
 	public void setUserId(long userId);
 
 	/**
@@ -107,6 +128,7 @@ public interface PasswordPolicyModel extends AuditedModel,
 	 * @return the user uuid of this password policy
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getUserUuid() throws SystemException;
 
 	/**
@@ -114,6 +136,7 @@ public interface PasswordPolicyModel extends AuditedModel,
 	 *
 	 * @param userUuid the user uuid of this password policy
 	 */
+	@Override
 	public void setUserUuid(String userUuid);
 
 	/**
@@ -122,6 +145,7 @@ public interface PasswordPolicyModel extends AuditedModel,
 	 * @return the user name of this password policy
 	 */
 	@AutoEscape
+	@Override
 	public String getUserName();
 
 	/**
@@ -129,6 +153,7 @@ public interface PasswordPolicyModel extends AuditedModel,
 	 *
 	 * @param userName the user name of this password policy
 	 */
+	@Override
 	public void setUserName(String userName);
 
 	/**
@@ -136,6 +161,7 @@ public interface PasswordPolicyModel extends AuditedModel,
 	 *
 	 * @return the create date of this password policy
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -143,6 +169,7 @@ public interface PasswordPolicyModel extends AuditedModel,
 	 *
 	 * @param createDate the create date of this password policy
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -150,6 +177,7 @@ public interface PasswordPolicyModel extends AuditedModel,
 	 *
 	 * @return the modified date of this password policy
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -157,6 +185,7 @@ public interface PasswordPolicyModel extends AuditedModel,
 	 *
 	 * @param modifiedDate the modified date of this password policy
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
@@ -393,6 +422,21 @@ public interface PasswordPolicyModel extends AuditedModel,
 	public void setMinUpperCase(int minUpperCase);
 
 	/**
+	 * Returns the regex of this password policy.
+	 *
+	 * @return the regex of this password policy
+	 */
+	@AutoEscape
+	public String getRegex();
+
+	/**
+	 * Sets the regex of this password policy.
+	 *
+	 * @param regex the regex of this password policy
+	 */
+	public void setRegex(String regex);
+
+	/**
 	 * Returns the history of this password policy.
 	 *
 	 * @return the history of this password policy
@@ -588,37 +632,60 @@ public interface PasswordPolicyModel extends AuditedModel,
 	 */
 	public void setResetTicketMaxAge(long resetTicketMaxAge);
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(PasswordPolicy passwordPolicy);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<PasswordPolicy> toCacheModel();
 
+	@Override
 	public PasswordPolicy toEscapedModel();
 
+	@Override
+	public PasswordPolicy toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -38,7 +38,13 @@ public abstract class SCLicenseBaseImpl extends SCLicenseModelImpl
 	 *
 	 * Never modify or reference this class directly. All methods that expect a s c license model instance should use the {@link SCLicense} interface instead.
 	 */
+	@Override
 	public void persist() throws SystemException {
-		SCLicenseLocalServiceUtil.updateSCLicense(this);
+		if (this.isNew()) {
+			SCLicenseLocalServiceUtil.addSCLicense(this);
+		}
+		else {
+			SCLicenseLocalServiceUtil.updateSCLicense(this);
+		}
 	}
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,17 +14,25 @@
 
 package com.liferay.util.format;
 
+import com.liferay.portal.kernel.format.PhoneNumberFormat;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 /**
- * @author Brian Wing Shun Chan
+ * @author     Brian Wing Shun Chan
+ * @author     Manuel de la Peña
+ * @deprecated As of 6.2.0, replaced by {@link
+ *             com.liferay.portal.format.USAPhoneNumberFormatImpl}
  */
 public class USAPhoneNumberFormat implements PhoneNumberFormat {
 
+	@Override
 	public String format(String phoneNumber) {
-		if (phoneNumber == null) {
+		if (Validator.isNull(phoneNumber)) {
 			return StringPool.BLANK;
 		}
 
@@ -58,13 +66,23 @@ public class USAPhoneNumberFormat implements PhoneNumberFormat {
 			return phoneNumber.substring(0, 3).concat(StringPool.DASH).concat(
 				phoneNumber.substring(3));
 		}
-		else {
-			return phoneNumber;
-		}
+
+		return phoneNumber;
 	}
 
+	@Override
 	public String strip(String phoneNumber) {
 		return StringUtil.extractDigits(phoneNumber);
+	}
+
+	@Override
+	public boolean validate(String phoneNumber) {
+		if (Validator.isNull(phoneNumber)) {
+			return false;
+		}
+
+		return phoneNumber.matches(
+			PropsUtil.get(PropsKeys.PHONE_NUMBER_FORMAT_USA_REGEXP));
 	}
 
 }

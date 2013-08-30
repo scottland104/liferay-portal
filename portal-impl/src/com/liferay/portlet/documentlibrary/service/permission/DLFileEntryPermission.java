@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,6 +24,7 @@ import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.util.PortletKeys;
 import com.liferay.portal.util.PropsValues;
+import com.liferay.portlet.documentlibrary.NoSuchFolderException;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.model.DLFileVersion;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
@@ -81,7 +82,8 @@ public class DLFileEntryPermission {
 			return hasPermission.booleanValue();
 		}
 
-		DLFileVersion latestDLFileVersion = dlFileEntry.getLatestFileVersion();
+		DLFileVersion latestDLFileVersion = dlFileEntry.getLatestFileVersion(
+			true);
 
 		if (latestDLFileVersion.isPending()) {
 			hasPermission = WorkflowPermissionUtil.hasPermission(
@@ -94,19 +96,28 @@ public class DLFileEntryPermission {
 			}
 		}
 
-		if (PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
-			if (dlFileEntry.getFolderId() !=
-					DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+		if (actionId.equals(ActionKeys.VIEW) &&
+			PropsValues.PERMISSIONS_VIEW_DYNAMIC_INHERITANCE) {
 
-				DLFolder dlFolder = DLFolderLocalServiceUtil.getFolder(
-					dlFileEntry.getFolderId());
+			long dlFolderId = dlFileEntry.getFolderId();
 
-				if (!DLFolderPermission.contains(
-						permissionChecker, dlFolder, ActionKeys.ACCESS) &&
-					!DLFolderPermission.contains(
-						permissionChecker, dlFolder, ActionKeys.VIEW)) {
+			if (dlFolderId != DLFolderConstants.DEFAULT_PARENT_FOLDER_ID) {
+				try {
+					DLFolder dlFolder = DLFolderLocalServiceUtil.getFolder(
+						dlFolderId);
 
-					return false;
+					if (!DLFolderPermission.contains(
+							permissionChecker, dlFolder, ActionKeys.ACCESS) &&
+						!DLFolderPermission.contains(
+							permissionChecker, dlFolder, ActionKeys.VIEW)) {
+
+						return false;
+					}
+				}
+				catch (NoSuchFolderException nsfe) {
+					if (!latestDLFileVersion.isInTrash()) {
+						throw nsfe;
+					}
 				}
 			}
 		}
@@ -137,8 +148,7 @@ public class DLFileEntryPermission {
 			String actionId)
 		throws PortalException, SystemException {
 
-		FileEntry fileEntry = DLAppLocalServiceUtil.getFileEntry(
-			fileEntryId);
+		FileEntry fileEntry = DLAppLocalServiceUtil.getFileEntry(fileEntryId);
 
 		return fileEntry.containsPermission(permissionChecker, actionId);
 	}

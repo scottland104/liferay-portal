@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.Country;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing Country in entity cache.
  *
@@ -26,10 +31,10 @@ import com.liferay.portal.model.Country;
  * @see Country
  * @generated
  */
-public class CountryCacheModel implements CacheModel<Country> {
+public class CountryCacheModel implements CacheModel<Country>, Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(15);
+		StringBundler sb = new StringBundler(17);
 
 		sb.append("{countryId=");
 		sb.append(countryId);
@@ -43,6 +48,8 @@ public class CountryCacheModel implements CacheModel<Country> {
 		sb.append(number);
 		sb.append(", idd=");
 		sb.append(idd);
+		sb.append(", zipRequired=");
+		sb.append(zipRequired);
 		sb.append(", active=");
 		sb.append(active);
 		sb.append("}");
@@ -50,6 +57,7 @@ public class CountryCacheModel implements CacheModel<Country> {
 		return sb.toString();
 	}
 
+	@Override
 	public Country toEntityModel() {
 		CountryImpl countryImpl = new CountryImpl();
 
@@ -90,11 +98,68 @@ public class CountryCacheModel implements CacheModel<Country> {
 			countryImpl.setIdd(idd);
 		}
 
+		countryImpl.setZipRequired(zipRequired);
 		countryImpl.setActive(active);
 
 		countryImpl.resetOriginalValues();
 
 		return countryImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		countryId = objectInput.readLong();
+		name = objectInput.readUTF();
+		a2 = objectInput.readUTF();
+		a3 = objectInput.readUTF();
+		number = objectInput.readUTF();
+		idd = objectInput.readUTF();
+		zipRequired = objectInput.readBoolean();
+		active = objectInput.readBoolean();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(countryId);
+
+		if (name == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(name);
+		}
+
+		if (a2 == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(a2);
+		}
+
+		if (a3 == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(a3);
+		}
+
+		if (number == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(number);
+		}
+
+		if (idd == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(idd);
+		}
+
+		objectOutput.writeBoolean(zipRequired);
+		objectOutput.writeBoolean(active);
 	}
 
 	public long countryId;
@@ -103,5 +168,6 @@ public class CountryCacheModel implements CacheModel<Country> {
 	public String a3;
 	public String number;
 	public String idd;
+	public boolean zipRequired;
 	public boolean active;
 }

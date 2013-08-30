@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,8 +23,8 @@ import java.util.List;
 /**
  * This class is used by SOAP remote services, specifically {@link com.liferay.portlet.dynamicdatamapping.service.http.DDMStructureServiceSoap}.
  *
- * @author    Brian Wing Shun Chan
- * @see       com.liferay.portlet.dynamicdatamapping.service.http.DDMStructureServiceSoap
+ * @author Brian Wing Shun Chan
+ * @see com.liferay.portlet.dynamicdatamapping.service.http.DDMStructureServiceSoap
  * @generated
  */
 public class DDMStructureSoap implements Serializable {
@@ -39,12 +39,14 @@ public class DDMStructureSoap implements Serializable {
 		soapModel.setUserName(model.getUserName());
 		soapModel.setCreateDate(model.getCreateDate());
 		soapModel.setModifiedDate(model.getModifiedDate());
+		soapModel.setParentStructureId(model.getParentStructureId());
 		soapModel.setClassNameId(model.getClassNameId());
 		soapModel.setStructureKey(model.getStructureKey());
 		soapModel.setName(model.getName());
 		soapModel.setDescription(model.getDescription());
 		soapModel.setXsd(model.getXsd());
 		soapModel.setStorageType(model.getStorageType());
+		soapModel.setType(model.getType());
 
 		return soapModel;
 	}
@@ -161,6 +163,14 @@ public class DDMStructureSoap implements Serializable {
 		_modifiedDate = modifiedDate;
 	}
 
+	public long getParentStructureId() {
+		return _parentStructureId;
+	}
+
+	public void setParentStructureId(long parentStructureId) {
+		_parentStructureId = parentStructureId;
+	}
+
 	public long getClassNameId() {
 		return _classNameId;
 	}
@@ -209,6 +219,14 @@ public class DDMStructureSoap implements Serializable {
 		_storageType = storageType;
 	}
 
+	public int getType() {
+		return _type;
+	}
+
+	public void setType(int type) {
+		_type = type;
+	}
+
 	private String _uuid;
 	private long _structureId;
 	private long _groupId;
@@ -217,10 +235,12 @@ public class DDMStructureSoap implements Serializable {
 	private String _userName;
 	private Date _createDate;
 	private Date _modifiedDate;
+	private long _parentStructureId;
 	private long _classNameId;
 	private String _structureKey;
 	private String _name;
 	private String _description;
 	private String _xsd;
 	private String _storageType;
+	private int _type;
 }

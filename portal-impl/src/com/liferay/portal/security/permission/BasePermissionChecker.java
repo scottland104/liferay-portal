@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -21,6 +21,7 @@ import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.RoleLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.admin.util.OmniadminUtil;
 
 import java.util.Collections;
@@ -36,26 +37,31 @@ public abstract class BasePermissionChecker implements PermissionChecker {
 	@Override
 	public abstract PermissionChecker clone();
 
+	@Override
 	public long getCompanyId() {
 		return user.getCompanyId();
 	}
 
+	@Override
 	public List<Long> getGuestResourceBlockIds(
 		long companyId, long groupId, String name, String actionId) {
 
 		return Collections.emptyList();
 	}
 
+	@Override
 	public List<Long> getOwnerResourceBlockIds(
 		long companyId, long groupId, String name, String actionId) {
 
 		return Collections.emptyList();
 	}
 
+	@Override
 	public long getOwnerRoleId() {
 		return ownerRole.getRoleId();
 	}
 
+	@Override
 	public List<Long> getResourceBlockIds(
 		long companyId, long groupId, long userId, String name,
 		String actionId) {
@@ -63,14 +69,22 @@ public abstract class BasePermissionChecker implements PermissionChecker {
 		return Collections.emptyList();
 	}
 
+	@Override
 	public long[] getRoleIds(long userId, long groupId) {
 		return PermissionChecker.DEFAULT_ROLE_IDS;
 	}
 
+	@Override
+	public User getUser() {
+		return user;
+	}
+
+	@Override
 	public long getUserId() {
 		return user.getUserId();
 	}
 
+	@Override
 	public boolean hasOwnerPermission(
 		long companyId, String name, long primKey, long ownerId,
 		String actionId) {
@@ -79,13 +93,15 @@ public abstract class BasePermissionChecker implements PermissionChecker {
 			companyId, name, String.valueOf(primKey), ownerId, actionId);
 	}
 
+	@Override
 	public boolean hasPermission(
 		long groupId, String name, long primKey, String actionId) {
 
 		return hasPermission(groupId, name, String.valueOf(primKey), actionId);
 	}
 
-	public void init(User user, boolean checkGuest) {
+	@Override
+	public void init(User user) {
 		this.user = user;
 
 		if (user.isDefaultUser()) {
@@ -104,8 +120,6 @@ public abstract class BasePermissionChecker implements PermissionChecker {
 			this.signedIn = true;
 		}
 
-		this.checkGuest = checkGuest;
-
 		try {
 			this.ownerRole = RoleLocalServiceUtil.getRole(
 				user.getCompanyId(), RoleConstants.OWNER);
@@ -115,52 +129,55 @@ public abstract class BasePermissionChecker implements PermissionChecker {
 		}
 	}
 
+	@Override
 	public boolean isCheckGuest() {
 		return checkGuest;
 	}
 
 	/**
-	 * @deprecated As of 6.1, renamed to {@link #isGroupAdmin(long)}
+	 * @deprecated As of 6.1.0, renamed to {@link #isGroupAdmin(long)}
 	 */
+	@Override
 	public boolean isCommunityAdmin(long groupId) {
 		return isGroupAdmin(groupId);
 	}
 
 	/**
-	 * @deprecated As of 6.1, renamed to {@link #isGroupOwner(long)}
+	 * @deprecated As of 6.1.0, renamed to {@link #isGroupOwner(long)}
 	 */
+	@Override
 	public boolean isCommunityOwner(long groupId) {
 		return isGroupOwner(groupId);
 	}
 
+	@Override
 	public boolean isOmniadmin() {
 		if (omniadmin == null) {
-			omniadmin = Boolean.valueOf(OmniadminUtil.isOmniadmin(getUserId()));
+			omniadmin = Boolean.valueOf(OmniadminUtil.isOmniadmin(getUser()));
 		}
 
 		return omniadmin.booleanValue();
 	}
 
+	@Override
 	public boolean isSignedIn() {
 		return signedIn;
 	}
 
+	@Override
 	public void resetValues() {
 	}
 
-	public void setCheckGuest(boolean checkGuest) {
-		this.checkGuest = checkGuest;
-	}
-
+	@Override
 	public void setValues(PortletRequest portletRequest) {
 	}
 
-	protected User user;
+	protected boolean checkGuest = PropsValues.PERMISSIONS_CHECK_GUEST_ENABLED;
 	protected long defaultUserId;
-	protected boolean signedIn;
-	protected boolean checkGuest;
 	protected Boolean omniadmin;
 	protected Role ownerRole;
+	protected boolean signedIn;
+	protected User user;
 
 	private static Log _log = LogFactoryUtil.getLog(
 		BasePermissionChecker.class);

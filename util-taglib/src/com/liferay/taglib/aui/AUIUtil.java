@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,65 +25,41 @@ import java.util.Map;
  */
 public class AUIUtil {
 
-	public static final String BUTTON_INPUT_PREFIX = "aui-button-input";
+	/**
+	 * @deprecated As of 6.2.0
+	 */
+	public static final String BUTTON_INPUT_PREFIX = "btn-input";
 
-	public static final String BUTTON_PREFIX = "aui-button";
+	public static final String BUTTON_PREFIX = "btn";
 
-	public static final String FIELD_PREFIX = "aui-field";
+	public static final String FIELD_PREFIX = "field";
 
-	public static final String INPUT_PREFIX = "aui-field-input";
+	/**
+	 * @deprecated As of 6.2.0
+	 */
+	public static final String INPUT_PREFIX = "field-input";
 
-	public static final String LABEL_PREFIX = "aui-field-label";
+	/**
+	 * @deprecated As of 6.2.0
+	 */
+	public static final String LABEL_CHOICE_PREFIX = "choice-label";
+
+	/**
+	 * @deprecated As of 6.2.0
+	 */
+	public static final String LABEL_FIELD_PREFIX = "field-label";
 
 	public static String buildCss(
-		String prefix, String baseTypeCss, boolean inlineField,
-		boolean disabled, boolean choiceField, boolean first, boolean last,
+		String prefix, boolean disabled, boolean first, boolean last,
 		String cssClass) {
 
 		StringBundler sb = new StringBundler();
 
 		sb.append(prefix);
 
-		if (choiceField) {
-			sb.append(StringPool.SPACE);
-			sb.append(prefix);
-			sb.append("-choice");
-		}
-		else if (baseTypeCss.equals("button")) {
-		}
-		else if (baseTypeCss.equals("password") ||
-				 baseTypeCss.equals("string") ||
-				 baseTypeCss.equals("textarea")) {
-
-			sb.append(StringPool.SPACE);
-			sb.append(prefix);
-			sb.append("-text");
-		}
-		else if (baseTypeCss.equals("select")) {
-			sb.append(StringPool.SPACE);
-			sb.append(prefix);
-			sb.append("-select");
-			sb.append(StringPool.SPACE);
-			sb.append(prefix);
-			sb.append("-menu");
-		}
-		else {
-			sb.append(StringPool.SPACE);
-			sb.append(prefix);
-			sb.append("-");
-			sb.append(baseTypeCss);
-		}
-
-		if (inlineField) {
-			sb.append(StringPool.SPACE);
-			sb.append(prefix);
-			sb.append("-inline");
-		}
-
 		if (disabled) {
 			sb.append(StringPool.SPACE);
-			sb.append(prefix);
-			sb.append("-disabled");
+			sb.append("disabled");
 		}
 
 		if (first) {
@@ -105,8 +81,19 @@ public class AUIUtil {
 		return sb.toString();
 	}
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #buildCss(String, boolean,
+	 *             boolean, boolean, String)}
+	 */
+	public static String buildCss(
+			String prefix, String baseTypeCss, boolean disabled, boolean first,
+			boolean last, String cssClass) {
+
+		return buildCss(prefix, disabled, first, last, cssClass);
+	}
+
 	public static String buildData(Map<String, Object> data) {
-		if ((data == null) || (data.isEmpty())) {
+		if ((data == null) || data.isEmpty()) {
 			return StringPool.BLANK;
 		}
 
@@ -127,23 +114,47 @@ public class AUIUtil {
 	}
 
 	public static String buildLabel(
-		String inlineLabel, boolean showForLabel, String forLabel) {
+		String baseType, boolean inlineField, boolean showForLabel,
+		String forLabel) {
 
-		StringBundler sb = new StringBundler(4);
+		StringBundler sb = new StringBundler(7);
 
-		sb.append("class=\"" + LABEL_PREFIX);
-
-		if (Validator.isNotNull(inlineLabel) && !inlineLabel.equals("right")) {
-			sb.append("-inline-label");
+		if (baseType.equals("boolean")) {
+			baseType = "checkbox";
 		}
 
-		sb.append("\"");
+		if (baseType.equals("checkbox") || baseType.equals("radio")) {
+			sb.append("class=\"");
+			sb.append(baseType);
+
+			if (inlineField) {
+				sb.append(" inline");
+			}
+
+			sb.append("\" ");
+		}
+		else {
+			sb.append("class=\"control-label\" ");
+		}
 
 		if (showForLabel) {
-			sb.append(" for=\"" + forLabel + "\"");
+			sb.append("for=\"");
+			sb.append(forLabel);
+			sb.append("\"");
 		}
 
 		return sb.toString();
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #buildLabel(String, boolean,
+	 *             boolean, String)}
+	 */
+	public static String buildLabel(
+		String inlineLabel, boolean showForLabel, String forLabel,
+		boolean choiceField) {
+
+		return buildLabel(StringPool.BLANK, false, showForLabel, forLabel);
 	}
 
 }

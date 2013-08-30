@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,8 +18,8 @@ import com.liferay.mail.model.Filter;
 import com.liferay.mail.service.CyrusServiceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.process.ProcessUtil;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.ProcessUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -29,12 +29,14 @@ import com.liferay.portal.util.PropsUtil;
 import java.io.File;
 
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * @author Brian Wing Shun Chan
  */
 public class CyrusHook implements Hook {
 
+	@Override
 	public void addForward(
 		long companyId, long userId, List<Filter> filters,
 		List<String> emailAddresses, boolean leaveCopy) {
@@ -46,7 +48,7 @@ public class CyrusHook implements Hook {
 				File file = new File(home + "/" + userId + ".procmail.forward");
 
 				if ((filters.size() > 0) || (emailAddresses.size() > 0) ||
-					(leaveCopy)) {
+					leaveCopy) {
 
 					StringBundler sb = new StringBundler();
 
@@ -95,6 +97,7 @@ public class CyrusHook implements Hook {
 		}
 	}
 
+	@Override
 	public void addUser(
 		long companyId, long userId, String password, String firstName,
 		String middleName, String lastName, String emailAddress) {
@@ -104,23 +107,23 @@ public class CyrusHook implements Hook {
 
 			// Expect
 
-			String addUserCmd =
-				PropsUtil.get(PropsKeys.MAIL_HOOK_CYRUS_ADD_USER);
+			String addUserCmd = PropsUtil.get(
+				PropsKeys.MAIL_HOOK_CYRUS_ADD_USER);
 
 			addUserCmd = StringUtil.replace(
 				addUserCmd, "%1%", String.valueOf(userId));
 
-			Runtime rt = Runtime.getRuntime();
+			Future<?> future = ProcessUtil.execute(
+				ProcessUtil.LOGGING_OUTPUT_PROCESSOR, addUserCmd);
 
-			Process p = rt.exec(addUserCmd);
-
-			ProcessUtil.close(p);
+			future.get();
 		}
 		catch (Exception e) {
 			_log.error(e, e);
 		}
 	}
 
+	@Override
 	public void addVacationMessage(
 		long companyId, long userId, String emailAddress,
 		String vacationMessage) {
@@ -148,6 +151,7 @@ public class CyrusHook implements Hook {
 		}
 	}
 
+	@Override
 	public void deleteEmailAddress(long companyId, long userId) {
 		try {
 			CyrusServiceUtil.deleteEmailAddress(companyId, userId);
@@ -157,23 +161,23 @@ public class CyrusHook implements Hook {
 		}
 	}
 
+	@Override
 	public void deleteUser(long companyId, long userId) {
 		try {
 			CyrusServiceUtil.deleteUser(userId);
 
 			// Expect
 
-			String deleteUserCmd =
-				PropsUtil.get(PropsKeys.MAIL_HOOK_CYRUS_DELETE_USER);
+			String deleteUserCmd = PropsUtil.get(
+				PropsKeys.MAIL_HOOK_CYRUS_DELETE_USER);
 
 			deleteUserCmd = StringUtil.replace(
 				deleteUserCmd, "%1%", String.valueOf(userId));
 
-			Runtime rt = Runtime.getRuntime();
+			Future<?> future = ProcessUtil.execute(
+				ProcessUtil.LOGGING_OUTPUT_PROCESSOR, deleteUserCmd);
 
-			Process p = rt.exec(deleteUserCmd);
-
-			ProcessUtil.close(p);
+			future.get();
 
 			// Procmail
 
@@ -208,6 +212,7 @@ public class CyrusHook implements Hook {
 		}
 	}
 
+	@Override
 	public void updateBlocked(
 		long companyId, long userId, List<String> blocked) {
 
@@ -245,6 +250,7 @@ public class CyrusHook implements Hook {
 		}
 	}
 
+	@Override
 	public void updateEmailAddress(
 		long companyId, long userId, String emailAddress) {
 
@@ -257,6 +263,7 @@ public class CyrusHook implements Hook {
 		}
 	}
 
+	@Override
 	public void updatePassword(long companyId, long userId, String password) {
 		try {
 			CyrusServiceUtil.updatePassword(companyId, userId, password);

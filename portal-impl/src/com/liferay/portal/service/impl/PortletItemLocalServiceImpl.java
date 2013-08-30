@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -34,6 +34,7 @@ import java.util.List;
 public class PortletItemLocalServiceImpl
 	extends PortletItemLocalServiceBaseImpl {
 
+	@Override
 	public PortletItem addPortletItem(
 			long userId, long groupId, String name, String portletId,
 			String className)
@@ -47,8 +48,7 @@ public class PortletItemLocalServiceImpl
 
 		long portletItemId = counterLocalService.increment();
 
-		PortletItem portletItem = portletItemPersistence.create(
-			portletItemId);
+		PortletItem portletItem = portletItemPersistence.create(portletItemId);
 
 		portletItem.setGroupId(groupId);
 		portletItem.setCompanyId(user.getCompanyId());
@@ -60,18 +60,12 @@ public class PortletItemLocalServiceImpl
 		portletItem.setPortletId(portletId);
 		portletItem.setClassNameId(classNameId);
 
-		portletItemPersistence.update(portletItem, false);
+		portletItemPersistence.update(portletItem);
 
 		return portletItem;
 	}
 
 	@Override
-	public PortletItem getPortletItem(long portletItemId)
-		throws PortalException, SystemException {
-
-		return portletItemPersistence.findByPrimaryKey(portletItemId);
-	}
-
 	public PortletItem getPortletItem(
 			long groupId, String name, String portletId, String className)
 		throws PortalException, SystemException {
@@ -82,6 +76,7 @@ public class PortletItemLocalServiceImpl
 			groupId, name, portletId, classNameId);
 	}
 
+	@Override
 	public List<PortletItem> getPortletItems(long groupId, String className)
 		throws SystemException {
 
@@ -90,6 +85,7 @@ public class PortletItemLocalServiceImpl
 		return portletItemPersistence.findByG_C(groupId, classNameId);
 	}
 
+	@Override
 	public List<PortletItem> getPortletItems(
 			long groupId, String portletId, String className)
 		throws SystemException {
@@ -100,6 +96,7 @@ public class PortletItemLocalServiceImpl
 			groupId, portletId, classNameId);
 	}
 
+	@Override
 	public PortletItem updatePortletItem(
 			long userId, long groupId, String name, String portletId,
 			String className)
@@ -117,9 +114,9 @@ public class PortletItemLocalServiceImpl
 			portletItem.setUserName(user.getFullName());
 			portletItem.setModifiedDate(new Date());
 
-			portletItemPersistence.update(portletItem, false);
+			portletItemPersistence.update(portletItem);
 		}
-		catch (NoSuchPortletItemException nsste) {
+		catch (NoSuchPortletItemException nspie) {
 			portletItem = addPortletItem(
 				userId, groupId, name, portletId,
 				PortletPreferences.class.getName());

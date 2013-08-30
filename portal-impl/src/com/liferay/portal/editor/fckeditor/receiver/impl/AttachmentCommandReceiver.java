@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,20 +16,16 @@ package com.liferay.portal.editor.fckeditor.receiver.impl;
 
 import com.liferay.portal.editor.fckeditor.command.CommandArgument;
 import com.liferay.portal.editor.fckeditor.exception.FCKException;
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.model.CompanyConstants;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.util.PortletKeys;
-import com.liferay.portlet.documentlibrary.NoSuchDirectoryException;
-import com.liferay.portlet.documentlibrary.store.DLStoreUtil;
 import com.liferay.portlet.wiki.model.WikiPage;
 import com.liferay.portlet.wiki.service.WikiPageLocalServiceUtil;
 import com.liferay.portlet.wiki.service.WikiPageServiceUtil;
 
-import java.io.File;
+import java.io.InputStream;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,13 +41,15 @@ import org.w3c.dom.Node;
  */
 public class AttachmentCommandReceiver extends BaseCommandReceiver {
 
+	@Override
 	protected String createFolder(CommandArgument commandArgument) {
 		return "0";
 	}
 
+	@Override
 	protected String fileUpload(
-		CommandArgument commandArgument, String fileName, File file,
-		String extension) {
+		CommandArgument commandArgument, String fileName,
+		InputStream inputStream, String extension, long size) {
 
 		try {
 			HttpServletRequest request =
@@ -66,15 +64,16 @@ public class AttachmentCommandReceiver extends BaseCommandReceiver {
 
 			long nodeId = page.getNodeId();
 
-			List<ObjectValuePair<String, File>> files =
-				new ArrayList<ObjectValuePair<String, File>>();
+			List<ObjectValuePair<String, InputStream>> inputStreamOVPs =
+				new ArrayList<ObjectValuePair<String, InputStream>>(1);
 
-			ObjectValuePair<String, File> ovp =
-				new ObjectValuePair<String, File>(fileName, file);
+			ObjectValuePair<String, InputStream> inputStreamOVP =
+				new ObjectValuePair<String, InputStream>(fileName, inputStream);
 
-			files.add(ovp);
+			inputStreamOVPs.add(inputStreamOVP);
 
-			WikiPageServiceUtil.addPageAttachments(nodeId, title, files);
+			WikiPageServiceUtil.addPageAttachments(
+				nodeId, title, inputStreamOVPs);
 		}
 		catch (Exception e) {
 			throw new FCKException(e);
@@ -83,10 +82,12 @@ public class AttachmentCommandReceiver extends BaseCommandReceiver {
 		return "0";
 	}
 
+	@Override
 	protected void getFolders(
 		CommandArgument commandArgument, Document document, Node rootNode) {
 	}
 
+	@Override
 	protected void getFoldersAndFiles(
 		CommandArgument commandArgument, Document document, Node rootNode) {
 
@@ -98,6 +99,7 @@ public class AttachmentCommandReceiver extends BaseCommandReceiver {
 		}
 	}
 
+	@Override
 	protected boolean isStagedData(Group group) {
 		return group.isStagedPortlet(PortletKeys.WIKI);
 	}
@@ -118,40 +120,20 @@ public class AttachmentCommandReceiver extends BaseCommandReceiver {
 		WikiPage wikiPage = WikiPageLocalServiceUtil.getPage(
 			wikiPageResourcePrimKey);
 
-		long repositoryId = CompanyConstants.SYSTEM;
+		String attachmentURLPrefix = ParamUtil.getString(
+			request, "attachmentURLPrefix");
 
-		String dirName = wikiPage.getAttachmentsDir();
-
-		String[] fileNames = null;
-
-		try {
-			fileNames = DLStoreUtil.getFileNames(
-				wikiPage.getCompanyId(), repositoryId, dirName);
-		}
-		catch (NoSuchDirectoryException nsde) {
-			DLStoreUtil.addDirectory(
-				wikiPage.getCompanyId(), repositoryId, dirName);
-
-			fileNames = DLStoreUtil.getFileNames(
-				wikiPage.getCompanyId(), repositoryId, dirName);
-		}
-
-		for (String fileName : fileNames) {
-			byte[] fileEntry = DLStoreUtil.getFile(
-				wikiPage.getCompanyId(), repositoryId, fileName);
-
-			String[] parts = StringUtil.split(fileName, StringPool.SLASH);
-
-			fileName = parts[3];
-
+		for (FileEntry fileEntry : wikiPage.getAttachmentsFileEntries()) {
 			Element fileElement = document.createElement("File");
 
 			filesElement.appendChild(fileElement);
 
-			fileElement.setAttribute("name", fileName);
-			fileElement.setAttribute("desc", fileName);
-			fileElement.setAttribute("size", getSize(fileEntry.length));
-			fileElement.setAttribute("url", fileName);
+			fileElement.setAttribute("name", fileEntry.getTitle());
+			fileElement.setAttribute("desc", fileEntry.getTitle());
+			fileElement.setAttribute(
+				"size", String.valueOf(fileEntry.getSize()));
+			fileElement.setAttribute(
+				"url", attachmentURLPrefix + fileEntry.getTitle());
 		}
 	}
 

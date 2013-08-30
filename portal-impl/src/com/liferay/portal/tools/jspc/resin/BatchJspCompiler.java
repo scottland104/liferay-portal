@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,10 +14,10 @@
 
 package com.liferay.portal.tools.jspc.resin;
 
-import com.liferay.portal.kernel.util.MethodHandler;
-import com.liferay.portal.kernel.util.MethodKey;
 import com.liferay.portal.kernel.util.StackTraceUtil;
 import com.liferay.portal.util.FileImpl;
+
+import java.lang.reflect.Method;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,33 +51,19 @@ public class BatchJspCompiler {
 
 			ds.scan();
 
-			String[] files = ds.getIncludedFiles();
+			String[] fileNames = ds.getIncludedFiles();
 
-			Arrays.sort(files);
+			Arrays.sort(fileNames);
 
-			List<String> fileNames = new ArrayList<String>();
-
-			for (int i = 0; i < files.length; i++) {
-				String fileName = files[i];
-
-				fileNames.add(fileName);
-
-				if (((i > 0) && ((i % 200) == 0)) ||
-					((i + 1) == files.length)) {
-
-					_compile(fileNames);
-
-					fileNames.clear();
-				}
-			}
+			_compile(fileNames);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	private void _compile(List<String> fileNames) throws Exception {
-		if (fileNames.size() == 0) {
+	private void _compile(String[] fileNames) throws Exception {
+		if (fileNames.length == 0) {
 			return;
 		}
 
@@ -87,17 +73,15 @@ public class BatchJspCompiler {
 		arguments.add(_appDir);
 		arguments.add("-class-dir");
 		arguments.add(_classDir);
-		arguments.addAll(fileNames);
+		arguments.addAll(Arrays.asList(fileNames));
 
-		MethodKey methodKey = new MethodKey(
-			"com.caucho.jsp.JspCompiler", "main", String[].class);
+		Class<?> clazz = Class.forName("com.caucho.jsp.JspCompiler");
 
-		MethodHandler methodHandler = new MethodHandler(
-			methodKey,
-			(Object)arguments.toArray(new String[arguments.size()]));
+		Method method = clazz.getMethod("main", String[].class);
 
 		try {
-			methodHandler.invoke(false);
+			method.invoke(
+				null, (Object)arguments.toArray(new String[arguments.size()]));
 		}
 		catch (Exception e) {
 			_fileUtil.write(

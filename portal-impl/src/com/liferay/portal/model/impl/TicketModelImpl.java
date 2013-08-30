@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,8 +16,10 @@ package com.liferay.portal.model.impl;
 
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.Ticket;
 import com.liferay.portal.model.TicketModel;
@@ -29,11 +31,11 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the Ticket service. Represents a row in the &quot;Ticket&quot; database table, with each column mapped to a property of this class.
@@ -80,61 +82,154 @@ public class TicketModelImpl extends BaseModelImpl<Ticket>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.Ticket"),
 			true);
-
-	public Class<?> getModelClass() {
-		return Ticket.class;
-	}
-
-	public String getModelClassName() {
-		return Ticket.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.Ticket"),
+			true);
+	public static long KEY_COLUMN_BITMASK = 1L;
+	public static long TICKETID_COLUMN_BITMASK = 2L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.Ticket"));
 
 	public TicketModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _ticketId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setTicketId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_ticketId);
+		return _ticketId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return Ticket.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return Ticket.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("ticketId", getTicketId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("createDate", getCreateDate());
+		attributes.put("classNameId", getClassNameId());
+		attributes.put("classPK", getClassPK());
+		attributes.put("key", getKey());
+		attributes.put("type", getType());
+		attributes.put("extraInfo", getExtraInfo());
+		attributes.put("expirationDate", getExpirationDate());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long ticketId = (Long)attributes.get("ticketId");
+
+		if (ticketId != null) {
+			setTicketId(ticketId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Date createDate = (Date)attributes.get("createDate");
+
+		if (createDate != null) {
+			setCreateDate(createDate);
+		}
+
+		Long classNameId = (Long)attributes.get("classNameId");
+
+		if (classNameId != null) {
+			setClassNameId(classNameId);
+		}
+
+		Long classPK = (Long)attributes.get("classPK");
+
+		if (classPK != null) {
+			setClassPK(classPK);
+		}
+
+		String key = (String)attributes.get("key");
+
+		if (key != null) {
+			setKey(key);
+		}
+
+		Integer type = (Integer)attributes.get("type");
+
+		if (type != null) {
+			setType(type);
+		}
+
+		String extraInfo = (String)attributes.get("extraInfo");
+
+		if (extraInfo != null) {
+			setExtraInfo(extraInfo);
+		}
+
+		Date expirationDate = (Date)attributes.get("expirationDate");
+
+		if (expirationDate != null) {
+			setExpirationDate(expirationDate);
+		}
+	}
+
+	@Override
 	public long getTicketId() {
 		return _ticketId;
 	}
 
+	@Override
 	public void setTicketId(long ticketId) {
+		_columnBitmask = -1L;
+
 		_ticketId = ticketId;
 	}
 
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
 		_companyId = companyId;
 	}
 
+	@Override
 	public Date getCreateDate() {
 		return _createDate;
 	}
 
+	@Override
 	public void setCreateDate(Date createDate) {
 		_createDate = createDate;
 	}
 
+	@Override
 	public String getClassName() {
 		if (getClassNameId() <= 0) {
 			return StringPool.BLANK;
@@ -143,22 +238,38 @@ public class TicketModelImpl extends BaseModelImpl<Ticket>
 		return PortalUtil.getClassName(getClassNameId());
 	}
 
+	@Override
+	public void setClassName(String className) {
+		long classNameId = 0;
+
+		if (Validator.isNotNull(className)) {
+			classNameId = PortalUtil.getClassNameId(className);
+		}
+
+		setClassNameId(classNameId);
+	}
+
+	@Override
 	public long getClassNameId() {
 		return _classNameId;
 	}
 
+	@Override
 	public void setClassNameId(long classNameId) {
 		_classNameId = classNameId;
 	}
 
+	@Override
 	public long getClassPK() {
 		return _classPK;
 	}
 
+	@Override
 	public void setClassPK(long classPK) {
 		_classPK = classPK;
 	}
 
+	@Override
 	public String getKey() {
 		if (_key == null) {
 			return StringPool.BLANK;
@@ -168,7 +279,10 @@ public class TicketModelImpl extends BaseModelImpl<Ticket>
 		}
 	}
 
+	@Override
 	public void setKey(String key) {
+		_columnBitmask |= KEY_COLUMN_BITMASK;
+
 		if (_originalKey == null) {
 			_originalKey = _key;
 		}
@@ -180,14 +294,17 @@ public class TicketModelImpl extends BaseModelImpl<Ticket>
 		return GetterUtil.getString(_originalKey);
 	}
 
+	@Override
 	public int getType() {
 		return _type;
 	}
 
+	@Override
 	public void setType(int type) {
 		_type = type;
 	}
 
+	@Override
 	public String getExtraInfo() {
 		if (_extraInfo == null) {
 			return StringPool.BLANK;
@@ -197,47 +314,46 @@ public class TicketModelImpl extends BaseModelImpl<Ticket>
 		}
 	}
 
+	@Override
 	public void setExtraInfo(String extraInfo) {
 		_extraInfo = extraInfo;
 	}
 
+	@Override
 	public Date getExpirationDate() {
 		return _expirationDate;
 	}
 
+	@Override
 	public void setExpirationDate(Date expirationDate) {
 		_expirationDate = expirationDate;
 	}
 
-	@Override
-	public Ticket toEscapedModel() {
-		if (isEscapedModel()) {
-			return (Ticket)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (Ticket)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					Ticket.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			Ticket.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public Ticket toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (Ticket)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -259,6 +375,7 @@ public class TicketModelImpl extends BaseModelImpl<Ticket>
 		return ticketImpl;
 	}
 
+	@Override
 	public int compareTo(Ticket ticket) {
 		int value = 0;
 
@@ -281,18 +398,15 @@ public class TicketModelImpl extends BaseModelImpl<Ticket>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof Ticket)) {
 			return false;
 		}
 
-		Ticket ticket = null;
-
-		try {
-			ticket = (Ticket)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		Ticket ticket = (Ticket)obj;
 
 		long primaryKey = ticket.getPrimaryKey();
 
@@ -314,6 +428,8 @@ public class TicketModelImpl extends BaseModelImpl<Ticket>
 		TicketModelImpl ticketModelImpl = this;
 
 		ticketModelImpl._originalKey = ticketModelImpl._key;
+
+		ticketModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -394,6 +510,7 @@ public class TicketModelImpl extends BaseModelImpl<Ticket>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(31);
 
@@ -444,9 +561,7 @@ public class TicketModelImpl extends BaseModelImpl<Ticket>
 	}
 
 	private static ClassLoader _classLoader = Ticket.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
-			Ticket.class
-		};
+	private static Class<?>[] _escapedModelInterfaces = new Class[] { Ticket.class };
 	private long _ticketId;
 	private long _companyId;
 	private Date _createDate;
@@ -457,6 +572,6 @@ public class TicketModelImpl extends BaseModelImpl<Ticket>
 	private int _type;
 	private String _extraInfo;
 	private Date _expirationDate;
-	private transient ExpandoBridge _expandoBridge;
-	private Ticket _escapedModelProxy;
+	private long _columnBitmask;
+	private Ticket _escapedModel;
 }

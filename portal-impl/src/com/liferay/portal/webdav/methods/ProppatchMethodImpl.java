@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -39,7 +39,6 @@ import com.liferay.portal.webdav.LockException;
 import com.liferay.util.xml.XMLFormatter;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -51,11 +50,12 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class ProppatchMethodImpl extends BasePropMethodImpl {
 
-	public int process(WebDAVRequest webDavRequest) throws WebDAVException {
+	@Override
+	public int process(WebDAVRequest webDAVRequest) throws WebDAVException {
 		try {
-			Set<QName> props = processInstructions(webDavRequest);
+			Set<QName> props = processInstructions(webDAVRequest);
 
-			return writeResponseXML(webDavRequest, props);
+			return writeResponseXML(webDAVRequest, props);
 		}
 		catch (InvalidRequestException ire) {
 			if (_log.isInfoEnabled()) {
@@ -72,12 +72,12 @@ public class ProppatchMethodImpl extends BasePropMethodImpl {
 		}
 	}
 
-	protected WebDAVProps getStoredProperties(WebDAVRequest webDavRequest)
+	protected WebDAVProps getStoredProperties(WebDAVRequest webDAVRequest)
 		throws PortalException, SystemException {
 
-		WebDAVStorage storage = webDavRequest.getWebDAVStorage();
+		WebDAVStorage storage = webDAVRequest.getWebDAVStorage();
 
-		Resource resource = storage.getResource(webDavRequest);
+		Resource resource = storage.getResource(webDAVRequest);
 
 		WebDAVProps webDavProps = null;
 
@@ -92,28 +92,28 @@ public class ProppatchMethodImpl extends BasePropMethodImpl {
 			Lock lock = resource.getLock();
 
 			if ((lock == null) ||
-				!lock.getUuid().equals(webDavRequest.getLockUuid())) {
+				!lock.getUuid().equals(webDAVRequest.getLockUuid())) {
 
 				throw new LockException();
 			}
 		}
 
 		webDavProps = WebDAVPropsLocalServiceUtil.getWebDAVProps(
-			webDavRequest.getCompanyId(), resource.getClassName(),
+			webDAVRequest.getCompanyId(), resource.getClassName(),
 			resource.getPrimaryKey());
 
 		return webDavProps;
 	}
 
-	protected Set<QName> processInstructions(WebDAVRequest webDavRequest)
+	protected Set<QName> processInstructions(WebDAVRequest webDAVRequest)
 		throws InvalidRequestException, LockException {
 
 		try {
 			Set<QName> newProps = new HashSet<QName>();
 
-			HttpServletRequest request = webDavRequest.getHttpServletRequest();
+			HttpServletRequest request = webDAVRequest.getHttpServletRequest();
 
-			WebDAVProps webDavProps = getStoredProperties(webDavRequest);
+			WebDAVProps webDavProps = getStoredProperties(webDAVRequest);
 
 			String xml = new String(
 				FileUtil.getBytes(request.getInputStream()));
@@ -132,11 +132,9 @@ public class ProppatchMethodImpl extends BasePropMethodImpl {
 
 			Element rootElement = document.getRootElement();
 
-			Iterator<Element> itr = rootElement.elements().iterator();
+			List<Element> instructionElements = rootElement.elements();
 
-			while (itr.hasNext()) {
-				Element instructionElement = itr.next();
-
+			for (Element instructionElement : instructionElements) {
 				List<Element> propElements = instructionElement.elements();
 
 				if (propElements.size() != 1) {
@@ -174,8 +172,9 @@ public class ProppatchMethodImpl extends BasePropMethodImpl {
 							webDavProps.addProp(name, prefix, uri, text);
 						}
 
-						newProps.add(SAXReaderUtil.createQName(
-							customPropElement.getName(), namespace));
+						newProps.add(
+							SAXReaderUtil.createQName(
+								customPropElement.getName(), namespace));
 					}
 					else if (instructionElement.getName().equals("remove")) {
 						webDavProps.removeProp(name, prefix, uri);

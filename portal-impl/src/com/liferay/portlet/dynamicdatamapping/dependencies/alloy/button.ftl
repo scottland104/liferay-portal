@@ -1,7 +1,7 @@
 <#include "../init.ftl">
 
-<span class="lfr-forms-field-wrapper lfr-forms-field-wrapper-button">
-	<@aui.input cssClass=cssClass helpMessage=field.tip label=label name=namespacedFieldName type="button" value=field.predefinedValue />
+<@aui["field-wrapper"] data=data helpMessage=escape(fieldStructure.tip)>
+	<@aui.input cssClass=cssClass label=escape(label) name=namespacedFieldName type="button" value=fieldStructure.predefinedValue />
 
-	${field.children}
-</span>
+	${fieldStructure.children}
+</@>

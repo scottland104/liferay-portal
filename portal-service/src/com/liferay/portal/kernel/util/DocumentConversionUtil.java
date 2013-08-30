@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,6 +14,7 @@
 
 package com.liferay.portal.kernel.util;
 
+import java.io.File;
 import java.io.InputStream;
 
 /**
@@ -54,9 +55,10 @@ public class DocumentConversionUtil {
 		"com.liferay.portlet.documentlibrary.util.DocumentConversionUtil";
 
 	private static MethodKey _convertMethodKey = new MethodKey(
-		_CLASS_NAME, "convert", String.class, InputStream.class, String.class,
-		String.class);
+		ClassResolverUtil.resolveByPortalClassLoader(_CLASS_NAME), "convert",
+		String.class, InputStream.class, String.class, String.class);
 	private static MethodKey _getConversionsMethodKey = new MethodKey(
-		_CLASS_NAME, "getConversions", String.class);
+		ClassResolverUtil.resolveByPortalClassLoader(_CLASS_NAME),
+		"getConversions", String.class);
 
 }

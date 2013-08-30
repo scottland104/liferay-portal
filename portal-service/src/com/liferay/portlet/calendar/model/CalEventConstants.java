@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,6 +25,12 @@ public class CalEventConstants {
 
 	public static final String BIRTHDAY = "birthday";
 
+	public static final int END_DATE_TYPE_END_AFTER = 1;
+
+	public static final int END_DATE_TYPE_END_BY = 2;
+
+	public static final int END_DATE_TYPE_NONE = 0;
+
 	public static final int REMIND_BY_AIM = 3;
 
 	public static final int REMIND_BY_EMAIL = 1;
@@ -47,7 +53,7 @@ public class CalEventConstants {
 		Time.DAY * 12, Time.DAY * 13, Time.DAY * 14
 	};
 
-	public static final String[] TYPES =
-		PropsUtil.getArray(PropsKeys.CALENDAR_EVENT_TYPES);
+	public static final String[] TYPES = PropsUtil.getArray(
+		PropsKeys.CALENDAR_EVENT_TYPES);
 
 }

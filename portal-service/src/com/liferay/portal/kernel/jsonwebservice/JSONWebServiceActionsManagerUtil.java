@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,9 +14,13 @@
 
 package com.liferay.portal.kernel.jsonwebservice;
 
+import com.liferay.portal.kernel.security.pacl.permission.PortalRuntimePermission;
+
 import java.lang.reflect.Method;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -25,8 +29,45 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class JSONWebServiceActionsManagerUtil {
 
-	public static List<String[]> dumpMappings() {
-		return _jsonWebServiceActionsManager.dumpMappings();
+	public static Set<String> getContextPaths() {
+		return _jsonWebServiceActionsManager. getContextPaths();
+	}
+
+	public static JSONWebServiceAction getJSONWebServiceAction(
+		HttpServletRequest request) {
+
+		return getJSONWebServiceActionsManager().getJSONWebServiceAction(
+			request);
+	}
+
+	public static JSONWebServiceAction getJSONWebServiceAction(
+		HttpServletRequest request, String path, String method,
+		Map<String, Object> parameterMap) {
+
+		return getJSONWebServiceActionsManager().getJSONWebServiceAction(
+			request, path, method, parameterMap);
+	}
+
+	public static JSONWebServiceActionMapping getJSONWebServiceActionMapping(
+		String signature) {
+
+		return getJSONWebServiceActionsManager().getJSONWebServiceActionMapping(
+			signature);
+	}
+
+	public static List<JSONWebServiceActionMapping>
+		getJSONWebServiceActionMappings(String contextPath) {
+
+		PortalRuntimePermission.checkGetBeanProperty(
+			JSONWebServiceActionsManagerUtil.class);
+
+		return _jsonWebServiceActionsManager.getJSONWebServiceActionMappings(
+			contextPath);
+	}
+
+	public static int getJSONWebServiceActionsCount(String contextPath) {
+		return getJSONWebServiceActionsManager().getJSONWebServiceActionsCount(
+			contextPath);
 	}
 
 	public static JSONWebServiceActionsManager
@@ -35,19 +76,36 @@ public class JSONWebServiceActionsManagerUtil {
 		return _jsonWebServiceActionsManager;
 	}
 
-	public static JSONWebServiceAction lookup(HttpServletRequest request) {
-		return getJSONWebServiceActionsManager().lookup(request);
+	public static void registerJSONWebServiceAction(
+		String contextPath, Class<?> actionClass, Method actionMethod,
+		String path, String method) {
+
+		getJSONWebServiceActionsManager().registerJSONWebServiceAction(
+			contextPath, actionClass, actionMethod, path, method);
 	}
 
 	public static void registerJSONWebServiceAction(
-		Class<?> actionClass, Method actionMethod, String path, String method) {
+		String contextPath, Object actionObject, Class<?> actionClass,
+		Method actionMethod, String path, String method) {
 
 		getJSONWebServiceActionsManager().registerJSONWebServiceAction(
-			actionClass, actionMethod, path, method);
+			contextPath, actionObject, actionClass, actionMethod, path, method);
+	}
+
+	public static int unregisterJSONWebServiceActions(Object actionObject) {
+		return getJSONWebServiceActionsManager().
+			unregisterJSONWebServiceActions(actionObject);
+	}
+
+	public static int unregisterJSONWebServiceActions(String contextPath) {
+		return getJSONWebServiceActionsManager().
+			unregisterJSONWebServiceActions(contextPath);
 	}
 
 	public void setJSONWebServiceActionsManager(
 		JSONWebServiceActionsManager jsonWebServiceActionsManager) {
+
+		PortalRuntimePermission.checkSetBeanProperty(getClass());
 
 		_jsonWebServiceActionsManager = jsonWebServiceActionsManager;
 	}

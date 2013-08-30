@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,7 +19,6 @@
 <%
 String randomNamespace = PortalUtil.generateRandomKey(request, "taglib_ui_flash_page") + StringPool.UNDERLINE;
 
-String align = (String)request.getAttribute("liferay-ui:flash:align");
 String allowFullScreen = (String)request.getAttribute("liferay-ui:flash:allowFullScreen");
 String allowScriptAccess = (String)request.getAttribute("liferay-ui:flash:allowScriptAccess");
 String base = (String)request.getAttribute("liferay-ui:flash:base");
@@ -43,7 +42,7 @@ String wmode = (String)request.getAttribute("liferay-ui:flash:wmode");
 
 <div id="<%= randomNamespace %>flashcontent" style="height: <%= height %>; width: <%= width %>;"></div>
 
-<aui:script use="aui-swf">
+<aui:script use="aui-swf-deprecated">
 	new A.SWF(
 		{
 			boundingBox: '#<%= randomNamespace %>flashcontent',
@@ -53,7 +52,6 @@ String wmode = (String)request.getAttribute("liferay-ui:flash:wmode");
 				base: '<%= base %>',
 				bgcolor: '<%= bgcolor %>',
 				devicefont: '<%= devicefont %>',
-				flashvars: '<%= flashvars %>',
 				loop: '<%= loop %>',
 				menu: '<%= menu %>',
 				play: '<%= play %>',
@@ -63,6 +61,7 @@ String wmode = (String)request.getAttribute("liferay-ui:flash:wmode");
 				swliveconnect: '<%= swliveconnect %>',
 				wmode: '<%= wmode %>'
 			},
+			flashVars: '<%= flashvars %>',
 			height: '<%= height %>',
 			id: '<%= id %>',
 			url: '<%= movie %>',

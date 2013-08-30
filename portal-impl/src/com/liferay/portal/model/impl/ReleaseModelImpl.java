@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,6 +16,7 @@ package com.liferay.portal.model.impl;
 
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -28,11 +29,11 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the Release service. Represents a row in the &quot;Release_&quot; database table, with each column mapped to a property of this class.
@@ -63,10 +64,13 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 			{ "buildNumber", Types.INTEGER },
 			{ "buildDate", Types.TIMESTAMP },
 			{ "verified", Types.BOOLEAN },
+			{ "state_", Types.INTEGER },
 			{ "testString", Types.VARCHAR }
 		};
-	public static final String TABLE_SQL_CREATE = "create table Release_ (releaseId LONG not null primary key,createDate DATE null,modifiedDate DATE null,servletContextName VARCHAR(75) null,buildNumber INTEGER,buildDate DATE null,verified BOOLEAN,testString VARCHAR(1024) null)";
+	public static final String TABLE_SQL_CREATE = "create table Release_ (releaseId LONG not null primary key,createDate DATE null,modifiedDate DATE null,servletContextName VARCHAR(75) null,buildNumber INTEGER,buildDate DATE null,verified BOOLEAN,state_ INTEGER,testString VARCHAR(1024) null)";
 	public static final String TABLE_SQL_DROP = "drop table Release_";
+	public static final String ORDER_BY_JPQL = " ORDER BY release.releaseId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY Release_.releaseId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -76,61 +80,152 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.Release"),
 			true);
-
-	public Class<?> getModelClass() {
-		return Release.class;
-	}
-
-	public String getModelClassName() {
-		return Release.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.Release"),
+			true);
+	public static long SERVLETCONTEXTNAME_COLUMN_BITMASK = 1L;
+	public static long RELEASEID_COLUMN_BITMASK = 2L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.Release"));
 
 	public ReleaseModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _releaseId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setReleaseId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_releaseId);
+		return _releaseId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return Release.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return Release.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("releaseId", getReleaseId());
+		attributes.put("createDate", getCreateDate());
+		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("servletContextName", getServletContextName());
+		attributes.put("buildNumber", getBuildNumber());
+		attributes.put("buildDate", getBuildDate());
+		attributes.put("verified", getVerified());
+		attributes.put("state", getState());
+		attributes.put("testString", getTestString());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long releaseId = (Long)attributes.get("releaseId");
+
+		if (releaseId != null) {
+			setReleaseId(releaseId);
+		}
+
+		Date createDate = (Date)attributes.get("createDate");
+
+		if (createDate != null) {
+			setCreateDate(createDate);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
+		}
+
+		String servletContextName = (String)attributes.get("servletContextName");
+
+		if (servletContextName != null) {
+			setServletContextName(servletContextName);
+		}
+
+		Integer buildNumber = (Integer)attributes.get("buildNumber");
+
+		if (buildNumber != null) {
+			setBuildNumber(buildNumber);
+		}
+
+		Date buildDate = (Date)attributes.get("buildDate");
+
+		if (buildDate != null) {
+			setBuildDate(buildDate);
+		}
+
+		Boolean verified = (Boolean)attributes.get("verified");
+
+		if (verified != null) {
+			setVerified(verified);
+		}
+
+		Integer state = (Integer)attributes.get("state");
+
+		if (state != null) {
+			setState(state);
+		}
+
+		String testString = (String)attributes.get("testString");
+
+		if (testString != null) {
+			setTestString(testString);
+		}
+	}
+
+	@Override
 	public long getReleaseId() {
 		return _releaseId;
 	}
 
+	@Override
 	public void setReleaseId(long releaseId) {
 		_releaseId = releaseId;
 	}
 
+	@Override
 	public Date getCreateDate() {
 		return _createDate;
 	}
 
+	@Override
 	public void setCreateDate(Date createDate) {
 		_createDate = createDate;
 	}
 
+	@Override
 	public Date getModifiedDate() {
 		return _modifiedDate;
 	}
 
+	@Override
 	public void setModifiedDate(Date modifiedDate) {
 		_modifiedDate = modifiedDate;
 	}
 
+	@Override
 	public String getServletContextName() {
 		if (_servletContextName == null) {
 			return StringPool.BLANK;
@@ -140,7 +235,10 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 		}
 	}
 
+	@Override
 	public void setServletContextName(String servletContextName) {
+		_columnBitmask |= SERVLETCONTEXTNAME_COLUMN_BITMASK;
+
 		if (_originalServletContextName == null) {
 			_originalServletContextName = _servletContextName;
 		}
@@ -152,34 +250,52 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 		return GetterUtil.getString(_originalServletContextName);
 	}
 
+	@Override
 	public int getBuildNumber() {
 		return _buildNumber;
 	}
 
+	@Override
 	public void setBuildNumber(int buildNumber) {
 		_buildNumber = buildNumber;
 	}
 
+	@Override
 	public Date getBuildDate() {
 		return _buildDate;
 	}
 
+	@Override
 	public void setBuildDate(Date buildDate) {
 		_buildDate = buildDate;
 	}
 
+	@Override
 	public boolean getVerified() {
 		return _verified;
 	}
 
+	@Override
 	public boolean isVerified() {
 		return _verified;
 	}
 
+	@Override
 	public void setVerified(boolean verified) {
 		_verified = verified;
 	}
 
+	@Override
+	public int getState() {
+		return _state;
+	}
+
+	@Override
+	public void setState(int state) {
+		_state = state;
+	}
+
+	@Override
 	public String getTestString() {
 		if (_testString == null) {
 			return StringPool.BLANK;
@@ -189,39 +305,36 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 		}
 	}
 
+	@Override
 	public void setTestString(String testString) {
 		_testString = testString;
 	}
 
-	@Override
-	public Release toEscapedModel() {
-		if (isEscapedModel()) {
-			return (Release)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (Release)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(0,
-					Release.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(0,
+			Release.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public Release toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (Release)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -235,6 +348,7 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 		releaseImpl.setBuildNumber(getBuildNumber());
 		releaseImpl.setBuildDate(getBuildDate());
 		releaseImpl.setVerified(getVerified());
+		releaseImpl.setState(getState());
 		releaseImpl.setTestString(getTestString());
 
 		releaseImpl.resetOriginalValues();
@@ -242,6 +356,7 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 		return releaseImpl;
 	}
 
+	@Override
 	public int compareTo(Release release) {
 		long primaryKey = release.getPrimaryKey();
 
@@ -258,18 +373,15 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof Release)) {
 			return false;
 		}
 
-		Release release = null;
-
-		try {
-			release = (Release)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		Release release = (Release)obj;
 
 		long primaryKey = release.getPrimaryKey();
 
@@ -291,6 +403,8 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 		ReleaseModelImpl releaseModelImpl = this;
 
 		releaseModelImpl._originalServletContextName = releaseModelImpl._servletContextName;
+
+		releaseModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -338,6 +452,8 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 
 		releaseCacheModel.verified = getVerified();
 
+		releaseCacheModel.state = getState();
+
 		releaseCacheModel.testString = getTestString();
 
 		String testString = releaseCacheModel.testString;
@@ -351,7 +467,7 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(17);
+		StringBundler sb = new StringBundler(19);
 
 		sb.append("{releaseId=");
 		sb.append(getReleaseId());
@@ -367,6 +483,8 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 		sb.append(getBuildDate());
 		sb.append(", verified=");
 		sb.append(getVerified());
+		sb.append(", state=");
+		sb.append(getState());
 		sb.append(", testString=");
 		sb.append(getTestString());
 		sb.append("}");
@@ -374,8 +492,9 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
-		StringBundler sb = new StringBundler(28);
+		StringBundler sb = new StringBundler(31);
 
 		sb.append("<model><model-name>");
 		sb.append("com.liferay.portal.model.Release");
@@ -410,6 +529,10 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 		sb.append(getVerified());
 		sb.append("]]></column-value></column>");
 		sb.append(
+			"<column><column-name>state</column-name><column-value><![CDATA[");
+		sb.append(getState());
+		sb.append("]]></column-value></column>");
+		sb.append(
 			"<column><column-name>testString</column-name><column-value><![CDATA[");
 		sb.append(getTestString());
 		sb.append("]]></column-value></column>");
@@ -420,7 +543,7 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 	}
 
 	private static ClassLoader _classLoader = Release.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			Release.class
 		};
 	private long _releaseId;
@@ -431,7 +554,8 @@ public class ReleaseModelImpl extends BaseModelImpl<Release>
 	private int _buildNumber;
 	private Date _buildDate;
 	private boolean _verified;
+	private int _state;
 	private String _testString;
-	private transient ExpandoBridge _expandoBridge;
-	private Release _escapedModelProxy;
+	private long _columnBitmask;
+	private Release _escapedModel;
 }

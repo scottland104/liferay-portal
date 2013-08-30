@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -27,12 +27,14 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.SetUtil;
+import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextUtil;
 import com.liferay.portal.struts.JSONAction;
+import com.liferay.portal.util.ClassLoaderUtil;
 import com.liferay.portal.util.PropsValues;
 
 import java.lang.reflect.Method;
@@ -79,6 +81,7 @@ public class JSONServiceAction extends JSONAction {
 
 		String className = ParamUtil.getString(request, "serviceClassName");
 		String methodName = ParamUtil.getString(request, "serviceMethodName");
+
 		String[] serviceParameters = getStringArrayFromJSON(
 			request, "serviceParameters");
 		String[] serviceParameterTypes = getStringArrayFromJSON(
@@ -88,55 +91,54 @@ public class JSONServiceAction extends JSONAction {
 			return null;
 		}
 
-		Thread currentThread = Thread.currentThread();
-
-		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
+		ClassLoader contextClassLoader =
+			ClassLoaderUtil.getContextClassLoader();
 
 		Class<?> clazz = contextClassLoader.loadClass(className);
 
 		Object[] methodAndParameterTypes = getMethodAndParameterTypes(
 			clazz, methodName, serviceParameters, serviceParameterTypes);
 
-		if (methodAndParameterTypes != null) {
-			Method method = (Method)methodAndParameterTypes[0];
-			Type[] parameterTypes = (Type[])methodAndParameterTypes[1];
-			Object[] args = new Object[serviceParameters.length];
-
-			for (int i = 0; i < serviceParameters.length; i++) {
-				args[i] = getArgValue(
-					request, clazz, methodName, serviceParameters[i],
-					parameterTypes[i]);
-			}
-
-			try {
-				if (_log.isDebugEnabled()) {
-					_log.debug(
-						"Invoking " + clazz + " on method " + method.getName() +
-							" with args " + Arrays.toString(args));
-				}
-
-				Object returnObj = method.invoke(clazz, args);
-
-				if (returnObj != null) {
-					return getReturnValue(returnObj);
-				}
-				else {
-					return JSONFactoryUtil.getNullJSON();
-				}
-			}
-			catch (Exception e) {
-				if (_log.isDebugEnabled()) {
-					_log.debug(
-						"Invoked " + clazz + " on method " + method.getName() +
-							" with args " + Arrays.toString(args),
-						e);
-				}
-
-				return JSONFactoryUtil.serializeException(e);
-			}
+		if (methodAndParameterTypes == null) {
+			return null;
 		}
 
-		return null;
+		Method method = (Method)methodAndParameterTypes[0];
+		Type[] parameterTypes = (Type[])methodAndParameterTypes[1];
+		Object[] args = new Object[serviceParameters.length];
+
+		for (int i = 0; i < serviceParameters.length; i++) {
+			args[i] = getArgValue(
+				request, clazz, methodName, serviceParameters[i],
+				parameterTypes[i]);
+		}
+
+		try {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Invoking " + clazz + " on method " + method.getName() +
+						" with args " + Arrays.toString(args));
+			}
+
+			Object returnObj = method.invoke(clazz, args);
+
+			if (returnObj != null) {
+				return getReturnValue(returnObj);
+			}
+			else {
+				return JSONFactoryUtil.getNullJSON();
+			}
+		}
+		catch (Exception e) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Invoked " + clazz + " on method " + method.getName() +
+						" with args " + Arrays.toString(args),
+					e);
+			}
+
+			return JSONFactoryUtil.serializeException(e);
+		}
 	}
 
 	protected Object getArgValue(
@@ -218,7 +220,7 @@ public class JSONServiceAction extends JSONAction {
 		else if (typeNameOrClassDescriptor.equals("[[Z")) {
 			String[] values = request.getParameterValues(parameter);
 
-			if ((values != null) && (values.length > 0)) {
+			if (ArrayUtil.isNotEmpty(values)) {
 				String[] values0 = StringUtil.split(values[0]);
 
 				boolean[][] doubleArray =
@@ -241,7 +243,7 @@ public class JSONServiceAction extends JSONAction {
 		else if (typeNameOrClassDescriptor.equals("[[D")) {
 			String[] values = request.getParameterValues(parameter);
 
-			if ((values != null) && (values.length > 0)) {
+			if (ArrayUtil.isNotEmpty(values)) {
 				String[] values0 = StringUtil.split(values[0]);
 
 				double[][] doubleArray =
@@ -264,7 +266,7 @@ public class JSONServiceAction extends JSONAction {
 		else if (typeNameOrClassDescriptor.equals("[[F")) {
 			String[] values = request.getParameterValues(parameter);
 
-			if ((values != null) && (values.length > 0)) {
+			if (ArrayUtil.isNotEmpty(values)) {
 				String[] values0 = StringUtil.split(values[0]);
 
 				float[][] doubleArray =
@@ -287,11 +289,10 @@ public class JSONServiceAction extends JSONAction {
 		else if (typeNameOrClassDescriptor.equals("[[I")) {
 			String[] values = request.getParameterValues(parameter);
 
-			if ((values != null) && (values.length > 0)) {
+			if (ArrayUtil.isNotEmpty(values)) {
 				String[] values0 = StringUtil.split(values[0]);
 
-				int[][] doubleArray =
-					new int[values.length][values0.length];
+				int[][] doubleArray = new int[values.length][values0.length];
 
 				for (int i = 0; i < values.length; i++) {
 					String[] curValues = StringUtil.split(values[i]);
@@ -310,11 +311,10 @@ public class JSONServiceAction extends JSONAction {
 		else if (typeNameOrClassDescriptor.equals("[[J")) {
 			String[] values = request.getParameterValues(parameter);
 
-			if ((values != null) && (values.length > 0)) {
+			if (ArrayUtil.isNotEmpty(values)) {
 				String[] values0 = StringUtil.split(values[0]);
 
-				long[][] doubleArray =
-					new long[values.length][values0.length];
+				long[][] doubleArray = new long[values.length][values0.length];
 
 				for (int i = 0; i < values.length; i++) {
 					String[] curValues = StringUtil.split(values[i]);
@@ -333,7 +333,7 @@ public class JSONServiceAction extends JSONAction {
 		else if (typeNameOrClassDescriptor.equals("[[S")) {
 			String[] values = request.getParameterValues(parameter);
 
-			if ((values != null) && (values.length > 0)) {
+			if (ArrayUtil.isNotEmpty(values)) {
 				String[] values0 = StringUtil.split(values[0]);
 
 				short[][] doubleArray =
@@ -356,7 +356,7 @@ public class JSONServiceAction extends JSONAction {
 		else if (typeNameOrClassDescriptor.equals("[[Ljava.lang.String")) {
 			String[] values = request.getParameterValues(parameter);
 
-			if ((values != null) && (values.length > 0)) {
+			if (ArrayUtil.isNotEmpty(values)) {
 				String[] values0 = StringUtil.split(values[0]);
 
 				String[][] doubleArray =
@@ -373,7 +373,7 @@ public class JSONServiceAction extends JSONAction {
 			}
 		}
 		else if (typeNameOrClassDescriptor.equals(
-			"java.util.Map<java.util.Locale, java.lang.String>")) {
+					"java.util.Map<java.util.Locale, java.lang.String>")) {
 
 			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(value);
 
@@ -381,17 +381,16 @@ public class JSONServiceAction extends JSONAction {
 		}
 		else {
 			try {
-				return JSONFactoryUtil.looseDeserialize(value);
+				return JSONFactoryUtil.looseDeserializeSafe(value);
 			}
 			catch (Exception e) {
+				_log.error(
+					"Unsupported parameter type for class " + clazz +
+						", method " + methodName + ", parameter " + parameter +
+							", and type " + typeNameOrClassDescriptor);
+
+				return null;
 			}
-
-			_log.error(
-				"Unsupported parameter type for class " + clazz + ", method " +
-					methodName + ", parameter " + parameter + ", and type " +
-						typeNameOrClassDescriptor);
-
-			return null;
 		}
 	}
 
@@ -400,11 +399,23 @@ public class JSONServiceAction extends JSONAction {
 			String[] parameterTypes)
 		throws Exception {
 
-		String parameterNames = StringUtil.merge(parameters);
+		StringBundler sb = new StringBundler(5);
 
-		String key =
-			clazz.getName() + "_METHOD_NAME_" + methodName + "_PARAMETERS_" +
-				parameterNames;
+		sb.append(clazz.getName());
+		sb.append("_METHOD_NAME_");
+		sb.append(methodName);
+		sb.append("_PARAMETERS_");
+
+		String parameterTypesNames = StringUtil.merge(parameterTypes);
+
+		if (Validator.isNull(parameterTypesNames)) {
+			sb.append(parameters.length);
+		}
+		else {
+			sb.append(parameterTypesNames);
+		}
+
+		String key = sb.toString();
 
 		Object[] methodAndParameterTypes = _methodCache.get(key);
 
@@ -445,10 +456,12 @@ public class JSONServiceAction extends JSONAction {
 						}
 					}
 					else if (method != null) {
+						String parametersString = StringUtil.merge(parameters);
+
 						_log.error(
 							"Obscure method name for class " + clazz +
 								", method " + methodName + ", and parameters " +
-									parameterNames);
+									parametersString);
 
 						return null;
 					}
@@ -470,9 +483,11 @@ public class JSONServiceAction extends JSONAction {
 			return methodAndParameterTypes;
 		}
 		else {
+			String parametersString = StringUtil.merge(parameters);
+
 			_log.error(
 				"No method found for class " + clazz + ", method " +
-					methodName + ", and parameters " + parameterNames);
+					methodName + ", and parameters " + parametersString);
 
 			return null;
 		}
@@ -494,7 +509,7 @@ public class JSONServiceAction extends JSONAction {
 
 		jsonSerializer.exclude("*.class");
 
-		return jsonSerializer.serialize(returnObj);
+		return jsonSerializer.serializeDeep(returnObj);
 	}
 
 	protected String[] getStringArrayFromJSON(
@@ -578,7 +593,7 @@ public class JSONServiceAction extends JSONAction {
 		}
 	}
 
-	private static final String _REROUTE_PATH = "/json";
+	private static final String _REROUTE_PATH = "/api/json";
 
 	private static Log _log = LogFactoryUtil.getLog(JSONServiceAction.class);
 

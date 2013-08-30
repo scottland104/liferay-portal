@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * This class is used by SOAP remote services.
  *
- * @author    Brian Wing Shun Chan
+ * @author Brian Wing Shun Chan
  * @generated
  */
 public class UserNotificationEventSoap implements Serializable {
@@ -37,7 +37,9 @@ public class UserNotificationEventSoap implements Serializable {
 		soapModel.setType(model.getType());
 		soapModel.setTimestamp(model.getTimestamp());
 		soapModel.setDeliverBy(model.getDeliverBy());
+		soapModel.setDelivered(model.getDelivered());
 		soapModel.setPayload(model.getPayload());
+		soapModel.setArchived(model.getArchived());
 
 		return soapModel;
 	}
@@ -149,12 +151,36 @@ public class UserNotificationEventSoap implements Serializable {
 		_deliverBy = deliverBy;
 	}
 
+	public boolean getDelivered() {
+		return _delivered;
+	}
+
+	public boolean isDelivered() {
+		return _delivered;
+	}
+
+	public void setDelivered(boolean delivered) {
+		_delivered = delivered;
+	}
+
 	public String getPayload() {
 		return _payload;
 	}
 
 	public void setPayload(String payload) {
 		_payload = payload;
+	}
+
+	public boolean getArchived() {
+		return _archived;
+	}
+
+	public boolean isArchived() {
+		return _archived;
+	}
+
+	public void setArchived(boolean archived) {
+		_archived = archived;
 	}
 
 	private String _uuid;
@@ -164,5 +190,7 @@ public class UserNotificationEventSoap implements Serializable {
 	private String _type;
 	private long _timestamp;
 	private long _deliverBy;
+	private boolean _delivered;
 	private String _payload;
+	private boolean _archived;
 }

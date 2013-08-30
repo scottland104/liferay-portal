@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -31,11 +31,12 @@ if (reminderAttempts == null) {
 %>
 
 <portlet:actionURL var="forgotPasswordURL">
-	<portlet:param name="saveLastPath" value="0" />
 	<portlet:param name="struts_action" value="/login/forgot_password" />
 </portlet:actionURL>
 
 <aui:form action="<%= forgotPasswordURL %>" method="post" name="fm">
+	<aui:input name="saveLastPath" type="hidden" value="<%= false %>" />
+
 	<portlet:renderURL var="redirectURL" />
 
 	<aui:input name="redirect" type="hidden" value="<%= redirectURL %>" />
@@ -45,6 +46,7 @@ if (reminderAttempts == null) {
 	<liferay-ui:error exception="<%= NoSuchUserException.class %>" message='<%= "the-" + TextFormatter.format(authType, TextFormatter.K) + "-you-requested-is-not-registered-in-our-database" %>' />
 	<liferay-ui:error exception="<%= RequiredReminderQueryException.class %>" message="you-have-not-configured-a-reminder-query" />
 	<liferay-ui:error exception="<%= SendPasswordException.class %>" message="your-password-can-only-be-sent-to-an-external-email-address" />
+	<liferay-ui:error exception="<%= UserActiveException.class %>" message="your-account-is-not-active" />
 	<liferay-ui:error exception="<%= UserEmailAddressException.class %>" message="please-enter-a-valid-email-address" />
 	<liferay-ui:error exception="<%= UserReminderQueryException.class %>" message="your-answer-does-not-match-what-is-in-our-database" />
 
@@ -74,12 +76,14 @@ if (reminderAttempts == null) {
 
 				<aui:input name="step" type="hidden" value="1" />
 
-				<aui:input label="<%= loginLabel %>" name="<%= loginParameter %>" size="30" type="text" value="<%= loginValue %>" />
+				<aui:input label="<%= loginLabel %>" name="<%= loginParameter %>" size="30" type="text" value="<%= loginValue %>">
+					<aui:validator name="required" />
+				</aui:input>
 
 				<c:if test="<%= PropsValues.CAPTCHA_CHECK_PORTAL_SEND_PASSWORD %>">
-					<portlet:actionURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" var="captchaURL">
+					<portlet:resourceURL var="captchaURL">
 						<portlet:param name="struts_action" value="/login/captcha" />
-					</portlet:actionURL>
+					</portlet:resourceURL>
 
 					<liferay-ui:captcha url="<%= captchaURL %>" />
 				</c:if>
@@ -109,24 +113,24 @@ if (reminderAttempts == null) {
 					}
 					%>
 
-					<div class="portlet-msg-info">
+					<div class="alert alert-info">
 						<%= LanguageUtil.format(pageContext, "a-new-password-will-be-sent-to-x-if-you-can-correctly-answer-the-following-question", login) %>
 					</div>
 
-					<aui:input label="<%= user2.getReminderQueryQuestion() %>" name="answer" type="text" />
+					<aui:input autoFocus="<%= true %>" label="<%= HtmlUtil.escape(user2.getReminderQueryQuestion()) %>" name="answer" type="text" />
 				</c:if>
 
 				<c:choose>
 					<c:when test="<%= PropsValues.USERS_REMINDER_QUERIES_REQUIRED && !user2.hasReminderQuery() %>">
-						<div class="portlet-msg-info">
+						<div class="alert alert-info">
 							<liferay-ui:message key="the-password-cannot-be-reset-because-you-have-not-configured-a-reminder-query" />
 						</div>
 					</c:when>
 					<c:otherwise>
 						<c:if test="<%= reminderAttempts >= 3 %>">
-							<portlet:actionURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" var="captchaURL">
+							<portlet:resourceURL var="captchaURL">
 								<portlet:param name="struts_action" value="/login/captcha" />
-							</portlet:actionURL>
+							</portlet:resourceURL>
 
 							<liferay-ui:captcha url="<%= captchaURL %>" />
 						</c:if>
@@ -138,7 +142,7 @@ if (reminderAttempts == null) {
 				</c:choose>
 			</c:when>
 			<c:otherwise>
-				<div class="portlet-msg-alert">
+				<div class="alert alert-block">
 					<liferay-ui:message key="the-system-cannot-send-you-a-new-password-because-you-have-not-provided-an-email-address" />
 				</div>
 			</c:otherwise>
@@ -147,7 +151,3 @@ if (reminderAttempts == null) {
 </aui:form>
 
 <liferay-util:include page="/html/portlet/login/navigation.jsp" />
-
-<aui:script>
-	Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace /><%= (user2 == null) ? "emailAddress" : "answer" %>);
-</aui:script>

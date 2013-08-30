@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,8 +14,6 @@
 
 package com.liferay.portlet.wiki.service.persistence;
 
-import com.liferay.portal.NoSuchModelException;
-import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.cache.CacheRegistryUtil;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
 import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
@@ -30,16 +28,15 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.InstanceFactory;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.UnmodifiableList;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.ModelListener;
-import com.liferay.portal.service.persistence.BatchSessionUtil;
-import com.liferay.portal.service.persistence.ResourcePersistence;
-import com.liferay.portal.service.persistence.UserPersistence;
 import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
 
 import com.liferay.portlet.wiki.NoSuchPageResourceException;
@@ -52,6 +49,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The persistence implementation for the wiki page resource service.
@@ -73,417 +71,41 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * Never modify or reference this class directly. Always use {@link WikiPageResourceUtil} to access the wiki page resource persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
 	 */
 	public static final String FINDER_CLASS_NAME_ENTITY = WikiPageResourceImpl.class.getName();
-	public static final String FINDER_CLASS_NAME_LIST = FINDER_CLASS_NAME_ENTITY +
-		".List";
-	public static final FinderPath FINDER_PATH_FIND_BY_UUID = new FinderPath(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+	public static final String FINDER_CLASS_NAME_LIST_WITH_PAGINATION = FINDER_CLASS_NAME_ENTITY +
+		".List1";
+	public static final String FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION = FINDER_CLASS_NAME_ENTITY +
+		".List2";
+	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_ALL = new FinderPath(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
 			WikiPageResourceModelImpl.FINDER_CACHE_ENABLED,
-			WikiPageResourceImpl.class, FINDER_CLASS_NAME_LIST, "findByUuid",
+			WikiPageResourceImpl.class, FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
+			"findAll", new String[0]);
+	public static final FinderPath FINDER_PATH_WITHOUT_PAGINATION_FIND_ALL = new FinderPath(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+			WikiPageResourceModelImpl.FINDER_CACHE_ENABLED,
+			WikiPageResourceImpl.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll", new String[0]);
+	public static final FinderPath FINDER_PATH_COUNT_ALL = new FinderPath(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+			WikiPageResourceModelImpl.FINDER_CACHE_ENABLED, Long.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll", new String[0]);
+	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_BY_UUID = new FinderPath(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+			WikiPageResourceModelImpl.FINDER_CACHE_ENABLED,
+			WikiPageResourceImpl.class, FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
+			"findByUuid",
 			new String[] {
 				String.class.getName(),
 				
-			"java.lang.Integer", "java.lang.Integer",
-				"com.liferay.portal.kernel.util.OrderByComparator"
+			Integer.class.getName(), Integer.class.getName(),
+				OrderByComparator.class.getName()
 			});
+	public static final FinderPath FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_UUID = new FinderPath(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+			WikiPageResourceModelImpl.FINDER_CACHE_ENABLED,
+			WikiPageResourceImpl.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid",
+			new String[] { String.class.getName() },
+			WikiPageResourceModelImpl.UUID_COLUMN_BITMASK);
 	public static final FinderPath FINDER_PATH_COUNT_BY_UUID = new FinderPath(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
 			WikiPageResourceModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countByUuid",
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid",
 			new String[] { String.class.getName() });
-	public static final FinderPath FINDER_PATH_FETCH_BY_N_T = new FinderPath(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
-			WikiPageResourceModelImpl.FINDER_CACHE_ENABLED,
-			WikiPageResourceImpl.class, FINDER_CLASS_NAME_ENTITY, "fetchByN_T",
-			new String[] { Long.class.getName(), String.class.getName() });
-	public static final FinderPath FINDER_PATH_COUNT_BY_N_T = new FinderPath(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
-			WikiPageResourceModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countByN_T",
-			new String[] { Long.class.getName(), String.class.getName() });
-	public static final FinderPath FINDER_PATH_FIND_ALL = new FinderPath(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
-			WikiPageResourceModelImpl.FINDER_CACHE_ENABLED,
-			WikiPageResourceImpl.class, FINDER_CLASS_NAME_LIST, "findAll",
-			new String[0]);
-	public static final FinderPath FINDER_PATH_COUNT_ALL = new FinderPath(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
-			WikiPageResourceModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countAll", new String[0]);
-
-	/**
-	 * Caches the wiki page resource in the entity cache if it is enabled.
-	 *
-	 * @param wikiPageResource the wiki page resource
-	 */
-	public void cacheResult(WikiPageResource wikiPageResource) {
-		EntityCacheUtil.putResult(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
-			WikiPageResourceImpl.class, wikiPageResource.getPrimaryKey(),
-			wikiPageResource);
-
-		FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_N_T,
-			new Object[] {
-				Long.valueOf(wikiPageResource.getNodeId()),
-				
-			wikiPageResource.getTitle()
-			}, wikiPageResource);
-
-		wikiPageResource.resetOriginalValues();
-	}
-
-	/**
-	 * Caches the wiki page resources in the entity cache if it is enabled.
-	 *
-	 * @param wikiPageResources the wiki page resources
-	 */
-	public void cacheResult(List<WikiPageResource> wikiPageResources) {
-		for (WikiPageResource wikiPageResource : wikiPageResources) {
-			if (EntityCacheUtil.getResult(
-						WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
-						WikiPageResourceImpl.class,
-						wikiPageResource.getPrimaryKey(), this) == null) {
-				cacheResult(wikiPageResource);
-			}
-		}
-	}
-
-	/**
-	 * Clears the cache for all wiki page resources.
-	 *
-	 * <p>
-	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
-	 * </p>
-	 */
-	@Override
-	public void clearCache() {
-		if (_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE) {
-			CacheRegistryUtil.clear(WikiPageResourceImpl.class.getName());
-		}
-
-		EntityCacheUtil.clearCache(WikiPageResourceImpl.class.getName());
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_ENTITY);
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
-	}
-
-	/**
-	 * Clears the cache for the wiki page resource.
-	 *
-	 * <p>
-	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
-	 * </p>
-	 */
-	@Override
-	public void clearCache(WikiPageResource wikiPageResource) {
-		EntityCacheUtil.removeResult(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
-			WikiPageResourceImpl.class, wikiPageResource.getPrimaryKey());
-
-		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_N_T,
-			new Object[] {
-				Long.valueOf(wikiPageResource.getNodeId()),
-				
-			wikiPageResource.getTitle()
-			});
-	}
-
-	/**
-	 * Creates a new wiki page resource with the primary key. Does not add the wiki page resource to the database.
-	 *
-	 * @param resourcePrimKey the primary key for the new wiki page resource
-	 * @return the new wiki page resource
-	 */
-	public WikiPageResource create(long resourcePrimKey) {
-		WikiPageResource wikiPageResource = new WikiPageResourceImpl();
-
-		wikiPageResource.setNew(true);
-		wikiPageResource.setPrimaryKey(resourcePrimKey);
-
-		String uuid = PortalUUIDUtil.generate();
-
-		wikiPageResource.setUuid(uuid);
-
-		return wikiPageResource;
-	}
-
-	/**
-	 * Removes the wiki page resource with the primary key from the database. Also notifies the appropriate model listeners.
-	 *
-	 * @param primaryKey the primary key of the wiki page resource
-	 * @return the wiki page resource that was removed
-	 * @throws com.liferay.portal.NoSuchModelException if a wiki page resource with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public WikiPageResource remove(Serializable primaryKey)
-		throws NoSuchModelException, SystemException {
-		return remove(((Long)primaryKey).longValue());
-	}
-
-	/**
-	 * Removes the wiki page resource with the primary key from the database. Also notifies the appropriate model listeners.
-	 *
-	 * @param resourcePrimKey the primary key of the wiki page resource
-	 * @return the wiki page resource that was removed
-	 * @throws com.liferay.portlet.wiki.NoSuchPageResourceException if a wiki page resource with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	public WikiPageResource remove(long resourcePrimKey)
-		throws NoSuchPageResourceException, SystemException {
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			WikiPageResource wikiPageResource = (WikiPageResource)session.get(WikiPageResourceImpl.class,
-					Long.valueOf(resourcePrimKey));
-
-			if (wikiPageResource == null) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
-						resourcePrimKey);
-				}
-
-				throw new NoSuchPageResourceException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
-					resourcePrimKey);
-			}
-
-			return wikiPageResourcePersistence.remove(wikiPageResource);
-		}
-		catch (NoSuchPageResourceException nsee) {
-			throw nsee;
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	/**
-	 * Removes the wiki page resource from the database. Also notifies the appropriate model listeners.
-	 *
-	 * @param wikiPageResource the wiki page resource
-	 * @return the wiki page resource that was removed
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public WikiPageResource remove(WikiPageResource wikiPageResource)
-		throws SystemException {
-		return super.remove(wikiPageResource);
-	}
-
-	@Override
-	protected WikiPageResource removeImpl(WikiPageResource wikiPageResource)
-		throws SystemException {
-		wikiPageResource = toUnwrappedModel(wikiPageResource);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BatchSessionUtil.delete(session, wikiPageResource);
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
-
-		WikiPageResourceModelImpl wikiPageResourceModelImpl = (WikiPageResourceModelImpl)wikiPageResource;
-
-		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_N_T,
-			new Object[] {
-				Long.valueOf(wikiPageResourceModelImpl.getNodeId()),
-				
-			wikiPageResourceModelImpl.getTitle()
-			});
-
-		EntityCacheUtil.removeResult(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
-			WikiPageResourceImpl.class, wikiPageResource.getPrimaryKey());
-
-		return wikiPageResource;
-	}
-
-	@Override
-	public WikiPageResource updateImpl(
-		com.liferay.portlet.wiki.model.WikiPageResource wikiPageResource,
-		boolean merge) throws SystemException {
-		wikiPageResource = toUnwrappedModel(wikiPageResource);
-
-		boolean isNew = wikiPageResource.isNew();
-
-		WikiPageResourceModelImpl wikiPageResourceModelImpl = (WikiPageResourceModelImpl)wikiPageResource;
-
-		if (Validator.isNull(wikiPageResource.getUuid())) {
-			String uuid = PortalUUIDUtil.generate();
-
-			wikiPageResource.setUuid(uuid);
-		}
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BatchSessionUtil.update(session, wikiPageResource, merge);
-
-			wikiPageResource.setNew(false);
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
-
-		EntityCacheUtil.putResult(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
-			WikiPageResourceImpl.class, wikiPageResource.getPrimaryKey(),
-			wikiPageResource);
-
-		if (!isNew &&
-				((wikiPageResource.getNodeId() != wikiPageResourceModelImpl.getOriginalNodeId()) ||
-				!Validator.equals(wikiPageResource.getTitle(),
-					wikiPageResourceModelImpl.getOriginalTitle()))) {
-			FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_N_T,
-				new Object[] {
-					Long.valueOf(wikiPageResourceModelImpl.getOriginalNodeId()),
-					
-				wikiPageResourceModelImpl.getOriginalTitle()
-				});
-		}
-
-		if (isNew ||
-				((wikiPageResource.getNodeId() != wikiPageResourceModelImpl.getOriginalNodeId()) ||
-				!Validator.equals(wikiPageResource.getTitle(),
-					wikiPageResourceModelImpl.getOriginalTitle()))) {
-			FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_N_T,
-				new Object[] {
-					Long.valueOf(wikiPageResource.getNodeId()),
-					
-				wikiPageResource.getTitle()
-				}, wikiPageResource);
-		}
-
-		return wikiPageResource;
-	}
-
-	protected WikiPageResource toUnwrappedModel(
-		WikiPageResource wikiPageResource) {
-		if (wikiPageResource instanceof WikiPageResourceImpl) {
-			return wikiPageResource;
-		}
-
-		WikiPageResourceImpl wikiPageResourceImpl = new WikiPageResourceImpl();
-
-		wikiPageResourceImpl.setNew(wikiPageResource.isNew());
-		wikiPageResourceImpl.setPrimaryKey(wikiPageResource.getPrimaryKey());
-
-		wikiPageResourceImpl.setUuid(wikiPageResource.getUuid());
-		wikiPageResourceImpl.setResourcePrimKey(wikiPageResource.getResourcePrimKey());
-		wikiPageResourceImpl.setNodeId(wikiPageResource.getNodeId());
-		wikiPageResourceImpl.setTitle(wikiPageResource.getTitle());
-
-		return wikiPageResourceImpl;
-	}
-
-	/**
-	 * Returns the wiki page resource with the primary key or throws a {@link com.liferay.portal.NoSuchModelException} if it could not be found.
-	 *
-	 * @param primaryKey the primary key of the wiki page resource
-	 * @return the wiki page resource
-	 * @throws com.liferay.portal.NoSuchModelException if a wiki page resource with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public WikiPageResource findByPrimaryKey(Serializable primaryKey)
-		throws NoSuchModelException, SystemException {
-		return findByPrimaryKey(((Long)primaryKey).longValue());
-	}
-
-	/**
-	 * Returns the wiki page resource with the primary key or throws a {@link com.liferay.portlet.wiki.NoSuchPageResourceException} if it could not be found.
-	 *
-	 * @param resourcePrimKey the primary key of the wiki page resource
-	 * @return the wiki page resource
-	 * @throws com.liferay.portlet.wiki.NoSuchPageResourceException if a wiki page resource with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	public WikiPageResource findByPrimaryKey(long resourcePrimKey)
-		throws NoSuchPageResourceException, SystemException {
-		WikiPageResource wikiPageResource = fetchByPrimaryKey(resourcePrimKey);
-
-		if (wikiPageResource == null) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + resourcePrimKey);
-			}
-
-			throw new NoSuchPageResourceException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
-				resourcePrimKey);
-		}
-
-		return wikiPageResource;
-	}
-
-	/**
-	 * Returns the wiki page resource with the primary key or returns <code>null</code> if it could not be found.
-	 *
-	 * @param primaryKey the primary key of the wiki page resource
-	 * @return the wiki page resource, or <code>null</code> if a wiki page resource with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public WikiPageResource fetchByPrimaryKey(Serializable primaryKey)
-		throws SystemException {
-		return fetchByPrimaryKey(((Long)primaryKey).longValue());
-	}
-
-	/**
-	 * Returns the wiki page resource with the primary key or returns <code>null</code> if it could not be found.
-	 *
-	 * @param resourcePrimKey the primary key of the wiki page resource
-	 * @return the wiki page resource, or <code>null</code> if a wiki page resource with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	public WikiPageResource fetchByPrimaryKey(long resourcePrimKey)
-		throws SystemException {
-		WikiPageResource wikiPageResource = (WikiPageResource)EntityCacheUtil.getResult(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
-				WikiPageResourceImpl.class, resourcePrimKey, this);
-
-		if (wikiPageResource == _nullWikiPageResource) {
-			return null;
-		}
-
-		if (wikiPageResource == null) {
-			Session session = null;
-
-			boolean hasException = false;
-
-			try {
-				session = openSession();
-
-				wikiPageResource = (WikiPageResource)session.get(WikiPageResourceImpl.class,
-						Long.valueOf(resourcePrimKey));
-			}
-			catch (Exception e) {
-				hasException = true;
-
-				throw processException(e);
-			}
-			finally {
-				if (wikiPageResource != null) {
-					cacheResult(wikiPageResource);
-				}
-				else if (!hasException) {
-					EntityCacheUtil.putResult(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
-						WikiPageResourceImpl.class, resourcePrimKey,
-						_nullWikiPageResource);
-				}
-
-				closeSession(session);
-			}
-		}
-
-		return wikiPageResource;
-	}
 
 	/**
 	 * Returns all the wiki page resources where uuid = &#63;.
@@ -492,6 +114,7 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * @return the matching wiki page resources
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<WikiPageResource> findByUuid(String uuid)
 		throws SystemException {
 		return findByUuid(uuid, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
@@ -501,7 +124,7 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * Returns a range of all the wiki page resources where uuid = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.wiki.model.impl.WikiPageResourceModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param uuid the uuid
@@ -510,6 +133,7 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * @return the range of matching wiki page resources
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<WikiPageResource> findByUuid(String uuid, int start, int end)
 		throws SystemException {
 		return findByUuid(uuid, start, end, null);
@@ -519,7 +143,7 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * Returns an ordered range of all the wiki page resources where uuid = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.wiki.model.impl.WikiPageResourceModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param uuid the uuid
@@ -529,17 +153,36 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * @return the ordered range of matching wiki page resources
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<WikiPageResource> findByUuid(String uuid, int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
-		Object[] finderArgs = new Object[] {
-				uuid,
-				
-				String.valueOf(start), String.valueOf(end),
-				String.valueOf(orderByComparator)
-			};
+		boolean pagination = true;
+		FinderPath finderPath = null;
+		Object[] finderArgs = null;
 
-		List<WikiPageResource> list = (List<WikiPageResource>)FinderCacheUtil.getResult(FINDER_PATH_FIND_BY_UUID,
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+			pagination = false;
+			finderPath = FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_UUID;
+			finderArgs = new Object[] { uuid };
+		}
+		else {
+			finderPath = FINDER_PATH_WITH_PAGINATION_FIND_BY_UUID;
+			finderArgs = new Object[] { uuid, start, end, orderByComparator };
+		}
+
+		List<WikiPageResource> list = (List<WikiPageResource>)FinderCacheUtil.getResult(finderPath,
 				finderArgs, this);
+
+		if ((list != null) && !list.isEmpty()) {
+			for (WikiPageResource wikiPageResource : list) {
+				if (!Validator.equals(uuid, wikiPageResource.getUuid())) {
+					list = null;
+
+					break;
+				}
+			}
+		}
 
 		if (list == null) {
 			StringBundler query = null;
@@ -549,26 +192,32 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 						(orderByComparator.getOrderByFields().length * 3));
 			}
 			else {
-				query = new StringBundler(2);
+				query = new StringBundler(3);
 			}
 
 			query.append(_SQL_SELECT_WIKIPAGERESOURCE_WHERE);
 
+			boolean bindUuid = false;
+
 			if (uuid == null) {
 				query.append(_FINDER_COLUMN_UUID_UUID_1);
 			}
+			else if (uuid.equals(StringPool.BLANK)) {
+				query.append(_FINDER_COLUMN_UUID_UUID_3);
+			}
 			else {
-				if (uuid.equals(StringPool.BLANK)) {
-					query.append(_FINDER_COLUMN_UUID_UUID_3);
-				}
-				else {
-					query.append(_FINDER_COLUMN_UUID_UUID_2);
-				}
+				bindUuid = true;
+
+				query.append(_FINDER_COLUMN_UUID_UUID_2);
 			}
 
 			if (orderByComparator != null) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
 					orderByComparator);
+			}
+			else
+			 if (pagination) {
+				query.append(WikiPageResourceModelImpl.ORDER_BY_JPQL);
 			}
 
 			String sql = query.toString();
@@ -582,28 +231,33 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 
 				QueryPos qPos = QueryPos.getInstance(q);
 
-				if (uuid != null) {
+				if (bindUuid) {
 					qPos.add(uuid);
 				}
 
-				list = (List<WikiPageResource>)QueryUtil.list(q, getDialect(),
-						start, end);
+				if (!pagination) {
+					list = (List<WikiPageResource>)QueryUtil.list(q,
+							getDialect(), start, end, false);
+
+					Collections.sort(list);
+
+					list = new UnmodifiableList<WikiPageResource>(list);
+				}
+				else {
+					list = (List<WikiPageResource>)QueryUtil.list(q,
+							getDialect(), start, end);
+				}
+
+				cacheResult(list);
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, list);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (list == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FIND_BY_UUID,
-						finderArgs);
-				}
-				else {
-					cacheResult(list);
-
-					FinderCacheUtil.putResult(FINDER_PATH_FIND_BY_UUID,
-						finderArgs, list);
-				}
-
 				closeSession(session);
 			}
 		}
@@ -614,44 +268,57 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	/**
 	 * Returns the first wiki page resource in the ordered set where uuid = &#63;.
 	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
-	 *
 	 * @param uuid the uuid
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching wiki page resource
 	 * @throws com.liferay.portlet.wiki.NoSuchPageResourceException if a matching wiki page resource could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public WikiPageResource findByUuid_First(String uuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchPageResourceException, SystemException {
+		WikiPageResource wikiPageResource = fetchByUuid_First(uuid,
+				orderByComparator);
+
+		if (wikiPageResource != null) {
+			return wikiPageResource;
+		}
+
+		StringBundler msg = new StringBundler(4);
+
+		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		msg.append("uuid=");
+		msg.append(uuid);
+
+		msg.append(StringPool.CLOSE_CURLY_BRACE);
+
+		throw new NoSuchPageResourceException(msg.toString());
+	}
+
+	/**
+	 * Returns the first wiki page resource in the ordered set where uuid = &#63;.
+	 *
+	 * @param uuid the uuid
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching wiki page resource, or <code>null</code> if a matching wiki page resource could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public WikiPageResource fetchByUuid_First(String uuid,
+		OrderByComparator orderByComparator) throws SystemException {
 		List<WikiPageResource> list = findByUuid(uuid, 0, 1, orderByComparator);
 
-		if (list.isEmpty()) {
-			StringBundler msg = new StringBundler(4);
-
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-			msg.append("uuid=");
-			msg.append(uuid);
-
-			msg.append(StringPool.CLOSE_CURLY_BRACE);
-
-			throw new NoSuchPageResourceException(msg.toString());
-		}
-		else {
+		if (!list.isEmpty()) {
 			return list.get(0);
 		}
+
+		return null;
 	}
 
 	/**
 	 * Returns the last wiki page resource in the ordered set where uuid = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
 	 *
 	 * @param uuid the uuid
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
@@ -659,37 +326,58 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * @throws com.liferay.portlet.wiki.NoSuchPageResourceException if a matching wiki page resource could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public WikiPageResource findByUuid_Last(String uuid,
 		OrderByComparator orderByComparator)
 		throws NoSuchPageResourceException, SystemException {
+		WikiPageResource wikiPageResource = fetchByUuid_Last(uuid,
+				orderByComparator);
+
+		if (wikiPageResource != null) {
+			return wikiPageResource;
+		}
+
+		StringBundler msg = new StringBundler(4);
+
+		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		msg.append("uuid=");
+		msg.append(uuid);
+
+		msg.append(StringPool.CLOSE_CURLY_BRACE);
+
+		throw new NoSuchPageResourceException(msg.toString());
+	}
+
+	/**
+	 * Returns the last wiki page resource in the ordered set where uuid = &#63;.
+	 *
+	 * @param uuid the uuid
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching wiki page resource, or <code>null</code> if a matching wiki page resource could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public WikiPageResource fetchByUuid_Last(String uuid,
+		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByUuid(uuid);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<WikiPageResource> list = findByUuid(uuid, count - 1, count,
 				orderByComparator);
 
-		if (list.isEmpty()) {
-			StringBundler msg = new StringBundler(4);
-
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-			msg.append("uuid=");
-			msg.append(uuid);
-
-			msg.append(StringPool.CLOSE_CURLY_BRACE);
-
-			throw new NoSuchPageResourceException(msg.toString());
-		}
-		else {
+		if (!list.isEmpty()) {
 			return list.get(0);
 		}
+
+		return null;
 	}
 
 	/**
 	 * Returns the wiki page resources before and after the current wiki page resource in the ordered set where uuid = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
 	 *
 	 * @param resourcePrimKey the primary key of the current wiki page resource
 	 * @param uuid the uuid
@@ -698,6 +386,7 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * @throws com.liferay.portlet.wiki.NoSuchPageResourceException if a wiki page resource with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public WikiPageResource[] findByUuid_PrevAndNext(long resourcePrimKey,
 		String uuid, OrderByComparator orderByComparator)
 		throws NoSuchPageResourceException, SystemException {
@@ -743,30 +432,32 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 
 		query.append(_SQL_SELECT_WIKIPAGERESOURCE_WHERE);
 
+		boolean bindUuid = false;
+
 		if (uuid == null) {
 			query.append(_FINDER_COLUMN_UUID_UUID_1);
 		}
+		else if (uuid.equals(StringPool.BLANK)) {
+			query.append(_FINDER_COLUMN_UUID_UUID_3);
+		}
 		else {
-			if (uuid.equals(StringPool.BLANK)) {
-				query.append(_FINDER_COLUMN_UUID_UUID_3);
-			}
-			else {
-				query.append(_FINDER_COLUMN_UUID_UUID_2);
-			}
+			bindUuid = true;
+
+			query.append(_FINDER_COLUMN_UUID_UUID_2);
 		}
 
 		if (orderByComparator != null) {
-			String[] orderByFields = orderByComparator.getOrderByFields();
+			String[] orderByConditionFields = orderByComparator.getOrderByConditionFields();
 
-			if (orderByFields.length > 0) {
+			if (orderByConditionFields.length > 0) {
 				query.append(WHERE_AND);
 			}
 
-			for (int i = 0; i < orderByFields.length; i++) {
+			for (int i = 0; i < orderByConditionFields.length; i++) {
 				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				query.append(orderByConditionFields[i]);
 
-				if ((i + 1) < orderByFields.length) {
+				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
 						query.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
@@ -785,6 +476,8 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 			}
 
 			query.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
 				query.append(_ORDER_BY_ENTITY_ALIAS);
@@ -808,6 +501,9 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 				}
 			}
 		}
+		else {
+			query.append(WikiPageResourceModelImpl.ORDER_BY_JPQL);
+		}
 
 		String sql = query.toString();
 
@@ -818,12 +514,12 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 
 		QueryPos qPos = QueryPos.getInstance(q);
 
-		if (uuid != null) {
+		if (bindUuid) {
 			qPos.add(uuid);
 		}
 
 		if (orderByComparator != null) {
-			Object[] values = orderByComparator.getOrderByValues(wikiPageResource);
+			Object[] values = orderByComparator.getOrderByConditionValues(wikiPageResource);
 
 			for (Object value : values) {
 				qPos.add(value);
@@ -841,6 +537,101 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	}
 
 	/**
+	 * Removes all the wiki page resources where uuid = &#63; from the database.
+	 *
+	 * @param uuid the uuid
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public void removeByUuid(String uuid) throws SystemException {
+		for (WikiPageResource wikiPageResource : findByUuid(uuid,
+				QueryUtil.ALL_POS, QueryUtil.ALL_POS, null)) {
+			remove(wikiPageResource);
+		}
+	}
+
+	/**
+	 * Returns the number of wiki page resources where uuid = &#63;.
+	 *
+	 * @param uuid the uuid
+	 * @return the number of matching wiki page resources
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public int countByUuid(String uuid) throws SystemException {
+		FinderPath finderPath = FINDER_PATH_COUNT_BY_UUID;
+
+		Object[] finderArgs = new Object[] { uuid };
+
+		Long count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs,
+				this);
+
+		if (count == null) {
+			StringBundler query = new StringBundler(2);
+
+			query.append(_SQL_COUNT_WIKIPAGERESOURCE_WHERE);
+
+			boolean bindUuid = false;
+
+			if (uuid == null) {
+				query.append(_FINDER_COLUMN_UUID_UUID_1);
+			}
+			else if (uuid.equals(StringPool.BLANK)) {
+				query.append(_FINDER_COLUMN_UUID_UUID_3);
+			}
+			else {
+				bindUuid = true;
+
+				query.append(_FINDER_COLUMN_UUID_UUID_2);
+			}
+
+			String sql = query.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query q = session.createQuery(sql);
+
+				QueryPos qPos = QueryPos.getInstance(q);
+
+				if (bindUuid) {
+					qPos.add(uuid);
+				}
+
+				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, count);
+			}
+			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return count.intValue();
+	}
+
+	private static final String _FINDER_COLUMN_UUID_UUID_1 = "wikiPageResource.uuid IS NULL";
+	private static final String _FINDER_COLUMN_UUID_UUID_2 = "wikiPageResource.uuid = ?";
+	private static final String _FINDER_COLUMN_UUID_UUID_3 = "(wikiPageResource.uuid IS NULL OR wikiPageResource.uuid = '')";
+	public static final FinderPath FINDER_PATH_FETCH_BY_N_T = new FinderPath(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+			WikiPageResourceModelImpl.FINDER_CACHE_ENABLED,
+			WikiPageResourceImpl.class, FINDER_CLASS_NAME_ENTITY, "fetchByN_T",
+			new String[] { Long.class.getName(), String.class.getName() },
+			WikiPageResourceModelImpl.NODEID_COLUMN_BITMASK |
+			WikiPageResourceModelImpl.TITLE_COLUMN_BITMASK);
+	public static final FinderPath FINDER_PATH_COUNT_BY_N_T = new FinderPath(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+			WikiPageResourceModelImpl.FINDER_CACHE_ENABLED, Long.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByN_T",
+			new String[] { Long.class.getName(), String.class.getName() });
+
+	/**
 	 * Returns the wiki page resource where nodeId = &#63; and title = &#63; or throws a {@link com.liferay.portlet.wiki.NoSuchPageResourceException} if it could not be found.
 	 *
 	 * @param nodeId the node ID
@@ -849,6 +640,7 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * @throws com.liferay.portlet.wiki.NoSuchPageResourceException if a matching wiki page resource could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public WikiPageResource findByN_T(long nodeId, String title)
 		throws NoSuchPageResourceException, SystemException {
 		WikiPageResource wikiPageResource = fetchByN_T(nodeId, title);
@@ -884,6 +676,7 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * @return the matching wiki page resource, or <code>null</code> if a matching wiki page resource could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public WikiPageResource fetchByN_T(long nodeId, String title)
 		throws SystemException {
 		return fetchByN_T(nodeId, title, true);
@@ -898,6 +691,7 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * @return the matching wiki page resource, or <code>null</code> if a matching wiki page resource could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public WikiPageResource fetchByN_T(long nodeId, String title,
 		boolean retrieveFromCache) throws SystemException {
 		Object[] finderArgs = new Object[] { nodeId, title };
@@ -909,23 +703,34 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 					finderArgs, this);
 		}
 
+		if (result instanceof WikiPageResource) {
+			WikiPageResource wikiPageResource = (WikiPageResource)result;
+
+			if ((nodeId != wikiPageResource.getNodeId()) ||
+					!Validator.equals(title, wikiPageResource.getTitle())) {
+				result = null;
+			}
+		}
+
 		if (result == null) {
-			StringBundler query = new StringBundler(3);
+			StringBundler query = new StringBundler(4);
 
 			query.append(_SQL_SELECT_WIKIPAGERESOURCE_WHERE);
 
 			query.append(_FINDER_COLUMN_N_T_NODEID_2);
 
+			boolean bindTitle = false;
+
 			if (title == null) {
 				query.append(_FINDER_COLUMN_N_T_TITLE_1);
 			}
+			else if (title.equals(StringPool.BLANK)) {
+				query.append(_FINDER_COLUMN_N_T_TITLE_3);
+			}
 			else {
-				if (title.equals(StringPool.BLANK)) {
-					query.append(_FINDER_COLUMN_N_T_TITLE_3);
-				}
-				else {
-					query.append(_FINDER_COLUMN_N_T_TITLE_2);
-				}
+				bindTitle = true;
+
+				query.append(_FINDER_COLUMN_N_T_TITLE_2);
 			}
 
 			String sql = query.toString();
@@ -941,22 +746,20 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 
 				qPos.add(nodeId);
 
-				if (title != null) {
+				if (bindTitle) {
 					qPos.add(title);
 				}
 
 				List<WikiPageResource> list = q.list();
-
-				result = list;
-
-				WikiPageResource wikiPageResource = null;
 
 				if (list.isEmpty()) {
 					FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_N_T,
 						finderArgs, list);
 				}
 				else {
-					wikiPageResource = list.get(0);
+					WikiPageResource wikiPageResource = list.get(0);
+
+					result = wikiPageResource;
 
 					cacheResult(wikiPageResource);
 
@@ -967,29 +770,562 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 							finderArgs, wikiPageResource);
 					}
 				}
-
-				return wikiPageResource;
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_N_T,
+					finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (result == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_N_T,
-						finderArgs);
-				}
-
 				closeSession(session);
 			}
 		}
+
+		if (result instanceof List<?>) {
+			return null;
+		}
 		else {
-			if (result instanceof List<?>) {
-				return null;
+			return (WikiPageResource)result;
+		}
+	}
+
+	/**
+	 * Removes the wiki page resource where nodeId = &#63; and title = &#63; from the database.
+	 *
+	 * @param nodeId the node ID
+	 * @param title the title
+	 * @return the wiki page resource that was removed
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public WikiPageResource removeByN_T(long nodeId, String title)
+		throws NoSuchPageResourceException, SystemException {
+		WikiPageResource wikiPageResource = findByN_T(nodeId, title);
+
+		return remove(wikiPageResource);
+	}
+
+	/**
+	 * Returns the number of wiki page resources where nodeId = &#63; and title = &#63;.
+	 *
+	 * @param nodeId the node ID
+	 * @param title the title
+	 * @return the number of matching wiki page resources
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public int countByN_T(long nodeId, String title) throws SystemException {
+		FinderPath finderPath = FINDER_PATH_COUNT_BY_N_T;
+
+		Object[] finderArgs = new Object[] { nodeId, title };
+
+		Long count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs,
+				this);
+
+		if (count == null) {
+			StringBundler query = new StringBundler(3);
+
+			query.append(_SQL_COUNT_WIKIPAGERESOURCE_WHERE);
+
+			query.append(_FINDER_COLUMN_N_T_NODEID_2);
+
+			boolean bindTitle = false;
+
+			if (title == null) {
+				query.append(_FINDER_COLUMN_N_T_TITLE_1);
+			}
+			else if (title.equals(StringPool.BLANK)) {
+				query.append(_FINDER_COLUMN_N_T_TITLE_3);
 			}
 			else {
-				return (WikiPageResource)result;
+				bindTitle = true;
+
+				query.append(_FINDER_COLUMN_N_T_TITLE_2);
+			}
+
+			String sql = query.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query q = session.createQuery(sql);
+
+				QueryPos qPos = QueryPos.getInstance(q);
+
+				qPos.add(nodeId);
+
+				if (bindTitle) {
+					qPos.add(title);
+				}
+
+				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, count);
+			}
+			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
 			}
 		}
+
+		return count.intValue();
+	}
+
+	private static final String _FINDER_COLUMN_N_T_NODEID_2 = "wikiPageResource.nodeId = ? AND ";
+	private static final String _FINDER_COLUMN_N_T_TITLE_1 = "wikiPageResource.title IS NULL";
+	private static final String _FINDER_COLUMN_N_T_TITLE_2 = "wikiPageResource.title = ?";
+	private static final String _FINDER_COLUMN_N_T_TITLE_3 = "(wikiPageResource.title IS NULL OR wikiPageResource.title = '')";
+
+	public WikiPageResourcePersistenceImpl() {
+		setModelClass(WikiPageResource.class);
+	}
+
+	/**
+	 * Caches the wiki page resource in the entity cache if it is enabled.
+	 *
+	 * @param wikiPageResource the wiki page resource
+	 */
+	@Override
+	public void cacheResult(WikiPageResource wikiPageResource) {
+		EntityCacheUtil.putResult(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+			WikiPageResourceImpl.class, wikiPageResource.getPrimaryKey(),
+			wikiPageResource);
+
+		FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_N_T,
+			new Object[] {
+				wikiPageResource.getNodeId(), wikiPageResource.getTitle()
+			}, wikiPageResource);
+
+		wikiPageResource.resetOriginalValues();
+	}
+
+	/**
+	 * Caches the wiki page resources in the entity cache if it is enabled.
+	 *
+	 * @param wikiPageResources the wiki page resources
+	 */
+	@Override
+	public void cacheResult(List<WikiPageResource> wikiPageResources) {
+		for (WikiPageResource wikiPageResource : wikiPageResources) {
+			if (EntityCacheUtil.getResult(
+						WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+						WikiPageResourceImpl.class,
+						wikiPageResource.getPrimaryKey()) == null) {
+				cacheResult(wikiPageResource);
+			}
+			else {
+				wikiPageResource.resetOriginalValues();
+			}
+		}
+	}
+
+	/**
+	 * Clears the cache for all wiki page resources.
+	 *
+	 * <p>
+	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
+	 * </p>
+	 */
+	@Override
+	public void clearCache() {
+		if (_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE) {
+			CacheRegistryUtil.clear(WikiPageResourceImpl.class.getName());
+		}
+
+		EntityCacheUtil.clearCache(WikiPageResourceImpl.class.getName());
+
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_ENTITY);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+	}
+
+	/**
+	 * Clears the cache for the wiki page resource.
+	 *
+	 * <p>
+	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
+	 * </p>
+	 */
+	@Override
+	public void clearCache(WikiPageResource wikiPageResource) {
+		EntityCacheUtil.removeResult(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+			WikiPageResourceImpl.class, wikiPageResource.getPrimaryKey());
+
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+
+		clearUniqueFindersCache(wikiPageResource);
+	}
+
+	@Override
+	public void clearCache(List<WikiPageResource> wikiPageResources) {
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+
+		for (WikiPageResource wikiPageResource : wikiPageResources) {
+			EntityCacheUtil.removeResult(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+				WikiPageResourceImpl.class, wikiPageResource.getPrimaryKey());
+
+			clearUniqueFindersCache(wikiPageResource);
+		}
+	}
+
+	protected void cacheUniqueFindersCache(WikiPageResource wikiPageResource) {
+		if (wikiPageResource.isNew()) {
+			Object[] args = new Object[] {
+					wikiPageResource.getNodeId(), wikiPageResource.getTitle()
+				};
+
+			FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_N_T, args,
+				Long.valueOf(1));
+			FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_N_T, args,
+				wikiPageResource);
+		}
+		else {
+			WikiPageResourceModelImpl wikiPageResourceModelImpl = (WikiPageResourceModelImpl)wikiPageResource;
+
+			if ((wikiPageResourceModelImpl.getColumnBitmask() &
+					FINDER_PATH_FETCH_BY_N_T.getColumnBitmask()) != 0) {
+				Object[] args = new Object[] {
+						wikiPageResource.getNodeId(),
+						wikiPageResource.getTitle()
+					};
+
+				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_N_T, args,
+					Long.valueOf(1));
+				FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_N_T, args,
+					wikiPageResource);
+			}
+		}
+	}
+
+	protected void clearUniqueFindersCache(WikiPageResource wikiPageResource) {
+		WikiPageResourceModelImpl wikiPageResourceModelImpl = (WikiPageResourceModelImpl)wikiPageResource;
+
+		Object[] args = new Object[] {
+				wikiPageResource.getNodeId(), wikiPageResource.getTitle()
+			};
+
+		FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_N_T, args);
+		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_N_T, args);
+
+		if ((wikiPageResourceModelImpl.getColumnBitmask() &
+				FINDER_PATH_FETCH_BY_N_T.getColumnBitmask()) != 0) {
+			args = new Object[] {
+					wikiPageResourceModelImpl.getOriginalNodeId(),
+					wikiPageResourceModelImpl.getOriginalTitle()
+				};
+
+			FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_N_T, args);
+			FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_N_T, args);
+		}
+	}
+
+	/**
+	 * Creates a new wiki page resource with the primary key. Does not add the wiki page resource to the database.
+	 *
+	 * @param resourcePrimKey the primary key for the new wiki page resource
+	 * @return the new wiki page resource
+	 */
+	@Override
+	public WikiPageResource create(long resourcePrimKey) {
+		WikiPageResource wikiPageResource = new WikiPageResourceImpl();
+
+		wikiPageResource.setNew(true);
+		wikiPageResource.setPrimaryKey(resourcePrimKey);
+
+		String uuid = PortalUUIDUtil.generate();
+
+		wikiPageResource.setUuid(uuid);
+
+		return wikiPageResource;
+	}
+
+	/**
+	 * Removes the wiki page resource with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * @param resourcePrimKey the primary key of the wiki page resource
+	 * @return the wiki page resource that was removed
+	 * @throws com.liferay.portlet.wiki.NoSuchPageResourceException if a wiki page resource with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public WikiPageResource remove(long resourcePrimKey)
+		throws NoSuchPageResourceException, SystemException {
+		return remove((Serializable)resourcePrimKey);
+	}
+
+	/**
+	 * Removes the wiki page resource with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * @param primaryKey the primary key of the wiki page resource
+	 * @return the wiki page resource that was removed
+	 * @throws com.liferay.portlet.wiki.NoSuchPageResourceException if a wiki page resource with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public WikiPageResource remove(Serializable primaryKey)
+		throws NoSuchPageResourceException, SystemException {
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			WikiPageResource wikiPageResource = (WikiPageResource)session.get(WikiPageResourceImpl.class,
+					primaryKey);
+
+			if (wikiPageResource == null) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + primaryKey);
+				}
+
+				throw new NoSuchPageResourceException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
+					primaryKey);
+			}
+
+			return remove(wikiPageResource);
+		}
+		catch (NoSuchPageResourceException nsee) {
+			throw nsee;
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	@Override
+	protected WikiPageResource removeImpl(WikiPageResource wikiPageResource)
+		throws SystemException {
+		wikiPageResource = toUnwrappedModel(wikiPageResource);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			if (!session.contains(wikiPageResource)) {
+				wikiPageResource = (WikiPageResource)session.get(WikiPageResourceImpl.class,
+						wikiPageResource.getPrimaryKeyObj());
+			}
+
+			if (wikiPageResource != null) {
+				session.delete(wikiPageResource);
+			}
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+
+		if (wikiPageResource != null) {
+			clearCache(wikiPageResource);
+		}
+
+		return wikiPageResource;
+	}
+
+	@Override
+	public WikiPageResource updateImpl(
+		com.liferay.portlet.wiki.model.WikiPageResource wikiPageResource)
+		throws SystemException {
+		wikiPageResource = toUnwrappedModel(wikiPageResource);
+
+		boolean isNew = wikiPageResource.isNew();
+
+		WikiPageResourceModelImpl wikiPageResourceModelImpl = (WikiPageResourceModelImpl)wikiPageResource;
+
+		if (Validator.isNull(wikiPageResource.getUuid())) {
+			String uuid = PortalUUIDUtil.generate();
+
+			wikiPageResource.setUuid(uuid);
+		}
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			if (wikiPageResource.isNew()) {
+				session.save(wikiPageResource);
+
+				wikiPageResource.setNew(false);
+			}
+			else {
+				session.merge(wikiPageResource);
+			}
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+
+		if (isNew || !WikiPageResourceModelImpl.COLUMN_BITMASK_ENABLED) {
+			FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		}
+
+		else {
+			if ((wikiPageResourceModelImpl.getColumnBitmask() &
+					FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_UUID.getColumnBitmask()) != 0) {
+				Object[] args = new Object[] {
+						wikiPageResourceModelImpl.getOriginalUuid()
+					};
+
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_UUID, args);
+				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_UUID,
+					args);
+
+				args = new Object[] { wikiPageResourceModelImpl.getUuid() };
+
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_UUID, args);
+				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_UUID,
+					args);
+			}
+		}
+
+		EntityCacheUtil.putResult(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+			WikiPageResourceImpl.class, wikiPageResource.getPrimaryKey(),
+			wikiPageResource);
+
+		clearUniqueFindersCache(wikiPageResource);
+		cacheUniqueFindersCache(wikiPageResource);
+
+		return wikiPageResource;
+	}
+
+	protected WikiPageResource toUnwrappedModel(
+		WikiPageResource wikiPageResource) {
+		if (wikiPageResource instanceof WikiPageResourceImpl) {
+			return wikiPageResource;
+		}
+
+		WikiPageResourceImpl wikiPageResourceImpl = new WikiPageResourceImpl();
+
+		wikiPageResourceImpl.setNew(wikiPageResource.isNew());
+		wikiPageResourceImpl.setPrimaryKey(wikiPageResource.getPrimaryKey());
+
+		wikiPageResourceImpl.setUuid(wikiPageResource.getUuid());
+		wikiPageResourceImpl.setResourcePrimKey(wikiPageResource.getResourcePrimKey());
+		wikiPageResourceImpl.setNodeId(wikiPageResource.getNodeId());
+		wikiPageResourceImpl.setTitle(wikiPageResource.getTitle());
+
+		return wikiPageResourceImpl;
+	}
+
+	/**
+	 * Returns the wiki page resource with the primary key or throws a {@link com.liferay.portal.NoSuchModelException} if it could not be found.
+	 *
+	 * @param primaryKey the primary key of the wiki page resource
+	 * @return the wiki page resource
+	 * @throws com.liferay.portlet.wiki.NoSuchPageResourceException if a wiki page resource with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public WikiPageResource findByPrimaryKey(Serializable primaryKey)
+		throws NoSuchPageResourceException, SystemException {
+		WikiPageResource wikiPageResource = fetchByPrimaryKey(primaryKey);
+
+		if (wikiPageResource == null) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + primaryKey);
+			}
+
+			throw new NoSuchPageResourceException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
+				primaryKey);
+		}
+
+		return wikiPageResource;
+	}
+
+	/**
+	 * Returns the wiki page resource with the primary key or throws a {@link com.liferay.portlet.wiki.NoSuchPageResourceException} if it could not be found.
+	 *
+	 * @param resourcePrimKey the primary key of the wiki page resource
+	 * @return the wiki page resource
+	 * @throws com.liferay.portlet.wiki.NoSuchPageResourceException if a wiki page resource with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public WikiPageResource findByPrimaryKey(long resourcePrimKey)
+		throws NoSuchPageResourceException, SystemException {
+		return findByPrimaryKey((Serializable)resourcePrimKey);
+	}
+
+	/**
+	 * Returns the wiki page resource with the primary key or returns <code>null</code> if it could not be found.
+	 *
+	 * @param primaryKey the primary key of the wiki page resource
+	 * @return the wiki page resource, or <code>null</code> if a wiki page resource with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public WikiPageResource fetchByPrimaryKey(Serializable primaryKey)
+		throws SystemException {
+		WikiPageResource wikiPageResource = (WikiPageResource)EntityCacheUtil.getResult(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+				WikiPageResourceImpl.class, primaryKey);
+
+		if (wikiPageResource == _nullWikiPageResource) {
+			return null;
+		}
+
+		if (wikiPageResource == null) {
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				wikiPageResource = (WikiPageResource)session.get(WikiPageResourceImpl.class,
+						primaryKey);
+
+				if (wikiPageResource != null) {
+					cacheResult(wikiPageResource);
+				}
+				else {
+					EntityCacheUtil.putResult(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+						WikiPageResourceImpl.class, primaryKey,
+						_nullWikiPageResource);
+				}
+			}
+			catch (Exception e) {
+				EntityCacheUtil.removeResult(WikiPageResourceModelImpl.ENTITY_CACHE_ENABLED,
+					WikiPageResourceImpl.class, primaryKey);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return wikiPageResource;
+	}
+
+	/**
+	 * Returns the wiki page resource with the primary key or returns <code>null</code> if it could not be found.
+	 *
+	 * @param resourcePrimKey the primary key of the wiki page resource
+	 * @return the wiki page resource, or <code>null</code> if a wiki page resource with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public WikiPageResource fetchByPrimaryKey(long resourcePrimKey)
+		throws SystemException {
+		return fetchByPrimaryKey((Serializable)resourcePrimKey);
 	}
 
 	/**
@@ -998,6 +1334,7 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * @return the wiki page resources
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<WikiPageResource> findAll() throws SystemException {
 		return findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
@@ -1006,7 +1343,7 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * Returns a range of all the wiki page resources.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.wiki.model.impl.WikiPageResourceModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param start the lower bound of the range of wiki page resources
@@ -1014,6 +1351,7 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * @return the range of wiki page resources
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<WikiPageResource> findAll(int start, int end)
 		throws SystemException {
 		return findAll(start, end, null);
@@ -1023,7 +1361,7 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * Returns an ordered range of all the wiki page resources.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.wiki.model.impl.WikiPageResourceModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param start the lower bound of the range of wiki page resources
@@ -1032,14 +1370,25 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * @return the ordered range of wiki page resources
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<WikiPageResource> findAll(int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
-		Object[] finderArgs = new Object[] {
-				String.valueOf(start), String.valueOf(end),
-				String.valueOf(orderByComparator)
-			};
+		boolean pagination = true;
+		FinderPath finderPath = null;
+		Object[] finderArgs = null;
 
-		List<WikiPageResource> list = (List<WikiPageResource>)FinderCacheUtil.getResult(FINDER_PATH_FIND_ALL,
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+			pagination = false;
+			finderPath = FINDER_PATH_WITHOUT_PAGINATION_FIND_ALL;
+			finderArgs = FINDER_ARGS_EMPTY;
+		}
+		else {
+			finderPath = FINDER_PATH_WITH_PAGINATION_FIND_ALL;
+			finderArgs = new Object[] { start, end, orderByComparator };
+		}
+
+		List<WikiPageResource> list = (List<WikiPageResource>)FinderCacheUtil.getResult(finderPath,
 				finderArgs, this);
 
 		if (list == null) {
@@ -1059,6 +1408,10 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 			}
 			else {
 				sql = _SQL_SELECT_WIKIPAGERESOURCE;
+
+				if (pagination) {
+					sql = sql.concat(WikiPageResourceModelImpl.ORDER_BY_JPQL);
+				}
 			}
 
 			Session session = null;
@@ -1068,32 +1421,29 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 
 				Query q = session.createQuery(sql);
 
-				if (orderByComparator == null) {
+				if (!pagination) {
 					list = (List<WikiPageResource>)QueryUtil.list(q,
 							getDialect(), start, end, false);
 
 					Collections.sort(list);
+
+					list = new UnmodifiableList<WikiPageResource>(list);
 				}
 				else {
 					list = (List<WikiPageResource>)QueryUtil.list(q,
 							getDialect(), start, end);
 				}
+
+				cacheResult(list);
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, list);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (list == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FIND_ALL,
-						finderArgs);
-				}
-				else {
-					cacheResult(list);
-
-					FinderCacheUtil.putResult(FINDER_PATH_FIND_ALL, finderArgs,
-						list);
-				}
-
 				closeSession(session);
 			}
 		}
@@ -1102,175 +1452,15 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	}
 
 	/**
-	 * Removes all the wiki page resources where uuid = &#63; from the database.
-	 *
-	 * @param uuid the uuid
-	 * @throws SystemException if a system exception occurred
-	 */
-	public void removeByUuid(String uuid) throws SystemException {
-		for (WikiPageResource wikiPageResource : findByUuid(uuid)) {
-			wikiPageResourcePersistence.remove(wikiPageResource);
-		}
-	}
-
-	/**
-	 * Removes the wiki page resource where nodeId = &#63; and title = &#63; from the database.
-	 *
-	 * @param nodeId the node ID
-	 * @param title the title
-	 * @throws SystemException if a system exception occurred
-	 */
-	public void removeByN_T(long nodeId, String title)
-		throws NoSuchPageResourceException, SystemException {
-		WikiPageResource wikiPageResource = findByN_T(nodeId, title);
-
-		wikiPageResourcePersistence.remove(wikiPageResource);
-	}
-
-	/**
 	 * Removes all the wiki page resources from the database.
 	 *
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeAll() throws SystemException {
 		for (WikiPageResource wikiPageResource : findAll()) {
-			wikiPageResourcePersistence.remove(wikiPageResource);
+			remove(wikiPageResource);
 		}
-	}
-
-	/**
-	 * Returns the number of wiki page resources where uuid = &#63;.
-	 *
-	 * @param uuid the uuid
-	 * @return the number of matching wiki page resources
-	 * @throws SystemException if a system exception occurred
-	 */
-	public int countByUuid(String uuid) throws SystemException {
-		Object[] finderArgs = new Object[] { uuid };
-
-		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_BY_UUID,
-				finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(2);
-
-			query.append(_SQL_COUNT_WIKIPAGERESOURCE_WHERE);
-
-			if (uuid == null) {
-				query.append(_FINDER_COLUMN_UUID_UUID_1);
-			}
-			else {
-				if (uuid.equals(StringPool.BLANK)) {
-					query.append(_FINDER_COLUMN_UUID_UUID_3);
-				}
-				else {
-					query.append(_FINDER_COLUMN_UUID_UUID_2);
-				}
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				if (uuid != null) {
-					qPos.add(uuid);
-				}
-
-				count = (Long)q.uniqueResult();
-			}
-			catch (Exception e) {
-				throw processException(e);
-			}
-			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_UUID,
-					finderArgs, count);
-
-				closeSession(session);
-			}
-		}
-
-		return count.intValue();
-	}
-
-	/**
-	 * Returns the number of wiki page resources where nodeId = &#63; and title = &#63;.
-	 *
-	 * @param nodeId the node ID
-	 * @param title the title
-	 * @return the number of matching wiki page resources
-	 * @throws SystemException if a system exception occurred
-	 */
-	public int countByN_T(long nodeId, String title) throws SystemException {
-		Object[] finderArgs = new Object[] { nodeId, title };
-
-		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_BY_N_T,
-				finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(3);
-
-			query.append(_SQL_COUNT_WIKIPAGERESOURCE_WHERE);
-
-			query.append(_FINDER_COLUMN_N_T_NODEID_2);
-
-			if (title == null) {
-				query.append(_FINDER_COLUMN_N_T_TITLE_1);
-			}
-			else {
-				if (title.equals(StringPool.BLANK)) {
-					query.append(_FINDER_COLUMN_N_T_TITLE_3);
-				}
-				else {
-					query.append(_FINDER_COLUMN_N_T_TITLE_2);
-				}
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(nodeId);
-
-				if (title != null) {
-					qPos.add(title);
-				}
-
-				count = (Long)q.uniqueResult();
-			}
-			catch (Exception e) {
-				throw processException(e);
-			}
-			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_N_T, finderArgs,
-					count);
-
-				closeSession(session);
-			}
-		}
-
-		return count.intValue();
 	}
 
 	/**
@@ -1279,11 +1469,10 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	 * @return the number of wiki page resources
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countAll() throws SystemException {
-		Object[] finderArgs = new Object[0];
-
 		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_ALL,
-				finderArgs, this);
+				FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -1294,23 +1483,27 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 				Query q = session.createQuery(_SQL_COUNT_WIKIPAGERESOURCE);
 
 				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(FINDER_PATH_COUNT_ALL,
+					FINDER_ARGS_EMPTY, count);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_ALL,
+					FINDER_ARGS_EMPTY);
+
 				throw processException(e);
 			}
 			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_ALL, finderArgs,
-					count);
-
 				closeSession(session);
 			}
 		}
 
 		return count.intValue();
+	}
+
+	@Override
+	protected Set<String> getBadColumnNames() {
+		return _badColumnNames;
 	}
 
 	/**
@@ -1327,7 +1520,7 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 
 				for (String listenerClassName : listenerClassNames) {
 					listenersList.add((ModelListener<WikiPageResource>)InstanceFactory.newInstance(
-							listenerClassName));
+							getClassLoader(), listenerClassName));
 				}
 
 				listeners = listenersList.toArray(new ModelListener[listenersList.size()]);
@@ -1341,46 +1534,36 @@ public class WikiPageResourcePersistenceImpl extends BasePersistenceImpl<WikiPag
 	public void destroy() {
 		EntityCacheUtil.removeCache(WikiPageResourceImpl.class.getName());
 		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_ENTITY);
-		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST);
+		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 	}
 
-	@BeanReference(type = WikiNodePersistence.class)
-	protected WikiNodePersistence wikiNodePersistence;
-	@BeanReference(type = WikiPagePersistence.class)
-	protected WikiPagePersistence wikiPagePersistence;
-	@BeanReference(type = WikiPageResourcePersistence.class)
-	protected WikiPageResourcePersistence wikiPageResourcePersistence;
-	@BeanReference(type = ResourcePersistence.class)
-	protected ResourcePersistence resourcePersistence;
-	@BeanReference(type = UserPersistence.class)
-	protected UserPersistence userPersistence;
 	private static final String _SQL_SELECT_WIKIPAGERESOURCE = "SELECT wikiPageResource FROM WikiPageResource wikiPageResource";
 	private static final String _SQL_SELECT_WIKIPAGERESOURCE_WHERE = "SELECT wikiPageResource FROM WikiPageResource wikiPageResource WHERE ";
 	private static final String _SQL_COUNT_WIKIPAGERESOURCE = "SELECT COUNT(wikiPageResource) FROM WikiPageResource wikiPageResource";
 	private static final String _SQL_COUNT_WIKIPAGERESOURCE_WHERE = "SELECT COUNT(wikiPageResource) FROM WikiPageResource wikiPageResource WHERE ";
-	private static final String _FINDER_COLUMN_UUID_UUID_1 = "wikiPageResource.uuid IS NULL";
-	private static final String _FINDER_COLUMN_UUID_UUID_2 = "wikiPageResource.uuid = ?";
-	private static final String _FINDER_COLUMN_UUID_UUID_3 = "(wikiPageResource.uuid IS NULL OR wikiPageResource.uuid = ?)";
-	private static final String _FINDER_COLUMN_N_T_NODEID_2 = "wikiPageResource.nodeId = ? AND ";
-	private static final String _FINDER_COLUMN_N_T_TITLE_1 = "wikiPageResource.title IS NULL";
-	private static final String _FINDER_COLUMN_N_T_TITLE_2 = "wikiPageResource.title = ?";
-	private static final String _FINDER_COLUMN_N_T_TITLE_3 = "(wikiPageResource.title IS NULL OR wikiPageResource.title = ?)";
 	private static final String _ORDER_BY_ENTITY_ALIAS = "wikiPageResource.";
 	private static final String _NO_SUCH_ENTITY_WITH_PRIMARY_KEY = "No WikiPageResource exists with the primary key ";
 	private static final String _NO_SUCH_ENTITY_WITH_KEY = "No WikiPageResource exists with the key {";
 	private static final boolean _HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE = com.liferay.portal.util.PropsValues.HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE;
 	private static Log _log = LogFactoryUtil.getLog(WikiPageResourcePersistenceImpl.class);
+	private static Set<String> _badColumnNames = SetUtil.fromArray(new String[] {
+				"uuid"
+			});
 	private static WikiPageResource _nullWikiPageResource = new WikiPageResourceImpl() {
+			@Override
 			public Object clone() {
 				return this;
 			}
 
+			@Override
 			public CacheModel<WikiPageResource> toCacheModel() {
 				return _nullWikiPageResourceCacheModel;
 			}
 		};
 
 	private static CacheModel<WikiPageResource> _nullWikiPageResourceCacheModel = new CacheModel<WikiPageResource>() {
+			@Override
 			public WikiPageResource toEntityModel() {
 				return _nullWikiPageResource;
 			}

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,8 +23,8 @@ import java.util.List;
 /**
  * This class is used by SOAP remote services, specifically {@link com.liferay.portlet.bookmarks.service.http.BookmarksEntryServiceSoap}.
  *
- * @author    Brian Wing Shun Chan
- * @see       com.liferay.portlet.bookmarks.service.http.BookmarksEntryServiceSoap
+ * @author Brian Wing Shun Chan
+ * @see com.liferay.portlet.bookmarks.service.http.BookmarksEntryServiceSoap
  * @generated
  */
 public class BookmarksEntrySoap implements Serializable {
@@ -46,6 +46,10 @@ public class BookmarksEntrySoap implements Serializable {
 		soapModel.setDescription(model.getDescription());
 		soapModel.setVisits(model.getVisits());
 		soapModel.setPriority(model.getPriority());
+		soapModel.setStatus(model.getStatus());
+		soapModel.setStatusByUserId(model.getStatusByUserId());
+		soapModel.setStatusByUserName(model.getStatusByUserName());
+		soapModel.setStatusDate(model.getStatusDate());
 
 		return soapModel;
 	}
@@ -218,6 +222,38 @@ public class BookmarksEntrySoap implements Serializable {
 		_priority = priority;
 	}
 
+	public int getStatus() {
+		return _status;
+	}
+
+	public void setStatus(int status) {
+		_status = status;
+	}
+
+	public long getStatusByUserId() {
+		return _statusByUserId;
+	}
+
+	public void setStatusByUserId(long statusByUserId) {
+		_statusByUserId = statusByUserId;
+	}
+
+	public String getStatusByUserName() {
+		return _statusByUserName;
+	}
+
+	public void setStatusByUserName(String statusByUserName) {
+		_statusByUserName = statusByUserName;
+	}
+
+	public Date getStatusDate() {
+		return _statusDate;
+	}
+
+	public void setStatusDate(Date statusDate) {
+		_statusDate = statusDate;
+	}
+
 	private String _uuid;
 	private long _entryId;
 	private long _groupId;
@@ -233,4 +269,8 @@ public class BookmarksEntrySoap implements Serializable {
 	private String _description;
 	private int _visits;
 	private int _priority;
+	private int _status;
+	private long _statusByUserId;
+	private String _statusByUserName;
+	private Date _statusDate;
 }

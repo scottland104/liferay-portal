@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -29,6 +29,7 @@ import java.util.List;
  */
 public class GetDocsMetaInfoMethodImpl extends BaseMethodImpl {
 
+	@Override
 	public String getMethodName() {
 		return _METHOD_NAME;
 	}
@@ -37,15 +38,7 @@ public class GetDocsMetaInfoMethodImpl extends BaseMethodImpl {
 	public String getRootPath(SharepointRequest sharepointRequest) {
 		String urlList = sharepointRequest.getParameterValue("url_list");
 
-		urlList = urlList.substring(1, urlList.length() - 1);
-
-		int pos = urlList.lastIndexOf("sharepoint/");
-
-		if (pos != -1) {
-			urlList = urlList.substring(pos + 11);
-		}
-
-		return urlList;
+		return urlList.substring(1, urlList.length() - 1);
 	}
 
 	@Override

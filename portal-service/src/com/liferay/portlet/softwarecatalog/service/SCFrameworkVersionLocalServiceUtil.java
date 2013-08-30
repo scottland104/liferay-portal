@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,15 +15,15 @@
 package com.liferay.portlet.softwarecatalog.service;
 
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
-import com.liferay.portal.kernel.util.MethodCache;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the s c framework version local service. This utility wraps {@link com.liferay.portlet.softwarecatalog.service.impl.SCFrameworkVersionLocalServiceImpl} and is the primary access point for service operations in application layer code running on the local server.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
+ * Provides the local service utility for SCFrameworkVersion. This utility wraps
+ * {@link com.liferay.portlet.softwarecatalog.service.impl.SCFrameworkVersionLocalServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on the local server. Methods of this service will not have security checks
+ * based on the propagated JAAS credentials because this service can only be
+ * accessed from within the same VM.
  *
  * @author Brian Wing Shun Chan
  * @see SCFrameworkVersionLocalService
@@ -66,25 +66,32 @@ public class SCFrameworkVersionLocalServiceUtil {
 	* Deletes the s c framework version with the primary key from the database. Also notifies the appropriate model listeners.
 	*
 	* @param frameworkVersionId the primary key of the s c framework version
+	* @return the s c framework version that was removed
 	* @throws PortalException if a s c framework version with the primary key could not be found
 	* @throws SystemException if a system exception occurred
 	*/
-	public static void deleteSCFrameworkVersion(long frameworkVersionId)
+	public static com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion deleteSCFrameworkVersion(
+		long frameworkVersionId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		getService().deleteSCFrameworkVersion(frameworkVersionId);
+		return getService().deleteSCFrameworkVersion(frameworkVersionId);
 	}
 
 	/**
 	* Deletes the s c framework version from the database. Also notifies the appropriate model listeners.
 	*
 	* @param scFrameworkVersion the s c framework version
+	* @return the s c framework version that was removed
 	* @throws SystemException if a system exception occurred
 	*/
-	public static void deleteSCFrameworkVersion(
+	public static com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion deleteSCFrameworkVersion(
 		com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion scFrameworkVersion)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		getService().deleteSCFrameworkVersion(scFrameworkVersion);
+		return getService().deleteSCFrameworkVersion(scFrameworkVersion);
+	}
+
+	public static com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery() {
+		return getService().dynamicQuery();
 	}
 
 	/**
@@ -105,7 +112,7 @@ public class SCFrameworkVersionLocalServiceUtil {
 	* Performs a dynamic query on the database and returns a range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCFrameworkVersionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -125,7 +132,7 @@ public class SCFrameworkVersionLocalServiceUtil {
 	* Performs a dynamic query on the database and returns an ordered range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCFrameworkVersionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -159,6 +166,27 @@ public class SCFrameworkVersionLocalServiceUtil {
 	}
 
 	/**
+	* Returns the number of rows that match the dynamic query.
+	*
+	* @param dynamicQuery the dynamic query
+	* @param projection the projection to apply to the query
+	* @return the number of rows that match the dynamic query
+	* @throws SystemException if a system exception occurred
+	*/
+	public static long dynamicQueryCount(
+		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		com.liferay.portal.kernel.dao.orm.Projection projection)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().dynamicQueryCount(dynamicQuery, projection);
+	}
+
+	public static com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion fetchSCFrameworkVersion(
+		long frameworkVersionId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().fetchSCFrameworkVersion(frameworkVersionId);
+	}
+
+	/**
 	* Returns the s c framework version with the primary key.
 	*
 	* @param frameworkVersionId the primary key of the s c framework version
@@ -184,7 +212,7 @@ public class SCFrameworkVersionLocalServiceUtil {
 	* Returns a range of all the s c framework versions.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.softwarecatalog.model.impl.SCFrameworkVersionModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param start the lower bound of the range of s c framework versions
@@ -223,18 +251,179 @@ public class SCFrameworkVersionLocalServiceUtil {
 	}
 
 	/**
-	* Updates the s c framework version in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
-	*
-	* @param scFrameworkVersion the s c framework version
-	* @param merge whether to merge the s c framework version with the current session. See {@link com.liferay.portal.service.persistence.BatchSession#update(com.liferay.portal.kernel.dao.orm.Session, com.liferay.portal.model.BaseModel, boolean)} for an explanation.
-	* @return the s c framework version that was updated
 	* @throws SystemException if a system exception occurred
 	*/
-	public static com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion updateSCFrameworkVersion(
-		com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion scFrameworkVersion,
-		boolean merge)
+	public static void addSCProductVersionSCFrameworkVersion(
+		long productVersionId, long frameworkVersionId)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		return getService().updateSCFrameworkVersion(scFrameworkVersion, merge);
+		getService()
+			.addSCProductVersionSCFrameworkVersion(productVersionId,
+			frameworkVersionId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void addSCProductVersionSCFrameworkVersion(
+		long productVersionId,
+		com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion scFrameworkVersion)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getService()
+			.addSCProductVersionSCFrameworkVersion(productVersionId,
+			scFrameworkVersion);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void addSCProductVersionSCFrameworkVersions(
+		long productVersionId, long[] frameworkVersionIds)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getService()
+			.addSCProductVersionSCFrameworkVersions(productVersionId,
+			frameworkVersionIds);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void addSCProductVersionSCFrameworkVersions(
+		long productVersionId,
+		java.util.List<com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion> SCFrameworkVersions)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getService()
+			.addSCProductVersionSCFrameworkVersions(productVersionId,
+			SCFrameworkVersions);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void clearSCProductVersionSCFrameworkVersions(
+		long productVersionId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getService().clearSCProductVersionSCFrameworkVersions(productVersionId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void deleteSCProductVersionSCFrameworkVersion(
+		long productVersionId, long frameworkVersionId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getService()
+			.deleteSCProductVersionSCFrameworkVersion(productVersionId,
+			frameworkVersionId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void deleteSCProductVersionSCFrameworkVersion(
+		long productVersionId,
+		com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion scFrameworkVersion)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getService()
+			.deleteSCProductVersionSCFrameworkVersion(productVersionId,
+			scFrameworkVersion);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void deleteSCProductVersionSCFrameworkVersions(
+		long productVersionId, long[] frameworkVersionIds)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getService()
+			.deleteSCProductVersionSCFrameworkVersions(productVersionId,
+			frameworkVersionIds);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void deleteSCProductVersionSCFrameworkVersions(
+		long productVersionId,
+		java.util.List<com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion> SCFrameworkVersions)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getService()
+			.deleteSCProductVersionSCFrameworkVersions(productVersionId,
+			SCFrameworkVersions);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static java.util.List<com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion> getSCProductVersionSCFrameworkVersions(
+		long productVersionId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .getSCProductVersionSCFrameworkVersions(productVersionId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static java.util.List<com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion> getSCProductVersionSCFrameworkVersions(
+		long productVersionId, int start, int end)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .getSCProductVersionSCFrameworkVersions(productVersionId,
+			start, end);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static java.util.List<com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion> getSCProductVersionSCFrameworkVersions(
+		long productVersionId, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .getSCProductVersionSCFrameworkVersions(productVersionId,
+			start, end, orderByComparator);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static int getSCProductVersionSCFrameworkVersionsCount(
+		long productVersionId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .getSCProductVersionSCFrameworkVersionsCount(productVersionId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static boolean hasSCProductVersionSCFrameworkVersion(
+		long productVersionId, long frameworkVersionId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .hasSCProductVersionSCFrameworkVersion(productVersionId,
+			frameworkVersionId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static boolean hasSCProductVersionSCFrameworkVersions(
+		long productVersionId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService()
+				   .hasSCProductVersionSCFrameworkVersions(productVersionId);
+	}
+
+	/**
+	* @throws SystemException if a system exception occurred
+	*/
+	public static void setSCProductVersionSCFrameworkVersions(
+		long productVersionId, long[] frameworkVersionIds)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getService()
+			.setSCProductVersionSCFrameworkVersions(productVersionId,
+			frameworkVersionIds);
 	}
 
 	/**
@@ -378,20 +567,15 @@ public class SCFrameworkVersionLocalServiceUtil {
 
 			ReferenceRegistry.registerReference(SCFrameworkVersionLocalServiceUtil.class,
 				"_service");
-			MethodCache.remove(SCFrameworkVersionLocalService.class);
 		}
 
 		return _service;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setService(SCFrameworkVersionLocalService service) {
-		MethodCache.remove(SCFrameworkVersionLocalService.class);
-
-		_service = service;
-
-		ReferenceRegistry.registerReference(SCFrameworkVersionLocalServiceUtil.class,
-			"_service");
-		MethodCache.remove(SCFrameworkVersionLocalService.class);
 	}
 
 	private static SCFrameworkVersionLocalService _service;

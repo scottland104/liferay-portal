@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,33 +17,35 @@
 <%@ include file="/html/portlet/blogs_admin/init.jsp" %>
 
 <%
-String toolbarItem = ParamUtil.getString(request, "toolbarItem", "view-all");
+String toolbarItem = ParamUtil.getString(request, "toolbarItem");
 %>
 
-<div class="lfr-portlet-toolbar">
-	<portlet:renderURL var="viewEntriesURL">
-		<portlet:param name="struts_action" value="/blogs_admin/view" />
-	</portlet:renderURL>
-
-	<span class="lfr-toolbar-button view-button <%= toolbarItem.equals("view-all") ? "current" : StringPool.BLANK %>">
-		<a href="<%= viewEntriesURL %>"><liferay-ui:message key="view-all" /></a>
-	</span>
-
-	<c:if test="<%= PortalPermissionUtil.contains(permissionChecker, ActionKeys.ADD_ENTRY) %>">
-		<portlet:renderURL var="addEntryURL">
-			<portlet:param name="struts_action" value="/blogs_admin/edit_entry" />
-			<portlet:param name="redirect" value="<%= currentURL %>" />
-			<portlet:param name="backURL" value="<%= currentURL %>" />
+<aui:nav-bar>
+	<aui:nav>
+		<portlet:renderURL var="viewEntriesURL">
+			<portlet:param name="struts_action" value="/blogs_admin/view" />
 		</portlet:renderURL>
 
-		<span class="lfr-toolbar-button add-button <%= toolbarItem.equals("add") ? "current" : StringPool.BLANK %>"><a href="<%= addEntryURL %>"><liferay-ui:message key="add" /></a></span>
-	</c:if>
+		<c:if test="<%= BlogsPermission.contains(permissionChecker, scopeGroupId, ActionKeys.ADD_ENTRY) %>">
+			<portlet:renderURL var="addEntryURL">
+				<portlet:param name="struts_action" value="/blogs_admin/edit_entry" />
+				<portlet:param name="redirect" value="<%= viewEntriesURL %>" />
+				<portlet:param name="backURL" value="<%= viewEntriesURL %>" />
+			</portlet:renderURL>
 
-	<c:if test="<%= RoleLocalServiceUtil.hasUserRole(user.getUserId(), user.getCompanyId(), RoleConstants.ADMINISTRATOR, true) %>">
-		<liferay-portlet:renderURL var="expandoURL" portletName="<%= PortletKeys.EXPANDO %>">
-			<portlet:param name="struts_action" value="/expando/view_attributes" />
-			<portlet:param name="redirect" value="<%= currentURL %>" />
-			<portlet:param name="modelResource" value="<%= BlogsEntry.class.getName() %>" />
-		</liferay-portlet:renderURL>
+			<aui:nav-item href="<%= addEntryURL %>" iconClass="icon-plus" label="add" selected='<%= toolbarItem.equals("add") %>' />
+		</c:if>
+	</aui:nav>
+
+	<c:if test="<%= showBlogEntriesSearch %>">
+		<div class="navbar-search pull-right">
+			<div class="form-search">
+				<div class="input-append">
+					<input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" class="search-query span9" id="<portlet:namespace/>keywords1" name="<portlet:namespace/>keywords" placeholder="<liferay-ui:message key="keywords" />" type="text" />
+
+					<aui:button primary="<%= false %>" type="submit" value="search" />
+				</div>
+			</div>
+		</div>
 	</c:if>
-</div>
+</aui:nav-bar>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,30 +16,42 @@ package com.liferay.portlet.documentlibrary.model.impl;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.lar.StagedModelType;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.model.Lock;
+import com.liferay.portal.model.Repository;
 import com.liferay.portal.service.LockLocalServiceUtil;
+import com.liferay.portal.service.RepositoryLocalServiceUtil;
+import com.liferay.portlet.documentlibrary.NoSuchFolderException;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
+import com.liferay.portlet.documentlibrary.model.DLFileEntryMetadata;
+import com.liferay.portlet.documentlibrary.model.DLFileEntryType;
 import com.liferay.portlet.documentlibrary.model.DLFileVersion;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
+import com.liferay.portlet.documentlibrary.service.DLFileEntryMetadataLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLFileEntryServiceUtil;
+import com.liferay.portlet.documentlibrary.service.DLFileEntryTypeLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLFileVersionLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLFileVersionServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.util.DLUtil;
+import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
+import com.liferay.portlet.dynamicdatamapping.storage.Fields;
+import com.liferay.portlet.dynamicdatamapping.storage.StorageEngineUtil;
 import com.liferay.portlet.expando.model.ExpandoBridge;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -52,12 +64,14 @@ public class DLFileEntryImpl extends DLFileEntryBaseImpl {
 	public DLFileEntryImpl() {
 	}
 
+	@Override
 	public InputStream getContentStream()
 		throws PortalException, SystemException {
 
 		return getContentStream(getVersion());
 	}
 
+	@Override
 	public InputStream getContentStream(String version)
 		throws PortalException, SystemException {
 
@@ -65,6 +79,7 @@ public class DLFileEntryImpl extends DLFileEntryBaseImpl {
 			getFileEntryId(), version);
 	}
 
+	@Override
 	public long getDataRepositoryId() {
 		return DLFolderConstants.getDataRepositoryId(
 			getGroupId(), getFolderId());
@@ -94,6 +109,7 @@ public class DLFileEntryImpl extends DLFileEntryBaseImpl {
 		}
 	}
 
+	@Override
 	public UnicodeProperties getExtraSettingsProperties() {
 		if (_extraSettingsProperties == null) {
 			_extraSettingsProperties = new UnicodeProperties(true);
@@ -109,12 +125,48 @@ public class DLFileEntryImpl extends DLFileEntryBaseImpl {
 		return _extraSettingsProperties;
 	}
 
+	@Override
+	public Map<String, Fields> getFieldsMap(long fileVersionId)
+		throws PortalException, SystemException {
+
+		Map<String, Fields> fieldsMap = new HashMap<String, Fields>();
+
+		DLFileVersion dlFileVersion =
+			DLFileVersionLocalServiceUtil.getFileVersion(fileVersionId);
+
+		long fileEntryTypeId = dlFileVersion.getFileEntryTypeId();
+
+		if (fileEntryTypeId <= 0) {
+			return fieldsMap;
+		}
+
+		DLFileEntryType dlFileEntryType =
+			DLFileEntryTypeLocalServiceUtil.getFileEntryType(fileEntryTypeId);
+
+		List<DDMStructure> ddmStructures = dlFileEntryType.getDDMStructures();
+
+		for (DDMStructure ddmStructure : ddmStructures) {
+			DLFileEntryMetadata dlFileEntryMetadata =
+				DLFileEntryMetadataLocalServiceUtil.getFileEntryMetadata(
+					ddmStructure.getStructureId(), fileVersionId);
+
+			Fields fields = StorageEngineUtil.getFields(
+				dlFileEntryMetadata.getDDMStorageId());
+
+			fieldsMap.put(ddmStructure.getStructureKey(), fields);
+		}
+
+		return fieldsMap;
+	}
+
+	@Override
 	public DLFileVersion getFileVersion()
 		throws PortalException, SystemException {
 
 		return getFileVersion(getVersion());
 	}
 
+	@Override
 	public DLFileVersion getFileVersion(String version)
 		throws PortalException, SystemException {
 
@@ -122,6 +174,7 @@ public class DLFileEntryImpl extends DLFileEntryBaseImpl {
 			getFileEntryId(), version);
 	}
 
+	@Override
 	public List<DLFileVersion> getFileVersions(int status)
 		throws SystemException {
 
@@ -129,36 +182,41 @@ public class DLFileEntryImpl extends DLFileEntryBaseImpl {
 			getFileEntryId(), status);
 	}
 
-	public DLFolder getFolder() {
-		DLFolder dlFolder = null;
-
-		if (getFolderId() > 0) {
-			try {
-				dlFolder = DLFolderLocalServiceUtil.getFolder(getFolderId());
-			}
-			catch (Exception e) {
-				dlFolder = new DLFolderImpl();
-
-				_log.error(e, e);
-			}
-		}
-		else {
-			dlFolder = new DLFolderImpl();
-		}
-
-		return dlFolder;
+	@Override
+	public int getFileVersionsCount(int status) throws SystemException {
+		return DLFileVersionLocalServiceUtil.getFileVersionsCount(
+			getFileEntryId(), status);
 	}
 
+	@Override
+	public DLFolder getFolder() throws PortalException, SystemException {
+		if (getFolderId() <= 0) {
+			return new DLFolderImpl();
+		}
+
+		return DLFolderLocalServiceUtil.getFolder(getFolderId());
+	}
+
+	@Override
 	public String getIcon() {
 		return DLUtil.getFileIcon(getExtension());
 	}
 
-	public DLFileVersion getLatestFileVersion()
+	@Override
+	public DLFileVersion getLatestFileVersion(boolean trusted)
 		throws PortalException, SystemException {
 
-		return DLFileVersionServiceUtil.getLatestFileVersion(getFileEntryId());
+		if (trusted) {
+			return DLFileVersionLocalServiceUtil.getLatestFileVersion(
+				getFileEntryId(), false);
+		}
+		else {
+			return DLFileVersionServiceUtil.getLatestFileVersion(
+				getFileEntryId());
+		}
 	}
 
+	@Override
 	public Lock getLock() {
 		try {
 			return LockLocalServiceUtil.getLock(
@@ -170,11 +228,9 @@ public class DLFileEntryImpl extends DLFileEntryBaseImpl {
 		return null;
 	}
 
+	@Override
 	public String getLuceneProperties() {
 		UnicodeProperties extraSettingsProps = getExtraSettingsProperties();
-
-		Iterator<Map.Entry<String, String>> itr =
-			extraSettingsProps.entrySet().iterator();
 
 		StringBundler sb = new StringBundler(
 			extraSettingsProps.entrySet().size() + 4);
@@ -184,9 +240,7 @@ public class DLFileEntryImpl extends DLFileEntryBaseImpl {
 		sb.append(getDescription());
 		sb.append(StringPool.SPACE);
 
-		while (itr.hasNext()) {
-			Map.Entry<String, String> entry = itr.next();
-
+		for (Map.Entry<String, String> entry : extraSettingsProps.entrySet()) {
 			String value = GetterUtil.getString(entry.getValue());
 
 			sb.append(value);
@@ -195,6 +249,89 @@ public class DLFileEntryImpl extends DLFileEntryBaseImpl {
 		return sb.toString();
 	}
 
+	@Override
+	public StagedModelType getStagedModelType() {
+		return new StagedModelType(FileEntry.class);
+	}
+
+	@Override
+	public DLFolder getTrashContainer()
+		throws PortalException, SystemException {
+
+		DLFolder dlFolder = null;
+
+		try {
+			dlFolder = getFolder();
+		}
+		catch (NoSuchFolderException nsfe) {
+			return null;
+		}
+
+		if (dlFolder.isInTrash()) {
+			return dlFolder;
+		}
+
+		return dlFolder.getTrashContainer();
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link DLFileVersion#getUserId()}
+	 */
+	@Override
+	public long getVersionUserId() {
+		long versionUserId = 0;
+
+		try {
+			DLFileVersion dlFileVersion = getFileVersion();
+
+			versionUserId = dlFileVersion.getUserId();
+		}
+		catch (Exception e) {
+			_log.error(e, e);
+		}
+
+		return versionUserId;
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link DLFileVersion#getUserName()}
+	 */
+	@Override
+	public String getVersionUserName() {
+		String versionUserName = StringPool.BLANK;
+
+		try {
+			DLFileVersion dlFileVersion = getFileVersion();
+
+			versionUserName = dlFileVersion.getUserName();
+		}
+		catch (Exception e) {
+			_log.error(e, e);
+		}
+
+		return versionUserName;
+	}
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link DLFileVersion#getUserUuid()}
+	 */
+	@Override
+	public String getVersionUserUuid() {
+		String versionUserUuid = StringPool.BLANK;
+
+		try {
+			DLFileVersion dlFileVersion = getFileVersion();
+
+			versionUserUuid = dlFileVersion.getUserUuid();
+		}
+		catch (Exception e) {
+			_log.error(e, e);
+		}
+
+		return versionUserUuid;
+	}
+
+	@Override
 	public boolean hasLock() {
 		try {
 			return DLFileEntryServiceUtil.hasFileEntryLock(getFileEntryId());
@@ -205,6 +342,7 @@ public class DLFileEntryImpl extends DLFileEntryBaseImpl {
 		return false;
 	}
 
+	@Override
 	public boolean isCheckedOut() {
 		try {
 			return DLFileEntryServiceUtil.isFileEntryCheckedOut(
@@ -217,12 +355,45 @@ public class DLFileEntryImpl extends DLFileEntryBaseImpl {
 	}
 
 	@Override
+	public boolean isInHiddenFolder() {
+		try {
+			long repositoryId = getRepositoryId();
+
+			Repository repository = RepositoryLocalServiceUtil.getRepository(
+				repositoryId);
+
+			long dlFolderId = repository.getDlFolderId();
+
+			DLFolder dlFolder = DLFolderLocalServiceUtil.getFolder(dlFolderId);
+
+			return dlFolder.isHidden();
+		}
+		catch (Exception e) {
+		}
+
+		return false;
+	}
+
+	@Override
+	public boolean isInTrashContainer()
+		throws PortalException, SystemException {
+
+		if (getTrashContainer() != null) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	@Override
 	public void setExtraSettings(String extraSettings) {
 		_extraSettingsProperties = null;
 
 		super.setExtraSettings(extraSettings);
 	}
 
+	@Override
 	public void setExtraSettingsProperties(
 		UnicodeProperties extraSettingsProperties) {
 
@@ -233,6 +404,6 @@ public class DLFileEntryImpl extends DLFileEntryBaseImpl {
 
 	private static Log _log = LogFactoryUtil.getLog(DLFileEntryImpl.class);
 
-	private UnicodeProperties _extraSettingsProperties = null;
+	private UnicodeProperties _extraSettingsProperties;
 
 }

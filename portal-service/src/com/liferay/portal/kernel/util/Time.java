@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,10 +14,13 @@
 
 package com.liferay.portal.kernel.util;
 
+import com.liferay.portal.kernel.language.LanguageUtil;
+
 import java.text.Format;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 
 /**
@@ -25,25 +28,27 @@ import java.util.TimeZone;
  */
 public class Time {
 
-	public static final long SECOND = 1000;
+	public static final long DAY = Time.HOUR * 24;
 
-	public static final long MINUTE = SECOND * 60;
+	public static final String DURATION_FORMAT = "HH:mm:ss.SSS";
 
-	public static final long HOUR = MINUTE * 60;
+	public static final long HOUR = Time.MINUTE * 60;
 
-	public static final long DAY = HOUR * 24;
+	public static final long MINUTE = Time.SECOND * 60;
 
-	public static final long WEEK = DAY * 7;
-
-	public static final long MONTH = DAY * 30;
-
-	public static final long YEAR = DAY * 365;
+	public static final long MONTH = Time.DAY * 30;
 
 	public static final String RFC822_FORMAT = "EEE, dd MMM yyyy HH:mm:ss Z";
 
-	public static final String TIMESTAMP_FORMAT = "yyyyMMddkkmmssSSS";
+	public static final long SECOND = 1000;
 
 	public static final String SHORT_TIMESTAMP_FORMAT = "yyyyMMddkkmm";
+
+	public static final String TIMESTAMP_FORMAT = "yyyyMMddkkmmssSSS";
+
+	public static final long WEEK = Time.DAY * 7;
+
+	public static final long YEAR = Time.DAY * 365;
 
 	public static Date getDate(Calendar cal) {
 		Calendar adjustedCal = CalendarFactoryUtil.getCalendar();
@@ -59,16 +64,16 @@ public class Time {
 		return adjustedCal.getTime();
 	}
 
-	public static Date getDate(TimeZone tz) {
-		Calendar cal = CalendarFactoryUtil.getCalendar(tz);
-
-		return getDate(cal);
-	}
-
 	public static Date getDate(Date date, TimeZone tz) {
 		Calendar cal = CalendarFactoryUtil.getCalendar(tz);
 
 		cal.setTime(date);
+
+		return getDate(cal);
+	}
+
+	public static Date getDate(TimeZone tz) {
+		Calendar cal = CalendarFactoryUtil.getCalendar(tz);
 
 		return getDate(cal);
 	}
@@ -120,38 +125,88 @@ public class Time {
 			}
 		}
 		else {
-			if (milliseconds % WEEK == 0) {
+			if ((milliseconds % WEEK) == 0) {
 				x = (int)(milliseconds / WEEK);
 
 				s = x + " Week";
 			}
-			else if (milliseconds % DAY == 0) {
+			else if ((milliseconds % DAY) == 0) {
 				x = (int)(milliseconds / DAY);
 
 				s = x + " Day";
 			}
-			else if (milliseconds % HOUR == 0) {
+			else if ((milliseconds % HOUR) == 0) {
 				x = (int)(milliseconds / HOUR);
 
 				s = x + " Hour";
 			}
-			else if (milliseconds % MINUTE == 0) {
+			else if ((milliseconds % MINUTE) == 0) {
 				x = (int)(milliseconds / MINUTE);
 
 				s = x + " Minute";
 			}
-			else if (milliseconds % SECOND == 0) {
+			else if ((milliseconds % SECOND) == 0) {
 				x = (int)(milliseconds / SECOND);
 
 				s = x + " Second";
 			}
+			else {
+				x = (int)milliseconds;
+
+				s = x + " Millisecond";
+			}
 		}
 
-		if (x > 1) {
+		if ((x == 0) || (x > 1)) {
 			s += "s";
 		}
 
 		return s;
+	}
+
+	public static String getDuration(long milliseconds) {
+		return getSimpleDate(new Date(milliseconds), DURATION_FORMAT);
+	}
+
+	public static String getRelativeTimeDescription(
+		Date date, Locale locale, TimeZone timeZone) {
+
+		return getRelativeTimeDescription(date.getTime(), locale, timeZone);
+	}
+
+	public static String getRelativeTimeDescription(
+		long milliseconds, Locale locale, TimeZone timeZone) {
+
+		Format timeFormat = FastDateFormatFactoryUtil.getTime(locale, timeZone);
+
+		int daysBetween = DateUtil.getDaysBetween(
+			new Date(milliseconds), new Date(), timeZone);
+
+		long millisAgo = System.currentTimeMillis() - milliseconds;
+
+		if (millisAgo <= Time.MINUTE) {
+			return LanguageUtil.get(locale, "about-a-minute-ago");
+		}
+		else if (millisAgo < Time.HOUR) {
+			return LanguageUtil.format(
+				locale, "x-minutes-ago", (millisAgo / Time.MINUTE));
+		}
+		else if ((millisAgo / Time.HOUR) == 1) {
+			return LanguageUtil.get(locale, "about-an-hour-ago");
+		}
+		else if ((millisAgo < Time.DAY) || (daysBetween == 0)) {
+			return LanguageUtil.format(
+				locale, "x-hours-ago", (millisAgo / Time.HOUR));
+		}
+		else if (daysBetween == 1) {
+			return LanguageUtil.format(
+				locale, "yesterday-at-x", timeFormat.format(milliseconds));
+		}
+
+		Format dateFormat = FastDateFormatFactoryUtil.getSimpleDateFormat(
+			"EEEE, MMMMM dd, yyyy", locale, timeZone);
+
+		return dateFormat.format(milliseconds);
 	}
 
 	public static String getRFC822() {

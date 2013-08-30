@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,8 +17,10 @@ package com.liferay.portal.model.impl;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.Subscription;
 import com.liferay.portal.model.SubscriptionModel;
@@ -30,11 +32,11 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base model implementation for the Subscription service. Represents a row in the &quot;Subscription&quot; database table, with each column mapped to a property of this class.
@@ -70,6 +72,8 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 		};
 	public static final String TABLE_SQL_CREATE = "create table Subscription (subscriptionId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,classNameId LONG,classPK LONG,frequency VARCHAR(75) null)";
 	public static final String TABLE_SQL_DROP = "drop table Subscription";
+	public static final String ORDER_BY_JPQL = " ORDER BY subscription.subscriptionId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY Subscription.subscriptionId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -79,50 +83,143 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.Subscription"),
 			true);
-
-	public Class<?> getModelClass() {
-		return Subscription.class;
-	}
-
-	public String getModelClassName() {
-		return Subscription.class.getName();
-	}
-
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.Subscription"),
+			true);
+	public static long CLASSNAMEID_COLUMN_BITMASK = 1L;
+	public static long CLASSPK_COLUMN_BITMASK = 2L;
+	public static long COMPANYID_COLUMN_BITMASK = 4L;
+	public static long USERID_COLUMN_BITMASK = 8L;
+	public static long SUBSCRIPTIONID_COLUMN_BITMASK = 16L;
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.Subscription"));
 
 	public SubscriptionModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _subscriptionId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setSubscriptionId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_subscriptionId);
+		return _subscriptionId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return Subscription.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return Subscription.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("subscriptionId", getSubscriptionId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("userId", getUserId());
+		attributes.put("userName", getUserName());
+		attributes.put("createDate", getCreateDate());
+		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("classNameId", getClassNameId());
+		attributes.put("classPK", getClassPK());
+		attributes.put("frequency", getFrequency());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long subscriptionId = (Long)attributes.get("subscriptionId");
+
+		if (subscriptionId != null) {
+			setSubscriptionId(subscriptionId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long userId = (Long)attributes.get("userId");
+
+		if (userId != null) {
+			setUserId(userId);
+		}
+
+		String userName = (String)attributes.get("userName");
+
+		if (userName != null) {
+			setUserName(userName);
+		}
+
+		Date createDate = (Date)attributes.get("createDate");
+
+		if (createDate != null) {
+			setCreateDate(createDate);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
+		}
+
+		Long classNameId = (Long)attributes.get("classNameId");
+
+		if (classNameId != null) {
+			setClassNameId(classNameId);
+		}
+
+		Long classPK = (Long)attributes.get("classPK");
+
+		if (classPK != null) {
+			setClassPK(classPK);
+		}
+
+		String frequency = (String)attributes.get("frequency");
+
+		if (frequency != null) {
+			setFrequency(frequency);
+		}
+	}
+
+	@Override
 	public long getSubscriptionId() {
 		return _subscriptionId;
 	}
 
+	@Override
 	public void setSubscriptionId(long subscriptionId) {
 		_subscriptionId = subscriptionId;
 	}
 
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
+		_columnBitmask |= COMPANYID_COLUMN_BITMASK;
+
 		if (!_setOriginalCompanyId) {
 			_setOriginalCompanyId = true;
 
@@ -136,11 +233,15 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 		return _originalCompanyId;
 	}
 
+	@Override
 	public long getUserId() {
 		return _userId;
 	}
 
+	@Override
 	public void setUserId(long userId) {
+		_columnBitmask |= USERID_COLUMN_BITMASK;
+
 		if (!_setOriginalUserId) {
 			_setOriginalUserId = true;
 
@@ -150,10 +251,12 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 		_userId = userId;
 	}
 
+	@Override
 	public String getUserUuid() throws SystemException {
 		return PortalUtil.getUserValue(getUserId(), "uuid", _userUuid);
 	}
 
+	@Override
 	public void setUserUuid(String userUuid) {
 		_userUuid = userUuid;
 	}
@@ -162,6 +265,7 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 		return _originalUserId;
 	}
 
+	@Override
 	public String getUserName() {
 		if (_userName == null) {
 			return StringPool.BLANK;
@@ -171,26 +275,32 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 		}
 	}
 
+	@Override
 	public void setUserName(String userName) {
 		_userName = userName;
 	}
 
+	@Override
 	public Date getCreateDate() {
 		return _createDate;
 	}
 
+	@Override
 	public void setCreateDate(Date createDate) {
 		_createDate = createDate;
 	}
 
+	@Override
 	public Date getModifiedDate() {
 		return _modifiedDate;
 	}
 
+	@Override
 	public void setModifiedDate(Date modifiedDate) {
 		_modifiedDate = modifiedDate;
 	}
 
+	@Override
 	public String getClassName() {
 		if (getClassNameId() <= 0) {
 			return StringPool.BLANK;
@@ -199,11 +309,26 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 		return PortalUtil.getClassName(getClassNameId());
 	}
 
+	@Override
+	public void setClassName(String className) {
+		long classNameId = 0;
+
+		if (Validator.isNotNull(className)) {
+			classNameId = PortalUtil.getClassNameId(className);
+		}
+
+		setClassNameId(classNameId);
+	}
+
+	@Override
 	public long getClassNameId() {
 		return _classNameId;
 	}
 
+	@Override
 	public void setClassNameId(long classNameId) {
+		_columnBitmask |= CLASSNAMEID_COLUMN_BITMASK;
+
 		if (!_setOriginalClassNameId) {
 			_setOriginalClassNameId = true;
 
@@ -217,11 +342,15 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 		return _originalClassNameId;
 	}
 
+	@Override
 	public long getClassPK() {
 		return _classPK;
 	}
 
+	@Override
 	public void setClassPK(long classPK) {
+		_columnBitmask |= CLASSPK_COLUMN_BITMASK;
+
 		if (!_setOriginalClassPK) {
 			_setOriginalClassPK = true;
 
@@ -235,6 +364,7 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 		return _originalClassPK;
 	}
 
+	@Override
 	public String getFrequency() {
 		if (_frequency == null) {
 			return StringPool.BLANK;
@@ -244,39 +374,36 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 		}
 	}
 
+	@Override
 	public void setFrequency(String frequency) {
 		_frequency = frequency;
 	}
 
-	@Override
-	public Subscription toEscapedModel() {
-		if (isEscapedModel()) {
-			return (Subscription)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (Subscription)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					Subscription.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			Subscription.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public Subscription toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (Subscription)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -298,6 +425,7 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 		return subscriptionImpl;
 	}
 
+	@Override
 	public int compareTo(Subscription subscription) {
 		long primaryKey = subscription.getPrimaryKey();
 
@@ -314,18 +442,15 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof Subscription)) {
 			return false;
 		}
 
-		Subscription subscription = null;
-
-		try {
-			subscription = (Subscription)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		Subscription subscription = (Subscription)obj;
 
 		long primaryKey = subscription.getPrimaryKey();
 
@@ -361,6 +486,8 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 		subscriptionModelImpl._originalClassPK = subscriptionModelImpl._classPK;
 
 		subscriptionModelImpl._setOriginalClassPK = false;
+
+		subscriptionModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -441,6 +568,7 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(31);
 
@@ -491,7 +619,7 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 	}
 
 	private static ClassLoader _classLoader = Subscription.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			Subscription.class
 		};
 	private long _subscriptionId;
@@ -512,6 +640,6 @@ public class SubscriptionModelImpl extends BaseModelImpl<Subscription>
 	private long _originalClassPK;
 	private boolean _setOriginalClassPK;
 	private String _frequency;
-	private transient ExpandoBridge _expandoBridge;
-	private Subscription _escapedModelProxy;
+	private long _columnBitmask;
+	private Subscription _escapedModel;
 }

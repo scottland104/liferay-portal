@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,20 +14,42 @@
 
 package com.liferay.portlet.journal.service;
 
+import com.liferay.portal.service.ServiceWrapper;
+
 /**
- * <p>
- * This class is a wrapper for {@link JournalFeedService}.
- * </p>
+ * Provides a wrapper for {@link JournalFeedService}.
  *
- * @author    Brian Wing Shun Chan
- * @see       JournalFeedService
+ * @author Brian Wing Shun Chan
+ * @see JournalFeedService
  * @generated
  */
-public class JournalFeedServiceWrapper implements JournalFeedService {
+public class JournalFeedServiceWrapper implements JournalFeedService,
+	ServiceWrapper<JournalFeedService> {
 	public JournalFeedServiceWrapper(JournalFeedService journalFeedService) {
 		_journalFeedService = journalFeedService;
 	}
 
+	/**
+	* Returns the Spring bean ID for this bean.
+	*
+	* @return the Spring bean ID for this bean
+	*/
+	@Override
+	public java.lang.String getBeanIdentifier() {
+		return _journalFeedService.getBeanIdentifier();
+	}
+
+	/**
+	* Sets the Spring bean ID for this bean.
+	*
+	* @param beanIdentifier the Spring bean ID for this bean
+	*/
+	@Override
+	public void setBeanIdentifier(java.lang.String beanIdentifier) {
+		_journalFeedService.setBeanIdentifier(beanIdentifier);
+	}
+
+	@Override
 	public com.liferay.portlet.journal.model.JournalFeed addFeed(long groupId,
 		java.lang.String feedId, boolean autoFeedId, java.lang.String name,
 		java.lang.String description, java.lang.String type,
@@ -46,18 +68,21 @@ public class JournalFeedServiceWrapper implements JournalFeedService {
 			targetPortletId, contentField, feedType, feedVersion, serviceContext);
 	}
 
+	@Override
 	public void deleteFeed(long groupId, long feedId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		_journalFeedService.deleteFeed(groupId, feedId);
 	}
 
+	@Override
 	public void deleteFeed(long groupId, java.lang.String feedId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		_journalFeedService.deleteFeed(groupId, feedId);
 	}
 
+	@Override
 	public com.liferay.portlet.journal.model.JournalFeed getFeed(long groupId,
 		long feedId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -65,6 +90,7 @@ public class JournalFeedServiceWrapper implements JournalFeedService {
 		return _journalFeedService.getFeed(groupId, feedId);
 	}
 
+	@Override
 	public com.liferay.portlet.journal.model.JournalFeed getFeed(long groupId,
 		java.lang.String feedId)
 		throws com.liferay.portal.kernel.exception.PortalException,
@@ -72,6 +98,7 @@ public class JournalFeedServiceWrapper implements JournalFeedService {
 		return _journalFeedService.getFeed(groupId, feedId);
 	}
 
+	@Override
 	public com.liferay.portlet.journal.model.JournalFeed updateFeed(
 		long groupId, java.lang.String feedId, java.lang.String name,
 		java.lang.String description, java.lang.String type,
@@ -90,12 +117,28 @@ public class JournalFeedServiceWrapper implements JournalFeedService {
 			targetPortletId, contentField, feedType, feedVersion, serviceContext);
 	}
 
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedService}
+	 */
 	public JournalFeedService getWrappedJournalFeedService() {
 		return _journalFeedService;
 	}
 
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #setWrappedService}
+	 */
 	public void setWrappedJournalFeedService(
 		JournalFeedService journalFeedService) {
+		_journalFeedService = journalFeedService;
+	}
+
+	@Override
+	public JournalFeedService getWrappedService() {
+		return _journalFeedService;
+	}
+
+	@Override
+	public void setWrappedService(JournalFeedService journalFeedService) {
 		_journalFeedService = journalFeedService;
 	}
 

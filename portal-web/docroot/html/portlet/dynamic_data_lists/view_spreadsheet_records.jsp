@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,10 +19,10 @@
 <%
 DDLRecordSet recordSet = (DDLRecordSet)request.getAttribute(WebKeys.DYNAMIC_DATA_LISTS_RECORD_SET);
 
-boolean editable = ParamUtil.getBoolean(request, "editable", true);
+boolean editable = false;
 
-if (portletName.equals(PortletKeys.DYNAMIC_DATA_LISTS)) {
-	editable = true;
+if (DDLRecordSetPermission.contains(permissionChecker, recordSet.getRecordSetId(), ActionKeys.ADD_RECORD) && DDLRecordSetPermission.contains(permissionChecker, recordSet.getRecordSetId(), ActionKeys.UPDATE)) {
+	editable = DDLUtil.isEditable(request, portletDisplay.getId(), themeDisplay.getScopeGroupId());
 }
 
 DDMStructure ddmStructure = recordSet.getDDMStructure();
@@ -30,8 +30,8 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 
 <div class="lfr-spreadsheet-container">
 	<div id="<portlet:namespace />spreadsheet">
-		<div class="yui3-widget yui3-datatable" id="<portlet:namespace />dataTableBB">
-			<div class="yui3-datatable-scrollable yui3-datatable-content" id="<portlet:namespace />dataTableCC"></div>
+		<div class="table-striped yui3-widget yui3-datatable" id="<portlet:namespace />dataTable">
+			<div class="yui3-datatable-scrollable yui3-datatable-content" id="<portlet:namespace />dataTableContent"></div>
 		</div>
 	</div>
 
@@ -39,7 +39,7 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 		<div class="lfr-spreadsheet-add-rows-buttons">
 			<aui:button inlineField="<%= true %>" name="addRecords" value="add" />
 
-			<aui:select inlineField="<%= true %>" inlineLabel="right" label="more-rows-at-bottom" name="numberOfRecords">
+			<aui:select inlineField="<%= true %>" label="more-rows-at-bottom" name="numberOfRecords">
 				<aui:option label="1" />
 				<aui:option label="5" />
 				<aui:option label="10" />
@@ -50,32 +50,66 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 	</c:if>
 </div>
 
+<%@ include file="/html/portlet/dynamic_data_lists/custom_spreadsheet_editors.jspf" %>
+
 <aui:script use="liferay-portlet-dynamic-data-lists">
 	var structure = <%= DDMXSDUtil.getJSONArray(ddmStructure.getXsd()) %>;
-	var columnset = Liferay.SpreadSheet.buildDataTableColumnset(<%= DDLUtil.getRecordSetJSONArray(recordSet) %>, structure, <%= editable %>);
+	var columns = Liferay.SpreadSheet.buildDataTableColumns(<%= DDLUtil.getRecordSetJSONArray(recordSet) %>, structure, <%= editable %>);
 
-	var ignoreEmptyRecordsSort = function(recA, recB, field, desc) {
-		var sorted = -1;
+	var ignoreEmptyRecordsNumericSort = function(recA, recB, desc, field) {
+		var a = recA.get(field);
+		var b = recB.get(field);
 
-		if (recB.getValue(field) !== '') {
-			sorted = A.ArraySort.compare(recA.getValue(field), recB.getValue(field), desc);
+		return A.ArraySort.compareIgnoreWhiteSpace(
+			a,
+			b,
+			desc,
+			function(a, b, desc) {
+				var num1 = parseFloat(a);
+				var num2 = parseFloat(b);
 
-			if (sorted === 0) {
-				sorted = A.ArraySort.compare(recA.get("id"), recB.get("id"), desc);
+				var result;
+
+				if (isNaN(num1) || isNaN(num2)) {
+					result = A.ArraySort.compare(a, b, desc);
+				}
+				else {
+					result = desc ? (num2 - num1) : (num1 - num2);
+				}
+
+				return result;
 			}
-		}
+		);
+	};
 
-		return sorted;
+	var ignoreEmptyRecordsStringSort = function(recA, recB, desc, field) {
+		var a = recA.get(field);
+		var b = recB.get(field);
+
+		return A.ArraySort.compareIgnoreWhiteSpace(a, b, desc);
+	};
+
+	var numericData = {
+		'double': 1,
+		integer: 1,
+		number: 1
 	};
 
 	var keys = A.Array.map(
-		columnset,
+		columns,
 		function(item, index, collection) {
+			var key = item.key;
+
 			if (!item.sortFn) {
-				item.sortFn = ignoreEmptyRecordsSort;
+				if (numericData[item.dataType]) {
+					item.sortFn = A.rbind(ignoreEmptyRecordsNumericSort, item, key);
+				}
+				else {
+					item.sortFn = A.rbind(ignoreEmptyRecordsStringSort, item, key);
+				}
 			}
 
-			return item.key;
+			return key;
 		}
 	);
 
@@ -87,11 +121,9 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 	}
 
 	List<DDLRecord> records = DDLRecordLocalServiceUtil.getRecords(recordSet.getRecordSetId(), status, 0, 1000, null);
-
-	int totalEmptyRecords = Math.max(recordSet.getMinDisplayRows(), records.size());
 	%>
 
-	var records = <%= DDLUtil.getRecordsJSONArray(records) %>;
+	var records = <%= DDLUtil.getRecordsJSONArray(records, !editable) %>;
 
 	records.sort(
 		function(a, b) {
@@ -99,56 +131,55 @@ DDMStructure ddmStructure = recordSet.getDDMStructure();
 		}
 	);
 
-	var recordSet = Liferay.SpreadSheet.buildEmptyRecords(<%= totalEmptyRecords %>, keys);
+	var data = Liferay.SpreadSheet.buildEmptyRecords(<%= Math.max(recordSet.getMinDisplayRows(), records.size()) %>, keys);
 
 	A.Array.each(
 		records,
 		function(item, index, collection) {
-			recordSet.splice(item.displayIndex, 0, item);
+			data.splice(item.displayIndex, 0, item);
 		}
 	);
 
 	var spreadSheet = new Liferay.SpreadSheet(
 		{
-			boundingBox: '#<portlet:namespace />dataTableBB',
-			columnset: columnset,
-			contentBox: '#<portlet:namespace />dataTableCC',
+			boundingBox: '#<portlet:namespace />dataTable',
+			columns: columns,
+			contentBox: '#<portlet:namespace />dataTableContent',
+			data: data,
 			editEvent: 'dblclick',
-			recordSet: recordSet,
-			recordSetId: <%= recordSet.getRecordSetId() %>,
-			structure: structure
+			plugins: [
+				{
+					fn: A.Plugin.DataTableHighlight,
+					cfg: {
+						highlightRange: false
+					}
+				}
+			],
+			recordsetId: <%= recordSet.getRecordSetId() %>,
+			structure: structure,
+			width: '100%'
 		}
-	).plug(
-		A.Plugin.DataTableScroll,
-		{
-			height: 700,
-			width: 900
-		}
-	).plug(
-		A.Plugin.DataTableSelection,
-		{
-			selectEvent: 'mousedown'
-		}
-	).plug(A.Plugin.DataTableSort);
+	);
 
 	spreadSheet.render('#<portlet:namespace />spreadsheet');
 
 	spreadSheet.get('boundingBox').unselectable();
 
-	var numberOfRecordsNode = A.one('#<portlet:namespace />numberOfRecords');
+	<c:if test="<%= editable %>">
+		var numberOfRecordsNode = A.one('#<portlet:namespace />numberOfRecords');
 
-	A.one('#<portlet:namespace />addRecords').on(
-		'click',
-		function(event) {
-			var numberOfRecords = parseInt(numberOfRecordsNode.val(), 10) || 0;
+		A.one('#<portlet:namespace />addRecords').on(
+			'click',
+			function(event) {
+				var numberOfRecords = parseInt(numberOfRecordsNode.val(), 10) || 0;
 
-			var recordSet = spreadSheet.get('recordSet');
+				spreadSheet.addEmptyRows(numberOfRecords);
 
-			spreadSheet.addEmptyRows(numberOfRecords);
-
-			spreadSheet.updateMinDisplayRows(recordSet.getLength());
-		}
-	);
+				spreadSheet.updateMinDisplayRows(spreadSheet.get('data').size());
+			}
+		);
+	</c:if>
 
 	window.<portlet:namespace />spreadSheet = spreadSheet;
+	window.<portlet:namespace />structure = structure;
 </aui:script>

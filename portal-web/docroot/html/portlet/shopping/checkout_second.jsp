@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,7 +19,7 @@
 <%
 ShoppingCart cart = ShoppingUtil.getCart(renderRequest);
 
-Map items = cart.getItems();
+Map<ShoppingCartItem, Integer> items = cart.getItems();
 
 ShoppingCoupon coupon = cart.getCoupon();
 
@@ -134,7 +134,7 @@ ShoppingOrder order = (ShoppingOrder)request.getAttribute(WebKeys.SHOPPING_ORDER
 			</tr>
 			<tr>
 				<td>
-					<liferay-ui:message key="zip" />:
+					<liferay-ui:message key="postal-code" />:
 				</td>
 				<td>
 					<%= HtmlUtil.escape(order.getBillingZip()) %>
@@ -222,7 +222,7 @@ ShoppingOrder order = (ShoppingOrder)request.getAttribute(WebKeys.SHOPPING_ORDER
 			</tr>
 			<tr>
 				<td>
-					<liferay-ui:message key="zip" />:
+					<liferay-ui:message key="postal-code" />:
 				</td>
 				<td>
 					<%= HtmlUtil.escape(order.getShippingZip()) %>
@@ -339,20 +339,17 @@ ShoppingOrder order = (ShoppingOrder)request.getAttribute(WebKeys.SHOPPING_ORDER
 	searchContainer.setHeaderNames(headerNames);
 	searchContainer.setHover(false);
 
-	Set results = items.entrySet();
 	int total = items.size();
 
 	searchContainer.setTotal(total);
 
 	List resultRows = searchContainer.getResultRows();
 
-	Iterator itr = results.iterator();
+	int i = 0;
 
-	for (int i = 0; itr.hasNext(); i++) {
-		Map.Entry entry = (Map.Entry)itr.next();
-
-		ShoppingCartItem cartItem = (ShoppingCartItem)entry.getKey();
-		Integer count = (Integer)entry.getValue();
+	for (Map.Entry<ShoppingCartItem, Integer> entry : items.entrySet()) {
+		ShoppingCartItem cartItem = entry.getKey();
+		Integer count = entry.getValue();
 
 		ShoppingItem item = cartItem.getItem();
 		String[] fieldsArray = cartItem.getFieldsArray();
@@ -383,7 +380,7 @@ ShoppingOrder order = (ShoppingOrder)request.getAttribute(WebKeys.SHOPPING_ORDER
 			sb.append(HtmlUtil.escape(item.getName()));
 			sb.append(" (");
 			sb.append(StringUtil.replace(StringUtil.merge(cartItem.getFieldsArray(), ", "), "=", ": "));
-			sb.append(")");
+			sb.append(StringPool.CLOSE_PARENTHESIS);
 
 			row.addText(sb.toString(), rowURL);
 		}
@@ -394,10 +391,10 @@ ShoppingOrder order = (ShoppingOrder)request.getAttribute(WebKeys.SHOPPING_ORDER
 		// Availability
 
 		if (ShoppingUtil.isInStock(item, itemFields, fieldsArray, count)) {
-			row.addText("<div class=\"portlet-msg-success\">".concat(LanguageUtil.get(pageContext, "in-stock")).concat("</div>"), rowURL);
+			row.addText("<div class=\"alert alert-success\">".concat(LanguageUtil.get(pageContext, "in-stock")).concat("</div>"), rowURL);
 		}
 		else {
-			row.addText("<div class=\"portlet-msg-error\">".concat(LanguageUtil.get(pageContext, "out-of-stock")).concat("</div>"), rowURL);
+			row.addText("<div class=\"alert alert-error\">".concat(LanguageUtil.get(pageContext, "out-of-stock")).concat("</div>"), rowURL);
 		}
 
 		// Quantity
@@ -415,6 +412,8 @@ ShoppingOrder order = (ShoppingOrder)request.getAttribute(WebKeys.SHOPPING_ORDER
 		// Add result row
 
 		resultRows.add(row);
+
+		i++;
 	}
 	%>
 
@@ -483,7 +482,7 @@ ShoppingOrder order = (ShoppingOrder)request.getAttribute(WebKeys.SHOPPING_ORDER
 				String taglibOpenCouponWindow = "var viewCouponWindow = window.open('" + viewCouponURL + "', 'viewCoupon', 'directories=no,height=200,location=no,menubar=no,resizable=no,scrollbars=yes,status=no,toolbar=no,width=280'); void(''); viewCouponWindow.focus();";
 				%>
 
-				<aui:a href='<%= taglibOpenCouponWindow %>' label='<%= "(" + coupon.getCouponId() + ")" %>' />
+				<aui:a href="<%= taglibOpenCouponWindow %>" label='<%= "(" + coupon.getCouponId() + ")" %>' />
 			</td>
 		</tr>
 	</c:if>

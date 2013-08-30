@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -59,7 +59,7 @@ if (layoutSetBranches.contains(layoutSetBranch)) {
 
 				<liferay-ui:search-container-column-text
 					name="branch"
-					property="name"
+					value="<%= LanguageUtil.get(pageContext, curLayoutSetBranch.getName()) %>"
 				/>
 
 				<liferay-ui:search-container-column-text
@@ -70,9 +70,9 @@ if (layoutSetBranches.contains(layoutSetBranch)) {
 					buffer.append("<a class='layout-set-branch' data-layoutSetBranchId='");
 					buffer.append(curLayoutSetBranch.getLayoutSetBranchId());
 					buffer.append("' data-layoutSetBranchName='");
-					buffer.append(HtmlUtil.escape(curLayoutSetBranch.getName()));
+					buffer.append(HtmlUtil.escapeAttribute(curLayoutSetBranch.getName()));
 					buffer.append("' data-layoutSetBranchMessage='");
-					buffer.append(HtmlUtil.escape(LanguageUtil.format(pageContext, "are-you-sure-you-want-to-merge-changes-from-x", curLayoutSetBranch.getName())));
+					buffer.append(HtmlUtil.escapeAttribute(LanguageUtil.format(pageContext, "are-you-sure-you-want-to-merge-changes-from-x", curLayoutSetBranch.getName())));
 					buffer.append("' href='#'>");
 					buffer.append(LanguageUtil.get(pageContext, "select"));
 					buffer.append("</a>");
@@ -81,7 +81,7 @@ if (layoutSetBranches.contains(layoutSetBranch)) {
 				</liferay-ui:search-container-column-text>
 			</liferay-ui:search-container-row>
 
-			<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" paginate="<%= false %>" />
+			<liferay-ui:search-iterator paginate="<%= false %>" searchContainer="<%= searchContainer %>" />
 		</liferay-ui:search-container>
 	</aui:form>
 </div>

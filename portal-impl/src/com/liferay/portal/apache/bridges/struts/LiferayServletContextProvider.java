@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,10 +14,10 @@
 
 package com.liferay.portal.apache.bridges.struts;
 
+import com.liferay.portal.kernel.portlet.LiferayPortletContext;
 import com.liferay.portal.kernel.servlet.ServletContextProvider;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.util.PortalUtil;
-import com.liferay.portlet.PortletContextImpl;
 
 import javax.portlet.GenericPortlet;
 import javax.portlet.PortletContext;
@@ -32,30 +32,11 @@ import javax.servlet.http.HttpServletResponse;
  * @author James Schopp
  * @author Michael Young
  * @author Deepak Gothe
+ * @author Raymond Augé
  */
 public class LiferayServletContextProvider implements ServletContextProvider {
 
-	public ServletContext getServletContext(GenericPortlet portlet) {
-		PortletContext portletContext = portlet.getPortletContext();
-
-		ServletContext servletContext =
-			(ServletContext)portletContext.getAttribute(
-				JavaConstants.JAVAX_PORTLET_SERVLET_CONTEXT);
-
-		if (servletContext == null) {
-			PortletContextImpl portletContextImpl =
-				(PortletContextImpl)portlet.getPortletContext();
-
-			servletContext = portletContextImpl.getServletContext();
-		}
-
-		return getServletContext(servletContext);
-	}
-
-	public ServletContext getServletContext(ServletContext servletContext) {
-		return new LiferayServletContext(servletContext);
-	}
-
+	@Override
 	public HttpServletRequest getHttpServletRequest(
 		GenericPortlet portlet, PortletRequest portletRequest) {
 
@@ -65,10 +46,34 @@ public class LiferayServletContextProvider implements ServletContextProvider {
 		return new LiferayStrutsRequestImpl(request);
 	}
 
+	@Override
 	public HttpServletResponse getHttpServletResponse(
 		GenericPortlet portlet, PortletResponse portletResponse) {
 
 		return PortalUtil.getHttpServletResponse(portletResponse);
+	}
+
+	@Override
+	public ServletContext getServletContext(GenericPortlet portlet) {
+		PortletContext portletContext = portlet.getPortletContext();
+
+		ServletContext servletContext =
+			(ServletContext)portletContext.getAttribute(
+				JavaConstants.JAVAX_PORTLET_SERVLET_CONTEXT);
+
+		if (servletContext == null) {
+			LiferayPortletContext liferayPortletContext =
+				(LiferayPortletContext)portlet.getPortletContext();
+
+			servletContext = liferayPortletContext.getServletContext();
+		}
+
+		return getServletContext(servletContext);
+	}
+
+	@Override
+	public ServletContext getServletContext(ServletContext servletContext) {
+		return new LiferayServletContext(servletContext);
 	}
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,25 +19,29 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.BrowserSnifferUtil;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
-import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.servlet.MetaInfoCacheServletResponse;
+import com.liferay.portal.kernel.servlet.ServletOutputStreamAdapter;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.UnsyncPrintWriterPool;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.util.RSSThreadLocal;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.OutputStream;
 import java.io.PrintWriter;
+
+import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
 
 /**
  * @author Jayson Falkner
  * @author Brian Wing Shun Chan
  * @author Shuyang Zhou
  */
-public class GZipResponse extends HttpServletResponseWrapper {
+public class GZipResponse extends MetaInfoCacheServletResponse {
 
 	public GZipResponse(
 		HttpServletRequest request, HttpServletResponse response) {
@@ -52,12 +56,37 @@ public class GZipResponse extends HttpServletResponseWrapper {
 
 		_response.setContentLength(-1);
 
+		// Setting the header after finishResponse is too late
+
 		_response.addHeader(HttpHeaders.CONTENT_ENCODING, _GZIP);
 
 		_firefox = BrowserSnifferUtil.isFirefox(request);
 	}
 
+	@Override
 	public void finishResponse() throws IOException {
+
+		// Is the response committed?
+
+		if (!isCommitted()) {
+
+			// Has the content been GZipped yet?
+
+			if ((_servletOutputStream == null) ||
+				((_servletOutputStream != null) &&
+				 (_unsyncByteArrayOutputStream != null) &&
+				 (_unsyncByteArrayOutputStream.size() == 0))) {
+
+				// Reset the wrapped response to clear out the GZip header
+
+				_response.reset();
+
+				// Reapply meta data
+
+				super.finishResponse();
+			}
+		}
+
 		try {
 			if (_printWriter != null) {
 				_printWriter.close();
@@ -66,7 +95,7 @@ public class GZipResponse extends HttpServletResponseWrapper {
 				_servletOutputStream.close();
 			}
 		}
-		catch (IOException e) {
+		catch (IOException ioe) {
 		}
 
 		if (_unsyncByteArrayOutputStream != null) {
@@ -90,16 +119,21 @@ public class GZipResponse extends HttpServletResponseWrapper {
 		}
 
 		if (_servletOutputStream == null) {
-			if (_firefox && RSSThreadLocal.isExportRSS()) {
-				_unsyncByteArrayOutputStream =
-					new UnsyncByteArrayOutputStream();
-
-				_servletOutputStream = new GZipServletOutputStream(
-					_unsyncByteArrayOutputStream);
+			if (_isGZipContentType()) {
+				_servletOutputStream = _response.getOutputStream();
 			}
 			else {
-				_servletOutputStream = new GZipServletOutputStream(
-					_response.getOutputStream());
+				if (_firefox && RSSThreadLocal.isExportRSS()) {
+					_unsyncByteArrayOutputStream =
+						new UnsyncByteArrayOutputStream();
+
+					_servletOutputStream = _createGZipServletOutputStream(
+						_unsyncByteArrayOutputStream);
+				}
+				else {
+					_servletOutputStream = _createGZipServletOutputStream(
+						_response.getOutputStream());
+				}
 			}
 		}
 
@@ -123,15 +157,42 @@ public class GZipResponse extends HttpServletResponseWrapper {
 		_servletOutputStream = getOutputStream();
 
 		_printWriter = UnsyncPrintWriterPool.borrow(
-			new OutputStreamWriter(
-				//_stream, _res.getCharacterEncoding()));
-				_servletOutputStream, StringPool.UTF8));
+			_servletOutputStream, getCharacterEncoding());
 
 		return _printWriter;
 	}
 
 	@Override
 	public void setContentLength(int contentLength) {
+	}
+
+	private ServletOutputStream _createGZipServletOutputStream(
+			OutputStream outputStream)
+		throws IOException {
+
+		GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream) {
+
+			{
+				def.setLevel(PropsValues.GZIP_COMPRESSION_LEVEL);
+			}
+
+		};
+
+		return new ServletOutputStreamAdapter(gzipOutputStream);
+	}
+
+	private boolean _isGZipContentType() {
+		String contentType = getContentType();
+
+		if (contentType != null) {
+			if (contentType.equals(ContentTypes.APPLICATION_GZIP) ||
+				contentType.equals(ContentTypes.APPLICATION_X_GZIP)) {
+
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private static final String _GZIP = "gzip";

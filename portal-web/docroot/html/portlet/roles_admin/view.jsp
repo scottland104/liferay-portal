@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -31,9 +31,7 @@ String portletURLString = portletURL.toString();
 <aui:form action="<%= portletURLString %>" method="get" name="fm">
 	<liferay-portlet:renderURLParams varImpl="portletURL" />
 
-	<liferay-util:include page="/html/portlet/roles_admin/toolbar.jsp">
-		<liferay-util:param name="toolbarItem" value="view-all" />
-	</liferay-util:include>
+	<liferay-util:include page="/html/portlet/roles_admin/toolbar.jsp" />
 
 	<%
 	RoleSearch searchContainer = new RoleSearch(renderRequest, portletURL);
@@ -88,7 +86,7 @@ String portletURLString = portletURL.toString();
 
 		// Name
 
-		row.addText(HtmlUtil.escape(role.getTitle(locale)), rowURL);
+		row.addText(role.getTitle(locale), rowURL);
 
 		// Type
 
@@ -105,7 +103,7 @@ String portletURLString = portletURL.toString();
 
 		// Description
 
-		row.addText(role.getDescription(), rowURL);
+		row.addText(role.getDescription(locale), rowURL);
 
 		// Action
 

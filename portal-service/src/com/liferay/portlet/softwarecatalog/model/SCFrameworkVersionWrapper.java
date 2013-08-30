@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,26 +14,124 @@
 
 package com.liferay.portlet.softwarecatalog.model;
 
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.model.ModelWrapper;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * <p>
  * This class is a wrapper for {@link SCFrameworkVersion}.
  * </p>
  *
- * @author    Brian Wing Shun Chan
- * @see       SCFrameworkVersion
+ * @author Brian Wing Shun Chan
+ * @see SCFrameworkVersion
  * @generated
  */
-public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
+public class SCFrameworkVersionWrapper implements SCFrameworkVersion,
+	ModelWrapper<SCFrameworkVersion> {
 	public SCFrameworkVersionWrapper(SCFrameworkVersion scFrameworkVersion) {
 		_scFrameworkVersion = scFrameworkVersion;
 	}
 
+	@Override
 	public Class<?> getModelClass() {
 		return SCFrameworkVersion.class;
 	}
 
+	@Override
 	public String getModelClassName() {
 		return SCFrameworkVersion.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("frameworkVersionId", getFrameworkVersionId());
+		attributes.put("groupId", getGroupId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("userId", getUserId());
+		attributes.put("userName", getUserName());
+		attributes.put("createDate", getCreateDate());
+		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("name", getName());
+		attributes.put("url", getUrl());
+		attributes.put("active", getActive());
+		attributes.put("priority", getPriority());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long frameworkVersionId = (Long)attributes.get("frameworkVersionId");
+
+		if (frameworkVersionId != null) {
+			setFrameworkVersionId(frameworkVersionId);
+		}
+
+		Long groupId = (Long)attributes.get("groupId");
+
+		if (groupId != null) {
+			setGroupId(groupId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long userId = (Long)attributes.get("userId");
+
+		if (userId != null) {
+			setUserId(userId);
+		}
+
+		String userName = (String)attributes.get("userName");
+
+		if (userName != null) {
+			setUserName(userName);
+		}
+
+		Date createDate = (Date)attributes.get("createDate");
+
+		if (createDate != null) {
+			setCreateDate(createDate);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
+		}
+
+		String name = (String)attributes.get("name");
+
+		if (name != null) {
+			setName(name);
+		}
+
+		String url = (String)attributes.get("url");
+
+		if (url != null) {
+			setUrl(url);
+		}
+
+		Boolean active = (Boolean)attributes.get("active");
+
+		if (active != null) {
+			setActive(active);
+		}
+
+		Integer priority = (Integer)attributes.get("priority");
+
+		if (priority != null) {
+			setPriority(priority);
+		}
 	}
 
 	/**
@@ -41,6 +139,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @return the primary key of this s c framework version
 	*/
+	@Override
 	public long getPrimaryKey() {
 		return _scFrameworkVersion.getPrimaryKey();
 	}
@@ -50,6 +149,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @param primaryKey the primary key of this s c framework version
 	*/
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		_scFrameworkVersion.setPrimaryKey(primaryKey);
 	}
@@ -59,6 +159,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @return the framework version ID of this s c framework version
 	*/
+	@Override
 	public long getFrameworkVersionId() {
 		return _scFrameworkVersion.getFrameworkVersionId();
 	}
@@ -68,6 +169,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @param frameworkVersionId the framework version ID of this s c framework version
 	*/
+	@Override
 	public void setFrameworkVersionId(long frameworkVersionId) {
 		_scFrameworkVersion.setFrameworkVersionId(frameworkVersionId);
 	}
@@ -77,6 +179,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @return the group ID of this s c framework version
 	*/
+	@Override
 	public long getGroupId() {
 		return _scFrameworkVersion.getGroupId();
 	}
@@ -86,6 +189,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @param groupId the group ID of this s c framework version
 	*/
+	@Override
 	public void setGroupId(long groupId) {
 		_scFrameworkVersion.setGroupId(groupId);
 	}
@@ -95,6 +199,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @return the company ID of this s c framework version
 	*/
+	@Override
 	public long getCompanyId() {
 		return _scFrameworkVersion.getCompanyId();
 	}
@@ -104,6 +209,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @param companyId the company ID of this s c framework version
 	*/
+	@Override
 	public void setCompanyId(long companyId) {
 		_scFrameworkVersion.setCompanyId(companyId);
 	}
@@ -113,6 +219,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @return the user ID of this s c framework version
 	*/
+	@Override
 	public long getUserId() {
 		return _scFrameworkVersion.getUserId();
 	}
@@ -122,6 +229,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @param userId the user ID of this s c framework version
 	*/
+	@Override
 	public void setUserId(long userId) {
 		_scFrameworkVersion.setUserId(userId);
 	}
@@ -132,6 +240,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	* @return the user uuid of this s c framework version
 	* @throws SystemException if a system exception occurred
 	*/
+	@Override
 	public java.lang.String getUserUuid()
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _scFrameworkVersion.getUserUuid();
@@ -142,6 +251,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @param userUuid the user uuid of this s c framework version
 	*/
+	@Override
 	public void setUserUuid(java.lang.String userUuid) {
 		_scFrameworkVersion.setUserUuid(userUuid);
 	}
@@ -151,6 +261,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @return the user name of this s c framework version
 	*/
+	@Override
 	public java.lang.String getUserName() {
 		return _scFrameworkVersion.getUserName();
 	}
@@ -160,6 +271,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @param userName the user name of this s c framework version
 	*/
+	@Override
 	public void setUserName(java.lang.String userName) {
 		_scFrameworkVersion.setUserName(userName);
 	}
@@ -169,6 +281,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @return the create date of this s c framework version
 	*/
+	@Override
 	public java.util.Date getCreateDate() {
 		return _scFrameworkVersion.getCreateDate();
 	}
@@ -178,6 +291,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @param createDate the create date of this s c framework version
 	*/
+	@Override
 	public void setCreateDate(java.util.Date createDate) {
 		_scFrameworkVersion.setCreateDate(createDate);
 	}
@@ -187,6 +301,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @return the modified date of this s c framework version
 	*/
+	@Override
 	public java.util.Date getModifiedDate() {
 		return _scFrameworkVersion.getModifiedDate();
 	}
@@ -196,6 +311,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @param modifiedDate the modified date of this s c framework version
 	*/
+	@Override
 	public void setModifiedDate(java.util.Date modifiedDate) {
 		_scFrameworkVersion.setModifiedDate(modifiedDate);
 	}
@@ -205,6 +321,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @return the name of this s c framework version
 	*/
+	@Override
 	public java.lang.String getName() {
 		return _scFrameworkVersion.getName();
 	}
@@ -214,6 +331,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @param name the name of this s c framework version
 	*/
+	@Override
 	public void setName(java.lang.String name) {
 		_scFrameworkVersion.setName(name);
 	}
@@ -223,6 +341,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @return the url of this s c framework version
 	*/
+	@Override
 	public java.lang.String getUrl() {
 		return _scFrameworkVersion.getUrl();
 	}
@@ -232,6 +351,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @param url the url of this s c framework version
 	*/
+	@Override
 	public void setUrl(java.lang.String url) {
 		_scFrameworkVersion.setUrl(url);
 	}
@@ -241,6 +361,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @return the active of this s c framework version
 	*/
+	@Override
 	public boolean getActive() {
 		return _scFrameworkVersion.getActive();
 	}
@@ -250,6 +371,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @return <code>true</code> if this s c framework version is active; <code>false</code> otherwise
 	*/
+	@Override
 	public boolean isActive() {
 		return _scFrameworkVersion.isActive();
 	}
@@ -259,6 +381,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @param active the active of this s c framework version
 	*/
+	@Override
 	public void setActive(boolean active) {
 		_scFrameworkVersion.setActive(active);
 	}
@@ -268,6 +391,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @return the priority of this s c framework version
 	*/
+	@Override
 	public int getPriority() {
 		return _scFrameworkVersion.getPriority();
 	}
@@ -277,46 +401,64 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 	*
 	* @param priority the priority of this s c framework version
 	*/
+	@Override
 	public void setPriority(int priority) {
 		_scFrameworkVersion.setPriority(priority);
 	}
 
+	@Override
 	public boolean isNew() {
 		return _scFrameworkVersion.isNew();
 	}
 
+	@Override
 	public void setNew(boolean n) {
 		_scFrameworkVersion.setNew(n);
 	}
 
+	@Override
 	public boolean isCachedModel() {
 		return _scFrameworkVersion.isCachedModel();
 	}
 
+	@Override
 	public void setCachedModel(boolean cachedModel) {
 		_scFrameworkVersion.setCachedModel(cachedModel);
 	}
 
+	@Override
 	public boolean isEscapedModel() {
 		return _scFrameworkVersion.isEscapedModel();
 	}
 
-	public void setEscapedModel(boolean escapedModel) {
-		_scFrameworkVersion.setEscapedModel(escapedModel);
-	}
-
+	@Override
 	public java.io.Serializable getPrimaryKeyObj() {
 		return _scFrameworkVersion.getPrimaryKeyObj();
 	}
 
+	@Override
 	public void setPrimaryKeyObj(java.io.Serializable primaryKeyObj) {
 		_scFrameworkVersion.setPrimaryKeyObj(primaryKeyObj);
 	}
 
+	@Override
 	public com.liferay.portlet.expando.model.ExpandoBridge getExpandoBridge() {
 		return _scFrameworkVersion.getExpandoBridge();
 	}
 
+	@Override
+	public void setExpandoBridgeAttributes(
+		com.liferay.portal.model.BaseModel<?> baseModel) {
+		_scFrameworkVersion.setExpandoBridgeAttributes(baseModel);
+	}
+
+	@Override
+	public void setExpandoBridgeAttributes(
+		com.liferay.portlet.expando.model.ExpandoBridge expandoBridge) {
+		_scFrameworkVersion.setExpandoBridgeAttributes(expandoBridge);
+	}
+
+	@Override
 	public void setExpandoBridgeAttributes(
 		com.liferay.portal.service.ServiceContext serviceContext) {
 		_scFrameworkVersion.setExpandoBridgeAttributes(serviceContext);
@@ -327,6 +469,7 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 		return new SCFrameworkVersionWrapper((SCFrameworkVersion)_scFrameworkVersion.clone());
 	}
 
+	@Override
 	public int compareTo(
 		com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion scFrameworkVersion) {
 		return _scFrameworkVersion.compareTo(scFrameworkVersion);
@@ -337,12 +480,19 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 		return _scFrameworkVersion.hashCode();
 	}
 
+	@Override
 	public com.liferay.portal.model.CacheModel<com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion> toCacheModel() {
 		return _scFrameworkVersion.toCacheModel();
 	}
 
+	@Override
 	public com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion toEscapedModel() {
 		return new SCFrameworkVersionWrapper(_scFrameworkVersion.toEscapedModel());
+	}
+
+	@Override
+	public com.liferay.portlet.softwarecatalog.model.SCFrameworkVersion toUnescapedModel() {
+		return new SCFrameworkVersionWrapper(_scFrameworkVersion.toUnescapedModel());
 	}
 
 	@Override
@@ -350,19 +500,50 @@ public class SCFrameworkVersionWrapper implements SCFrameworkVersion {
 		return _scFrameworkVersion.toString();
 	}
 
+	@Override
 	public java.lang.String toXmlString() {
 		return _scFrameworkVersion.toXmlString();
 	}
 
+	@Override
 	public void persist()
 		throws com.liferay.portal.kernel.exception.SystemException {
 		_scFrameworkVersion.persist();
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof SCFrameworkVersionWrapper)) {
+			return false;
+		}
+
+		SCFrameworkVersionWrapper scFrameworkVersionWrapper = (SCFrameworkVersionWrapper)obj;
+
+		if (Validator.equals(_scFrameworkVersion,
+					scFrameworkVersionWrapper._scFrameworkVersion)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * @deprecated As of 6.1.0, replaced by {@link #getWrappedModel}
+	 */
 	public SCFrameworkVersion getWrappedSCFrameworkVersion() {
 		return _scFrameworkVersion;
 	}
 
+	@Override
+	public SCFrameworkVersion getWrappedModel() {
+		return _scFrameworkVersion;
+	}
+
+	@Override
 	public void resetOriginalValues() {
 		_scFrameworkVersion.resetOriginalValues();
 	}

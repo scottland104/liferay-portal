@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -32,13 +33,13 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base model implementation for the Team service. Represents a row in the &quot;Team&quot; database table, with each column mapped to a property of this class.
@@ -85,6 +86,11 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.Team"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.Team"),
+			true);
+	public static long GROUPID_COLUMN_BITMASK = 1L;
+	public static long NAME_COLUMN_BITMASK = 2L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -93,6 +99,10 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 	 * @return the normal model instance
 	 */
 	public static Team toModel(TeamSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		Team model = new TeamImpl();
 
 		model.setTeamId(soapModel.getTeamId());
@@ -115,6 +125,10 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 	 * @return the normal model instances
 	 */
 	public static List<Team> toModels(TeamSoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<Team> models = new ArrayList<Team>(soapModels.length);
 
 		for (TeamSoap soapModel : soapModels) {
@@ -124,76 +138,177 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 		return models;
 	}
 
-	public Class<?> getModelClass() {
-		return Team.class;
-	}
-
-	public String getModelClassName() {
-		return Team.class.getName();
-	}
-
-	public static final String MAPPING_TABLE_USERS_TEAMS_NAME = com.liferay.portal.model.impl.UserModelImpl.MAPPING_TABLE_USERS_TEAMS_NAME;
-	public static final boolean FINDER_CACHE_ENABLED_USERS_TEAMS = com.liferay.portal.model.impl.UserModelImpl.FINDER_CACHE_ENABLED_USERS_TEAMS;
-	public static final String MAPPING_TABLE_USERGROUPS_TEAMS_NAME = com.liferay.portal.model.impl.UserGroupModelImpl.MAPPING_TABLE_USERGROUPS_TEAMS_NAME;
-	public static final boolean FINDER_CACHE_ENABLED_USERGROUPS_TEAMS = com.liferay.portal.model.impl.UserGroupModelImpl.FINDER_CACHE_ENABLED_USERGROUPS_TEAMS;
+	public static final String MAPPING_TABLE_USERS_TEAMS_NAME = "Users_Teams";
+	public static final Object[][] MAPPING_TABLE_USERS_TEAMS_COLUMNS = {
+			{ "userId", Types.BIGINT },
+			{ "teamId", Types.BIGINT }
+		};
+	public static final String MAPPING_TABLE_USERS_TEAMS_SQL_CREATE = "create table Users_Teams (teamId LONG not null,userId LONG not null,primary key (teamId, userId))";
+	public static final boolean FINDER_CACHE_ENABLED_USERS_TEAMS = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.finder.cache.enabled.Users_Teams"), true);
+	public static final String MAPPING_TABLE_USERGROUPS_TEAMS_NAME = "UserGroups_Teams";
+	public static final Object[][] MAPPING_TABLE_USERGROUPS_TEAMS_COLUMNS = {
+			{ "userGroupId", Types.BIGINT },
+			{ "teamId", Types.BIGINT }
+		};
+	public static final String MAPPING_TABLE_USERGROUPS_TEAMS_SQL_CREATE = "create table UserGroups_Teams (teamId LONG not null,userGroupId LONG not null,primary key (teamId, userGroupId))";
+	public static final boolean FINDER_CACHE_ENABLED_USERGROUPS_TEAMS = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.finder.cache.enabled.UserGroups_Teams"), true);
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.Team"));
 
 	public TeamModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _teamId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setTeamId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_teamId);
+		return _teamId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return Team.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return Team.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("teamId", getTeamId());
+		attributes.put("companyId", getCompanyId());
+		attributes.put("userId", getUserId());
+		attributes.put("userName", getUserName());
+		attributes.put("createDate", getCreateDate());
+		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("groupId", getGroupId());
+		attributes.put("name", getName());
+		attributes.put("description", getDescription());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long teamId = (Long)attributes.get("teamId");
+
+		if (teamId != null) {
+			setTeamId(teamId);
+		}
+
+		Long companyId = (Long)attributes.get("companyId");
+
+		if (companyId != null) {
+			setCompanyId(companyId);
+		}
+
+		Long userId = (Long)attributes.get("userId");
+
+		if (userId != null) {
+			setUserId(userId);
+		}
+
+		String userName = (String)attributes.get("userName");
+
+		if (userName != null) {
+			setUserName(userName);
+		}
+
+		Date createDate = (Date)attributes.get("createDate");
+
+		if (createDate != null) {
+			setCreateDate(createDate);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
+		}
+
+		Long groupId = (Long)attributes.get("groupId");
+
+		if (groupId != null) {
+			setGroupId(groupId);
+		}
+
+		String name = (String)attributes.get("name");
+
+		if (name != null) {
+			setName(name);
+		}
+
+		String description = (String)attributes.get("description");
+
+		if (description != null) {
+			setDescription(description);
+		}
+	}
+
 	@JSON
+	@Override
 	public long getTeamId() {
 		return _teamId;
 	}
 
+	@Override
 	public void setTeamId(long teamId) {
 		_teamId = teamId;
 	}
 
 	@JSON
+	@Override
 	public long getCompanyId() {
 		return _companyId;
 	}
 
+	@Override
 	public void setCompanyId(long companyId) {
 		_companyId = companyId;
 	}
 
 	@JSON
+	@Override
 	public long getUserId() {
 		return _userId;
 	}
 
+	@Override
 	public void setUserId(long userId) {
 		_userId = userId;
 	}
 
+	@Override
 	public String getUserUuid() throws SystemException {
 		return PortalUtil.getUserValue(getUserId(), "uuid", _userUuid);
 	}
 
+	@Override
 	public void setUserUuid(String userUuid) {
 		_userUuid = userUuid;
 	}
 
 	@JSON
+	@Override
 	public String getUserName() {
 		if (_userName == null) {
 			return StringPool.BLANK;
@@ -203,34 +318,43 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 		}
 	}
 
+	@Override
 	public void setUserName(String userName) {
 		_userName = userName;
 	}
 
 	@JSON
+	@Override
 	public Date getCreateDate() {
 		return _createDate;
 	}
 
+	@Override
 	public void setCreateDate(Date createDate) {
 		_createDate = createDate;
 	}
 
 	@JSON
+	@Override
 	public Date getModifiedDate() {
 		return _modifiedDate;
 	}
 
+	@Override
 	public void setModifiedDate(Date modifiedDate) {
 		_modifiedDate = modifiedDate;
 	}
 
 	@JSON
+	@Override
 	public long getGroupId() {
 		return _groupId;
 	}
 
+	@Override
 	public void setGroupId(long groupId) {
+		_columnBitmask |= GROUPID_COLUMN_BITMASK;
+
 		if (!_setOriginalGroupId) {
 			_setOriginalGroupId = true;
 
@@ -245,6 +369,7 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 	}
 
 	@JSON
+	@Override
 	public String getName() {
 		if (_name == null) {
 			return StringPool.BLANK;
@@ -254,7 +379,10 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 		}
 	}
 
+	@Override
 	public void setName(String name) {
+		_columnBitmask = -1L;
+
 		if (_originalName == null) {
 			_originalName = _name;
 		}
@@ -267,6 +395,7 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 	}
 
 	@JSON
+	@Override
 	public String getDescription() {
 		if (_description == null) {
 			return StringPool.BLANK;
@@ -276,39 +405,36 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 		}
 	}
 
+	@Override
 	public void setDescription(String description) {
 		_description = description;
 	}
 
-	@Override
-	public Team toEscapedModel() {
-		if (isEscapedModel()) {
-			return (Team)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (Team)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
-					Team.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(getCompanyId(),
+			Team.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public Team toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (Team)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -330,6 +456,7 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 		return teamImpl;
 	}
 
+	@Override
 	public int compareTo(Team team) {
 		int value = 0;
 
@@ -344,18 +471,15 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof Team)) {
 			return false;
 		}
 
-		Team team = null;
-
-		try {
-			team = (Team)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		Team team = (Team)obj;
 
 		long primaryKey = team.getPrimaryKey();
 
@@ -381,6 +505,8 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 		teamModelImpl._setOriginalGroupId = false;
 
 		teamModelImpl._originalName = teamModelImpl._name;
+
+		teamModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -467,6 +593,7 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(31);
 
@@ -517,9 +644,7 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 	}
 
 	private static ClassLoader _classLoader = Team.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
-			Team.class
-		};
+	private static Class<?>[] _escapedModelInterfaces = new Class[] { Team.class };
 	private long _teamId;
 	private long _companyId;
 	private long _userId;
@@ -533,6 +658,6 @@ public class TeamModelImpl extends BaseModelImpl<Team> implements TeamModel {
 	private String _name;
 	private String _originalName;
 	private String _description;
-	private transient ExpandoBridge _expandoBridge;
-	private Team _escapedModelProxy;
+	private long _columnBitmask;
+	private Team _escapedModel;
 }

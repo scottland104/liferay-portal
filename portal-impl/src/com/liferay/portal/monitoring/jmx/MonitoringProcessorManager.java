@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -26,9 +26,9 @@ import java.util.Set;
 public class MonitoringProcessorManager
 	implements MonitoringProcessorManagerMBean {
 
+	@Override
 	public String getLevel(String namespace) {
-		Level level = _monitoringProcessor.getLevel(
-			namespace);
+		Level level = _monitoringProcessor.getLevel(namespace);
 
 		if (level == null) {
 			level = Level.OFF;
@@ -37,12 +37,14 @@ public class MonitoringProcessorManager
 		return level.toString();
 	}
 
+	@Override
 	public String[] getNamespaces() {
 		Set<String> namespaces = _monitoringProcessor.getNamespaces();
 
 		return namespaces.toArray(new String[namespaces.size()]);
 	}
 
+	@Override
 	public void setLevel(String namespace, String levelName) {
 		Level level = Level.valueOf(levelName);
 

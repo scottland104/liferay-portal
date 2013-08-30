@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -38,7 +38,7 @@ UnicodeProperties layoutTypeSettings = selLayout.getTypeSettingsProperties();
 		String queryString = GetterUtil.getString(layoutTypeSettings.getProperty("query-string"));
 		%>
 
-		<aui:input helpMessage="query-string-help" label="query-string" name="TypeSettingsProperties--query-string--" size="30" type="text" value="<%= HtmlUtil.escape(queryString) %>" />
+		<aui:input helpMessage="query-string-help" label="query-string" name="TypeSettingsProperties--query-string--" size="30" type="text" value="<%= queryString %>" />
 	</c:if>
 
 	<%
@@ -69,16 +69,21 @@ UnicodeProperties layoutTypeSettings = selLayout.getTypeSettingsProperties();
 </aui:fieldset>
 
 <aui:script use="aui-base">
-	var deleteLogoLink = A.one('#<portlet:namespace />deleteIconLink');
-	var iconImageInput = A.one('#<portlet:namespace />iconImage');
-	var layoutIconContainer = A.one('#<portlet:namespace />layoutIconContainer');
-	var iconFileNameInput = A.one('#<portlet:namespace />iconFileName');
+	var panel = A.one('#<portlet:namespace />advanced');
+
+	var deleteLogoLink = panel.one('#<portlet:namespace />deleteIconLink');
+	var iconFileNameInput = panel.one('#<portlet:namespace />iconFileName');
+	var iconImageInput = panel.one('#<portlet:namespace />iconImage');
+	var layoutIconContainer = panel.one('#<portlet:namespace />layoutIconContainer');
 
 	var changeLogo = function(event) {
 		var changeLogo = (event.type == 'change');
 
 		iconImageInput.val(changeLogo);
-		layoutIconContainer.hide();
+
+		if (layoutIconContainer) {
+			layoutIconContainer.hide();
+		}
 	};
 
 	if (deleteLogoLink) {

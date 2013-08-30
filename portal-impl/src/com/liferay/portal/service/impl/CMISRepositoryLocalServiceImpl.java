@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -22,11 +22,10 @@ import com.liferay.portal.kernel.repository.cmis.CMISRepositoryHandler;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.repository.model.Folder;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.repository.cmis.CMISRepository;
 import com.liferay.portal.repository.proxy.BaseRepositoryProxyBean;
 import com.liferay.portal.service.base.CMISRepositoryLocalServiceBaseImpl;
-
-import java.lang.reflect.Proxy;
 
 import org.apache.chemistry.opencmis.client.api.Document;
 
@@ -36,6 +35,7 @@ import org.apache.chemistry.opencmis.client.api.Document;
 public class CMISRepositoryLocalServiceImpl
 	extends CMISRepositoryLocalServiceBaseImpl {
 
+	@Override
 	public Object getSession(long repositoryId)
 		throws PortalException, SystemException {
 
@@ -44,6 +44,7 @@ public class CMISRepositoryLocalServiceImpl
 		return cmisRepository.getSession();
 	}
 
+	@Override
 	public FileEntry toFileEntry(long repositoryId, Object object)
 		throws PortalException, SystemException {
 
@@ -54,6 +55,7 @@ public class CMISRepositoryLocalServiceImpl
 		return cmisRepository.toFileEntry(document);
 	}
 
+	@Override
 	public FileVersion toFileVersion(long repositoryId, Object object)
 		throws PortalException, SystemException {
 
@@ -64,6 +66,7 @@ public class CMISRepositoryLocalServiceImpl
 		return cmisRepository.toFileVersion(document);
 	}
 
+	@Override
 	public Folder toFolder(long repositoryId, Object object)
 		throws PortalException, SystemException {
 
@@ -78,7 +81,7 @@ public class CMISRepositoryLocalServiceImpl
 	protected CMISRepository getCmisRepository(long repositoryId)
 		throws PortalException, SystemException {
 
-		Repository repositoryImpl = repositoryService.getRepositoryImpl(
+		Repository repositoryImpl = repositoryLocalService.getRepositoryImpl(
 			repositoryId);
 
 		CMISRepositoryHandler cmisRepositoryHandler = null;
@@ -91,7 +94,7 @@ public class CMISRepositoryLocalServiceImpl
 				(BaseRepositoryProxyBean)repositoryImpl;
 
 			ClassLoaderBeanHandler classLoaderBeanHandler =
-				(ClassLoaderBeanHandler)Proxy.getInvocationHandler(
+				(ClassLoaderBeanHandler)ProxyUtil.getInvocationHandler(
 					baseRepositoryProxyBean.getProxyBean());
 
 			Object bean = classLoaderBeanHandler.getBean();

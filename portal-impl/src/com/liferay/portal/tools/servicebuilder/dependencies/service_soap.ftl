@@ -6,17 +6,19 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.LocalizationUtil;
 
 import java.rmi.RemoteException;
 
+import java.util.Locale;
+import java.util.Map;
+
 /**
- * <p>
- * This class provides a SOAP utility for the
+ * Provides the SOAP utility for the
  * {@link ${packagePath}.service.${entity.name}ServiceUtil} service utility. The
  * static methods of this class calls the same methods of the service utility.
  * However, the signatures are different because it is difficult for SOAP to
  * support certain types.
- * </p>
 <#if entity.hasColumns()>
  *
  * <p>
@@ -38,9 +40,8 @@ import java.rmi.RemoteException;
  * </p>
  *
  * <p>
- * You can see a list of services at
- * http://localhost:8080/tunnel-web/secure/axis. Set the property
- * <b>tunnel.servlet.hosts.allowed</b> in portal.properties to configure
+ * You can see a list of services at http://localhost:8080/api/axis. Set the
+ * property <b>axis.servlet.hosts.allowed</b> in portal.properties to configure
  * security.
  * </p>
  *
@@ -48,12 +49,15 @@ import java.rmi.RemoteException;
  * The SOAP utility is only generated for remote services.
  * </p>
  *
- * @author    ${author}
- * @see       ${entity.name}ServiceHttp
+ * @author ${author}
+ * @see ${entity.name}ServiceHttp
 <#if entity.hasColumns()>
- * @see       ${packagePath}.model.${entity.name}Soap
+ * @see ${packagePath}.model.${entity.name}Soap
 </#if>
- * @see       ${packagePath}.service.${entity.name}ServiceUtil
+ * @see ${packagePath}.service.${entity.name}ServiceUtil
+<#if classDeprecated>
+ * @deprecated ${classDeprecatedComment}
+</#if>
  * @generated
  */
 public class ${entity.name}ServiceSoap {
@@ -79,6 +83,8 @@ public class ${entity.name}ServiceSoap {
 				${returnValueName}Soap${returnValueDimension}
 			<#elseif stringUtil.startsWith(returnValueName, "com.liferay.portal.kernel.json.JSON")>
 				java.lang.String
+			<#elseif stringUtil.startsWith(returnValueName, "com.liferay.portal.kernel.repository.model.")>
+				${returnValueName}Soap
 			<#elseif returnValueName == "java.util.List">
 				<#if returnTypeGenericsName == "java.util.List<java.lang.Boolean>">
 					java.lang.Boolean[]
@@ -94,16 +100,24 @@ public class ${entity.name}ServiceSoap {
 					java.lang.Short[]
 				<#elseif returnTypeGenericsName == "java.util.List<java.lang.String>">
 					java.lang.String[]
-				<#elseif entity.hasColumns()>
+				<#elseif returnTypeGenericsName == "java.util.List<" + extendedModelName + ">">
 					${soapModelName}[]
+				<#elseif stringUtil.startsWith(returnTypeGenericsName, "java.util.List<com.liferay.portal.kernel.repository.model.")>
+					${serviceBuilder.getListActualTypeArguments(method.getReturns())}Soap[]
+				<#elseif entity.hasColumns() && (extendedModelName == serviceBuilder.getListActualTypeArguments(method.getReturns()))>
+					${soapModelName}[]
+				<#elseif !entity.hasColumns()>
+					${serviceBuilder.getListActualTypeArguments(method.getReturns())}[]
 				<#else>
-					${returnTypeGenericsName}
+					${serviceBuilder.getListActualTypeArguments(method.getReturns())}Soap[]
 				</#if>
 			<#else>
 				${returnTypeGenericsName}
 			</#if>
 
 			${method.name}(
+
+			<#assign localizationMapVariables = "">
 
 			<#list method.parameters as parameter>
 				<#assign parameterTypeName = serviceBuilder.getTypeGenericsName(parameter.type)>
@@ -123,7 +137,13 @@ public class ${entity.name}ServiceSoap {
 					<#assign parameterTypeName = parameterEntity.packagePath + ".model." + parameterEntity.name + "Soap">
 				</#if>
 
-				${parameterTypeName} ${parameter.name}
+				<#if parameterTypeName == "java.util.Map<java.util.Locale, java.lang.String>">
+					java.lang.String[] ${parameter.name}LanguageIds, java.lang.String[] ${parameter.name}Values
+
+					<#assign localizationMapVariables = localizationMapVariables + "Map<Locale, String>" + parameter.name + " = LocalizationUtil.getLocalizationMap(" + parameter.name + "LanguageIds, " + parameter.name + "Values);">
+				<#else>
+					${parameterTypeName} ${parameter.name}
+				</#if>
 
 				<#if parameter_has_next>
 					,
@@ -132,6 +152,8 @@ public class ${entity.name}ServiceSoap {
 
 			) throws RemoteException {
 				try {
+					${localizationMapVariables}
+
 					<#if returnValueName != "void">
 						${returnTypeGenericsName} returnValue =
 					</#if>
@@ -190,6 +212,8 @@ public class ${entity.name}ServiceSoap {
 							</#if>
 						<#elseif stringUtil.startsWith(returnValueName, "com.liferay.portal.kernel.json.JSON")>
 							return returnValue.toString();
+						<#elseif stringUtil.startsWith(returnValueName, "com.liferay.portal.kernel.repository.model.")>
+							return ${returnValueName}Soap.toSoapModel(returnValue);
 						<#elseif returnValueName == "java.util.List">
 							<#if returnTypeGenericsName == "java.util.List<java.lang.Boolean>">
 								return returnValue.toArray(new java.lang.Boolean[returnValue.size()]);
@@ -205,10 +229,16 @@ public class ${entity.name}ServiceSoap {
 								return returnValue.toArray(new java.lang.Short[returnValue.size()]);
 							<#elseif returnTypeGenericsName == "java.util.List<java.lang.String>">
 								return returnValue.toArray(new java.lang.String[returnValue.size()]);
-							<#elseif entity.hasColumns()>
+							<#elseif returnTypeGenericsName == "java.util.List<" + extendedModelName + ">">
+								return ${extendedModelName}Soap.toSoapModels(returnValue);
+							<#elseif stringUtil.startsWith(returnTypeGenericsName, "java.util.List<com.liferay.portal.kernel.repository.model.")>
+								return ${serviceBuilder.getListActualTypeArguments(method.getReturns())}Soap.toSoapModels(returnValue);
+							<#elseif entity.hasColumns() && (extendedModelName == serviceBuilder.getListActualTypeArguments(method.getReturns()))>
 								return ${soapModelName}.toSoapModels(returnValue);
+							<#elseif !entity.hasColumns()>
+								return returnValue.toArray(new ${serviceBuilder.getListActualTypeArguments(method.getReturns())}[returnValue.size()]);
 							<#else>
-								return returnValue;
+								return ${serviceBuilder.getListActualTypeArguments(method.getReturns())}Soap.toSoapModels(returnValue);
 							</#if>
 						<#else>
 							return returnValue;

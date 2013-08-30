@@ -1,7 +1,7 @@
-AUI().add(
+AUI.add(
 	'liferay-form',
 	function(A) {
-		var DEFAULTS_FORM_VALIDATOR = AUI.defaults.FormValidator;
+		var DEFAULTS_FORM_VALIDATOR = A.config.FormValidator;
 
 		var defaultAcceptFiles = DEFAULTS_FORM_VALIDATOR.RULES.acceptFiles;
 
@@ -91,7 +91,6 @@ AUI().add(
 									rules: rules
 								}
 							);
-
 							instance.formValidator = formValidator;
 
 							instance._bindForm();
@@ -104,10 +103,9 @@ AUI().add(
 						var formNode = instance.formNode;
 						var formValidator = instance.formValidator;
 
-						formValidator.on('submit', instance._onValidatorSubmit, instance);
+						formValidator.on('submit', A.bind('_onValidatorSubmit', instance));
 
-						formNode.delegate('blur', instance._onFieldFocusChange, 'button,input,select,textarea', instance);
-						formNode.delegate('focus', instance._onFieldFocusChange, 'button,input,select,textarea', instance);
+						formNode.delegate(['blur', 'focus'], A.bind('_onFieldFocusChange', instance), 'button,input,select,textarea');
 					},
 
 					_defaultSubmitFn: function(event) {
@@ -121,10 +119,10 @@ AUI().add(
 					_onFieldFocusChange: function(event) {
 						var instance = this;
 
-						var row = event.currentTarget.ancestor('.aui-field');
+						var row = event.currentTarget.ancestor('.field');
 
 						if (row) {
-							row.toggleClass('aui-field-focused', (event.type == 'focus'));
+							row.toggleClass('field-focused', (event.type == 'focus'));
 						}
 					},
 
@@ -157,7 +155,7 @@ AUI().add(
 						var fieldName = rule.fieldName;
 						var validatorName = rule.validatorName;
 
-						if (rule.body && !rule.isCustom) {
+						if (rule.body && !rule.custom) {
 							value = rule.body;
 						}
 
@@ -171,7 +169,9 @@ AUI().add(
 
 						fieldRules[validatorName] = value;
 
-						if (rule.isCustom) {
+						fieldRules.custom = rule.custom;
+
+						if (rule.custom) {
 							DEFAULTS_FORM_VALIDATOR.RULES[validatorName] = rule.body;
 						}
 
@@ -189,6 +189,12 @@ AUI().add(
 							fieldStrings[validatorName] = errorMessage;
 						}
 					}
+				},
+
+				get: function(id) {
+					var instance = this;
+
+					return instance._INSTANCES[id];
 				},
 
 				register: function(config) {
@@ -219,7 +225,6 @@ AUI().add(
 	},
 	'',
 	{
-		requires: ['aui-base', 'aui-form-validator'],
-		use: []
+		requires: ['aui-base', 'aui-form-validator']
 	}
 );

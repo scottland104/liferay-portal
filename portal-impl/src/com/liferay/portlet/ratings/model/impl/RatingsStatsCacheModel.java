@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.model.CacheModel;
 
 import com.liferay.portlet.ratings.model.RatingsStats;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing RatingsStats in entity cache.
  *
@@ -26,7 +31,8 @@ import com.liferay.portlet.ratings.model.RatingsStats;
  * @see RatingsStats
  * @generated
  */
-public class RatingsStatsCacheModel implements CacheModel<RatingsStats> {
+public class RatingsStatsCacheModel implements CacheModel<RatingsStats>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(13);
@@ -48,6 +54,7 @@ public class RatingsStatsCacheModel implements CacheModel<RatingsStats> {
 		return sb.toString();
 	}
 
+	@Override
 	public RatingsStats toEntityModel() {
 		RatingsStatsImpl ratingsStatsImpl = new RatingsStatsImpl();
 
@@ -61,6 +68,27 @@ public class RatingsStatsCacheModel implements CacheModel<RatingsStats> {
 		ratingsStatsImpl.resetOriginalValues();
 
 		return ratingsStatsImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		statsId = objectInput.readLong();
+		classNameId = objectInput.readLong();
+		classPK = objectInput.readLong();
+		totalEntries = objectInput.readInt();
+		totalScore = objectInput.readDouble();
+		averageScore = objectInput.readDouble();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(statsId);
+		objectOutput.writeLong(classNameId);
+		objectOutput.writeLong(classPK);
+		objectOutput.writeInt(totalEntries);
+		objectOutput.writeDouble(totalScore);
+		objectOutput.writeDouble(averageScore);
 	}
 
 	public long statsId;

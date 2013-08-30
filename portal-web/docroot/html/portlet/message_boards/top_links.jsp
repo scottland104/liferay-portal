@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -30,112 +30,96 @@ PortletURL portletURL = renderResponse.createRenderURL();
 portletURL.setParameter("struts_action", "/message_boards/view");
 %>
 
-<div class="top-links-container">
-	<div class="top-links">
-		<div class="top-links-navigation">
+<aui:nav-bar>
+	<aui:nav>
+
+		<%
+		String label = "message-boards-home";
+
+		portletURL.setParameter("topLink", label);
+		portletURL.setParameter("tag", StringPool.BLANK);
+		%>
+
+		<aui:nav-item cssClass='<%= topLink.equals(label) ? "active" : StringPool.BLANK %>' href="<%= portletURL.toString() %>" label="<%= label %>" selected="<%= topLink.equals(label) %>" />
+
+		<%
+		label = "recent-posts";
+
+		portletURL.setParameter("topLink", label);
+		%>
+
+		<aui:nav-item cssClass='<%= topLink.equals(label) ? "active" : StringPool.BLANK %>' href="<%= portletURL.toString() %>" label="<%= label %>" selected="<%= topLink.equals(label) %>" />
+
+		<c:if test="<%= themeDisplay.isSignedIn() %>">
 
 			<%
-			portletURL.setParameter("topLink", "message-boards-home");
+			label = "my-posts";
+
+			portletURL.setParameter("topLink", label);
 			%>
 
-			<liferay-ui:icon
-				cssClass="top-link"
-				image="../aui/home"
-				label="<%= true %>"
-				message="message-boards-home"
-				url='<%= (topLink.equals("message-boards-home") && categoryId == 0 && viewCategory) ? StringPool.BLANK : portletURL.toString() %>'
-			/>
+			<aui:nav-item cssClass='<%= topLink.equals(label) ? "active" : StringPool.BLANK %>' href="<%= portletURL.toString() %>" label="<%= label %>" selected="<%= topLink.equals(label) %>" />
 
-			<%
-			portletURL.setParameter("topLink", "recent-posts");
-			%>
-
-			<liferay-ui:icon
-				cssClass="top-link"
-				image="../aui/clock"
-				label="<%= true %>"
-				message="recent-posts"
-				url='<%= topLink.equals("recent-posts") ? StringPool.BLANK : portletURL.toString() %>'
-			/>
-
-			<c:if test="<%= themeDisplay.isSignedIn() %>">
+			<c:if test="<%= MBUtil.getEmailMessageAddedEnabled(portletPreferences) || MBUtil.getEmailMessageUpdatedEnabled(portletPreferences) %>">
 
 				<%
-				portletURL.setParameter("topLink", "my-posts");
+				label = "my-subscriptions";
+
+				portletURL.setParameter("topLink", label);
 				%>
 
-				<liferay-ui:icon
-					cssClass="top-link"
-					image="../aui/person"
-					label="<%= true %>"
-					message="my-posts"
-					url='<%= topLink.equals("my-posts") ? StringPool.BLANK : portletURL.toString() %>'
-				/>
-
-				<%
-				portletURL.setParameter("topLink", "my-subscriptions");
-				%>
-
-				<liferay-ui:icon
-					cssClass="top-link"
-					image="../aui/signal-diag"
-					label="<%= true %>"
-					message="my-subscriptions"
-					url='<%= topLink.equals("my-subscriptions") ? StringPool.BLANK : portletURL.toString() %>'
-				/>
+				<aui:nav-item cssClass='<%= topLink.equals(label) ? "active" : StringPool.BLANK %>' href="<%= portletURL.toString() %>" label="<%= label %>" selected="<%= topLink.equals(label) %>" />
 			</c:if>
+		</c:if>
+
+		<%
+		label = "statistics";
+
+		portletURL.setParameter("topLink", label);
+		%>
+
+		<aui:nav-item cssClass='<%= topLink.equals(label) ? "active" : StringPool.BLANK %>' href="<%= portletURL.toString() %>" label="<%= label %>" selected="<%= topLink.equals(label) %>" />
+
+		<c:if test="<%= MBPermission.contains(permissionChecker, scopeGroupId, ActionKeys.BAN_USER) %>">
 
 			<%
-			portletURL.setParameter("topLink", "statistics");
+			label = "banned-users";
+
+			portletURL.setParameter("topLink", label);
 			%>
 
-			<liferay-ui:icon
-				cssClass='<%= "top-link" + (MBPermission.contains(permissionChecker, scopeGroupId, ActionKeys.BAN_USER) ? StringPool.BLANK : " last") %>'
-				image="../aui/clipboard" label="<%= true %>"
-				message="statistics"
-				url='<%= topLink.equals("statistics") ? StringPool.BLANK : portletURL.toString() %>'
-			/>
+			<aui:nav-item cssClass='<%= topLink.equals(label) ? "active" : StringPool.BLANK %>' href="<%= portletURL.toString() %>" label="<%= label %>" selected="<%= topLink.equals(label) %>" />
+		</c:if>
+	</aui:nav>
 
-			<c:if test="<%= MBPermission.contains(permissionChecker, scopeGroupId, ActionKeys.BAN_USER) %>">
+	<c:if test="<%= showSearch %>">
+		<liferay-portlet:renderURL varImpl="searchURL">
+			<portlet:param name="struts_action" value="/message_boards/search" />
+		</liferay-portlet:renderURL>
 
-				<%
-				portletURL.setParameter("topLink", "banned-users");
-				%>
-
-				<liferay-ui:icon
-					cssClass="top-link last"
-					image="../aui/alert" label="<%= true %>"
-					message="banned-users"
-					url='<%= topLink.equals("banned-users") ? StringPool.BLANK : portletURL.toString() %>'
-				/>
-			</c:if>
-		</div>
-
-		<c:if test="<%= showSearch %>">
-			<liferay-portlet:renderURL varImpl="searchURL">
-				<portlet:param name="struts_action" value="/message_boards/search" />
-			</liferay-portlet:renderURL>
-
-			<div class="category-search">
+		<div class="navbar-search pull-right">
+			<div class="form-search">
 				<aui:form action="<%= searchURL %>" method="get" name="searchFm">
 					<liferay-portlet:renderURLParams varImpl="searchURL" />
 					<aui:input name="redirect" type="hidden" value="<%= currentURL %>" />
 					<aui:input name="breadcrumbsCategoryId" type="hidden" value="<%= categoryId %>" />
 					<aui:input name="searchCategoryId" type="hidden" value="<%= categoryId %>" />
 
-					<span class="aui-search-bar">
-						<aui:input id="keywords1" inlineField="<%= true %>" label="" name="keywords" size="30" title="search-messages" type="text" />
-
-						<aui:button type="submit" value="search" />
-					</span>
+					<liferay-ui:input-search id="keywords1" />
 				</aui:form>
 			</div>
+		</div>
 
-			<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) && !themeDisplay.isFacebook() %>">
-				<aui:script>
-					Liferay.Util.focusFormField(document.<portlet:namespace />searchFm.<portlet:namespace />keywords);
-				</aui:script>
-			</c:if>
+		<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) && !themeDisplay.isFacebook() %>">
+			<aui:script>
+				Liferay.Util.focusFormField(document.getElementById('<portlet:namespace />keywords1'));
+			</aui:script>
 		</c:if>
+	</c:if>
+</aui:nav-bar>
+
+<c:if test="<%= layout.isTypeControlPanel() %>">
+	<div id="breadcrumb">
+		<liferay-ui:breadcrumb showCurrentGroup="<%= false %>" showCurrentPortlet="<%= false %>" showGuestGroup="<%= false %>" showLayout="<%= false %>" showPortletBreadcrumb="<%= true %>" />
 	</div>
-</div>
+</c:if>

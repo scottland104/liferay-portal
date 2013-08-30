@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -47,6 +47,10 @@ public class StagingTag extends IncludeTag {
 		_message = message;
 	}
 
+	public void setOnlyActions(boolean onlyActions) {
+		_onlyActions = onlyActions;
+	}
+
 	public void setPrivateLayout(boolean privateLayout) {
 		_privateLayout = privateLayout;
 	}
@@ -63,10 +67,11 @@ public class StagingTag extends IncludeTag {
 	protected void cleanUp() {
 		_cssClass = null;
 		_extended = true;
-		_groupId = 0 ;
+		_groupId = 0;
 		_icon = "/dockbar/staging.png";
 		_layoutSetBranchId = 0;
 		_message = "staging";
+		_onlyActions = false;
 		_privateLayout = false;
 		_selPlid = 0;
 		_showManageBranches = false;
@@ -90,6 +95,8 @@ public class StagingTag extends IncludeTag {
 			String.valueOf(_layoutSetBranchId));
 		request.setAttribute("liferay-ui:staging:message", _message);
 		request.setAttribute(
+			"liferay-ui:staging:onlyActions", String.valueOf(_onlyActions));
+		request.setAttribute(
 			"liferay-ui:staging:privateLayout", String.valueOf(_privateLayout));
 		request.setAttribute(
 			"liferay-ui:staging:selPlid", String.valueOf(_selPlid));
@@ -106,6 +113,7 @@ public class StagingTag extends IncludeTag {
 	private String _icon = "/dockbar/staging.png";
 	private long _layoutSetBranchId;
 	private String _message = "staging";
+	private boolean _onlyActions;
 	private boolean _privateLayout;
 	private long _selPlid;
 	private boolean _showManageBranches;

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -52,8 +52,8 @@ public class UpdateLookAndFeelAction extends JSONAction {
 
 	@Override
 	public String getJSON(
-			ActionMapping mapping, ActionForm form, HttpServletRequest request,
-			HttpServletResponse response)
+			ActionMapping actionMapping, ActionForm actionForm,
+			HttpServletRequest request, HttpServletResponse response)
 		throws Exception {
 
 		HttpSession session = request.getSession();
@@ -69,14 +69,14 @@ public class UpdateLookAndFeelAction extends JSONAction {
 		String portletId = ParamUtil.getString(request, "portletId");
 
 		if (!PortletPermissionUtil.contains(
-				permissionChecker, themeDisplay.getPlid(), portletId,
+				permissionChecker, layout, portletId,
 				ActionKeys.CONFIGURATION)) {
 
 			return null;
 		}
 
 		PortletPreferences portletSetup =
-			PortletPreferencesFactoryUtil.getLayoutPortletSetup(
+			PortletPreferencesFactoryUtil.getStrictLayoutPortletSetup(
 				layout, portletId);
 
 		String css = ParamUtil.getString(request, "css");
@@ -94,13 +94,14 @@ public class UpdateLookAndFeelAction extends JSONAction {
 		css = jsonObj.toString();
 
 		boolean useCustomTitle = portletData.getBoolean("useCustomTitle");
-		boolean showBorders = portletData.getBoolean("showBorders");
+		String showBorders = portletData.getString("showBorders");
 		String linkToLayoutUuid = GetterUtil.getString(
 			portletData.getString("portletLinksTarget"));
 
 		JSONObject titles = portletData.getJSONObject("titles");
 
-		Locale[] locales = LanguageUtil.getAvailableLocales();
+		Locale[] locales = LanguageUtil.getAvailableLocales(
+			themeDisplay.getSiteGroupId());
 
 		for (int i = 0; i < locales.length; i++) {
 			String languageId = LocaleUtil.toLanguageId(locales[i]);
@@ -121,8 +122,16 @@ public class UpdateLookAndFeelAction extends JSONAction {
 
 		portletSetup.setValue(
 			"portletSetupUseCustomTitle", String.valueOf(useCustomTitle));
-		portletSetup.setValue(
-			"portletSetupShowBorders", String.valueOf(showBorders));
+
+		if (Validator.isNotNull(showBorders)) {
+			boolean showBordersBoolean = portletData.getBoolean("showBorders");
+
+			portletSetup.setValue(
+				"portletSetupShowBorders", String.valueOf(showBordersBoolean));
+		}
+		else {
+			portletSetup.reset("portletSetupShowBorders");
+		}
 
 		if (Validator.isNotNull(linkToLayoutUuid)) {
 			portletSetup.setValue(

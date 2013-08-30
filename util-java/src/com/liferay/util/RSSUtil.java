@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,8 +15,12 @@
 package com.liferay.util;
 
 import com.liferay.portal.kernel.util.CharPool;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 
 import com.sun.syndication.feed.synd.SyndContent;
 import com.sun.syndication.feed.synd.SyndEntry;
@@ -30,33 +34,43 @@ import org.jdom.IllegalDataException;
 
 /**
  * @author Brian Wing Shun Chan
+ * @author Eduardo Garcia
  */
 public class RSSUtil {
 
-	public static final String RSS = "rss";
-
-	public static final double[] RSS_VERSIONS = new double[] {
-		0.9, 0.91, 0.93, 0.94, 1.0, 2.0
-	};
-
 	public static final String ATOM = "atom";
 
-	public static final double[] ATOM_VERSIONS = new double[] {0.3, 1.0};
-
-	public static final String DEFAULT_TYPE = ATOM;
-
-	public static final double VERSION_DEFAULT = 1.0;
-
-	public static final String DEFAULT_ENTRY_TYPE = "html";
-
-	public static final String DEFAULT_FEED_TYPE = getFeedType(
-		DEFAULT_TYPE, VERSION_DEFAULT);
-
 	public static final String DISPLAY_STYLE_ABSTRACT = "abstract";
+
+	public static final String DISPLAY_STYLE_DEFAULT =
+		_getDisplayStyleDefault();
 
 	public static final String DISPLAY_STYLE_FULL_CONTENT = "full-content";
 
 	public static final String DISPLAY_STYLE_TITLE = "title";
+
+	public static final String[] DISPLAY_STYLES = new String[] {
+		DISPLAY_STYLE_ABSTRACT, DISPLAY_STYLE_FULL_CONTENT, DISPLAY_STYLE_TITLE
+	};
+
+	public static final String ENTRY_TYPE_DEFAULT = "html";
+
+	public static final String FEED_TYPE_DEFAULT = _getFeedTypeDefault();
+
+	public static final String[] FEED_TYPES = _getFeedTypes();
+
+	public static final String FORMAT_DEFAULT = getFeedTypeFormat(
+		FEED_TYPE_DEFAULT);
+
+	public static final String RSS = "rss";
+
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #FORMAT_DEFAULT}
+	 */
+	public static final String TYPE_DEFAULT = FORMAT_DEFAULT;
+
+	public static final double VERSION_DEFAULT = getFeedTypeVersion(
+		FEED_TYPE_DEFAULT);
 
 	public static String export(SyndFeed feed) throws FeedException {
 		RSSThreadLocal.setExportRSS(true);
@@ -82,45 +96,101 @@ public class RSSUtil {
 		return type + StringPool.UNDERLINE + version;
 	}
 
+	public static String getFeedTypeFormat(String feedType) {
+		if (Validator.isNotNull(feedType)) {
+			String[] parts = StringUtil.split(feedType, StringPool.UNDERLINE);
+
+			if (parts.length == 2) {
+				return GetterUtil.getString(parts[0], FORMAT_DEFAULT);
+			}
+		}
+
+		return FORMAT_DEFAULT;
+	}
+
+	public static String getFeedTypeName(String feedType) {
+		String type = getFeedTypeFormat(feedType);
+
+		if (type.equals(ATOM)) {
+			type = "Atom";
+		}
+		else if (type.equals(RSS)) {
+			type = "RSS";
+		}
+
+		double version = getFeedTypeVersion(feedType);
+
+		return type + StringPool.SPACE + version;
+	}
+
+	public static double getFeedTypeVersion(String feedType) {
+		if (Validator.isNotNull(feedType)) {
+			String[] parts = StringUtil.split(feedType, StringPool.UNDERLINE);
+
+			if (parts.length == 2) {
+				return GetterUtil.getDouble(parts[1], VERSION_DEFAULT);
+			}
+		}
+
+		return VERSION_DEFAULT;
+	}
+
 	public static String getFormatType(String format) {
-		String formatType = DEFAULT_TYPE;
-
-		if (StringUtil.contains(format, ATOM)) {
-			formatType = RSSUtil.ATOM;
-		}
-		else if (StringUtil.contains(format, RSS)) {
-			formatType = RSSUtil.RSS;
+		if (format == null) {
+			return FORMAT_DEFAULT;
 		}
 
-		return formatType;
+		int x = format.indexOf(ATOM);
+
+		if (x >= 0) {
+			return ATOM;
+		}
+
+		int y = format.indexOf(RSS);
+
+		if (y >= 0) {
+			return RSS;
+		}
+
+		return FORMAT_DEFAULT;
 	}
 
 	public static double getFormatVersion(String format) {
-		double formatVersion = VERSION_DEFAULT;
-
-		if (StringUtil.contains(format, "10")) {
-			formatVersion = 1.0;
-		}
-		else if (StringUtil.contains(format, "20")) {
-			formatVersion = 2.0;
+		if (format == null) {
+			return VERSION_DEFAULT;
 		}
 
-		return formatVersion;
+		int x = format.indexOf("10");
+
+		if (x >= 0) {
+			return 1.0;
+		}
+
+		int y = format.indexOf("20");
+
+		if (y >= 0) {
+			return 2.0;
+		}
+
+		return VERSION_DEFAULT;
 	}
 
-	private static void _regexpStrip(SyndFeed syndFeed) {
-		syndFeed.setTitle(_regexpStrip(syndFeed.getTitle()));
-		syndFeed.setDescription(_regexpStrip(syndFeed.getDescription()));
+	private static String _getDisplayStyleDefault() {
+		return GetterUtil.getString(
+			PropsUtil.get(PropsKeys.RSS_FEED_DISPLAY_STYLE_DEFAULT),
+			DISPLAY_STYLE_FULL_CONTENT);
+	}
 
-		List<SyndEntry> syndEntries = syndFeed.getEntries();
+	private static String _getFeedTypeDefault() {
+		return GetterUtil.getString(
+			PropsUtil.get(PropsKeys.RSS_FEED_TYPE_DEFAULT),
+			getFeedType(ATOM, 1.0));
+	}
 
-		for (SyndEntry syndEntry : syndEntries) {
-			syndEntry.setTitle(_regexpStrip(syndEntry.getTitle()));
-
-			SyndContent syndContent = syndEntry.getDescription();
-
-			syndContent.setValue(_regexpStrip(syndContent.getValue()));
-		}
+	private static String[] _getFeedTypes() {
+		return GetterUtil.getStringValues(
+			PropsUtil.getArray(PropsKeys.RSS_FEED_TYPES),
+			new String[] {FEED_TYPE_DEFAULT});
 	}
 
 	private static String _regexpStrip(String text) {
@@ -137,6 +207,21 @@ public class RSSUtil {
 		}
 
 		return new String(array);
+	}
+
+	private static void _regexpStrip(SyndFeed syndFeed) {
+		syndFeed.setTitle(_regexpStrip(syndFeed.getTitle()));
+		syndFeed.setDescription(_regexpStrip(syndFeed.getDescription()));
+
+		List<SyndEntry> syndEntries = syndFeed.getEntries();
+
+		for (SyndEntry syndEntry : syndEntries) {
+			syndEntry.setTitle(_regexpStrip(syndEntry.getTitle()));
+
+			SyndContent syndContent = syndEntry.getDescription();
+
+			syndContent.setValue(_regexpStrip(syndContent.getValue()));
+		}
 	}
 
 	private static final String _REGEXP_STRIP = "[\\d\\w]";

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,7 @@
 
 package com.liferay.portal.kernel.util;
 
-import java.io.Serializable;
+import java.math.BigDecimal;
 
 import java.text.DateFormat;
 
@@ -25,7 +25,7 @@ import java.util.Date;
  */
 public class GetterUtil {
 
-	public static String[] BOOLEANS = {"true", "t", "y", "on", "1"};
+	public static final String[] BOOLEANS = {"true", "t", "y", "on", "1"};
 
 	public static final boolean DEFAULT_BOOLEAN = false;
 
@@ -55,6 +55,8 @@ public class GetterUtil {
 
 	public static final Number DEFAULT_NUMBER = 0;
 
+	public static final Number[] DEFAULT_NUMBER_VALUES = new Number[0];
+
 	public static final Number DEFAULT_OBJECT = null;
 
 	public static final short DEFAULT_SHORT = 0;
@@ -63,7 +65,9 @@ public class GetterUtil {
 
 	public static final String DEFAULT_STRING = StringPool.BLANK;
 
-	public static boolean get(Serializable value, boolean defaultValue) {
+	public static final String[] DEFAULT_STRING_VALUES = new String[0];
+
+	public static boolean get(Object value, boolean defaultValue) {
 		if (value == null) {
 			return defaultValue;
 		}
@@ -71,7 +75,10 @@ public class GetterUtil {
 		if (value instanceof String) {
 			return get((String)value, defaultValue);
 		}
-		else if (value.getClass().isAssignableFrom(Boolean.class)) {
+
+		Class<?> clazz = value.getClass();
+
+		if (Boolean.class.isAssignableFrom(clazz)) {
 			return (Boolean)value;
 		}
 
@@ -79,7 +86,7 @@ public class GetterUtil {
 	}
 
 	public static Date get(
-		Serializable value, DateFormat dateFormat, Date defaultValue) {
+		Object value, DateFormat dateFormat, Date defaultValue) {
 
 		if (value == null) {
 			return defaultValue;
@@ -88,14 +95,17 @@ public class GetterUtil {
 		if (value instanceof String) {
 			return get((String)value, dateFormat, defaultValue);
 		}
-		else if (value.getClass().isAssignableFrom(Date.class)) {
+
+		Class<?> clazz = value.getClass();
+
+		if (Date.class.isAssignableFrom(clazz)) {
 			return (Date)value;
 		}
 
 		return defaultValue;
 	}
 
-	public static double get(Serializable value, double defaultValue) {
+	public static double get(Object value, double defaultValue) {
 		if (value == null) {
 			return defaultValue;
 		}
@@ -103,14 +113,23 @@ public class GetterUtil {
 		if (value instanceof String) {
 			return get((String)value, defaultValue);
 		}
-		else if (value.getClass().isAssignableFrom(Double.class)) {
+
+		Class<?> clazz = value.getClass();
+
+		if (Double.class.isAssignableFrom(clazz)) {
 			return (Double)value;
 		}
 
+		if (value instanceof Number) {
+			Number number = (Number)value;
+
+			return number.doubleValue();
+		}
+
 		return defaultValue;
 	}
 
-	public static float get(Serializable value, float defaultValue) {
+	public static float get(Object value, float defaultValue) {
 		if (value == null) {
 			return defaultValue;
 		}
@@ -118,14 +137,23 @@ public class GetterUtil {
 		if (value instanceof String) {
 			return get((String)value, defaultValue);
 		}
-		else if (value.getClass().isAssignableFrom(Float.class)) {
+
+		Class<?> clazz = value.getClass();
+
+		if (Float.class.isAssignableFrom(clazz)) {
 			return (Float)value;
 		}
 
+		if (value instanceof Number) {
+			Number number = (Number)value;
+
+			return number.floatValue();
+		}
+
 		return defaultValue;
 	}
 
-	public static int get(Serializable value, int defaultValue) {
+	public static int get(Object value, int defaultValue) {
 		if (value == null) {
 			return defaultValue;
 		}
@@ -133,14 +161,23 @@ public class GetterUtil {
 		if (value instanceof String) {
 			return get((String)value, defaultValue);
 		}
-		else if (value.getClass().isAssignableFrom(Integer.class)) {
+
+		Class<?> clazz = value.getClass();
+
+		if (Integer.class.isAssignableFrom(clazz)) {
 			return (Integer)value;
 		}
 
+		if (value instanceof Number) {
+			Number number = (Number)value;
+
+			return number.intValue();
+		}
+
 		return defaultValue;
 	}
 
-	public static long get(Serializable value, long defaultValue) {
+	public static long get(Object value, long defaultValue) {
 		if (value == null) {
 			return defaultValue;
 		}
@@ -148,14 +185,23 @@ public class GetterUtil {
 		if (value instanceof String) {
 			return get((String)value, defaultValue);
 		}
-		else if (value.getClass().isAssignableFrom(Long.class)) {
+
+		Class<?> clazz = value.getClass();
+
+		if (Long.class.isAssignableFrom(clazz)) {
 			return (Long)value;
+		}
+
+		if (value instanceof Number) {
+			Number number = (Number)value;
+
+			return number.longValue();
 		}
 
 		return defaultValue;
 	}
 
-	public static Number get(Serializable value, Number defaultValue) {
+	public static Number get(Object value, Number defaultValue) {
 		if (value == null) {
 			return defaultValue;
 		}
@@ -165,39 +211,38 @@ public class GetterUtil {
 				return defaultValue;
 			}
 
-			if (getFloat(value) == getInteger(value)) {
-				return getInteger(value);
-			}
-			else {
-				return getFloat(value);
-			}
+			return new BigDecimal((String)value);
 		}
-		else if (value.getClass().isAssignableFrom(Byte.class)) {
+
+		Class<?> clazz = value.getClass();
+
+		if (Byte.class.isAssignableFrom(clazz)) {
 			return (Byte)value;
 		}
-		else if (value.getClass().isAssignableFrom(Double.class)) {
+		else if (Double.class.isAssignableFrom(clazz)) {
 			return (Double)value;
 		}
-		else if (value.getClass().isAssignableFrom(Float.class)) {
+		else if (Float.class.isAssignableFrom(clazz)) {
 			return (Float)value;
 		}
-		else if (value.getClass().isAssignableFrom(Integer.class)) {
+		else if (Integer.class.isAssignableFrom(clazz)) {
 			return (Integer)value;
 		}
-		else if (value.getClass().isAssignableFrom(Long.class)) {
+		else if (Long.class.isAssignableFrom(clazz)) {
 			return (Long)value;
 		}
-		else if (value.getClass().isAssignableFrom(Number.class)) {
-			return (Number)value;
-		}
-		else if (value.getClass().isAssignableFrom(Short.class)) {
+		else if (Short.class.isAssignableFrom(clazz)) {
 			return (Short)value;
+		}
+
+		if (value instanceof Number) {
+			return (Number)value;
 		}
 
 		return defaultValue;
 	}
 
-	public static short get(Serializable value, short defaultValue) {
+	public static short get(Object value, short defaultValue) {
 		if (value == null) {
 			return defaultValue;
 		}
@@ -205,14 +250,23 @@ public class GetterUtil {
 		if (value instanceof String) {
 			return get((String)value, defaultValue);
 		}
-		else if (value.getClass().isAssignableFrom(Short.class)) {
+
+		Class<?> clazz = value.getClass();
+
+		if (Short.class.isAssignableFrom(clazz)) {
 			return (Short)value;
+		}
+
+		if (value instanceof Number) {
+			Number number = (Number)value;
+
+			return number.shortValue();
 		}
 
 		return defaultValue;
 	}
 
-	public static String get(Serializable value, String defaultValue) {
+	public static String get(Object value, String defaultValue) {
 		if (value == null) {
 			return defaultValue;
 		}
@@ -230,13 +284,11 @@ public class GetterUtil {
 		}
 
 		try {
-			value = value.trim();
+			value = value.trim().toLowerCase();
 
-			if (value.equalsIgnoreCase(BOOLEANS[0]) ||
-				value.equalsIgnoreCase(BOOLEANS[1]) ||
-				value.equalsIgnoreCase(BOOLEANS[2]) ||
-				value.equalsIgnoreCase(BOOLEANS[3]) ||
-				value.equalsIgnoreCase(BOOLEANS[4])) {
+			if (value.equals(BOOLEANS[0]) || value.equals(BOOLEANS[1]) ||
+				value.equals(BOOLEANS[2]) || value.equals(BOOLEANS[3]) ||
+				value.equals(BOOLEANS[4])) {
 
 				return true;
 			}
@@ -335,11 +387,11 @@ public class GetterUtil {
 		return value;
 	}
 
-	public static boolean getBoolean(Serializable value) {
+	public static boolean getBoolean(Object value) {
 		return getBoolean(value, DEFAULT_BOOLEAN);
 	}
 
-	public static boolean getBoolean(Serializable value, boolean defaultValue) {
+	public static boolean getBoolean(Object value, boolean defaultValue) {
 		return get(value, defaultValue);
 	}
 
@@ -351,22 +403,26 @@ public class GetterUtil {
 		return get(value, defaultValue);
 	}
 
-	public static boolean[] getBooleanValues(Serializable value) {
+	public static boolean[] getBooleanValues(Object value) {
 		return getBooleanValues(value, DEFAULT_BOOLEAN_VALUES);
 	}
 
 	public static boolean[] getBooleanValues(
-		Serializable value, boolean[] defaultValue) {
+		Object value, boolean[] defaultValue) {
+
+		if (value == null) {
+			return defaultValue;
+		}
 
 		Class<?> clazz = value.getClass();
 
 		if (clazz.isArray()) {
 			Class<?> componentType = clazz.getComponentType();
 
-			if (componentType.isAssignableFrom(String.class)) {
+			if (String.class.isAssignableFrom(componentType)) {
 				return getBooleanValues((String[])value, defaultValue);
 			}
-			else if (componentType.isAssignableFrom(Boolean.class)) {
+			else if (Boolean.class.isAssignableFrom(componentType)) {
 				return (boolean[])value;
 			}
 		}
@@ -394,12 +450,12 @@ public class GetterUtil {
 		return booleanValues;
 	}
 
-	public static Date getDate(Serializable value, DateFormat dateFormat) {
+	public static Date getDate(Object value, DateFormat dateFormat) {
 		return getDate(value, dateFormat, new Date());
 	}
 
 	public static Date getDate(
-		Serializable value, DateFormat dateFormat, Date defaultValue) {
+		Object value, DateFormat dateFormat, Date defaultValue) {
 
 		return get(value, dateFormat, defaultValue);
 	}
@@ -414,24 +470,26 @@ public class GetterUtil {
 		return get(value, dateFormat, defaultValue);
 	}
 
-	public static Date[] getDateValues(
-		Serializable value, DateFormat dateFormat) {
-
+	public static Date[] getDateValues(Object value, DateFormat dateFormat) {
 		return getDateValues(value, dateFormat, DEFAULT_DATE_VALUES);
 	}
 
 	public static Date[] getDateValues(
-		Serializable value, DateFormat dateFormat, Date[] defaultValue) {
+		Object value, DateFormat dateFormat, Date[] defaultValue) {
+
+		if (value == null) {
+			return defaultValue;
+		}
 
 		Class<?> clazz = value.getClass();
 
 		if (clazz.isArray()) {
 			Class<?> componentType = clazz.getComponentType();
 
-			if (componentType.isAssignableFrom(String.class)) {
+			if (String.class.isAssignableFrom(componentType)) {
 				return getDateValues((String[])value, dateFormat, defaultValue);
 			}
-			else if (componentType.isAssignableFrom(Date.class)) {
+			else if (Date.class.isAssignableFrom(componentType)) {
 				return (Date[])value;
 			}
 		}
@@ -459,11 +517,11 @@ public class GetterUtil {
 		return dateValues;
 	}
 
-	public static double getDouble(Serializable value) {
+	public static double getDouble(Object value) {
 		return getDouble(value, DEFAULT_DOUBLE);
 	}
 
-	public static double getDouble(Serializable value, double defaultValue) {
+	public static double getDouble(Object value, double defaultValue) {
 		return get(value, defaultValue);
 	}
 
@@ -475,22 +533,26 @@ public class GetterUtil {
 		return get(value, defaultValue);
 	}
 
-	public static double[] getDoubleValues(Serializable value) {
+	public static double[] getDoubleValues(Object value) {
 		return getDoubleValues(value, DEFAULT_DOUBLE_VALUES);
 	}
 
 	public static double[] getDoubleValues(
-		Serializable value, double[] defaultValue) {
+		Object value, double[] defaultValue) {
+
+		if (value == null) {
+			return defaultValue;
+		}
 
 		Class<?> clazz = value.getClass();
 
 		if (clazz.isArray()) {
 			Class<?> componentType = clazz.getComponentType();
 
-			if (componentType.isAssignableFrom(String.class)) {
+			if (String.class.isAssignableFrom(componentType)) {
 				return getDoubleValues((String[])value, defaultValue);
 			}
-			else if (componentType.isAssignableFrom(Double.class)) {
+			else if (Double.class.isAssignableFrom(componentType)) {
 				return (double[])value;
 			}
 		}
@@ -518,11 +580,11 @@ public class GetterUtil {
 		return doubleValues;
 	}
 
-	public static float getFloat(Serializable value) {
+	public static float getFloat(Object value) {
 		return getFloat(value, DEFAULT_FLOAT);
 	}
 
-	public static float getFloat(Serializable value, float defaultValue) {
+	public static float getFloat(Object value, float defaultValue) {
 		return get(value, defaultValue);
 	}
 
@@ -534,22 +596,24 @@ public class GetterUtil {
 		return get(value, defaultValue);
 	}
 
-	public static float[] getFloatValues(Serializable value) {
+	public static float[] getFloatValues(Object value) {
 		return getFloatValues(value, DEFAULT_FLOAT_VALUES);
 	}
 
-	public static float[] getFloatValues(
-		Serializable value, float[] defaultValue) {
+	public static float[] getFloatValues(Object value, float[] defaultValue) {
+		if (value == null) {
+			return defaultValue;
+		}
 
 		Class<?> clazz = value.getClass();
 
 		if (clazz.isArray()) {
 			Class<?> componentType = clazz.getComponentType();
 
-			if (componentType.isAssignableFrom(String.class)) {
+			if (String.class.isAssignableFrom(componentType)) {
 				return getFloatValues((String[])value, defaultValue);
 			}
-			else if (componentType.isAssignableFrom(Float.class)) {
+			else if (Float.class.isAssignableFrom(componentType)) {
 				return (float[])value;
 			}
 		}
@@ -577,11 +641,11 @@ public class GetterUtil {
 		return floatValues;
 	}
 
-	public static int getInteger(Serializable value) {
+	public static int getInteger(Object value) {
 		return getInteger(value, DEFAULT_INTEGER);
 	}
 
-	public static int getInteger(Serializable value, int defaultValue) {
+	public static int getInteger(Object value, int defaultValue) {
 		return get(value, defaultValue);
 	}
 
@@ -593,22 +657,87 @@ public class GetterUtil {
 		return get(value, defaultValue);
 	}
 
-	public static int[] getIntegerValues(Serializable value) {
+	public static int getIntegerStrict(String value) {
+		int length = value.length();
+
+		if (length <= 0) {
+			throw new NumberFormatException("Unable to parse " + value);
+		}
+
+		int index = 0;
+		int limit = -Integer.MAX_VALUE;
+		boolean negative = false;
+
+		char c = value.charAt(0);
+
+		if (c < CharPool.NUMBER_0) {
+			if (c == CharPool.MINUS) {
+				limit = Integer.MIN_VALUE;
+				negative = true;
+			}
+			else if (c != CharPool.PLUS) {
+				throw new NumberFormatException("Unable to parse " + value);
+			}
+
+			if (length == 1) {
+				throw new NumberFormatException("Unable to parse " + value);
+			}
+
+			index++;
+		}
+
+		int smallLimit = limit / 10;
+
+		int result = 0;
+
+		while (index < length) {
+			if (result < smallLimit) {
+				throw new NumberFormatException("Unable to parse " + value);
+			}
+
+			c = value.charAt(index++);
+
+			if ((c < CharPool.NUMBER_0) || (c > CharPool.NUMBER_9)) {
+				throw new NumberFormatException("Unable to parse " + value);
+			}
+
+			int number = c - CharPool.NUMBER_0;
+
+			result *= 10;
+
+			if (result < (limit + number)) {
+				throw new NumberFormatException("Unable to parse " + value);
+			}
+
+			result -= number;
+		}
+
+		if (negative) {
+			return result;
+		}
+		else {
+			return -result;
+		}
+	}
+
+	public static int[] getIntegerValues(Object value) {
 		return getIntegerValues(value, DEFAULT_INTEGER_VALUES);
 	}
 
-	public static int[] getIntegerValues(
-		Serializable value, int[] defaultValue) {
+	public static int[] getIntegerValues(Object value, int[] defaultValue) {
+		if (value == null) {
+			return defaultValue;
+		}
 
 		Class<?> clazz = value.getClass();
 
 		if (clazz.isArray()) {
 			Class<?> componentType = clazz.getComponentType();
 
-			if (componentType.isAssignableFrom(String.class)) {
+			if (String.class.isAssignableFrom(componentType)) {
 				return getIntegerValues((String[])value, defaultValue);
 			}
-			else if (componentType.isAssignableFrom(Integer.class)) {
+			else if (Integer.class.isAssignableFrom(componentType)) {
 				return (int[])value;
 			}
 		}
@@ -634,11 +763,11 @@ public class GetterUtil {
 		return intValues;
 	}
 
-	public static long getLong(Serializable value) {
+	public static long getLong(Object value) {
 		return getLong(value, DEFAULT_LONG);
 	}
 
-	public static long getLong(Serializable value, long defaultValue) {
+	public static long getLong(Object value, long defaultValue) {
 		return get(value, defaultValue);
 	}
 
@@ -650,24 +779,102 @@ public class GetterUtil {
 		return get(value, defaultValue);
 	}
 
-	public static long[] getLongValues(Serializable value) {
+	public static long getLongStrict(String value) {
+		int length = value.length();
+
+		if (length <= 0) {
+			throw new NumberFormatException("Unable to parse " + value);
+		}
+
+		int index = 0;
+		long limit = -Long.MAX_VALUE;
+		boolean negative = false;
+
+		char c = value.charAt(0);
+
+		if (c < CharPool.NUMBER_0) {
+			if (c == CharPool.MINUS) {
+				limit = Long.MIN_VALUE;
+				negative = true;
+			}
+			else if (c != CharPool.PLUS) {
+				throw new NumberFormatException("Unable to parse " + value);
+			}
+
+			if (length == 1) {
+				throw new NumberFormatException("Unable to parse " + value);
+			}
+
+			index++;
+		}
+
+		long smallLimit = limit / 10;
+
+		long result = 0;
+
+		while (index < length) {
+			if (result < smallLimit) {
+				throw new NumberFormatException("Unable to parse " + value);
+			}
+
+			c = value.charAt(index++);
+
+			if ((c < CharPool.NUMBER_0) || (c > CharPool.NUMBER_9)) {
+				throw new NumberFormatException("Unable to parse " + value);
+			}
+
+			int number = c - CharPool.NUMBER_0;
+
+			result *= 10;
+
+			if (result < (limit + number)) {
+				throw new NumberFormatException("Unable to parse " + value);
+			}
+
+			result -= number;
+		}
+
+		if (negative) {
+			return result;
+		}
+		else {
+			return -result;
+		}
+	}
+
+	public static long[] getLongValues(Object value) {
 		return getLongValues(value, DEFAULT_LONG_VALUES);
 	}
 
-	public static long[] getLongValues(
-		Serializable value, long[] defaultValue) {
+	public static long[] getLongValues(Object value, long[] defaultValue) {
+		if (value == null) {
+			return defaultValue;
+		}
 
 		Class<?> clazz = value.getClass();
 
-		if (clazz.isArray()) {
-			Class<?> componentType = clazz.getComponentType();
+		if (!clazz.isArray()) {
+			return defaultValue;
+		}
 
-			if (componentType.isAssignableFrom(String.class)) {
-				return getLongValues((String[])value, defaultValue);
+		Class<?> componentType = clazz.getComponentType();
+
+		if (String.class.isAssignableFrom(componentType)) {
+			return getLongValues((String[])value, defaultValue);
+		}
+		else if (Long.class.isAssignableFrom(componentType)) {
+			return (long[])value;
+		}
+		else if (Number.class.isAssignableFrom(componentType)) {
+			Number[] numbers = (Number[])value;
+
+			long[] values = new long[numbers.length];
+
+			for (int i = 0; i < values.length; i++) {
+				values[i] = numbers[i].longValue();
 			}
-			else if (componentType.isAssignableFrom(Long.class)) {
-				return (long[])value;
-			}
+
+			return values;
 		}
 
 		return defaultValue;
@@ -691,11 +898,11 @@ public class GetterUtil {
 		return longValues;
 	}
 
-	public static Number getNumber(Serializable value) {
+	public static Number getNumber(Object value) {
 		return getNumber(value, DEFAULT_NUMBER);
 	}
 
-	public static Number getNumber(Serializable value, Number defaultValue) {
+	public static Number getNumber(Object value, Number defaultValue) {
 		return get(value, defaultValue);
 	}
 
@@ -705,6 +912,53 @@ public class GetterUtil {
 
 	public static Number getNumber(String value, Number defaultValue) {
 		return get(value, defaultValue);
+	}
+
+	public static Number[] getNumberValues(Object value) {
+		return getNumberValues(value, DEFAULT_NUMBER_VALUES);
+	}
+
+	public static Number[] getNumberValues(
+		Object value, Number[] defaultValue) {
+
+		if (value == null) {
+			return defaultValue;
+		}
+
+		Class<?> clazz = value.getClass();
+
+		if (clazz.isArray()) {
+			Class<?> componentType = clazz.getComponentType();
+
+			if (String.class.isAssignableFrom(componentType)) {
+				return getNumberValues((String[])value, defaultValue);
+			}
+			else if (Number.class.isAssignableFrom(componentType)) {
+				return (Number[])value;
+			}
+		}
+
+		return defaultValue;
+	}
+
+	public static Number[] getNumberValues(String[] values) {
+		return getNumberValues(values, DEFAULT_NUMBER_VALUES);
+	}
+
+	public static Number[] getNumberValues(
+		String[] values, Number[] defaultValue) {
+
+		if (values == null) {
+			return defaultValue;
+		}
+
+		Number[] numberValues = new Number[values.length];
+
+		for (int i = 0; i < values.length; i++) {
+			numberValues[i] = getNumber(values[i]);
+		}
+
+		return numberValues;
 	}
 
 	public static Object getObject(Object value) {
@@ -719,11 +973,11 @@ public class GetterUtil {
 		return value;
 	}
 
-	public static short getShort(Serializable value) {
+	public static short getShort(Object value) {
 		return getShort(value, DEFAULT_SHORT);
 	}
 
-	public static short getShort(Serializable value, short defaultValue) {
+	public static short getShort(Object value, short defaultValue) {
 		return get(value, defaultValue);
 	}
 
@@ -735,22 +989,34 @@ public class GetterUtil {
 		return get(value, defaultValue);
 	}
 
-	public static short[] getShortValues(Serializable value) {
+	public static short getShortStrict(String value) {
+		int i = getIntegerStrict(value);
+
+		if ((i < Short.MIN_VALUE) || (i > Short.MAX_VALUE)) {
+			throw new NumberFormatException("Out of range value " + value);
+		}
+
+		return (short)i;
+	}
+
+	public static short[] getShortValues(Object value) {
 		return getShortValues(value, DEFAULT_SHORT_VALUES);
 	}
 
-	public static short[] getShortValues(
-		Serializable value, short[] defaultValue) {
+	public static short[] getShortValues(Object value, short[] defaultValue) {
+		if (value == null) {
+			return defaultValue;
+		}
 
 		Class<?> clazz = value.getClass();
 
 		if (clazz.isArray()) {
 			Class<?> componentType = clazz.getComponentType();
 
-			if (componentType.isAssignableFrom(String.class)) {
+			if (String.class.isAssignableFrom(componentType)) {
 				return getShortValues((String[])value, defaultValue);
 			}
-			else if (componentType.isAssignableFrom(Short.class)) {
+			else if (Short.class.isAssignableFrom(componentType)) {
 				return (short[])value;
 			}
 		}
@@ -778,11 +1044,11 @@ public class GetterUtil {
 		return shortValues;
 	}
 
-	public static String getString(Serializable value) {
+	public static String getString(Object value) {
 		return getString(value, DEFAULT_STRING);
 	}
 
-	public static String getString(Serializable value, String defaultValue) {
+	public static String getString(Object value, String defaultValue) {
 		return get(value, defaultValue);
 	}
 
@@ -792,6 +1058,50 @@ public class GetterUtil {
 
 	public static String getString(String value, String defaultValue) {
 		return get(value, defaultValue);
+	}
+
+	public static String[] getStringValues(Object value) {
+		return getStringValues(value, DEFAULT_STRING_VALUES);
+	}
+
+	public static String[] getStringValues(
+		Object value, String[] defaultValue) {
+
+		if (value == null) {
+			return defaultValue;
+		}
+
+		Class<?> clazz = value.getClass();
+
+		if (clazz.isArray()) {
+			Class<?> componentType = clazz.getComponentType();
+
+			if (String.class.isAssignableFrom(componentType)) {
+				return getStringValues((String[])value, defaultValue);
+			}
+		}
+
+		return defaultValue;
+	}
+
+	public static String[] getStringValues(
+		Object[] values, String[] defaultValue) {
+
+		if (values == null) {
+			return defaultValue;
+		}
+
+		String[] stringValues = new String[values.length];
+
+		for (int i = 0; i < values.length; i++) {
+			stringValues[i] = String.valueOf(values[i]);
+		}
+
+		return stringValues;
+	}
+
+	public static String[] getStringValues(String[] values) {
+		return getStringValues(values, DEFAULT_STRING_VALUES);
 	}
 
 	private static int _parseInt(String value, int defaultValue) {
@@ -858,26 +1168,6 @@ public class GetterUtil {
 	}
 
 	private static long _parseLong(String value, long defaultValue) {
-		if (_useJDKParseLong == null) {
-			if (OSDetector.isAIX() && ServerDetector.isWebSphere() &&
-				JavaProps.isIBM() && JavaProps.is64bit()) {
-
-				_useJDKParseLong = Boolean.TRUE;
-			}
-			else {
-				_useJDKParseLong = Boolean.FALSE;
-			}
-		}
-
-		if (_useJDKParseLong) {
-			try {
-				return Long.parseLong(value);
-			}
-			catch (NumberFormatException nfe) {
-				return defaultValue;
-			}
-		}
-
 		int length = value.length();
 
 		if (length <= 0) {
@@ -960,8 +1250,10 @@ public class GetterUtil {
 		for (int i = 0; i < length; i++) {
 			char c = value.charAt(i);
 
-			if ((Character.isDigit(c)) ||
-				((c == CharPool.DASH) && (i == 0)) ||
+			if (Character.isDigit(c) ||
+				((c == CharPool.DASH) &&
+				 ((i == 0) || (value.charAt(i - 1) == CharPool.UPPER_CASE_E) ||
+				  (value.charAt(i - 1) == CharPool.LOWER_CASE_E))) ||
 				(c == CharPool.PERIOD) || (c == CharPool.UPPER_CASE_E) ||
 				(c == CharPool.LOWER_CASE_E)) {
 
@@ -971,7 +1263,5 @@ public class GetterUtil {
 
 		return sb.toString();
 	}
-
-	private static Boolean _useJDKParseLong;
 
 }

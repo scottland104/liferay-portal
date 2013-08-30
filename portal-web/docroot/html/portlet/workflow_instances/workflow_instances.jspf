@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,12 +17,14 @@
 <liferay-ui:search-container
 	iteratorURL="<%= portletURL %>"
 >
-	<%@ include file="/html/portlet/workflow_instances/workflow_search_results.jspf" %>
 
-	<liferay-ui:search-container-results
-		results="<%= resultsInstances %>"
-		total="<%= totalInstances %>"
-	/>
+	<%
+	boolean allInstances = false;
+	%>
+
+	<liferay-ui:search-container-results>
+		<%@ include file="/html/portlet/workflow_instances/workflow_search_results.jspf" %>
+	</liferay-ui:search-container-results>
 
 	<liferay-ui:search-container-row
 		className="com.liferay.portal.kernel.workflow.WorkflowInstance"
@@ -37,8 +39,6 @@
 		<%
 		Map<String, Serializable> workflowContext = workflowInstance.getWorkflowContext();
 
-		long companyId = GetterUtil.getLong((String)workflowContext.get(WorkflowConstants.CONTEXT_COMPANY_ID));
-		long groupId = GetterUtil.getLong((String)workflowContext.get(WorkflowConstants.CONTEXT_GROUP_ID));
 		String className = (String)workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_NAME);
 		long classPK = GetterUtil.getLong((String)workflowContext.get(WorkflowConstants.CONTEXT_ENTRY_CLASS_PK));
 
@@ -65,20 +65,20 @@
 
 		<liferay-ui:search-container-column-text
 			buffer="buffer"
-			name="asset-title"
 			href="<%= rowURL %>"
+			name="asset-title"
 		>
 
 			<%
-			buffer.append(workflowHandler.getTitle(classPK, locale));
+			buffer.append(HtmlUtil.escape(workflowHandler.getTitle(classPK, locale)));
 			%>
 
 		</liferay-ui:search-container-column-text>
 
 		<liferay-ui:search-container-column-text
 			buffer="buffer"
-			name="asset-type"
 			href="<%= rowURL %>"
+			name="asset-type"
 		>
 
 			<%
@@ -101,8 +101,8 @@
 
 		<liferay-ui:search-container-column-text
 			buffer="buffer"
-			name="last-activity-date"
 			href="<%= rowURL %>"
+			name="last-activity-date"
 		>
 
 			<%
@@ -122,8 +122,8 @@
 
 		<liferay-ui:search-container-column-text
 			buffer="buffer"
-			name="end-date"
 			href="<%= rowURL %>"
+			name="end-date"
 		>
 
 			<%
@@ -137,7 +137,7 @@
 
 		</liferay-ui:search-container-column-text>
 
-		<c:if test="<%= !allInstances %>">
+		<c:if test='<%= !allInstances && !tabs2.equals("completed") %>'>
 			<liferay-ui:search-container-column-jsp
 				align="right"
 				path="/html/portlet/workflow_instances/workflow_instance_action.jsp"

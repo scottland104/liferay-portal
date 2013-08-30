@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,13 +20,15 @@ import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.NumericalStringComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.theme.ThemeDisplay;
+import com.liferay.portal.util.WebKeys;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -68,61 +70,25 @@ public class ConfigurationActionImpl extends DefaultConfigurationAction {
 		super.processAction(portletConfig, actionRequest, actionResponse);
 	}
 
-	protected void validateEmailFrom(ActionRequest actionRequest)
-		throws Exception {
+	protected boolean isValidUserRank(String rank) {
+		if ((StringUtil.count(rank, StringPool.EQUAL) != 1) ||
+			rank.startsWith(StringPool.EQUAL) ||
+			rank.endsWith(StringPool.EQUAL)) {
 
-		String emailFromName = getParameter(
-			actionRequest, "emailFromName");
-		String emailFromAddress = getParameter(
-			actionRequest, "emailFromAddress");
-
-		if (Validator.isNull(emailFromName)) {
-			SessionErrors.add(actionRequest, "emailFromName");
+			return false;
 		}
-		else if (!Validator.isEmailAddress(emailFromAddress) &&
-				 !Validator.isVariableTerm(emailFromAddress)) {
 
-			SessionErrors.add(actionRequest, "emailFromAddress");
-		}
-	}
-
-	protected void validateEmailMessageAdded(ActionRequest actionRequest)
-		throws Exception {
-
-		String emailMessageAddedSubjectPrefix = getParameter(
-			actionRequest, "emailMessageAddedSubjectPrefix");
-		String emailMessageAddedBody = getParameter(
-			actionRequest, "emailMessageAddedBody");
-
-		if (Validator.isNull(emailMessageAddedSubjectPrefix)) {
-			SessionErrors.add(actionRequest, "emailMessageAddedSubjectPrefix");
-		}
-		else if (Validator.isNull(emailMessageAddedBody)) {
-			SessionErrors.add(actionRequest, "emailMessageAddedBody");
-		}
-	}
-
-	protected void validateEmailMessageUpdated(ActionRequest actionRequest)
-		throws Exception {
-
-		String emailMessageUpdatedSubjectPrefix = getParameter(
-			actionRequest, "emailMessageUpdatedSubjectPrefix");
-		String emailMessageUpdatedBody = getParameter(
-			actionRequest, "emailMessageUpdatedBody");
-
-		if (Validator.isNull(emailMessageUpdatedSubjectPrefix)) {
-			SessionErrors.add(
-				actionRequest, "emailMessageUpdatedSubjectPrefix");
-		}
-		else if (Validator.isNull(emailMessageUpdatedBody)) {
-			SessionErrors.add(actionRequest, "emailMessageUpdatedBody");
-		}
+		return true;
 	}
 
 	protected void updateThreadPriorities(ActionRequest actionRequest)
 		throws Exception {
 
-		Locale[] locales = LanguageUtil.getAvailableLocales();
+		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		Locale[] locales = LanguageUtil.getAvailableLocales(
+			themeDisplay.getSiteGroupId());
 
 		for (int i = 0; i < locales.length; i++) {
 			String languageId = LocaleUtil.toLanguageId(locales[i]);
@@ -158,18 +124,29 @@ public class ConfigurationActionImpl extends DefaultConfigurationAction {
 	protected void updateUserRanks(ActionRequest actionRequest)
 		throws Exception {
 
-		Locale[] locales = LanguageUtil.getAvailableLocales();
+		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
 
-		for (int i = 0; i < locales.length; i++) {
-			String languageId = LocaleUtil.toLanguageId(locales[i]);
+		Locale[] locales = LanguageUtil.getAvailableLocales(
+			themeDisplay.getSiteGroupId());
+
+		for (Locale locale : locales) {
+			String languageId = LocaleUtil.toLanguageId(locale);
 
 			String[] ranks = StringUtil.splitLines(
 				ParamUtil.getString(actionRequest, "ranks_" + languageId));
 
-			Map<String, String> map = new TreeMap<String, String>();
+			Map<String, String> map = new TreeMap<String, String>(
+				new NumericalStringComparator());
 
-			for (int j = 0; j < ranks.length; j++) {
-				String[] kvp = StringUtil.split(ranks[j], CharPool.EQUAL);
+			for (String rank : ranks) {
+				if (!isValidUserRank(rank)) {
+					SessionErrors.add(actionRequest, "userRank");
+
+					return;
+				}
+
+				String[] kvp = StringUtil.split(rank, CharPool.EQUAL);
 
 				String kvpName = kvp[0];
 				String kvpValue = kvp[1];
@@ -181,12 +158,7 @@ public class ConfigurationActionImpl extends DefaultConfigurationAction {
 
 			int count = 0;
 
-			Iterator<Map.Entry<String, String>> itr =
-				map.entrySet().iterator();
-
-			while (itr.hasNext()) {
-				Map.Entry<String, String> entry = itr.next();
-
+			for (Map.Entry<String, String> entry : map.entrySet()) {
 				String kvpValue = entry.getKey();
 				String kvpName = entry.getValue();
 
@@ -197,6 +169,55 @@ public class ConfigurationActionImpl extends DefaultConfigurationAction {
 				"ranks", languageId);
 
 			setPreference(actionRequest, preferenceName, ranks);
+		}
+	}
+
+	protected void validateEmailFrom(ActionRequest actionRequest)
+		throws Exception {
+
+		String emailFromName = getParameter(actionRequest, "emailFromName");
+		String emailFromAddress = getParameter(
+			actionRequest, "emailFromAddress");
+
+		if (Validator.isNull(emailFromName)) {
+			SessionErrors.add(actionRequest, "emailFromName");
+		}
+		else if (!Validator.isEmailAddress(emailFromAddress) &&
+				 !Validator.isVariableTerm(emailFromAddress)) {
+
+			SessionErrors.add(actionRequest, "emailFromAddress");
+		}
+	}
+
+	protected void validateEmailMessageAdded(ActionRequest actionRequest)
+		throws Exception {
+
+		String emailMessageAddedSubject = getParameter(
+			actionRequest, "emailMessageAddedSubject");
+		String emailMessageAddedBody = getParameter(
+			actionRequest, "emailMessageAddedBody");
+
+		if (Validator.isNull(emailMessageAddedSubject)) {
+			SessionErrors.add(actionRequest, "emailMessageAddedSubject");
+		}
+		else if (Validator.isNull(emailMessageAddedBody)) {
+			SessionErrors.add(actionRequest, "emailMessageAddedBody");
+		}
+	}
+
+	protected void validateEmailMessageUpdated(ActionRequest actionRequest)
+		throws Exception {
+
+		String emailMessageUpdatedSubject = getParameter(
+			actionRequest, "emailMessageUpdatedSubject");
+		String emailMessageUpdatedBody = getParameter(
+			actionRequest, "emailMessageUpdatedBody");
+
+		if (Validator.isNull(emailMessageUpdatedSubject)) {
+			SessionErrors.add(actionRequest, "emailMessageUpdatedSubject");
+		}
+		else if (Validator.isNull(emailMessageUpdatedBody)) {
+			SessionErrors.add(actionRequest, "emailMessageUpdatedBody");
 		}
 	}
 

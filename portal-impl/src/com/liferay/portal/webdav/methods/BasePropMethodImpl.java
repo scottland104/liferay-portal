@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -35,8 +35,8 @@ import com.liferay.portal.service.WebDAVPropsLocalServiceUtil;
 import com.liferay.util.xml.DocUtil;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -59,6 +59,8 @@ public abstract class BasePropMethodImpl implements Method {
 	public static final QName GETCONTENTTYPE = createQName("getcontenttype");
 
 	public static final QName GETLASTMODIFIED = createQName("getlastmodified");
+
+	public static final QName ISREADONLY = createQName("isreadonly");
 
 	public static final QName LOCKDISCOVERY = createQName("lockdiscovery");
 
@@ -84,7 +86,7 @@ public abstract class BasePropMethodImpl implements Method {
 	}
 
 	protected void addResponse(
-			WebDAVRequest webDavRequest, Resource resource, Set<QName> props,
+			WebDAVRequest webDAVRequest, Resource resource, Set<QName> props,
 			Element multistatus)
 		throws Exception {
 
@@ -179,21 +181,29 @@ public abstract class BasePropMethodImpl implements Method {
 			}
 		}
 
+		if (props.contains(ISREADONLY)) {
+			props.remove(ISREADONLY);
+
+			Lock lock = resource.getLock();
+
+			if ((lock == null) || resource.isLocked()) {
+				DocUtil.add(
+					successPropElement, ISREADONLY, Boolean.FALSE.toString());
+			}
+			else {
+				DocUtil.add(
+					successPropElement, ISREADONLY, Boolean.TRUE.toString());
+			}
+
+			hasSuccess = true;
+		}
+
 		if (props.contains(LOCKDISCOVERY)) {
 			props.remove(LOCKDISCOVERY);
 
 			Lock lock = resource.getLock();
 
 			if (lock != null) {
-				long now = System.currentTimeMillis();
-
-				long timeRemaining =
-					(lock.getExpirationDate().getTime() - now) / Time.SECOND;
-
-				if (timeRemaining <= 0) {
-					timeRemaining = 1;
-				}
-
 				Element lockDiscoveryElement = DocUtil.add(
 					successPropElement, LOCKDISCOVERY);
 
@@ -217,11 +227,33 @@ public abstract class BasePropMethodImpl implements Method {
 
 				DocUtil.add(
 					activeLockElement, createQName("owner"), lock.getOwner());
-				DocUtil.add(
-					activeLockElement, createQName("timeout"),
-					"Second-" + timeRemaining);
 
-				if (webDavRequest.getUserId() == lock.getUserId()) {
+				long timeRemaining = 0;
+
+				Date expirationDate = lock.getExpirationDate();
+
+				if (expirationDate != null) {
+					long now = System.currentTimeMillis();
+
+					timeRemaining =
+						(expirationDate.getTime() - now) / Time.SECOND;
+
+					if (timeRemaining <= 0) {
+						timeRemaining = 1;
+					}
+				}
+
+				if (timeRemaining > 0) {
+					DocUtil.add(
+						activeLockElement, createQName("timeout"),
+						"Second-" + timeRemaining);
+				}
+				else {
+					DocUtil.add(
+						activeLockElement, createQName("timeout"), "Infinite");
+				}
+
+				if (webDAVRequest.getUserId() == lock.getUserId()) {
 					Element lockTokenElement = DocUtil.add(
 						activeLockElement, createQName("locktoken"));
 
@@ -255,7 +287,7 @@ public abstract class BasePropMethodImpl implements Method {
 		// Check remaining properties against custom properties
 
 		WebDAVProps webDavProps = WebDAVPropsLocalServiceUtil.getWebDAVProps(
-			webDavRequest.getCompanyId(), resource.getClassName(),
+			webDAVRequest.getCompanyId(), resource.getClassName(),
 			resource.getPrimaryKey());
 
 		Set<QName> customProps = webDavProps.getPropsSet();
@@ -302,32 +334,31 @@ public abstract class BasePropMethodImpl implements Method {
 	}
 
 	protected void addResponse(
-			WebDAVStorage storage, WebDAVRequest webDavRequest,
+			WebDAVStorage storage, WebDAVRequest webDAVRequest,
 			Resource resource, Set<QName> props, Element multistatusElement,
 			long depth)
 		throws Exception {
 
-		addResponse(webDavRequest, resource, props, multistatusElement);
+		addResponse(webDAVRequest, resource, props, multistatusElement);
 
 		if (resource.isCollection() && (depth != 0)) {
-			Iterator<Resource> itr = storage.getResources(
-				webDavRequest).iterator();
+			List<Resource> storageResources = storage.getResources(
+				webDAVRequest);
 
-			while (itr.hasNext()) {
-				resource = itr.next();
-
-				addResponse(webDavRequest, resource, props, multistatusElement);
+			for (Resource storageResource : storageResources) {
+				addResponse(
+					webDAVRequest, storageResource, props, multistatusElement);
 			}
 		}
 	}
 
 	protected int writeResponseXML(
-			WebDAVRequest webDavRequest, Set<QName> props)
+			WebDAVRequest webDAVRequest, Set<QName> props)
 		throws Exception {
 
-		WebDAVStorage storage = webDavRequest.getWebDAVStorage();
+		WebDAVStorage storage = webDAVRequest.getWebDAVStorage();
 
-		long depth = WebDAVUtil.getDepth(webDavRequest.getHttpServletRequest());
+		long depth = WebDAVUtil.getDepth(webDAVRequest.getHttpServletRequest());
 
 		Document document = SAXReaderUtil.createDocument();
 
@@ -336,11 +367,11 @@ public abstract class BasePropMethodImpl implements Method {
 
 		document.setRootElement(multistatusElement);
 
-		Resource resource = storage.getResource(webDavRequest);
+		Resource resource = storage.getResource(webDAVRequest);
 
 		if (resource != null) {
 			addResponse(
-				storage, webDavRequest, resource, props, multistatusElement,
+				storage, webDAVRequest, resource, props, multistatusElement,
 				depth);
 
 			String xml = document.formattedString(StringPool.FOUR_SPACES);
@@ -354,7 +385,7 @@ public abstract class BasePropMethodImpl implements Method {
 			int status = WebDAVUtil.SC_MULTI_STATUS;
 
 			HttpServletResponse response =
-				webDavRequest.getHttpServletResponse();
+				webDAVRequest.getHttpServletResponse();
 
 			response.setContentType(ContentTypes.TEXT_XML_UTF8);
 			response.setStatus(status);
@@ -376,7 +407,7 @@ public abstract class BasePropMethodImpl implements Method {
 			if (_log.isDebugEnabled()) {
 				_log.debug(
 					"No resource found for " + storage.getRootPath() +
-						webDavRequest.getPath());
+						webDAVRequest.getPath());
 			}
 
 			return HttpServletResponse.SC_NOT_FOUND;
@@ -385,15 +416,14 @@ public abstract class BasePropMethodImpl implements Method {
 
 	private static final List<QName> _ALL_COLLECTION_PROPS = Arrays.asList(
 		new QName[] {
-			CREATIONDATE, DISPLAYNAME, GETLASTMODIFIED,
-			GETCONTENTTYPE, LOCKDISCOVERY, RESOURCETYPE
+			CREATIONDATE, DISPLAYNAME, GETLASTMODIFIED, GETCONTENTTYPE,
+			LOCKDISCOVERY, RESOURCETYPE
 		});
 
 	private static final List<QName> _ALL_SIMPLE_PROPS = Arrays.asList(
 		new QName[] {
-			CREATIONDATE, DISPLAYNAME, GETLASTMODIFIED,
-			GETCONTENTTYPE, GETCONTENTLENGTH, LOCKDISCOVERY,
-			RESOURCETYPE
+			CREATIONDATE, DISPLAYNAME, GETLASTMODIFIED, GETCONTENTTYPE,
+			GETCONTENTLENGTH, ISREADONLY, LOCKDISCOVERY, RESOURCETYPE
 		});
 
 	private static Log _log = LogFactoryUtil.getLog(BasePropMethodImpl.class);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,8 +14,6 @@
 
 package com.liferay.portlet.announcements.service.persistence;
 
-import com.liferay.portal.NoSuchModelException;
-import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.cache.CacheRegistryUtil;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
 import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
@@ -30,15 +28,14 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.InstanceFactory;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.UnmodifiableList;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.ModelListener;
-import com.liferay.portal.service.persistence.BatchSessionUtil;
-import com.liferay.portal.service.persistence.ResourcePersistence;
-import com.liferay.portal.service.persistence.UserPersistence;
 import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
 
 import com.liferay.portlet.announcements.NoSuchDeliveryException;
@@ -51,6 +48,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The persistence implementation for the announcements delivery service.
@@ -72,414 +70,42 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * Never modify or reference this class directly. Always use {@link AnnouncementsDeliveryUtil} to access the announcements delivery persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
 	 */
 	public static final String FINDER_CLASS_NAME_ENTITY = AnnouncementsDeliveryImpl.class.getName();
-	public static final String FINDER_CLASS_NAME_LIST = FINDER_CLASS_NAME_ENTITY +
-		".List";
-	public static final FinderPath FINDER_PATH_FIND_BY_USERID = new FinderPath(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+	public static final String FINDER_CLASS_NAME_LIST_WITH_PAGINATION = FINDER_CLASS_NAME_ENTITY +
+		".List1";
+	public static final String FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION = FINDER_CLASS_NAME_ENTITY +
+		".List2";
+	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_ALL = new FinderPath(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
 			AnnouncementsDeliveryModelImpl.FINDER_CACHE_ENABLED,
-			AnnouncementsDeliveryImpl.class, FINDER_CLASS_NAME_LIST,
-			"findByUserId",
+			AnnouncementsDeliveryImpl.class,
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0]);
+	public static final FinderPath FINDER_PATH_WITHOUT_PAGINATION_FIND_ALL = new FinderPath(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+			AnnouncementsDeliveryModelImpl.FINDER_CACHE_ENABLED,
+			AnnouncementsDeliveryImpl.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll", new String[0]);
+	public static final FinderPath FINDER_PATH_COUNT_ALL = new FinderPath(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+			AnnouncementsDeliveryModelImpl.FINDER_CACHE_ENABLED, Long.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll", new String[0]);
+	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_BY_USERID = new FinderPath(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+			AnnouncementsDeliveryModelImpl.FINDER_CACHE_ENABLED,
+			AnnouncementsDeliveryImpl.class,
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUserId",
 			new String[] {
 				Long.class.getName(),
 				
-			"java.lang.Integer", "java.lang.Integer",
-				"com.liferay.portal.kernel.util.OrderByComparator"
+			Integer.class.getName(), Integer.class.getName(),
+				OrderByComparator.class.getName()
 			});
+	public static final FinderPath FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_USERID =
+		new FinderPath(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+			AnnouncementsDeliveryModelImpl.FINDER_CACHE_ENABLED,
+			AnnouncementsDeliveryImpl.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUserId",
+			new String[] { Long.class.getName() },
+			AnnouncementsDeliveryModelImpl.USERID_COLUMN_BITMASK);
 	public static final FinderPath FINDER_PATH_COUNT_BY_USERID = new FinderPath(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
 			AnnouncementsDeliveryModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countByUserId",
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUserId",
 			new String[] { Long.class.getName() });
-	public static final FinderPath FINDER_PATH_FETCH_BY_U_T = new FinderPath(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
-			AnnouncementsDeliveryModelImpl.FINDER_CACHE_ENABLED,
-			AnnouncementsDeliveryImpl.class, FINDER_CLASS_NAME_ENTITY,
-			"fetchByU_T",
-			new String[] { Long.class.getName(), String.class.getName() });
-	public static final FinderPath FINDER_PATH_COUNT_BY_U_T = new FinderPath(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
-			AnnouncementsDeliveryModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countByU_T",
-			new String[] { Long.class.getName(), String.class.getName() });
-	public static final FinderPath FINDER_PATH_FIND_ALL = new FinderPath(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
-			AnnouncementsDeliveryModelImpl.FINDER_CACHE_ENABLED,
-			AnnouncementsDeliveryImpl.class, FINDER_CLASS_NAME_LIST, "findAll",
-			new String[0]);
-	public static final FinderPath FINDER_PATH_COUNT_ALL = new FinderPath(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
-			AnnouncementsDeliveryModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countAll", new String[0]);
-
-	/**
-	 * Caches the announcements delivery in the entity cache if it is enabled.
-	 *
-	 * @param announcementsDelivery the announcements delivery
-	 */
-	public void cacheResult(AnnouncementsDelivery announcementsDelivery) {
-		EntityCacheUtil.putResult(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
-			AnnouncementsDeliveryImpl.class,
-			announcementsDelivery.getPrimaryKey(), announcementsDelivery);
-
-		FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_U_T,
-			new Object[] {
-				Long.valueOf(announcementsDelivery.getUserId()),
-				
-			announcementsDelivery.getType()
-			}, announcementsDelivery);
-
-		announcementsDelivery.resetOriginalValues();
-	}
-
-	/**
-	 * Caches the announcements deliveries in the entity cache if it is enabled.
-	 *
-	 * @param announcementsDeliveries the announcements deliveries
-	 */
-	public void cacheResult(List<AnnouncementsDelivery> announcementsDeliveries) {
-		for (AnnouncementsDelivery announcementsDelivery : announcementsDeliveries) {
-			if (EntityCacheUtil.getResult(
-						AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
-						AnnouncementsDeliveryImpl.class,
-						announcementsDelivery.getPrimaryKey(), this) == null) {
-				cacheResult(announcementsDelivery);
-			}
-		}
-	}
-
-	/**
-	 * Clears the cache for all announcements deliveries.
-	 *
-	 * <p>
-	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
-	 * </p>
-	 */
-	@Override
-	public void clearCache() {
-		if (_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE) {
-			CacheRegistryUtil.clear(AnnouncementsDeliveryImpl.class.getName());
-		}
-
-		EntityCacheUtil.clearCache(AnnouncementsDeliveryImpl.class.getName());
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_ENTITY);
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
-	}
-
-	/**
-	 * Clears the cache for the announcements delivery.
-	 *
-	 * <p>
-	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
-	 * </p>
-	 */
-	@Override
-	public void clearCache(AnnouncementsDelivery announcementsDelivery) {
-		EntityCacheUtil.removeResult(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
-			AnnouncementsDeliveryImpl.class,
-			announcementsDelivery.getPrimaryKey());
-
-		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_U_T,
-			new Object[] {
-				Long.valueOf(announcementsDelivery.getUserId()),
-				
-			announcementsDelivery.getType()
-			});
-	}
-
-	/**
-	 * Creates a new announcements delivery with the primary key. Does not add the announcements delivery to the database.
-	 *
-	 * @param deliveryId the primary key for the new announcements delivery
-	 * @return the new announcements delivery
-	 */
-	public AnnouncementsDelivery create(long deliveryId) {
-		AnnouncementsDelivery announcementsDelivery = new AnnouncementsDeliveryImpl();
-
-		announcementsDelivery.setNew(true);
-		announcementsDelivery.setPrimaryKey(deliveryId);
-
-		return announcementsDelivery;
-	}
-
-	/**
-	 * Removes the announcements delivery with the primary key from the database. Also notifies the appropriate model listeners.
-	 *
-	 * @param primaryKey the primary key of the announcements delivery
-	 * @return the announcements delivery that was removed
-	 * @throws com.liferay.portal.NoSuchModelException if a announcements delivery with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public AnnouncementsDelivery remove(Serializable primaryKey)
-		throws NoSuchModelException, SystemException {
-		return remove(((Long)primaryKey).longValue());
-	}
-
-	/**
-	 * Removes the announcements delivery with the primary key from the database. Also notifies the appropriate model listeners.
-	 *
-	 * @param deliveryId the primary key of the announcements delivery
-	 * @return the announcements delivery that was removed
-	 * @throws com.liferay.portlet.announcements.NoSuchDeliveryException if a announcements delivery with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	public AnnouncementsDelivery remove(long deliveryId)
-		throws NoSuchDeliveryException, SystemException {
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			AnnouncementsDelivery announcementsDelivery = (AnnouncementsDelivery)session.get(AnnouncementsDeliveryImpl.class,
-					Long.valueOf(deliveryId));
-
-			if (announcementsDelivery == null) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + deliveryId);
-				}
-
-				throw new NoSuchDeliveryException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
-					deliveryId);
-			}
-
-			return announcementsDeliveryPersistence.remove(announcementsDelivery);
-		}
-		catch (NoSuchDeliveryException nsee) {
-			throw nsee;
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-	}
-
-	/**
-	 * Removes the announcements delivery from the database. Also notifies the appropriate model listeners.
-	 *
-	 * @param announcementsDelivery the announcements delivery
-	 * @return the announcements delivery that was removed
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public AnnouncementsDelivery remove(
-		AnnouncementsDelivery announcementsDelivery) throws SystemException {
-		return super.remove(announcementsDelivery);
-	}
-
-	@Override
-	protected AnnouncementsDelivery removeImpl(
-		AnnouncementsDelivery announcementsDelivery) throws SystemException {
-		announcementsDelivery = toUnwrappedModel(announcementsDelivery);
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BatchSessionUtil.delete(session, announcementsDelivery);
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
-
-		AnnouncementsDeliveryModelImpl announcementsDeliveryModelImpl = (AnnouncementsDeliveryModelImpl)announcementsDelivery;
-
-		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_U_T,
-			new Object[] {
-				Long.valueOf(announcementsDeliveryModelImpl.getUserId()),
-				
-			announcementsDeliveryModelImpl.getType()
-			});
-
-		EntityCacheUtil.removeResult(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
-			AnnouncementsDeliveryImpl.class,
-			announcementsDelivery.getPrimaryKey());
-
-		return announcementsDelivery;
-	}
-
-	@Override
-	public AnnouncementsDelivery updateImpl(
-		com.liferay.portlet.announcements.model.AnnouncementsDelivery announcementsDelivery,
-		boolean merge) throws SystemException {
-		announcementsDelivery = toUnwrappedModel(announcementsDelivery);
-
-		boolean isNew = announcementsDelivery.isNew();
-
-		AnnouncementsDeliveryModelImpl announcementsDeliveryModelImpl = (AnnouncementsDeliveryModelImpl)announcementsDelivery;
-
-		Session session = null;
-
-		try {
-			session = openSession();
-
-			BatchSessionUtil.update(session, announcementsDelivery, merge);
-
-			announcementsDelivery.setNew(false);
-		}
-		catch (Exception e) {
-			throw processException(e);
-		}
-		finally {
-			closeSession(session);
-		}
-
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
-
-		EntityCacheUtil.putResult(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
-			AnnouncementsDeliveryImpl.class,
-			announcementsDelivery.getPrimaryKey(), announcementsDelivery);
-
-		if (!isNew &&
-				((announcementsDelivery.getUserId() != announcementsDeliveryModelImpl.getOriginalUserId()) ||
-				!Validator.equals(announcementsDelivery.getType(),
-					announcementsDeliveryModelImpl.getOriginalType()))) {
-			FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_U_T,
-				new Object[] {
-					Long.valueOf(
-						announcementsDeliveryModelImpl.getOriginalUserId()),
-					
-				announcementsDeliveryModelImpl.getOriginalType()
-				});
-		}
-
-		if (isNew ||
-				((announcementsDelivery.getUserId() != announcementsDeliveryModelImpl.getOriginalUserId()) ||
-				!Validator.equals(announcementsDelivery.getType(),
-					announcementsDeliveryModelImpl.getOriginalType()))) {
-			FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_U_T,
-				new Object[] {
-					Long.valueOf(announcementsDelivery.getUserId()),
-					
-				announcementsDelivery.getType()
-				}, announcementsDelivery);
-		}
-
-		return announcementsDelivery;
-	}
-
-	protected AnnouncementsDelivery toUnwrappedModel(
-		AnnouncementsDelivery announcementsDelivery) {
-		if (announcementsDelivery instanceof AnnouncementsDeliveryImpl) {
-			return announcementsDelivery;
-		}
-
-		AnnouncementsDeliveryImpl announcementsDeliveryImpl = new AnnouncementsDeliveryImpl();
-
-		announcementsDeliveryImpl.setNew(announcementsDelivery.isNew());
-		announcementsDeliveryImpl.setPrimaryKey(announcementsDelivery.getPrimaryKey());
-
-		announcementsDeliveryImpl.setDeliveryId(announcementsDelivery.getDeliveryId());
-		announcementsDeliveryImpl.setCompanyId(announcementsDelivery.getCompanyId());
-		announcementsDeliveryImpl.setUserId(announcementsDelivery.getUserId());
-		announcementsDeliveryImpl.setType(announcementsDelivery.getType());
-		announcementsDeliveryImpl.setEmail(announcementsDelivery.isEmail());
-		announcementsDeliveryImpl.setSms(announcementsDelivery.isSms());
-		announcementsDeliveryImpl.setWebsite(announcementsDelivery.isWebsite());
-
-		return announcementsDeliveryImpl;
-	}
-
-	/**
-	 * Returns the announcements delivery with the primary key or throws a {@link com.liferay.portal.NoSuchModelException} if it could not be found.
-	 *
-	 * @param primaryKey the primary key of the announcements delivery
-	 * @return the announcements delivery
-	 * @throws com.liferay.portal.NoSuchModelException if a announcements delivery with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public AnnouncementsDelivery findByPrimaryKey(Serializable primaryKey)
-		throws NoSuchModelException, SystemException {
-		return findByPrimaryKey(((Long)primaryKey).longValue());
-	}
-
-	/**
-	 * Returns the announcements delivery with the primary key or throws a {@link com.liferay.portlet.announcements.NoSuchDeliveryException} if it could not be found.
-	 *
-	 * @param deliveryId the primary key of the announcements delivery
-	 * @return the announcements delivery
-	 * @throws com.liferay.portlet.announcements.NoSuchDeliveryException if a announcements delivery with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	public AnnouncementsDelivery findByPrimaryKey(long deliveryId)
-		throws NoSuchDeliveryException, SystemException {
-		AnnouncementsDelivery announcementsDelivery = fetchByPrimaryKey(deliveryId);
-
-		if (announcementsDelivery == null) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + deliveryId);
-			}
-
-			throw new NoSuchDeliveryException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
-				deliveryId);
-		}
-
-		return announcementsDelivery;
-	}
-
-	/**
-	 * Returns the announcements delivery with the primary key or returns <code>null</code> if it could not be found.
-	 *
-	 * @param primaryKey the primary key of the announcements delivery
-	 * @return the announcements delivery, or <code>null</code> if a announcements delivery with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public AnnouncementsDelivery fetchByPrimaryKey(Serializable primaryKey)
-		throws SystemException {
-		return fetchByPrimaryKey(((Long)primaryKey).longValue());
-	}
-
-	/**
-	 * Returns the announcements delivery with the primary key or returns <code>null</code> if it could not be found.
-	 *
-	 * @param deliveryId the primary key of the announcements delivery
-	 * @return the announcements delivery, or <code>null</code> if a announcements delivery with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	public AnnouncementsDelivery fetchByPrimaryKey(long deliveryId)
-		throws SystemException {
-		AnnouncementsDelivery announcementsDelivery = (AnnouncementsDelivery)EntityCacheUtil.getResult(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
-				AnnouncementsDeliveryImpl.class, deliveryId, this);
-
-		if (announcementsDelivery == _nullAnnouncementsDelivery) {
-			return null;
-		}
-
-		if (announcementsDelivery == null) {
-			Session session = null;
-
-			boolean hasException = false;
-
-			try {
-				session = openSession();
-
-				announcementsDelivery = (AnnouncementsDelivery)session.get(AnnouncementsDeliveryImpl.class,
-						Long.valueOf(deliveryId));
-			}
-			catch (Exception e) {
-				hasException = true;
-
-				throw processException(e);
-			}
-			finally {
-				if (announcementsDelivery != null) {
-					cacheResult(announcementsDelivery);
-				}
-				else if (!hasException) {
-					EntityCacheUtil.putResult(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
-						AnnouncementsDeliveryImpl.class, deliveryId,
-						_nullAnnouncementsDelivery);
-				}
-
-				closeSession(session);
-			}
-		}
-
-		return announcementsDelivery;
-	}
 
 	/**
 	 * Returns all the announcements deliveries where userId = &#63;.
@@ -488,6 +114,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * @return the matching announcements deliveries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AnnouncementsDelivery> findByUserId(long userId)
 		throws SystemException {
 		return findByUserId(userId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
@@ -497,7 +124,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * Returns a range of all the announcements deliveries where userId = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.announcements.model.impl.AnnouncementsDeliveryModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param userId the user ID
@@ -506,6 +133,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * @return the range of matching announcements deliveries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AnnouncementsDelivery> findByUserId(long userId, int start,
 		int end) throws SystemException {
 		return findByUserId(userId, start, end, null);
@@ -515,7 +143,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * Returns an ordered range of all the announcements deliveries where userId = &#63;.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.announcements.model.impl.AnnouncementsDeliveryModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param userId the user ID
@@ -525,17 +153,36 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * @return the ordered range of matching announcements deliveries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AnnouncementsDelivery> findByUserId(long userId, int start,
 		int end, OrderByComparator orderByComparator) throws SystemException {
-		Object[] finderArgs = new Object[] {
-				userId,
-				
-				String.valueOf(start), String.valueOf(end),
-				String.valueOf(orderByComparator)
-			};
+		boolean pagination = true;
+		FinderPath finderPath = null;
+		Object[] finderArgs = null;
 
-		List<AnnouncementsDelivery> list = (List<AnnouncementsDelivery>)FinderCacheUtil.getResult(FINDER_PATH_FIND_BY_USERID,
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+			pagination = false;
+			finderPath = FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_USERID;
+			finderArgs = new Object[] { userId };
+		}
+		else {
+			finderPath = FINDER_PATH_WITH_PAGINATION_FIND_BY_USERID;
+			finderArgs = new Object[] { userId, start, end, orderByComparator };
+		}
+
+		List<AnnouncementsDelivery> list = (List<AnnouncementsDelivery>)FinderCacheUtil.getResult(finderPath,
 				finderArgs, this);
+
+		if ((list != null) && !list.isEmpty()) {
+			for (AnnouncementsDelivery announcementsDelivery : list) {
+				if ((userId != announcementsDelivery.getUserId())) {
+					list = null;
+
+					break;
+				}
+			}
+		}
 
 		if (list == null) {
 			StringBundler query = null;
@@ -545,7 +192,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 						(orderByComparator.getOrderByFields().length * 3));
 			}
 			else {
-				query = new StringBundler(2);
+				query = new StringBundler(3);
 			}
 
 			query.append(_SQL_SELECT_ANNOUNCEMENTSDELIVERY_WHERE);
@@ -555,6 +202,10 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 			if (orderByComparator != null) {
 				appendOrderByComparator(query, _ORDER_BY_ENTITY_ALIAS,
 					orderByComparator);
+			}
+			else
+			 if (pagination) {
+				query.append(AnnouncementsDeliveryModelImpl.ORDER_BY_JPQL);
 			}
 
 			String sql = query.toString();
@@ -570,24 +221,29 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 
 				qPos.add(userId);
 
-				list = (List<AnnouncementsDelivery>)QueryUtil.list(q,
-						getDialect(), start, end);
+				if (!pagination) {
+					list = (List<AnnouncementsDelivery>)QueryUtil.list(q,
+							getDialect(), start, end, false);
+
+					Collections.sort(list);
+
+					list = new UnmodifiableList<AnnouncementsDelivery>(list);
+				}
+				else {
+					list = (List<AnnouncementsDelivery>)QueryUtil.list(q,
+							getDialect(), start, end);
+				}
+
+				cacheResult(list);
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, list);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (list == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FIND_BY_USERID,
-						finderArgs);
-				}
-				else {
-					cacheResult(list);
-
-					FinderCacheUtil.putResult(FINDER_PATH_FIND_BY_USERID,
-						finderArgs, list);
-				}
-
 				closeSession(session);
 			}
 		}
@@ -598,45 +254,58 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	/**
 	 * Returns the first announcements delivery in the ordered set where userId = &#63;.
 	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
-	 *
 	 * @param userId the user ID
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
 	 * @return the first matching announcements delivery
 	 * @throws com.liferay.portlet.announcements.NoSuchDeliveryException if a matching announcements delivery could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AnnouncementsDelivery findByUserId_First(long userId,
 		OrderByComparator orderByComparator)
 		throws NoSuchDeliveryException, SystemException {
+		AnnouncementsDelivery announcementsDelivery = fetchByUserId_First(userId,
+				orderByComparator);
+
+		if (announcementsDelivery != null) {
+			return announcementsDelivery;
+		}
+
+		StringBundler msg = new StringBundler(4);
+
+		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		msg.append("userId=");
+		msg.append(userId);
+
+		msg.append(StringPool.CLOSE_CURLY_BRACE);
+
+		throw new NoSuchDeliveryException(msg.toString());
+	}
+
+	/**
+	 * Returns the first announcements delivery in the ordered set where userId = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching announcements delivery, or <code>null</code> if a matching announcements delivery could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AnnouncementsDelivery fetchByUserId_First(long userId,
+		OrderByComparator orderByComparator) throws SystemException {
 		List<AnnouncementsDelivery> list = findByUserId(userId, 0, 1,
 				orderByComparator);
 
-		if (list.isEmpty()) {
-			StringBundler msg = new StringBundler(4);
-
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-			msg.append("userId=");
-			msg.append(userId);
-
-			msg.append(StringPool.CLOSE_CURLY_BRACE);
-
-			throw new NoSuchDeliveryException(msg.toString());
-		}
-		else {
+		if (!list.isEmpty()) {
 			return list.get(0);
 		}
+
+		return null;
 	}
 
 	/**
 	 * Returns the last announcements delivery in the ordered set where userId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
 	 *
 	 * @param userId the user ID
 	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
@@ -644,37 +313,58 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * @throws com.liferay.portlet.announcements.NoSuchDeliveryException if a matching announcements delivery could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AnnouncementsDelivery findByUserId_Last(long userId,
 		OrderByComparator orderByComparator)
 		throws NoSuchDeliveryException, SystemException {
+		AnnouncementsDelivery announcementsDelivery = fetchByUserId_Last(userId,
+				orderByComparator);
+
+		if (announcementsDelivery != null) {
+			return announcementsDelivery;
+		}
+
+		StringBundler msg = new StringBundler(4);
+
+		msg.append(_NO_SUCH_ENTITY_WITH_KEY);
+
+		msg.append("userId=");
+		msg.append(userId);
+
+		msg.append(StringPool.CLOSE_CURLY_BRACE);
+
+		throw new NoSuchDeliveryException(msg.toString());
+	}
+
+	/**
+	 * Returns the last announcements delivery in the ordered set where userId = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching announcements delivery, or <code>null</code> if a matching announcements delivery could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AnnouncementsDelivery fetchByUserId_Last(long userId,
+		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByUserId(userId);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<AnnouncementsDelivery> list = findByUserId(userId, count - 1,
 				count, orderByComparator);
 
-		if (list.isEmpty()) {
-			StringBundler msg = new StringBundler(4);
-
-			msg.append(_NO_SUCH_ENTITY_WITH_KEY);
-
-			msg.append("userId=");
-			msg.append(userId);
-
-			msg.append(StringPool.CLOSE_CURLY_BRACE);
-
-			throw new NoSuchDeliveryException(msg.toString());
-		}
-		else {
+		if (!list.isEmpty()) {
 			return list.get(0);
 		}
+
+		return null;
 	}
 
 	/**
 	 * Returns the announcements deliveries before and after the current announcements delivery in the ordered set where userId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
-	 * </p>
 	 *
 	 * @param deliveryId the primary key of the current announcements delivery
 	 * @param userId the user ID
@@ -683,6 +373,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * @throws com.liferay.portlet.announcements.NoSuchDeliveryException if a announcements delivery with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AnnouncementsDelivery[] findByUserId_PrevAndNext(long deliveryId,
 		long userId, OrderByComparator orderByComparator)
 		throws NoSuchDeliveryException, SystemException {
@@ -731,17 +422,17 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 		query.append(_FINDER_COLUMN_USERID_USERID_2);
 
 		if (orderByComparator != null) {
-			String[] orderByFields = orderByComparator.getOrderByFields();
+			String[] orderByConditionFields = orderByComparator.getOrderByConditionFields();
 
-			if (orderByFields.length > 0) {
+			if (orderByConditionFields.length > 0) {
 				query.append(WHERE_AND);
 			}
 
-			for (int i = 0; i < orderByFields.length; i++) {
+			for (int i = 0; i < orderByConditionFields.length; i++) {
 				query.append(_ORDER_BY_ENTITY_ALIAS);
-				query.append(orderByFields[i]);
+				query.append(orderByConditionFields[i]);
 
-				if ((i + 1) < orderByFields.length) {
+				if ((i + 1) < orderByConditionFields.length) {
 					if (orderByComparator.isAscending() ^ previous) {
 						query.append(WHERE_GREATER_THAN_HAS_NEXT);
 					}
@@ -760,6 +451,8 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 			}
 
 			query.append(ORDER_BY_CLAUSE);
+
+			String[] orderByFields = orderByComparator.getOrderByFields();
 
 			for (int i = 0; i < orderByFields.length; i++) {
 				query.append(_ORDER_BY_ENTITY_ALIAS);
@@ -783,6 +476,9 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 				}
 			}
 		}
+		else {
+			query.append(AnnouncementsDeliveryModelImpl.ORDER_BY_JPQL);
+		}
 
 		String sql = query.toString();
 
@@ -796,7 +492,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 		qPos.add(userId);
 
 		if (orderByComparator != null) {
-			Object[] values = orderByComparator.getOrderByValues(announcementsDelivery);
+			Object[] values = orderByComparator.getOrderByConditionValues(announcementsDelivery);
 
 			for (Object value : values) {
 				qPos.add(value);
@@ -814,6 +510,86 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	}
 
 	/**
+	 * Removes all the announcements deliveries where userId = &#63; from the database.
+	 *
+	 * @param userId the user ID
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public void removeByUserId(long userId) throws SystemException {
+		for (AnnouncementsDelivery announcementsDelivery : findByUserId(
+				userId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null)) {
+			remove(announcementsDelivery);
+		}
+	}
+
+	/**
+	 * Returns the number of announcements deliveries where userId = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @return the number of matching announcements deliveries
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public int countByUserId(long userId) throws SystemException {
+		FinderPath finderPath = FINDER_PATH_COUNT_BY_USERID;
+
+		Object[] finderArgs = new Object[] { userId };
+
+		Long count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs,
+				this);
+
+		if (count == null) {
+			StringBundler query = new StringBundler(2);
+
+			query.append(_SQL_COUNT_ANNOUNCEMENTSDELIVERY_WHERE);
+
+			query.append(_FINDER_COLUMN_USERID_USERID_2);
+
+			String sql = query.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query q = session.createQuery(sql);
+
+				QueryPos qPos = QueryPos.getInstance(q);
+
+				qPos.add(userId);
+
+				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, count);
+			}
+			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return count.intValue();
+	}
+
+	private static final String _FINDER_COLUMN_USERID_USERID_2 = "announcementsDelivery.userId = ?";
+	public static final FinderPath FINDER_PATH_FETCH_BY_U_T = new FinderPath(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+			AnnouncementsDeliveryModelImpl.FINDER_CACHE_ENABLED,
+			AnnouncementsDeliveryImpl.class, FINDER_CLASS_NAME_ENTITY,
+			"fetchByU_T",
+			new String[] { Long.class.getName(), String.class.getName() },
+			AnnouncementsDeliveryModelImpl.USERID_COLUMN_BITMASK |
+			AnnouncementsDeliveryModelImpl.TYPE_COLUMN_BITMASK);
+	public static final FinderPath FINDER_PATH_COUNT_BY_U_T = new FinderPath(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+			AnnouncementsDeliveryModelImpl.FINDER_CACHE_ENABLED, Long.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_T",
+			new String[] { Long.class.getName(), String.class.getName() });
+
+	/**
 	 * Returns the announcements delivery where userId = &#63; and type = &#63; or throws a {@link com.liferay.portlet.announcements.NoSuchDeliveryException} if it could not be found.
 	 *
 	 * @param userId the user ID
@@ -822,6 +598,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * @throws com.liferay.portlet.announcements.NoSuchDeliveryException if a matching announcements delivery could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AnnouncementsDelivery findByU_T(long userId, String type)
 		throws NoSuchDeliveryException, SystemException {
 		AnnouncementsDelivery announcementsDelivery = fetchByU_T(userId, type);
@@ -857,6 +634,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * @return the matching announcements delivery, or <code>null</code> if a matching announcements delivery could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AnnouncementsDelivery fetchByU_T(long userId, String type)
 		throws SystemException {
 		return fetchByU_T(userId, type, true);
@@ -871,6 +649,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * @return the matching announcements delivery, or <code>null</code> if a matching announcements delivery could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public AnnouncementsDelivery fetchByU_T(long userId, String type,
 		boolean retrieveFromCache) throws SystemException {
 		Object[] finderArgs = new Object[] { userId, type };
@@ -882,23 +661,34 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 					finderArgs, this);
 		}
 
+		if (result instanceof AnnouncementsDelivery) {
+			AnnouncementsDelivery announcementsDelivery = (AnnouncementsDelivery)result;
+
+			if ((userId != announcementsDelivery.getUserId()) ||
+					!Validator.equals(type, announcementsDelivery.getType())) {
+				result = null;
+			}
+		}
+
 		if (result == null) {
-			StringBundler query = new StringBundler(3);
+			StringBundler query = new StringBundler(4);
 
 			query.append(_SQL_SELECT_ANNOUNCEMENTSDELIVERY_WHERE);
 
 			query.append(_FINDER_COLUMN_U_T_USERID_2);
 
+			boolean bindType = false;
+
 			if (type == null) {
 				query.append(_FINDER_COLUMN_U_T_TYPE_1);
 			}
+			else if (type.equals(StringPool.BLANK)) {
+				query.append(_FINDER_COLUMN_U_T_TYPE_3);
+			}
 			else {
-				if (type.equals(StringPool.BLANK)) {
-					query.append(_FINDER_COLUMN_U_T_TYPE_3);
-				}
-				else {
-					query.append(_FINDER_COLUMN_U_T_TYPE_2);
-				}
+				bindType = true;
+
+				query.append(_FINDER_COLUMN_U_T_TYPE_2);
 			}
 
 			String sql = query.toString();
@@ -914,22 +704,20 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 
 				qPos.add(userId);
 
-				if (type != null) {
+				if (bindType) {
 					qPos.add(type);
 				}
 
 				List<AnnouncementsDelivery> list = q.list();
-
-				result = list;
-
-				AnnouncementsDelivery announcementsDelivery = null;
 
 				if (list.isEmpty()) {
 					FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_U_T,
 						finderArgs, list);
 				}
 				else {
-					announcementsDelivery = list.get(0);
+					AnnouncementsDelivery announcementsDelivery = list.get(0);
+
+					result = announcementsDelivery;
 
 					cacheResult(announcementsDelivery);
 
@@ -940,29 +728,562 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 							finderArgs, announcementsDelivery);
 					}
 				}
-
-				return announcementsDelivery;
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_U_T,
+					finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (result == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_U_T,
-						finderArgs);
-				}
-
 				closeSession(session);
 			}
 		}
+
+		if (result instanceof List<?>) {
+			return null;
+		}
 		else {
-			if (result instanceof List<?>) {
-				return null;
+			return (AnnouncementsDelivery)result;
+		}
+	}
+
+	/**
+	 * Removes the announcements delivery where userId = &#63; and type = &#63; from the database.
+	 *
+	 * @param userId the user ID
+	 * @param type the type
+	 * @return the announcements delivery that was removed
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AnnouncementsDelivery removeByU_T(long userId, String type)
+		throws NoSuchDeliveryException, SystemException {
+		AnnouncementsDelivery announcementsDelivery = findByU_T(userId, type);
+
+		return remove(announcementsDelivery);
+	}
+
+	/**
+	 * Returns the number of announcements deliveries where userId = &#63; and type = &#63;.
+	 *
+	 * @param userId the user ID
+	 * @param type the type
+	 * @return the number of matching announcements deliveries
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public int countByU_T(long userId, String type) throws SystemException {
+		FinderPath finderPath = FINDER_PATH_COUNT_BY_U_T;
+
+		Object[] finderArgs = new Object[] { userId, type };
+
+		Long count = (Long)FinderCacheUtil.getResult(finderPath, finderArgs,
+				this);
+
+		if (count == null) {
+			StringBundler query = new StringBundler(3);
+
+			query.append(_SQL_COUNT_ANNOUNCEMENTSDELIVERY_WHERE);
+
+			query.append(_FINDER_COLUMN_U_T_USERID_2);
+
+			boolean bindType = false;
+
+			if (type == null) {
+				query.append(_FINDER_COLUMN_U_T_TYPE_1);
+			}
+			else if (type.equals(StringPool.BLANK)) {
+				query.append(_FINDER_COLUMN_U_T_TYPE_3);
 			}
 			else {
-				return (AnnouncementsDelivery)result;
+				bindType = true;
+
+				query.append(_FINDER_COLUMN_U_T_TYPE_2);
+			}
+
+			String sql = query.toString();
+
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				Query q = session.createQuery(sql);
+
+				QueryPos qPos = QueryPos.getInstance(q);
+
+				qPos.add(userId);
+
+				if (bindType) {
+					qPos.add(type);
+				}
+
+				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, count);
+			}
+			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
 			}
 		}
+
+		return count.intValue();
+	}
+
+	private static final String _FINDER_COLUMN_U_T_USERID_2 = "announcementsDelivery.userId = ? AND ";
+	private static final String _FINDER_COLUMN_U_T_TYPE_1 = "announcementsDelivery.type IS NULL";
+	private static final String _FINDER_COLUMN_U_T_TYPE_2 = "announcementsDelivery.type = ?";
+	private static final String _FINDER_COLUMN_U_T_TYPE_3 = "(announcementsDelivery.type IS NULL OR announcementsDelivery.type = '')";
+
+	public AnnouncementsDeliveryPersistenceImpl() {
+		setModelClass(AnnouncementsDelivery.class);
+	}
+
+	/**
+	 * Caches the announcements delivery in the entity cache if it is enabled.
+	 *
+	 * @param announcementsDelivery the announcements delivery
+	 */
+	@Override
+	public void cacheResult(AnnouncementsDelivery announcementsDelivery) {
+		EntityCacheUtil.putResult(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+			AnnouncementsDeliveryImpl.class,
+			announcementsDelivery.getPrimaryKey(), announcementsDelivery);
+
+		FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_U_T,
+			new Object[] {
+				announcementsDelivery.getUserId(),
+				announcementsDelivery.getType()
+			}, announcementsDelivery);
+
+		announcementsDelivery.resetOriginalValues();
+	}
+
+	/**
+	 * Caches the announcements deliveries in the entity cache if it is enabled.
+	 *
+	 * @param announcementsDeliveries the announcements deliveries
+	 */
+	@Override
+	public void cacheResult(List<AnnouncementsDelivery> announcementsDeliveries) {
+		for (AnnouncementsDelivery announcementsDelivery : announcementsDeliveries) {
+			if (EntityCacheUtil.getResult(
+						AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+						AnnouncementsDeliveryImpl.class,
+						announcementsDelivery.getPrimaryKey()) == null) {
+				cacheResult(announcementsDelivery);
+			}
+			else {
+				announcementsDelivery.resetOriginalValues();
+			}
+		}
+	}
+
+	/**
+	 * Clears the cache for all announcements deliveries.
+	 *
+	 * <p>
+	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
+	 * </p>
+	 */
+	@Override
+	public void clearCache() {
+		if (_HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE) {
+			CacheRegistryUtil.clear(AnnouncementsDeliveryImpl.class.getName());
+		}
+
+		EntityCacheUtil.clearCache(AnnouncementsDeliveryImpl.class.getName());
+
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_ENTITY);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+	}
+
+	/**
+	 * Clears the cache for the announcements delivery.
+	 *
+	 * <p>
+	 * The {@link com.liferay.portal.kernel.dao.orm.EntityCache} and {@link com.liferay.portal.kernel.dao.orm.FinderCache} are both cleared by this method.
+	 * </p>
+	 */
+	@Override
+	public void clearCache(AnnouncementsDelivery announcementsDelivery) {
+		EntityCacheUtil.removeResult(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+			AnnouncementsDeliveryImpl.class,
+			announcementsDelivery.getPrimaryKey());
+
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+
+		clearUniqueFindersCache(announcementsDelivery);
+	}
+
+	@Override
+	public void clearCache(List<AnnouncementsDelivery> announcementsDeliveries) {
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+
+		for (AnnouncementsDelivery announcementsDelivery : announcementsDeliveries) {
+			EntityCacheUtil.removeResult(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+				AnnouncementsDeliveryImpl.class,
+				announcementsDelivery.getPrimaryKey());
+
+			clearUniqueFindersCache(announcementsDelivery);
+		}
+	}
+
+	protected void cacheUniqueFindersCache(
+		AnnouncementsDelivery announcementsDelivery) {
+		if (announcementsDelivery.isNew()) {
+			Object[] args = new Object[] {
+					announcementsDelivery.getUserId(),
+					announcementsDelivery.getType()
+				};
+
+			FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_U_T, args,
+				Long.valueOf(1));
+			FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_U_T, args,
+				announcementsDelivery);
+		}
+		else {
+			AnnouncementsDeliveryModelImpl announcementsDeliveryModelImpl = (AnnouncementsDeliveryModelImpl)announcementsDelivery;
+
+			if ((announcementsDeliveryModelImpl.getColumnBitmask() &
+					FINDER_PATH_FETCH_BY_U_T.getColumnBitmask()) != 0) {
+				Object[] args = new Object[] {
+						announcementsDelivery.getUserId(),
+						announcementsDelivery.getType()
+					};
+
+				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_U_T, args,
+					Long.valueOf(1));
+				FinderCacheUtil.putResult(FINDER_PATH_FETCH_BY_U_T, args,
+					announcementsDelivery);
+			}
+		}
+	}
+
+	protected void clearUniqueFindersCache(
+		AnnouncementsDelivery announcementsDelivery) {
+		AnnouncementsDeliveryModelImpl announcementsDeliveryModelImpl = (AnnouncementsDeliveryModelImpl)announcementsDelivery;
+
+		Object[] args = new Object[] {
+				announcementsDelivery.getUserId(),
+				announcementsDelivery.getType()
+			};
+
+		FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_U_T, args);
+		FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_U_T, args);
+
+		if ((announcementsDeliveryModelImpl.getColumnBitmask() &
+				FINDER_PATH_FETCH_BY_U_T.getColumnBitmask()) != 0) {
+			args = new Object[] {
+					announcementsDeliveryModelImpl.getOriginalUserId(),
+					announcementsDeliveryModelImpl.getOriginalType()
+				};
+
+			FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_U_T, args);
+			FinderCacheUtil.removeResult(FINDER_PATH_FETCH_BY_U_T, args);
+		}
+	}
+
+	/**
+	 * Creates a new announcements delivery with the primary key. Does not add the announcements delivery to the database.
+	 *
+	 * @param deliveryId the primary key for the new announcements delivery
+	 * @return the new announcements delivery
+	 */
+	@Override
+	public AnnouncementsDelivery create(long deliveryId) {
+		AnnouncementsDelivery announcementsDelivery = new AnnouncementsDeliveryImpl();
+
+		announcementsDelivery.setNew(true);
+		announcementsDelivery.setPrimaryKey(deliveryId);
+
+		return announcementsDelivery;
+	}
+
+	/**
+	 * Removes the announcements delivery with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * @param deliveryId the primary key of the announcements delivery
+	 * @return the announcements delivery that was removed
+	 * @throws com.liferay.portlet.announcements.NoSuchDeliveryException if a announcements delivery with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AnnouncementsDelivery remove(long deliveryId)
+		throws NoSuchDeliveryException, SystemException {
+		return remove((Serializable)deliveryId);
+	}
+
+	/**
+	 * Removes the announcements delivery with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * @param primaryKey the primary key of the announcements delivery
+	 * @return the announcements delivery that was removed
+	 * @throws com.liferay.portlet.announcements.NoSuchDeliveryException if a announcements delivery with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AnnouncementsDelivery remove(Serializable primaryKey)
+		throws NoSuchDeliveryException, SystemException {
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			AnnouncementsDelivery announcementsDelivery = (AnnouncementsDelivery)session.get(AnnouncementsDeliveryImpl.class,
+					primaryKey);
+
+			if (announcementsDelivery == null) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + primaryKey);
+				}
+
+				throw new NoSuchDeliveryException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
+					primaryKey);
+			}
+
+			return remove(announcementsDelivery);
+		}
+		catch (NoSuchDeliveryException nsee) {
+			throw nsee;
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	@Override
+	protected AnnouncementsDelivery removeImpl(
+		AnnouncementsDelivery announcementsDelivery) throws SystemException {
+		announcementsDelivery = toUnwrappedModel(announcementsDelivery);
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			if (!session.contains(announcementsDelivery)) {
+				announcementsDelivery = (AnnouncementsDelivery)session.get(AnnouncementsDeliveryImpl.class,
+						announcementsDelivery.getPrimaryKeyObj());
+			}
+
+			if (announcementsDelivery != null) {
+				session.delete(announcementsDelivery);
+			}
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+
+		if (announcementsDelivery != null) {
+			clearCache(announcementsDelivery);
+		}
+
+		return announcementsDelivery;
+	}
+
+	@Override
+	public AnnouncementsDelivery updateImpl(
+		com.liferay.portlet.announcements.model.AnnouncementsDelivery announcementsDelivery)
+		throws SystemException {
+		announcementsDelivery = toUnwrappedModel(announcementsDelivery);
+
+		boolean isNew = announcementsDelivery.isNew();
+
+		AnnouncementsDeliveryModelImpl announcementsDeliveryModelImpl = (AnnouncementsDeliveryModelImpl)announcementsDelivery;
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			if (announcementsDelivery.isNew()) {
+				session.save(announcementsDelivery);
+
+				announcementsDelivery.setNew(false);
+			}
+			else {
+				session.merge(announcementsDelivery);
+			}
+		}
+		catch (Exception e) {
+			throw processException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+
+		if (isNew || !AnnouncementsDeliveryModelImpl.COLUMN_BITMASK_ENABLED) {
+			FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		}
+
+		else {
+			if ((announcementsDeliveryModelImpl.getColumnBitmask() &
+					FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_USERID.getColumnBitmask()) != 0) {
+				Object[] args = new Object[] {
+						announcementsDeliveryModelImpl.getOriginalUserId()
+					};
+
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_USERID, args);
+				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_USERID,
+					args);
+
+				args = new Object[] { announcementsDeliveryModelImpl.getUserId() };
+
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_BY_USERID, args);
+				FinderCacheUtil.removeResult(FINDER_PATH_WITHOUT_PAGINATION_FIND_BY_USERID,
+					args);
+			}
+		}
+
+		EntityCacheUtil.putResult(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+			AnnouncementsDeliveryImpl.class,
+			announcementsDelivery.getPrimaryKey(), announcementsDelivery);
+
+		clearUniqueFindersCache(announcementsDelivery);
+		cacheUniqueFindersCache(announcementsDelivery);
+
+		return announcementsDelivery;
+	}
+
+	protected AnnouncementsDelivery toUnwrappedModel(
+		AnnouncementsDelivery announcementsDelivery) {
+		if (announcementsDelivery instanceof AnnouncementsDeliveryImpl) {
+			return announcementsDelivery;
+		}
+
+		AnnouncementsDeliveryImpl announcementsDeliveryImpl = new AnnouncementsDeliveryImpl();
+
+		announcementsDeliveryImpl.setNew(announcementsDelivery.isNew());
+		announcementsDeliveryImpl.setPrimaryKey(announcementsDelivery.getPrimaryKey());
+
+		announcementsDeliveryImpl.setDeliveryId(announcementsDelivery.getDeliveryId());
+		announcementsDeliveryImpl.setCompanyId(announcementsDelivery.getCompanyId());
+		announcementsDeliveryImpl.setUserId(announcementsDelivery.getUserId());
+		announcementsDeliveryImpl.setType(announcementsDelivery.getType());
+		announcementsDeliveryImpl.setEmail(announcementsDelivery.isEmail());
+		announcementsDeliveryImpl.setSms(announcementsDelivery.isSms());
+		announcementsDeliveryImpl.setWebsite(announcementsDelivery.isWebsite());
+
+		return announcementsDeliveryImpl;
+	}
+
+	/**
+	 * Returns the announcements delivery with the primary key or throws a {@link com.liferay.portal.NoSuchModelException} if it could not be found.
+	 *
+	 * @param primaryKey the primary key of the announcements delivery
+	 * @return the announcements delivery
+	 * @throws com.liferay.portlet.announcements.NoSuchDeliveryException if a announcements delivery with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AnnouncementsDelivery findByPrimaryKey(Serializable primaryKey)
+		throws NoSuchDeliveryException, SystemException {
+		AnnouncementsDelivery announcementsDelivery = fetchByPrimaryKey(primaryKey);
+
+		if (announcementsDelivery == null) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + primaryKey);
+			}
+
+			throw new NoSuchDeliveryException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
+				primaryKey);
+		}
+
+		return announcementsDelivery;
+	}
+
+	/**
+	 * Returns the announcements delivery with the primary key or throws a {@link com.liferay.portlet.announcements.NoSuchDeliveryException} if it could not be found.
+	 *
+	 * @param deliveryId the primary key of the announcements delivery
+	 * @return the announcements delivery
+	 * @throws com.liferay.portlet.announcements.NoSuchDeliveryException if a announcements delivery with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AnnouncementsDelivery findByPrimaryKey(long deliveryId)
+		throws NoSuchDeliveryException, SystemException {
+		return findByPrimaryKey((Serializable)deliveryId);
+	}
+
+	/**
+	 * Returns the announcements delivery with the primary key or returns <code>null</code> if it could not be found.
+	 *
+	 * @param primaryKey the primary key of the announcements delivery
+	 * @return the announcements delivery, or <code>null</code> if a announcements delivery with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AnnouncementsDelivery fetchByPrimaryKey(Serializable primaryKey)
+		throws SystemException {
+		AnnouncementsDelivery announcementsDelivery = (AnnouncementsDelivery)EntityCacheUtil.getResult(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+				AnnouncementsDeliveryImpl.class, primaryKey);
+
+		if (announcementsDelivery == _nullAnnouncementsDelivery) {
+			return null;
+		}
+
+		if (announcementsDelivery == null) {
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				announcementsDelivery = (AnnouncementsDelivery)session.get(AnnouncementsDeliveryImpl.class,
+						primaryKey);
+
+				if (announcementsDelivery != null) {
+					cacheResult(announcementsDelivery);
+				}
+				else {
+					EntityCacheUtil.putResult(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+						AnnouncementsDeliveryImpl.class, primaryKey,
+						_nullAnnouncementsDelivery);
+				}
+			}
+			catch (Exception e) {
+				EntityCacheUtil.removeResult(AnnouncementsDeliveryModelImpl.ENTITY_CACHE_ENABLED,
+					AnnouncementsDeliveryImpl.class, primaryKey);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return announcementsDelivery;
+	}
+
+	/**
+	 * Returns the announcements delivery with the primary key or returns <code>null</code> if it could not be found.
+	 *
+	 * @param deliveryId the primary key of the announcements delivery
+	 * @return the announcements delivery, or <code>null</code> if a announcements delivery with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public AnnouncementsDelivery fetchByPrimaryKey(long deliveryId)
+		throws SystemException {
+		return fetchByPrimaryKey((Serializable)deliveryId);
 	}
 
 	/**
@@ -971,6 +1292,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * @return the announcements deliveries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AnnouncementsDelivery> findAll() throws SystemException {
 		return findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
@@ -979,7 +1301,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * Returns a range of all the announcements deliveries.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.announcements.model.impl.AnnouncementsDeliveryModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param start the lower bound of the range of announcements deliveries
@@ -987,6 +1309,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * @return the range of announcements deliveries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AnnouncementsDelivery> findAll(int start, int end)
 		throws SystemException {
 		return findAll(start, end, null);
@@ -996,7 +1319,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * Returns an ordered range of all the announcements deliveries.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.announcements.model.impl.AnnouncementsDeliveryModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param start the lower bound of the range of announcements deliveries
@@ -1005,14 +1328,25 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * @return the ordered range of announcements deliveries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<AnnouncementsDelivery> findAll(int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
-		Object[] finderArgs = new Object[] {
-				String.valueOf(start), String.valueOf(end),
-				String.valueOf(orderByComparator)
-			};
+		boolean pagination = true;
+		FinderPath finderPath = null;
+		Object[] finderArgs = null;
 
-		List<AnnouncementsDelivery> list = (List<AnnouncementsDelivery>)FinderCacheUtil.getResult(FINDER_PATH_FIND_ALL,
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+			pagination = false;
+			finderPath = FINDER_PATH_WITHOUT_PAGINATION_FIND_ALL;
+			finderArgs = FINDER_ARGS_EMPTY;
+		}
+		else {
+			finderPath = FINDER_PATH_WITH_PAGINATION_FIND_ALL;
+			finderArgs = new Object[] { start, end, orderByComparator };
+		}
+
+		List<AnnouncementsDelivery> list = (List<AnnouncementsDelivery>)FinderCacheUtil.getResult(finderPath,
 				finderArgs, this);
 
 		if (list == null) {
@@ -1032,6 +1366,10 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 			}
 			else {
 				sql = _SQL_SELECT_ANNOUNCEMENTSDELIVERY;
+
+				if (pagination) {
+					sql = sql.concat(AnnouncementsDeliveryModelImpl.ORDER_BY_JPQL);
+				}
 			}
 
 			Session session = null;
@@ -1041,32 +1379,29 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 
 				Query q = session.createQuery(sql);
 
-				if (orderByComparator == null) {
+				if (!pagination) {
 					list = (List<AnnouncementsDelivery>)QueryUtil.list(q,
 							getDialect(), start, end, false);
 
 					Collections.sort(list);
+
+					list = new UnmodifiableList<AnnouncementsDelivery>(list);
 				}
 				else {
 					list = (List<AnnouncementsDelivery>)QueryUtil.list(q,
 							getDialect(), start, end);
 				}
+
+				cacheResult(list);
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, list);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (list == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FIND_ALL,
-						finderArgs);
-				}
-				else {
-					cacheResult(list);
-
-					FinderCacheUtil.putResult(FINDER_PATH_FIND_ALL, finderArgs,
-						list);
-				}
-
 				closeSession(session);
 			}
 		}
@@ -1075,163 +1410,15 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	}
 
 	/**
-	 * Removes all the announcements deliveries where userId = &#63; from the database.
-	 *
-	 * @param userId the user ID
-	 * @throws SystemException if a system exception occurred
-	 */
-	public void removeByUserId(long userId) throws SystemException {
-		for (AnnouncementsDelivery announcementsDelivery : findByUserId(userId)) {
-			announcementsDeliveryPersistence.remove(announcementsDelivery);
-		}
-	}
-
-	/**
-	 * Removes the announcements delivery where userId = &#63; and type = &#63; from the database.
-	 *
-	 * @param userId the user ID
-	 * @param type the type
-	 * @throws SystemException if a system exception occurred
-	 */
-	public void removeByU_T(long userId, String type)
-		throws NoSuchDeliveryException, SystemException {
-		AnnouncementsDelivery announcementsDelivery = findByU_T(userId, type);
-
-		announcementsDeliveryPersistence.remove(announcementsDelivery);
-	}
-
-	/**
 	 * Removes all the announcements deliveries from the database.
 	 *
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeAll() throws SystemException {
 		for (AnnouncementsDelivery announcementsDelivery : findAll()) {
-			announcementsDeliveryPersistence.remove(announcementsDelivery);
+			remove(announcementsDelivery);
 		}
-	}
-
-	/**
-	 * Returns the number of announcements deliveries where userId = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @return the number of matching announcements deliveries
-	 * @throws SystemException if a system exception occurred
-	 */
-	public int countByUserId(long userId) throws SystemException {
-		Object[] finderArgs = new Object[] { userId };
-
-		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_BY_USERID,
-				finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(2);
-
-			query.append(_SQL_COUNT_ANNOUNCEMENTSDELIVERY_WHERE);
-
-			query.append(_FINDER_COLUMN_USERID_USERID_2);
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(userId);
-
-				count = (Long)q.uniqueResult();
-			}
-			catch (Exception e) {
-				throw processException(e);
-			}
-			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_USERID,
-					finderArgs, count);
-
-				closeSession(session);
-			}
-		}
-
-		return count.intValue();
-	}
-
-	/**
-	 * Returns the number of announcements deliveries where userId = &#63; and type = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param type the type
-	 * @return the number of matching announcements deliveries
-	 * @throws SystemException if a system exception occurred
-	 */
-	public int countByU_T(long userId, String type) throws SystemException {
-		Object[] finderArgs = new Object[] { userId, type };
-
-		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_BY_U_T,
-				finderArgs, this);
-
-		if (count == null) {
-			StringBundler query = new StringBundler(3);
-
-			query.append(_SQL_COUNT_ANNOUNCEMENTSDELIVERY_WHERE);
-
-			query.append(_FINDER_COLUMN_U_T_USERID_2);
-
-			if (type == null) {
-				query.append(_FINDER_COLUMN_U_T_TYPE_1);
-			}
-			else {
-				if (type.equals(StringPool.BLANK)) {
-					query.append(_FINDER_COLUMN_U_T_TYPE_3);
-				}
-				else {
-					query.append(_FINDER_COLUMN_U_T_TYPE_2);
-				}
-			}
-
-			String sql = query.toString();
-
-			Session session = null;
-
-			try {
-				session = openSession();
-
-				Query q = session.createQuery(sql);
-
-				QueryPos qPos = QueryPos.getInstance(q);
-
-				qPos.add(userId);
-
-				if (type != null) {
-					qPos.add(type);
-				}
-
-				count = (Long)q.uniqueResult();
-			}
-			catch (Exception e) {
-				throw processException(e);
-			}
-			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_BY_U_T, finderArgs,
-					count);
-
-				closeSession(session);
-			}
-		}
-
-		return count.intValue();
 	}
 
 	/**
@@ -1240,11 +1427,10 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	 * @return the number of announcements deliveries
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countAll() throws SystemException {
-		Object[] finderArgs = new Object[0];
-
 		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_ALL,
-				finderArgs, this);
+				FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -1255,23 +1441,27 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 				Query q = session.createQuery(_SQL_COUNT_ANNOUNCEMENTSDELIVERY);
 
 				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(FINDER_PATH_COUNT_ALL,
+					FINDER_ARGS_EMPTY, count);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_ALL,
+					FINDER_ARGS_EMPTY);
+
 				throw processException(e);
 			}
 			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_ALL, finderArgs,
-					count);
-
 				closeSession(session);
 			}
 		}
 
 		return count.intValue();
+	}
+
+	@Override
+	protected Set<String> getBadColumnNames() {
+		return _badColumnNames;
 	}
 
 	/**
@@ -1288,7 +1478,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 
 				for (String listenerClassName : listenerClassNames) {
 					listenersList.add((ModelListener<AnnouncementsDelivery>)InstanceFactory.newInstance(
-							listenerClassName));
+							getClassLoader(), listenerClassName));
 				}
 
 				listeners = listenersList.toArray(new ModelListener[listenersList.size()]);
@@ -1302,38 +1492,29 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 	public void destroy() {
 		EntityCacheUtil.removeCache(AnnouncementsDeliveryImpl.class.getName());
 		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_ENTITY);
-		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST);
+		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 	}
 
-	@BeanReference(type = AnnouncementsDeliveryPersistence.class)
-	protected AnnouncementsDeliveryPersistence announcementsDeliveryPersistence;
-	@BeanReference(type = AnnouncementsEntryPersistence.class)
-	protected AnnouncementsEntryPersistence announcementsEntryPersistence;
-	@BeanReference(type = AnnouncementsFlagPersistence.class)
-	protected AnnouncementsFlagPersistence announcementsFlagPersistence;
-	@BeanReference(type = ResourcePersistence.class)
-	protected ResourcePersistence resourcePersistence;
-	@BeanReference(type = UserPersistence.class)
-	protected UserPersistence userPersistence;
 	private static final String _SQL_SELECT_ANNOUNCEMENTSDELIVERY = "SELECT announcementsDelivery FROM AnnouncementsDelivery announcementsDelivery";
 	private static final String _SQL_SELECT_ANNOUNCEMENTSDELIVERY_WHERE = "SELECT announcementsDelivery FROM AnnouncementsDelivery announcementsDelivery WHERE ";
 	private static final String _SQL_COUNT_ANNOUNCEMENTSDELIVERY = "SELECT COUNT(announcementsDelivery) FROM AnnouncementsDelivery announcementsDelivery";
 	private static final String _SQL_COUNT_ANNOUNCEMENTSDELIVERY_WHERE = "SELECT COUNT(announcementsDelivery) FROM AnnouncementsDelivery announcementsDelivery WHERE ";
-	private static final String _FINDER_COLUMN_USERID_USERID_2 = "announcementsDelivery.userId = ?";
-	private static final String _FINDER_COLUMN_U_T_USERID_2 = "announcementsDelivery.userId = ? AND ";
-	private static final String _FINDER_COLUMN_U_T_TYPE_1 = "announcementsDelivery.type IS NULL";
-	private static final String _FINDER_COLUMN_U_T_TYPE_2 = "announcementsDelivery.type = ?";
-	private static final String _FINDER_COLUMN_U_T_TYPE_3 = "(announcementsDelivery.type IS NULL OR announcementsDelivery.type = ?)";
 	private static final String _ORDER_BY_ENTITY_ALIAS = "announcementsDelivery.";
 	private static final String _NO_SUCH_ENTITY_WITH_PRIMARY_KEY = "No AnnouncementsDelivery exists with the primary key ";
 	private static final String _NO_SUCH_ENTITY_WITH_KEY = "No AnnouncementsDelivery exists with the key {";
 	private static final boolean _HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE = com.liferay.portal.util.PropsValues.HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE;
 	private static Log _log = LogFactoryUtil.getLog(AnnouncementsDeliveryPersistenceImpl.class);
+	private static Set<String> _badColumnNames = SetUtil.fromArray(new String[] {
+				"type"
+			});
 	private static AnnouncementsDelivery _nullAnnouncementsDelivery = new AnnouncementsDeliveryImpl() {
+			@Override
 			public Object clone() {
 				return this;
 			}
 
+			@Override
 			public CacheModel<AnnouncementsDelivery> toCacheModel() {
 				return _nullAnnouncementsDeliveryCacheModel;
 			}
@@ -1341,6 +1522,7 @@ public class AnnouncementsDeliveryPersistenceImpl extends BasePersistenceImpl<An
 
 	private static CacheModel<AnnouncementsDelivery> _nullAnnouncementsDeliveryCacheModel =
 		new CacheModel<AnnouncementsDelivery>() {
+			@Override
 			public AnnouncementsDelivery toEntityModel() {
 				return _nullAnnouncementsDelivery;
 			}

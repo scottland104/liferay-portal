@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -25,17 +25,7 @@ public class StrutsConfigDescriptor extends SimpleXMLDescriptor {
 
 	@Override
 	public boolean canHandleType(String doctype, Document root) {
-		if (doctype.indexOf("struts-config") != -1) {
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-
-	@Override
-	public String[] getRootChildrenOrder() {
-		return _ROOT_ORDERED_CHILDREN;
+		return doctype.contains("struts-config");
 	}
 
 	@Override
@@ -44,19 +34,19 @@ public class StrutsConfigDescriptor extends SimpleXMLDescriptor {
 	}
 
 	@Override
-	public String[] getUniqueElements() {
-		return _UNIQUE_ELEMENTS;
-	}
-
-	@Override
 	public String[] getJoinableElements() {
 		return _JOINABLE_ELEMENTS;
 	}
 
-	private static final String[] _ROOT_ORDERED_CHILDREN = {
-		"data-sources", "form-beans", "global-exceptions", "global-forwards",
-		"action-mappings", "controller", "message-resources", "plug-in"
-	};
+	@Override
+	public String[] getRootChildrenOrder() {
+		return _ROOT_ORDERED_CHILDREN;
+	}
+
+	@Override
+	public String[] getUniqueElements() {
+		return _UNIQUE_ELEMENTS;
+	}
 
 	private static final ElementIdentifier[] _ELEMENTS_IDENTIFIED_BY_ATTR = {
 		new ElementIdentifier("forward", "name"),
@@ -65,14 +55,19 @@ public class StrutsConfigDescriptor extends SimpleXMLDescriptor {
 		new ElementIdentifier("form-bean", "name")
 	};
 
-	private static final String[] _UNIQUE_ELEMENTS = {
-		"data-sources", "form-beans", "global-exceptions", "global-forwards",
-		"action-mappings", "controller"
-	};
-
 	private static final String[] _JOINABLE_ELEMENTS = {
 		"data-sources", "form-beans", "global-exceptions", "global-forwards",
 		"action-mappings"
+	};
+
+	private static final String[] _ROOT_ORDERED_CHILDREN = {
+		"data-sources", "form-beans", "global-exceptions", "global-forwards",
+		"action-mappings", "controller", "message-resources", "plug-in"
+	};
+
+	private static final String[] _UNIQUE_ELEMENTS = {
+		"data-sources", "form-beans", "global-exceptions", "global-forwards",
+		"action-mappings", "controller"
 	};
 
 }

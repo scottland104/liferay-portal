@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.ResourceBlock;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing ResourceBlock in entity cache.
  *
@@ -26,7 +31,8 @@ import com.liferay.portal.model.ResourceBlock;
  * @see ResourceBlock
  * @generated
  */
-public class ResourceBlockCacheModel implements CacheModel<ResourceBlock> {
+public class ResourceBlockCacheModel implements CacheModel<ResourceBlock>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(13);
@@ -48,6 +54,7 @@ public class ResourceBlockCacheModel implements CacheModel<ResourceBlock> {
 		return sb.toString();
 	}
 
+	@Override
 	public ResourceBlock toEntityModel() {
 		ResourceBlockImpl resourceBlockImpl = new ResourceBlockImpl();
 
@@ -74,6 +81,40 @@ public class ResourceBlockCacheModel implements CacheModel<ResourceBlock> {
 		resourceBlockImpl.resetOriginalValues();
 
 		return resourceBlockImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		resourceBlockId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		groupId = objectInput.readLong();
+		name = objectInput.readUTF();
+		permissionsHash = objectInput.readUTF();
+		referenceCount = objectInput.readLong();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(resourceBlockId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(groupId);
+
+		if (name == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(name);
+		}
+
+		if (permissionsHash == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(permissionsHash);
+		}
+
+		objectOutput.writeLong(referenceCount);
 	}
 
 	public long resourceBlockId;

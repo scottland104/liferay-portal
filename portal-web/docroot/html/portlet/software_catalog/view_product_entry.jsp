@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -54,8 +54,9 @@ viewProductEntryURL.setParameter("productEntryId", String.valueOf(productEntryId
 
 <liferay-ui:header
 	backURL="<%= redirect %>"
+	escapeXml="<%= false %>"
 	localizeTitle="<%= false %>"
-	title='<%= productEntry.getName() + " " + ((latestProductVersion == null) ? "" : latestProductVersion.getVersion()) %>'
+	title='<%= productEntry.getName() + " " + ((latestProductVersion == null) ? "" : HtmlUtil.escape(latestProductVersion.getVersion())) %>'
 />
 
 <table class="lfr-table">
@@ -74,13 +75,13 @@ viewProductEntryURL.setParameter("productEntryId", String.valueOf(productEntryId
 	<td>
 
 		<%
-		Iterator itr = productEntry.getLicenses().iterator();
+		List<SCLicense> productEntryLicenses = productEntry.getLicenses();
 
-		while (itr.hasNext()) {
-			SCLicense license = (SCLicense)itr.next();
+		for (int i = 0; i < productEntryLicenses.size(); i++) {
+			SCLicense license = productEntryLicenses.get(i);
 		%>
 
-			<aui:a href="<%= license.getUrl() %>" target="_blank"><%= license.getName() %></aui:a><c:if test="<%= itr.hasNext() %>">, </c:if>
+			<aui:a href="<%= license.getUrl() %>" target="_blank"><%= HtmlUtil.escape(license.getName()) %></aui:a><c:if test="<%= i < productEntryLicenses.size() - 1 %>">, </c:if>
 
 		<%
 		}
@@ -156,7 +157,7 @@ viewProductEntryURL.setParameter("productEntryId", String.valueOf(productEntryId
 				<liferay-ui:message key="change-log" />:
 			</td>
 			<td>
-				<%= latestProductVersion.getChangeLog() %>
+				<%= HtmlUtil.escape(latestProductVersion.getChangeLog()) %>
 			</td>
 		</tr>
 		<tr>
@@ -194,7 +195,7 @@ viewProductEntryURL.setParameter("productEntryId", String.valueOf(productEntryId
 		<br />
 	</c:when>
 	<c:otherwise>
-		<div class="portlet-msg-error">
+		<div class="alert alert-error">
 			<liferay-ui:message key="this-product-does-not-have-any-released-versions" />
 		</div>
 	</c:otherwise>
@@ -212,7 +213,7 @@ List productScreenshots = SCProductScreenshotLocalServiceUtil.getProductScreensh
 			SCProductScreenshot productScreenshot = (SCProductScreenshot)productScreenshots.get(i);
 		%>
 
-			<aui:a href='<%= themeDisplay.getPathImage() + "/software_catalog?img_id=" + productScreenshot.getFullImageId() + "&t=" + ImageServletTokenUtil.getToken(productScreenshot.getFullImageId()) %>' target="_blank"><img alt="<liferay-ui:message key="screenshot" />" src="<%= themeDisplay.getPathImage() %>/software_catalog?img_id=<%= productScreenshot.getThumbnailId() %>&t=<%= ImageServletTokenUtil.getToken(productScreenshot.getThumbnailId()) %>" /></aui:a>
+			<aui:a href='<%= themeDisplay.getPathImage() + "/software_catalog?img_id=" + productScreenshot.getFullImageId() + "&t=" + WebServerServletTokenUtil.getToken(productScreenshot.getFullImageId()) %>' target="_blank"><img alt="<liferay-ui:message key="screenshot" />" src="<%= themeDisplay.getPathImage() %>/software_catalog?img_id=<%= productScreenshot.getThumbnailId() %>&t=<%= WebServerServletTokenUtil.getToken(productScreenshot.getThumbnailId()) %>" /></aui:a>
 
 		<%
 		}
@@ -231,21 +232,21 @@ List productScreenshots = SCProductScreenshotLocalServiceUtil.getProductScreensh
 <c:if test="<%= SCProductEntryPermission.contains(permissionChecker, productEntryId, ActionKeys.UPDATE) %>">
 	<br />
 
-	<input type="button" value="<liferay-ui:message key="edit-product" />" onClick="location.href = '<%= editProductEntryURL.toString() %>';" />
+	<input onClick="location.href = '<%= editProductEntryURL.toString() %>';" type="button" value="<liferay-ui:message key="edit-product" />" />
 
-	<input type="button" value="<liferay-ui:message key="add-product-version" />" onClick="location.href = '<%= addProductVersionURL.toString() %>';" />
+	<input onClick="location.href = '<%= addProductVersionURL.toString() %>';" type="button" value="<liferay-ui:message key="add-product-version" />" />
 
 	<br /><br />
 </c:if>
 
 <liferay-ui:tabs
-	param="tabs2"
 	names="version-history,comments"
+	param="tabs2"
 	portletURL="<%= viewProductEntryURL %>"
 />
 
 <c:choose>
-	<c:when test='<%= tabs2.equals("comments") %>'>
+	<c:when test='<%= PropsValues.SC_PRODUCT_COMMENTS_ENABLED && tabs2.equals("comments") %>'>
 		<portlet:actionURL var="discussionURL">
 			<portlet:param name="struts_action" value="/software_catalog/edit_product_entry_discussion" />
 		</portlet:actionURL>
@@ -255,7 +256,6 @@ List productScreenshots = SCProductScreenshotLocalServiceUtil.getProductScreensh
 			classPK="<%= productEntry.getProductEntryId() %>"
 			formAction="<%= discussionURL %>"
 			redirect="<%= currentURL %>"
-			subject="<%= productEntry.getName() %>"
 			userId="<%= productEntry.getUserId() %>"
 		/>
 	</c:when>
@@ -311,7 +311,7 @@ List productScreenshots = SCProductScreenshotLocalServiceUtil.getProductScreensh
 			row.addText(sb.toString());
 
 			row.addText(_getFrameworkVersions(curProductVersion.getFrameworkVersions()));
-			row.addText(dateFormatDateTime.format(curProductVersion.getModifiedDate()));
+			row.addDate(curProductVersion.getModifiedDate());
 
 			// Action
 
@@ -332,28 +332,26 @@ PortalUtil.setPageSubtitle(productEntry.getName(), request);
 PortalUtil.setPageDescription(productEntry.getShortDescription(), request);
 PortalUtil.setPageKeywords(productEntry.getTags(), request);
 
+SCProductEntry unescapedProductEntry = productEntry.toUnescapedModel();
+
 PortletURL portletURL = renderResponse.createRenderURL();
 
 portletURL.setParameter("struts_action", "/software_catalog/view_product");
 portletURL.setParameter("redirect", currentURL);
 portletURL.setParameter("productEntryId", String.valueOf(productEntry.getProductEntryId()));
 
-PortalUtil.addPortletBreadcrumbEntry(request, productEntry.getName(), portletURL.toString());
+PortalUtil.addPortletBreadcrumbEntry(request, unescapedProductEntry.getName(), portletURL.toString());
 %>
 
 <%!
-public String _getFrameworkVersions(List frameworkVersions) {
+public String _getFrameworkVersions(List<SCFrameworkVersion> frameworkVersions) {
 	if (frameworkVersions.isEmpty()) {
 		return StringPool.BLANK;
 	}
 
-	Iterator itr = frameworkVersions.iterator();
-
 	StringBundler sb = new StringBundler(frameworkVersions.size() * 6);
 
-	while (itr.hasNext()) {
-		SCFrameworkVersion frameworkVersion = (SCFrameworkVersion)itr.next();
-
+	for (SCFrameworkVersion frameworkVersion : frameworkVersions) {
 		frameworkVersion = frameworkVersion.toEscapedModel();
 
 		if (Validator.isNotNull(frameworkVersion.getUrl())) {
@@ -367,10 +365,10 @@ public String _getFrameworkVersions(List frameworkVersions) {
 			sb.append(frameworkVersion.getName());
 		}
 
-		if (itr.hasNext()) {
-			sb.append(", ");
-		}
+		sb.append(", ");
 	}
+
+	sb.setIndex(sb.index() - 1);
 
 	return sb.toString();
 }

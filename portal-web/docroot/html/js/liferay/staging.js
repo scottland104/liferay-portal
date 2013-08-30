@@ -1,4 +1,4 @@
-AUI().add(
+AUI.add(
 	'liferay-staging',
 	function(A) {
 		var Lang = A.Lang;
@@ -30,6 +30,6 @@ AUI().add(
 	},
 	'',
 	{
-		requires: ['aui-dialog', 'aui-io-plugin']
+		requires: ['aui-io-plugin-deprecated', 'liferay-util-window']
 	}
 );

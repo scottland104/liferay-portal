@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -32,7 +32,8 @@ import com.liferay.portal.util.PropsValues;
 import java.io.IOException;
 
 import javax.portlet.PortletRequest;
-import javax.portlet.PortletResponse;
+import javax.portlet.ResourceRequest;
+import javax.portlet.ResourceResponse;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -59,7 +60,7 @@ public class ReCaptchaImpl extends SimpleCaptchaImpl {
 
 	@Override
 	public void serveImage(
-		PortletRequest portletRequest, PortletResponse portletResponse) {
+		ResourceRequest resourceRequest, ResourceResponse resourceResponse) {
 
 		throw new UnsupportedOperationException();
 	}
@@ -90,7 +91,10 @@ public class ReCaptchaImpl extends SimpleCaptchaImpl {
 
 		options.addPart("remoteip", request.getRemoteAddr());
 		options.addPart("response", reCaptchaResponse);
-		options.setLocation(PropsValues.CAPTCHA_ENGINE_RECAPTCHA_URL_VERIFY);
+		options.setLocation(
+			HttpUtil.protocolize(
+				PropsValues.CAPTCHA_ENGINE_RECAPTCHA_URL_VERIFY,
+				request.isSecure()));
 		options.setPost(true);
 
 		String content = null;

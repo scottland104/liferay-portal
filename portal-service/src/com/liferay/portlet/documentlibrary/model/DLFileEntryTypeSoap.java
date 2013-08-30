@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -23,14 +23,15 @@ import java.util.List;
 /**
  * This class is used by SOAP remote services, specifically {@link com.liferay.portlet.documentlibrary.service.http.DLFileEntryTypeServiceSoap}.
  *
- * @author    Brian Wing Shun Chan
- * @see       com.liferay.portlet.documentlibrary.service.http.DLFileEntryTypeServiceSoap
+ * @author Brian Wing Shun Chan
+ * @see com.liferay.portlet.documentlibrary.service.http.DLFileEntryTypeServiceSoap
  * @generated
  */
 public class DLFileEntryTypeSoap implements Serializable {
 	public static DLFileEntryTypeSoap toSoapModel(DLFileEntryType model) {
 		DLFileEntryTypeSoap soapModel = new DLFileEntryTypeSoap();
 
+		soapModel.setUuid(model.getUuid());
 		soapModel.setFileEntryTypeId(model.getFileEntryTypeId());
 		soapModel.setGroupId(model.getGroupId());
 		soapModel.setCompanyId(model.getCompanyId());
@@ -38,6 +39,7 @@ public class DLFileEntryTypeSoap implements Serializable {
 		soapModel.setUserName(model.getUserName());
 		soapModel.setCreateDate(model.getCreateDate());
 		soapModel.setModifiedDate(model.getModifiedDate());
+		soapModel.setFileEntryTypeKey(model.getFileEntryTypeKey());
 		soapModel.setName(model.getName());
 		soapModel.setDescription(model.getDescription());
 
@@ -92,6 +94,14 @@ public class DLFileEntryTypeSoap implements Serializable {
 
 	public void setPrimaryKey(long pk) {
 		setFileEntryTypeId(pk);
+	}
+
+	public String getUuid() {
+		return _uuid;
+	}
+
+	public void setUuid(String uuid) {
+		_uuid = uuid;
 	}
 
 	public long getFileEntryTypeId() {
@@ -150,6 +160,14 @@ public class DLFileEntryTypeSoap implements Serializable {
 		_modifiedDate = modifiedDate;
 	}
 
+	public String getFileEntryTypeKey() {
+		return _fileEntryTypeKey;
+	}
+
+	public void setFileEntryTypeKey(String fileEntryTypeKey) {
+		_fileEntryTypeKey = fileEntryTypeKey;
+	}
+
 	public String getName() {
 		return _name;
 	}
@@ -166,6 +184,7 @@ public class DLFileEntryTypeSoap implements Serializable {
 		_description = description;
 	}
 
+	private String _uuid;
 	private long _fileEntryTypeId;
 	private long _groupId;
 	private long _companyId;
@@ -173,6 +192,7 @@ public class DLFileEntryTypeSoap implements Serializable {
 	private String _userName;
 	private Date _createDate;
 	private Date _modifiedDate;
+	private String _fileEntryTypeKey;
 	private String _name;
 	private String _description;
 }

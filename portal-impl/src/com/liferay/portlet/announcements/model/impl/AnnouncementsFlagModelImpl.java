@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.impl.BaseModelImpl;
@@ -33,13 +34,13 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base model implementation for the AnnouncementsFlag service. Represents a row in the &quot;AnnouncementsFlag&quot; database table, with each column mapped to a property of this class.
@@ -83,6 +84,13 @@ public class AnnouncementsFlagModelImpl extends BaseModelImpl<AnnouncementsFlag>
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portlet.announcements.model.AnnouncementsFlag"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portlet.announcements.model.AnnouncementsFlag"),
+			true);
+	public static long ENTRYID_COLUMN_BITMASK = 1L;
+	public static long USERID_COLUMN_BITMASK = 2L;
+	public static long VALUE_COLUMN_BITMASK = 4L;
+	public static long CREATEDATE_COLUMN_BITMASK = 8L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -91,6 +99,10 @@ public class AnnouncementsFlagModelImpl extends BaseModelImpl<AnnouncementsFlag>
 	 * @return the normal model instance
 	 */
 	public static AnnouncementsFlag toModel(AnnouncementsFlagSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		AnnouncementsFlag model = new AnnouncementsFlagImpl();
 
 		model.setFlagId(soapModel.getFlagId());
@@ -110,6 +122,10 @@ public class AnnouncementsFlagModelImpl extends BaseModelImpl<AnnouncementsFlag>
 	 */
 	public static List<AnnouncementsFlag> toModels(
 		AnnouncementsFlagSoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<AnnouncementsFlag> models = new ArrayList<AnnouncementsFlag>(soapModels.length);
 
 		for (AnnouncementsFlagSoap soapModel : soapModels) {
@@ -119,51 +135,109 @@ public class AnnouncementsFlagModelImpl extends BaseModelImpl<AnnouncementsFlag>
 		return models;
 	}
 
-	public Class<?> getModelClass() {
-		return AnnouncementsFlag.class;
-	}
-
-	public String getModelClassName() {
-		return AnnouncementsFlag.class.getName();
-	}
-
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portlet.announcements.model.AnnouncementsFlag"));
 
 	public AnnouncementsFlagModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _flagId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setFlagId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_flagId);
+		return _flagId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return AnnouncementsFlag.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return AnnouncementsFlag.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("flagId", getFlagId());
+		attributes.put("userId", getUserId());
+		attributes.put("createDate", getCreateDate());
+		attributes.put("entryId", getEntryId());
+		attributes.put("value", getValue());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long flagId = (Long)attributes.get("flagId");
+
+		if (flagId != null) {
+			setFlagId(flagId);
+		}
+
+		Long userId = (Long)attributes.get("userId");
+
+		if (userId != null) {
+			setUserId(userId);
+		}
+
+		Date createDate = (Date)attributes.get("createDate");
+
+		if (createDate != null) {
+			setCreateDate(createDate);
+		}
+
+		Long entryId = (Long)attributes.get("entryId");
+
+		if (entryId != null) {
+			setEntryId(entryId);
+		}
+
+		Integer value = (Integer)attributes.get("value");
+
+		if (value != null) {
+			setValue(value);
+		}
+	}
+
 	@JSON
+	@Override
 	public long getFlagId() {
 		return _flagId;
 	}
 
+	@Override
 	public void setFlagId(long flagId) {
 		_flagId = flagId;
 	}
 
 	@JSON
+	@Override
 	public long getUserId() {
 		return _userId;
 	}
 
+	@Override
 	public void setUserId(long userId) {
+		_columnBitmask = -1L;
+
 		if (!_setOriginalUserId) {
 			_setOriginalUserId = true;
 
@@ -173,10 +247,12 @@ public class AnnouncementsFlagModelImpl extends BaseModelImpl<AnnouncementsFlag>
 		_userId = userId;
 	}
 
+	@Override
 	public String getUserUuid() throws SystemException {
 		return PortalUtil.getUserValue(getUserId(), "uuid", _userUuid);
 	}
 
+	@Override
 	public void setUserUuid(String userUuid) {
 		_userUuid = userUuid;
 	}
@@ -186,20 +262,28 @@ public class AnnouncementsFlagModelImpl extends BaseModelImpl<AnnouncementsFlag>
 	}
 
 	@JSON
+	@Override
 	public Date getCreateDate() {
 		return _createDate;
 	}
 
+	@Override
 	public void setCreateDate(Date createDate) {
+		_columnBitmask = -1L;
+
 		_createDate = createDate;
 	}
 
 	@JSON
+	@Override
 	public long getEntryId() {
 		return _entryId;
 	}
 
+	@Override
 	public void setEntryId(long entryId) {
+		_columnBitmask |= ENTRYID_COLUMN_BITMASK;
+
 		if (!_setOriginalEntryId) {
 			_setOriginalEntryId = true;
 
@@ -214,11 +298,15 @@ public class AnnouncementsFlagModelImpl extends BaseModelImpl<AnnouncementsFlag>
 	}
 
 	@JSON
+	@Override
 	public int getValue() {
 		return _value;
 	}
 
+	@Override
 	public void setValue(int value) {
+		_columnBitmask |= VALUE_COLUMN_BITMASK;
+
 		if (!_setOriginalValue) {
 			_setOriginalValue = true;
 
@@ -232,35 +320,31 @@ public class AnnouncementsFlagModelImpl extends BaseModelImpl<AnnouncementsFlag>
 		return _originalValue;
 	}
 
-	@Override
-	public AnnouncementsFlag toEscapedModel() {
-		if (isEscapedModel()) {
-			return (AnnouncementsFlag)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (AnnouncementsFlag)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
-
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(0,
-					AnnouncementsFlag.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(0,
+			AnnouncementsFlag.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public AnnouncementsFlag toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (AnnouncementsFlag)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -278,6 +362,7 @@ public class AnnouncementsFlagModelImpl extends BaseModelImpl<AnnouncementsFlag>
 		return announcementsFlagImpl;
 	}
 
+	@Override
 	public int compareTo(AnnouncementsFlag announcementsFlag) {
 		int value = 0;
 
@@ -307,18 +392,15 @@ public class AnnouncementsFlagModelImpl extends BaseModelImpl<AnnouncementsFlag>
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof AnnouncementsFlag)) {
 			return false;
 		}
 
-		AnnouncementsFlag announcementsFlag = null;
-
-		try {
-			announcementsFlag = (AnnouncementsFlag)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		AnnouncementsFlag announcementsFlag = (AnnouncementsFlag)obj;
 
 		long primaryKey = announcementsFlag.getPrimaryKey();
 
@@ -350,6 +432,8 @@ public class AnnouncementsFlagModelImpl extends BaseModelImpl<AnnouncementsFlag>
 		announcementsFlagModelImpl._originalValue = announcementsFlagModelImpl._value;
 
 		announcementsFlagModelImpl._setOriginalValue = false;
+
+		announcementsFlagModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -395,6 +479,7 @@ public class AnnouncementsFlagModelImpl extends BaseModelImpl<AnnouncementsFlag>
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
 		StringBundler sb = new StringBundler(19);
 
@@ -429,7 +514,7 @@ public class AnnouncementsFlagModelImpl extends BaseModelImpl<AnnouncementsFlag>
 	}
 
 	private static ClassLoader _classLoader = AnnouncementsFlag.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
+	private static Class<?>[] _escapedModelInterfaces = new Class[] {
 			AnnouncementsFlag.class
 		};
 	private long _flagId;
@@ -444,6 +529,6 @@ public class AnnouncementsFlagModelImpl extends BaseModelImpl<AnnouncementsFlag>
 	private int _value;
 	private int _originalValue;
 	private boolean _setOriginalValue;
-	private transient ExpandoBridge _expandoBridge;
-	private AnnouncementsFlag _escapedModelProxy;
+	private long _columnBitmask;
+	private AnnouncementsFlag _escapedModel;
 }

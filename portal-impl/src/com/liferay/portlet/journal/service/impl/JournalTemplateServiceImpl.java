@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,60 +16,69 @@ package com.liferay.portlet.journal.service.impl;
 
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.util.PortalUtil;
+import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
+import com.liferay.portlet.dynamicdatamapping.model.DDMTemplate;
+import com.liferay.portlet.journal.model.JournalStructure;
 import com.liferay.portlet.journal.model.JournalTemplate;
 import com.liferay.portlet.journal.service.base.JournalTemplateServiceBaseImpl;
 import com.liferay.portlet.journal.service.permission.JournalPermission;
-import com.liferay.portlet.journal.service.permission.JournalStructurePermission;
 import com.liferay.portlet.journal.service.permission.JournalTemplatePermission;
+import com.liferay.portlet.journal.util.JournalUtil;
 
 import java.io.File;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
- * @author Brian Wing Shun Chan
- * @author Raymond Augé
+ * @author     Brian Wing Shun Chan
+ * @author     Raymond Augé
+ * @deprecated As of 6.2.0, since Web Content Administration now uses the
+ *             Dynamic Data Mapping framework to handle templates
  */
 public class JournalTemplateServiceImpl extends JournalTemplateServiceBaseImpl {
 
+	@Override
 	public JournalTemplate addTemplate(
 			long groupId, String templateId, boolean autoTemplateId,
-			String structureId, String name, String description, String xsl,
-			boolean formatXsl, String langType, boolean cacheable,
-			ServiceContext serviceContext)
+			String structureId, Map<Locale, String> nameMap,
+			Map<Locale, String> descriptionMap, String xsl, boolean formatXsl,
+			String langType, boolean cacheable, boolean smallImage,
+			String smallImageURL, File smallFile, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		JournalPermission.check(
 			getPermissionChecker(), groupId, ActionKeys.ADD_TEMPLATE);
 
 		return journalTemplateLocalService.addTemplate(
-			getUserId(), groupId, templateId, autoTemplateId, structureId, name,
-			description, xsl, formatXsl, langType, cacheable, false, null, null,
-			serviceContext);
+			getUserId(), groupId, templateId, autoTemplateId, structureId,
+			nameMap, descriptionMap, xsl, formatXsl, langType, cacheable,
+			smallImage, smallImageURL, smallFile, serviceContext);
 	}
 
+	@Override
 	public JournalTemplate addTemplate(
 			long groupId, String templateId, boolean autoTemplateId,
-			String structureId, String name, String description, String xsl,
-			boolean formatXsl, String langType, boolean cacheable,
-			boolean smallImage, String smallImageURL, File smallFile,
-			ServiceContext serviceContext)
+			String structureId, Map<Locale, String> nameMap,
+			Map<Locale, String> descriptionMap, String xsl, boolean formatXsl,
+			String langType, boolean cacheable, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		JournalPermission.check(
 			getPermissionChecker(), groupId, ActionKeys.ADD_TEMPLATE);
 
 		return journalTemplateLocalService.addTemplate(
-			getUserId(), groupId, templateId, autoTemplateId, structureId, name,
-			description, xsl, formatXsl, langType, cacheable, smallImage,
-			smallImageURL, smallFile, serviceContext);
+			getUserId(), groupId, templateId, autoTemplateId, structureId,
+			nameMap, descriptionMap, xsl, formatXsl, langType, cacheable, false,
+			null, null, serviceContext);
 	}
 
+	@Override
 	public JournalTemplate copyTemplate(
 			long groupId, String oldTemplateId, String newTemplateId,
 			boolean autoTemplateId)
@@ -82,6 +91,7 @@ public class JournalTemplateServiceImpl extends JournalTemplateServiceBaseImpl {
 			getUserId(), groupId, oldTemplateId, newTemplateId, autoTemplateId);
 	}
 
+	@Override
 	public void deleteTemplate(long groupId, String templateId)
 		throws PortalException, SystemException {
 
@@ -91,38 +101,22 @@ public class JournalTemplateServiceImpl extends JournalTemplateServiceBaseImpl {
 		journalTemplateLocalService.deleteTemplate(groupId, templateId);
 	}
 
+	@Override
 	public List<JournalTemplate> getStructureTemplates(
 			long groupId, String structureId)
 		throws PortalException, SystemException {
 
-		if (!JournalStructurePermission.contains(
-				getPermissionChecker(), groupId, structureId,
-				ActionKeys.VIEW)) {
+		JournalStructure structure = journalStructureLocalService.getStructure(
+			groupId, structureId);
 
-			return new ArrayList<JournalTemplate>();
-		}
+		List<DDMTemplate> ddmTemplates =
+			ddmTemplatePersistence.filterFindByG_CPK(
+				groupId, structure.getPrimaryKey());
 
-		List<JournalTemplate> list =
-			journalTemplateLocalService.getStructureTemplates(
-				groupId, structureId);
-
-		list = ListUtil.copy(list);
-
-		Iterator<JournalTemplate> itr = list.iterator();
-
-		while (itr.hasNext()) {
-			JournalTemplate template = itr.next();
-
-			if (!JournalTemplatePermission.contains(
-					getPermissionChecker(), template, ActionKeys.VIEW)) {
-
-				itr.remove();
-			}
-		}
-
-		return list;
+		return JournalUtil.toJournalTemplates(ddmTemplates);
 	}
 
+	@Override
 	public JournalTemplate getTemplate(long groupId, String templateId)
 		throws PortalException, SystemException {
 
@@ -132,34 +126,118 @@ public class JournalTemplateServiceImpl extends JournalTemplateServiceBaseImpl {
 		return journalTemplateLocalService.getTemplate(groupId, templateId);
 	}
 
-	public JournalTemplate updateTemplate(
-			long groupId, String templateId, String structureId, String name,
-			String description, String xsl, boolean formatXsl, String langType,
-			boolean cacheable, ServiceContext serviceContext)
+	@Override
+	public JournalTemplate getTemplate(
+			long groupId, String templateId, boolean includeGlobalTemplates)
 		throws PortalException, SystemException {
 
 		JournalTemplatePermission.check(
-			getPermissionChecker(), groupId, templateId, ActionKeys.UPDATE);
+			getPermissionChecker(), groupId, templateId, ActionKeys.VIEW);
 
-		return journalTemplateLocalService.updateTemplate(
-			groupId, templateId, structureId, name, description, xsl, formatXsl,
-			langType, cacheable, false, null, null, serviceContext);
+		return journalTemplateLocalService.getTemplate(
+			groupId, templateId, includeGlobalTemplates);
 	}
 
+	@Override
+	public List<JournalTemplate> search(
+			long companyId, long[] groupIds, String keywords,
+			String structureId, String structureIdComparator, int start,
+			int end, OrderByComparator obc)
+		throws SystemException {
+
+		long[] classNameIds = {PortalUtil.getClassNameId(DDMStructure.class)};
+		long[] classPKs = JournalUtil.getStructureClassPKs(
+			groupIds, structureId);
+
+		List<DDMTemplate> ddmTemplates = ddmTemplateFinder.filterFindByKeywords(
+			companyId, groupIds, classNameIds, classPKs, keywords, null, null,
+			start, end, obc);
+
+		return JournalUtil.toJournalTemplates(ddmTemplates);
+	}
+
+	@Override
+	public List<JournalTemplate> search(
+			long companyId, long[] groupIds, String templateId,
+			String structureId, String structureIdComparator, String name,
+			String description, boolean andOperator, int start, int end,
+			OrderByComparator obc)
+		throws SystemException {
+
+		long[] classNameIds = {PortalUtil.getClassNameId(DDMStructure.class)};
+		long[] classPKs = JournalUtil.getStructureClassPKs(
+			groupIds, structureId);
+
+		List<DDMTemplate> ddmTemplates =
+			ddmTemplateFinder.filterFindByC_G_C_C_N_D_T_M_L(
+				companyId, groupIds, classNameIds, classPKs, name, description,
+				null, null, null, andOperator, start, end, obc);
+
+		return JournalUtil.toJournalTemplates(ddmTemplates);
+	}
+
+	@Override
+	public int searchCount(
+			long companyId, long[] groupIds, String keywords,
+			String structureId, String structureIdComparator)
+		throws SystemException {
+
+		long[] classNameIds = {PortalUtil.getClassNameId(DDMStructure.class)};
+		long[] classPKs = JournalUtil.getStructureClassPKs(
+			groupIds, structureId);
+
+		return ddmTemplateFinder.filterCountByKeywords(
+			companyId, groupIds, classNameIds, classPKs, keywords, null, null);
+	}
+
+	@Override
+	public int searchCount(
+			long companyId, long[] groupIds, String templateId,
+			String structureId, String structureIdComparator, String name,
+			String description, boolean andOperator)
+		throws SystemException {
+
+		long[] classNameIds = {PortalUtil.getClassNameId(DDMStructure.class)};
+		long[] classPKs = JournalUtil.getStructureClassPKs(
+			groupIds, structureId);
+
+		return ddmTemplateFinder.filterCountByC_G_C_C_N_D_T_M_L(
+			companyId, groupIds, classNameIds, classPKs, name, description,
+			null, null, null, andOperator);
+	}
+
+	@Override
 	public JournalTemplate updateTemplate(
-			long groupId, String templateId, String structureId, String name,
-			String description, String xsl, boolean formatXsl, String langType,
-			boolean cacheable, boolean smallImage, String smallImageURL,
-			File smallFile, ServiceContext serviceContext)
+			long groupId, String templateId, String structureId,
+			Map<Locale, String> nameMap, Map<Locale, String> descriptionMap,
+			String xsl, boolean formatXsl, String langType, boolean cacheable,
+			boolean smallImage, String smallImageURL, File smallFile,
+			ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		JournalTemplatePermission.check(
 			getPermissionChecker(), groupId, templateId, ActionKeys.UPDATE);
 
 		return journalTemplateLocalService.updateTemplate(
-			groupId, templateId, structureId, name, description, xsl, formatXsl,
-			langType, cacheable, smallImage, smallImageURL, smallFile,
-			serviceContext);
+			groupId, templateId, structureId, nameMap, descriptionMap, xsl,
+			formatXsl, langType, cacheable, smallImage, smallImageURL,
+			smallFile, serviceContext);
+	}
+
+	@Override
+	public JournalTemplate updateTemplate(
+			long groupId, String templateId, String structureId,
+			Map<Locale, String> nameMap, Map<Locale, String> descriptionMap,
+			String xsl, boolean formatXsl, String langType, boolean cacheable,
+			ServiceContext serviceContext)
+		throws PortalException, SystemException {
+
+		JournalTemplatePermission.check(
+			getPermissionChecker(), groupId, templateId, ActionKeys.UPDATE);
+
+		return journalTemplateLocalService.updateTemplate(
+			groupId, templateId, structureId, nameMap, descriptionMap, xsl,
+			formatXsl, langType, cacheable, false, null, null, serviceContext);
 	}
 
 }

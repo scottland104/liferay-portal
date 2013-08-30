@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,13 +24,11 @@ import com.liferay.portal.service.http.TunnelUtil;
 import com.liferay.portlet.documentlibrary.service.DLFileVersionServiceUtil;
 
 /**
- * <p>
- * This class provides a HTTP utility for the
+ * Provides the HTTP utility for the
  * {@link com.liferay.portlet.documentlibrary.service.DLFileVersionServiceUtil} service utility. The
  * static methods of this class calls the same methods of the service utility.
  * However, the signatures are different because it requires an additional
  * {@link com.liferay.portal.security.auth.HttpPrincipal} parameter.
- * </p>
  *
  * <p>
  * The benefits of using the HTTP utility is that it is fast and allows for
@@ -47,10 +45,10 @@ import com.liferay.portlet.documentlibrary.service.DLFileVersionServiceUtil;
  * The HTTP utility is only generated for remote services.
  * </p>
  *
- * @author    Brian Wing Shun Chan
- * @see       DLFileVersionServiceSoap
- * @see       com.liferay.portal.security.auth.HttpPrincipal
- * @see       com.liferay.portlet.documentlibrary.service.DLFileVersionServiceUtil
+ * @author Brian Wing Shun Chan
+ * @see DLFileVersionServiceSoap
+ * @see com.liferay.portal.security.auth.HttpPrincipal
+ * @see com.liferay.portlet.documentlibrary.service.DLFileVersionServiceUtil
  * @generated
  */
 public class DLFileVersionServiceHttp {
@@ -59,7 +57,7 @@ public class DLFileVersionServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(DLFileVersionServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(DLFileVersionServiceUtil.class,
 					"getFileVersion", _getFileVersionParameterTypes0);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,
@@ -96,7 +94,7 @@ public class DLFileVersionServiceHttp {
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		try {
-			MethodKey methodKey = new MethodKey(DLFileVersionServiceUtil.class.getName(),
+			MethodKey methodKey = new MethodKey(DLFileVersionServiceUtil.class,
 					"getLatestFileVersion", _getLatestFileVersionParameterTypes1);
 
 			MethodHandler methodHandler = new MethodHandler(methodKey,

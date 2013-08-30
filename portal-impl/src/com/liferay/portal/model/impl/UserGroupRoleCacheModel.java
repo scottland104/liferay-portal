@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,11 @@ import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.UserGroupRole;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * The cache model class for representing UserGroupRole in entity cache.
  *
@@ -25,7 +30,8 @@ import com.liferay.portal.model.UserGroupRole;
  * @see UserGroupRole
  * @generated
  */
-public class UserGroupRoleCacheModel implements CacheModel<UserGroupRole> {
+public class UserGroupRoleCacheModel implements CacheModel<UserGroupRole>,
+	Externalizable {
 	@Override
 	public String toString() {
 		StringBundler sb = new StringBundler(7);
@@ -41,6 +47,7 @@ public class UserGroupRoleCacheModel implements CacheModel<UserGroupRole> {
 		return sb.toString();
 	}
 
+	@Override
 	public UserGroupRole toEntityModel() {
 		UserGroupRoleImpl userGroupRoleImpl = new UserGroupRoleImpl();
 
@@ -51,6 +58,21 @@ public class UserGroupRoleCacheModel implements CacheModel<UserGroupRole> {
 		userGroupRoleImpl.resetOriginalValues();
 
 		return userGroupRoleImpl;
+	}
+
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		userId = objectInput.readLong();
+		groupId = objectInput.readLong();
+		roleId = objectInput.readLong();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		objectOutput.writeLong(userId);
+		objectOutput.writeLong(groupId);
+		objectOutput.writeLong(roleId);
 	}
 
 	public long userId;

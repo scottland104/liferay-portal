@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,11 +14,12 @@
 
 package com.liferay.portlet.dynamicdatalists.model;
 
+import com.liferay.portal.LocaleException;
 import com.liferay.portal.kernel.bean.AutoEscape;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.model.BaseModel;
 import com.liferay.portal.model.CacheModel;
-import com.liferay.portal.model.GroupedModel;
+import com.liferay.portal.model.StagedGroupedModel;
 import com.liferay.portal.service.ServiceContext;
 
 import com.liferay.portlet.expando.model.ExpandoBridge;
@@ -42,7 +43,8 @@ import java.util.Map;
  * @see com.liferay.portlet.dynamicdatalists.model.impl.DDLRecordSetModelImpl
  * @generated
  */
-public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel {
+public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>,
+	StagedGroupedModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -69,6 +71,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 * @return the uuid of this d d l record set
 	 */
 	@AutoEscape
+	@Override
 	public String getUuid();
 
 	/**
@@ -76,6 +79,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 *
 	 * @param uuid the uuid of this d d l record set
 	 */
+	@Override
 	public void setUuid(String uuid);
 
 	/**
@@ -97,6 +101,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 *
 	 * @return the group ID of this d d l record set
 	 */
+	@Override
 	public long getGroupId();
 
 	/**
@@ -104,6 +109,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 *
 	 * @param groupId the group ID of this d d l record set
 	 */
+	@Override
 	public void setGroupId(long groupId);
 
 	/**
@@ -111,6 +117,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 *
 	 * @return the company ID of this d d l record set
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -118,6 +125,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 *
 	 * @param companyId the company ID of this d d l record set
 	 */
+	@Override
 	public void setCompanyId(long companyId);
 
 	/**
@@ -125,6 +133,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 *
 	 * @return the user ID of this d d l record set
 	 */
+	@Override
 	public long getUserId();
 
 	/**
@@ -132,6 +141,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 *
 	 * @param userId the user ID of this d d l record set
 	 */
+	@Override
 	public void setUserId(long userId);
 
 	/**
@@ -140,6 +150,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 * @return the user uuid of this d d l record set
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public String getUserUuid() throws SystemException;
 
 	/**
@@ -147,6 +158,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 *
 	 * @param userUuid the user uuid of this d d l record set
 	 */
+	@Override
 	public void setUserUuid(String userUuid);
 
 	/**
@@ -155,6 +167,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 * @return the user name of this d d l record set
 	 */
 	@AutoEscape
+	@Override
 	public String getUserName();
 
 	/**
@@ -162,6 +175,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 *
 	 * @param userName the user name of this d d l record set
 	 */
+	@Override
 	public void setUserName(String userName);
 
 	/**
@@ -169,6 +183,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 *
 	 * @return the create date of this d d l record set
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -176,6 +191,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 *
 	 * @param createDate the create date of this d d l record set
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -183,6 +199,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 *
 	 * @return the modified date of this d d l record set
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -190,6 +207,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 *
 	 * @param modifiedDate the modified date of this d d l record set
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
@@ -233,6 +251,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 * @param locale the locale of the language
 	 * @return the localized name of this d d l record set
 	 */
+	@AutoEscape
 	public String getName(Locale locale);
 
 	/**
@@ -242,6 +261,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized name of this d d l record set. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getName(Locale locale, boolean useDefault);
 
 	/**
@@ -250,6 +270,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 * @param languageId the ID of the language
 	 * @return the localized name of this d d l record set
 	 */
+	@AutoEscape
 	public String getName(String languageId);
 
 	/**
@@ -259,7 +280,14 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized name of this d d l record set
 	 */
+	@AutoEscape
 	public String getName(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getNameCurrentLanguageId();
+
+	@AutoEscape
+	public String getNameCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized names of this d d l record set.
@@ -292,6 +320,8 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 */
 	public void setName(String name, Locale locale, Locale defaultLocale);
 
+	public void setNameCurrentLanguageId(String languageId);
+
 	/**
 	 * Sets the localized names of this d d l record set from the map of locales and localized names.
 	 *
@@ -320,6 +350,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 * @param locale the locale of the language
 	 * @return the localized description of this d d l record set
 	 */
+	@AutoEscape
 	public String getDescription(Locale locale);
 
 	/**
@@ -329,6 +360,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized description of this d d l record set. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getDescription(Locale locale, boolean useDefault);
 
 	/**
@@ -337,6 +369,7 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 * @param languageId the ID of the language
 	 * @return the localized description of this d d l record set
 	 */
+	@AutoEscape
 	public String getDescription(String languageId);
 
 	/**
@@ -346,7 +379,14 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized description of this d d l record set
 	 */
+	@AutoEscape
 	public String getDescription(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getDescriptionCurrentLanguageId();
+
+	@AutoEscape
+	public String getDescriptionCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized descriptions of this d d l record set.
@@ -379,6 +419,8 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 */
 	public void setDescription(String description, Locale locale,
 		Locale defaultLocale);
+
+	public void setDescriptionCurrentLanguageId(String languageId);
 
 	/**
 	 * Sets the localized descriptions of this d d l record set from the map of locales and localized descriptions.
@@ -424,37 +466,69 @@ public interface DDLRecordSetModel extends BaseModel<DDLRecordSet>, GroupedModel
 	 */
 	public void setScope(int scope);
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	public String[] getAvailableLanguageIds();
+
+	public String getDefaultLanguageId();
+
+	public void prepareLocalizedFieldsForImport() throws LocaleException;
+
+	public void prepareLocalizedFieldsForImport(Locale defaultImportLocale)
+		throws LocaleException;
+
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(DDLRecordSet ddlRecordSet);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<DDLRecordSet> toCacheModel();
 
+	@Override
 	public DDLRecordSet toEscapedModel();
 
+	@Override
+	public DDLRecordSet toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,31 +17,20 @@
 <%@ include file="/html/portlet/blogs/init.jsp" %>
 
 <%
-long categoryId = ParamUtil.getLong(request, "categoryId");
-
-String categoryName = null;
-String vocabularyName = null;
-
-if (categoryId != 0) {
-	AssetCategory assetCategory = AssetCategoryLocalServiceUtil.getAssetCategory(categoryId);
-
-	assetCategory = assetCategory.toEscapedModel();
-
-	categoryName = assetCategory.getName();
-
-	AssetVocabulary assetVocabulary = AssetVocabularyLocalServiceUtil.getAssetVocabulary(assetCategory.getVocabularyId());
-
-	assetVocabulary = assetVocabulary.toEscapedModel();
-
-	vocabularyName = assetVocabulary.getName();
-}
-
-String tagName = ParamUtil.getString(request, "tag");
+long assetCategoryId = ParamUtil.getLong(request, "categoryId");
+String assetTagName = ParamUtil.getString(request, "tag");
 
 PortletURL portletURL = renderResponse.createRenderURL();
 
 portletURL.setParameter("struts_action", "/blogs/view");
 %>
+
+<portlet:actionURL var="undoTrashURL">
+	<portlet:param name="struts_action" value="/blogs/edit_entry" />
+	<portlet:param name="<%= Constants.CMD %>" value="<%= Constants.RESTORE %>" />
+</portlet:actionURL>
+
+<liferay-ui:trash-undo portletURL="<%= undoTrashURL %>" />
 
 <liferay-portlet:renderURL varImpl="searchURL">
 	<portlet:param name="struts_action" value="/blogs/search" />
@@ -61,16 +50,19 @@ portletURL.setParameter("struts_action", "/blogs/view");
 	int total = 0;
 	List results = null;
 
-	if ((categoryId != 0) || Validator.isNotNull(tagName)) {
+	if ((assetCategoryId != 0) || Validator.isNotNull(assetTagName)) {
 		AssetEntryQuery assetEntryQuery = new AssetEntryQuery(BlogsEntry.class.getName(), searchContainer);
 
 		assetEntryQuery.setExcludeZeroViewCount(false);
-
-		if (BlogsPermission.contains(permissionChecker, scopeGroupId, ActionKeys.ADD_ENTRY)) {
-			assetEntryQuery.setVisible(Boolean.TRUE);
-		}
+		assetEntryQuery.setVisible(Boolean.TRUE);
 
 		total = AssetEntryServiceUtil.getEntriesCount(assetEntryQuery);
+
+		searchContainer.setTotal(total);
+
+		assetEntryQuery.setEnd(searchContainer.getEnd());
+		assetEntryQuery.setStart(searchContainer.getStart());
+
 		results = AssetEntryServiceUtil.getEntries(assetEntryQuery);
 	}
 	else {
@@ -81,18 +73,14 @@ portletURL.setParameter("struts_action", "/blogs/view");
 		}
 
 		total = BlogsEntryServiceUtil.getGroupEntriesCount(scopeGroupId, status);
+
+		searchContainer.setTotal(total);
+
 		results = BlogsEntryServiceUtil.getGroupEntries(scopeGroupId, status, searchContainer.getStart(), searchContainer.getEnd());
 	}
 
-	searchContainer.setTotal(total);
 	searchContainer.setResults(results);
 	%>
 
 	<%@ include file="/html/portlet/blogs/view_entries.jspf" %>
 </aui:form>
-
-<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-	<aui:script>
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm1.<portlet:namespace />keywords);
-	</aui:script>
-</c:if>

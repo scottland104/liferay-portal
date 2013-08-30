@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -33,7 +33,6 @@ import com.liferay.portlet.shopping.CouponMinimumOrderException;
 import com.liferay.portlet.shopping.CouponNameException;
 import com.liferay.portlet.shopping.CouponStartDateException;
 import com.liferay.portlet.shopping.DuplicateCouponCodeException;
-import com.liferay.portlet.shopping.NoSuchCouponException;
 import com.liferay.portlet.shopping.model.ShoppingCategory;
 import com.liferay.portlet.shopping.model.ShoppingCoupon;
 import com.liferay.portlet.shopping.model.ShoppingItem;
@@ -51,6 +50,7 @@ import java.util.List;
 public class ShoppingCouponLocalServiceImpl
 	extends ShoppingCouponLocalServiceBaseImpl {
 
+	@Override
 	public ShoppingCoupon addCoupon(
 			long userId, String code, boolean autoCode, String name,
 			String description, int startDateMonth, int startDateDay,
@@ -73,7 +73,7 @@ public class ShoppingCouponLocalServiceImpl
 		Date startDate = PortalUtil.getDate(
 			startDateMonth, startDateDay, startDateYear, startDateHour,
 			startDateMinute, user.getTimeZone(),
-			new CouponStartDateException());
+			CouponStartDateException.class);
 
 		Date endDate = null;
 
@@ -81,10 +81,10 @@ public class ShoppingCouponLocalServiceImpl
 			endDate = PortalUtil.getDate(
 				endDateMonth, endDateDay, endDateYear, endDateHour,
 				endDateMinute, user.getTimeZone(),
-				new CouponEndDateException());
+				CouponEndDateException.class);
 		}
 
-		if ((endDate != null) && (startDate.after(endDate))) {
+		if ((endDate != null) && startDate.after(endDate)) {
 			throw new CouponDateException();
 		}
 
@@ -116,11 +116,12 @@ public class ShoppingCouponLocalServiceImpl
 		coupon.setDiscount(discount);
 		coupon.setDiscountType(discountType);
 
-		shoppingCouponPersistence.update(coupon, false);
+		shoppingCouponPersistence.update(coupon);
 
 		return coupon;
 	}
 
+	@Override
 	public void deleteCoupon(long couponId)
 		throws PortalException, SystemException {
 
@@ -130,10 +131,12 @@ public class ShoppingCouponLocalServiceImpl
 		deleteCoupon(coupon);
 	}
 
+	@Override
 	public void deleteCoupon(ShoppingCoupon coupon) throws SystemException {
 		shoppingCouponPersistence.remove(coupon);
 	}
 
+	@Override
 	public void deleteCoupons(long groupId) throws SystemException {
 		List<ShoppingCoupon> coupons = shoppingCouponPersistence.findByGroupId(
 			groupId);
@@ -143,12 +146,14 @@ public class ShoppingCouponLocalServiceImpl
 		}
 	}
 
+	@Override
 	public ShoppingCoupon getCoupon(long couponId)
 		throws PortalException, SystemException {
 
 		return shoppingCouponPersistence.findByPrimaryKey(couponId);
 	}
 
+	@Override
 	public ShoppingCoupon getCoupon(String code)
 		throws PortalException, SystemException {
 
@@ -157,16 +162,18 @@ public class ShoppingCouponLocalServiceImpl
 		return shoppingCouponPersistence.findByCode(code);
 	}
 
+	@Override
 	public List<ShoppingCoupon> search(
 			long groupId, long companyId, String code, boolean active,
 			String discountType, boolean andOperator, int start, int end)
 		throws SystemException {
 
 		return shoppingCouponFinder.findByG_C_C_A_DT(
-			groupId, companyId, code, active, discountType, andOperator,
-			start, end);
+			groupId, companyId, code, active, discountType, andOperator, start,
+			end);
 	}
 
+	@Override
 	public int searchCount(
 			long groupId, long companyId, String code, boolean active,
 			String discountType, boolean andOperator)
@@ -176,6 +183,7 @@ public class ShoppingCouponLocalServiceImpl
 			groupId, companyId, code, active, discountType, andOperator);
 	}
 
+	@Override
 	public ShoppingCoupon updateCoupon(
 			long userId, long couponId, String name, String description,
 			int startDateMonth, int startDateDay, int startDateYear,
@@ -194,7 +202,7 @@ public class ShoppingCouponLocalServiceImpl
 		Date startDate = PortalUtil.getDate(
 			startDateMonth, startDateDay, startDateYear, startDateHour,
 			startDateMinute, user.getTimeZone(),
-			new CouponStartDateException());
+			CouponStartDateException.class);
 
 		Date endDate = null;
 
@@ -202,10 +210,10 @@ public class ShoppingCouponLocalServiceImpl
 			endDate = PortalUtil.getDate(
 				endDateMonth, endDateDay, endDateYear, endDateHour,
 				endDateMinute, user.getTimeZone(),
-				new CouponEndDateException());
+				CouponEndDateException.class);
 		}
 
-		if ((endDate != null) && (startDate.after(endDate))) {
+		if ((endDate != null) && startDate.after(endDate)) {
 			throw new CouponDateException();
 		}
 
@@ -225,23 +233,22 @@ public class ShoppingCouponLocalServiceImpl
 		coupon.setDiscount(discount);
 		coupon.setDiscountType(discountType);
 
-		shoppingCouponPersistence.update(coupon, false);
+		shoppingCouponPersistence.update(coupon);
 
 		return coupon;
 	}
 
 	protected String getCode() throws SystemException {
-		String code =
-			PwdGenerator.getPassword(PwdGenerator.KEY1 + PwdGenerator.KEY2, 8);
+		String code = PwdGenerator.getPassword(
+			PwdGenerator.KEY1 + PwdGenerator.KEY2, 8);
 
-		try {
-			shoppingCouponPersistence.findByCode(code);
+		ShoppingCoupon coupon = shoppingCouponPersistence.fetchByCode(code);
 
-			return getCode();
+		if (coupon != null) {
+			return coupon.getCode();
 		}
-		catch (NoSuchCouponException nsce) {
-			return code;
-		}
+
+		return code;
 	}
 
 	protected void validate(
@@ -251,8 +258,7 @@ public class ShoppingCouponLocalServiceImpl
 		throws PortalException, SystemException {
 
 		if (!autoCode) {
-			if ((Validator.isNull(code)) ||
-				(Validator.isNumber(code)) ||
+			if (Validator.isNull(code) || Validator.isNumber(code) ||
 				(code.indexOf(CharPool.SPACE) != -1)) {
 
 				throw new CouponCodeException();

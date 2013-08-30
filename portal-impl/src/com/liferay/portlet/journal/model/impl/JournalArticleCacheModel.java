@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -20,6 +20,11 @@ import com.liferay.portal.model.CacheModel;
 
 import com.liferay.portlet.journal.model.JournalArticle;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -29,10 +34,11 @@ import java.util.Date;
  * @see JournalArticle
  * @generated
  */
-public class JournalArticleCacheModel implements CacheModel<JournalArticle> {
+public class JournalArticleCacheModel implements CacheModel<JournalArticle>,
+	Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(65);
+		StringBundler sb = new StringBundler(67);
 
 		sb.append("{uuid=");
 		sb.append(uuid);
@@ -52,6 +58,8 @@ public class JournalArticleCacheModel implements CacheModel<JournalArticle> {
 		sb.append(createDate);
 		sb.append(", modifiedDate=");
 		sb.append(modifiedDate);
+		sb.append(", folderId=");
+		sb.append(folderId);
 		sb.append(", classNameId=");
 		sb.append(classNameId);
 		sb.append(", classPK=");
@@ -103,6 +111,7 @@ public class JournalArticleCacheModel implements CacheModel<JournalArticle> {
 		return sb.toString();
 	}
 
+	@Override
 	public JournalArticle toEntityModel() {
 		JournalArticleImpl journalArticleImpl = new JournalArticleImpl();
 
@@ -140,6 +149,7 @@ public class JournalArticleCacheModel implements CacheModel<JournalArticle> {
 			journalArticleImpl.setModifiedDate(new Date(modifiedDate));
 		}
 
+		journalArticleImpl.setFolderId(folderId);
 		journalArticleImpl.setClassNameId(classNameId);
 		journalArticleImpl.setClassPK(classPK);
 
@@ -262,6 +272,164 @@ public class JournalArticleCacheModel implements CacheModel<JournalArticle> {
 		return journalArticleImpl;
 	}
 
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		uuid = objectInput.readUTF();
+		id = objectInput.readLong();
+		resourcePrimKey = objectInput.readLong();
+		groupId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		userId = objectInput.readLong();
+		userName = objectInput.readUTF();
+		createDate = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
+		folderId = objectInput.readLong();
+		classNameId = objectInput.readLong();
+		classPK = objectInput.readLong();
+		articleId = objectInput.readUTF();
+		version = objectInput.readDouble();
+		title = objectInput.readUTF();
+		urlTitle = objectInput.readUTF();
+		description = objectInput.readUTF();
+		content = objectInput.readUTF();
+		type = objectInput.readUTF();
+		structureId = objectInput.readUTF();
+		templateId = objectInput.readUTF();
+		layoutUuid = objectInput.readUTF();
+		displayDate = objectInput.readLong();
+		expirationDate = objectInput.readLong();
+		reviewDate = objectInput.readLong();
+		indexable = objectInput.readBoolean();
+		smallImage = objectInput.readBoolean();
+		smallImageId = objectInput.readLong();
+		smallImageURL = objectInput.readUTF();
+		status = objectInput.readInt();
+		statusByUserId = objectInput.readLong();
+		statusByUserName = objectInput.readUTF();
+		statusDate = objectInput.readLong();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		if (uuid == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
+
+		objectOutput.writeLong(id);
+		objectOutput.writeLong(resourcePrimKey);
+		objectOutput.writeLong(groupId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(userId);
+
+		if (userName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(userName);
+		}
+
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(modifiedDate);
+		objectOutput.writeLong(folderId);
+		objectOutput.writeLong(classNameId);
+		objectOutput.writeLong(classPK);
+
+		if (articleId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(articleId);
+		}
+
+		objectOutput.writeDouble(version);
+
+		if (title == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(title);
+		}
+
+		if (urlTitle == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(urlTitle);
+		}
+
+		if (description == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(description);
+		}
+
+		if (content == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(content);
+		}
+
+		if (type == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(type);
+		}
+
+		if (structureId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(structureId);
+		}
+
+		if (templateId == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(templateId);
+		}
+
+		if (layoutUuid == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(layoutUuid);
+		}
+
+		objectOutput.writeLong(displayDate);
+		objectOutput.writeLong(expirationDate);
+		objectOutput.writeLong(reviewDate);
+		objectOutput.writeBoolean(indexable);
+		objectOutput.writeBoolean(smallImage);
+		objectOutput.writeLong(smallImageId);
+
+		if (smallImageURL == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(smallImageURL);
+		}
+
+		objectOutput.writeInt(status);
+		objectOutput.writeLong(statusByUserId);
+
+		if (statusByUserName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(statusByUserName);
+		}
+
+		objectOutput.writeLong(statusDate);
+	}
+
 	public String uuid;
 	public long id;
 	public long resourcePrimKey;
@@ -271,6 +439,7 @@ public class JournalArticleCacheModel implements CacheModel<JournalArticle> {
 	public String userName;
 	public long createDate;
 	public long modifiedDate;
+	public long folderId;
 	public long classNameId;
 	public long classPK;
 	public String articleId;

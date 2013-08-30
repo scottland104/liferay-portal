@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,9 +15,9 @@
 package com.liferay.portal.tools.servicebuilder;
 
 import com.liferay.portal.kernel.util.StringBundler;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.TextFormatter;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -36,11 +36,23 @@ public class EntityFinder {
 		_where = where;
 		_dbIndex = dbIndex;
 		_columns = columns;
+
+		if (isCollection() && isUnique() && !hasArrayableOperator()) {
+			throw new IllegalArgumentException(
+				"A finder cannot return a Collection and be unique unless " +
+					"it has an arrayable column. See the ExpandoColumn " +
+						"service.xml declaration for an example.");
+		}
+
+		if ((!isCollection() || isUnique()) && hasCustomComparator()) {
+			throw new IllegalArgumentException(
+				"A unique finder cannot have a custom comparator");
+		}
 	}
 
 	public EntityColumn getColumn(String name) {
 		for (EntityColumn column : _columns) {
-			if (column.getName().equals(name)) {
+			if (name.equals(column.getName())) {
 				return column;
 			}
 		}
@@ -57,18 +69,15 @@ public class EntityFinder {
 			return _columns.get(0).getHumanCondition(arrayable);
 		}
 
-		Iterator<EntityColumn> itr = _columns.iterator();
+		StringBundler sb = new StringBundler(_columns.size() * 2);
 
-		StringBundler sb = new StringBundler();
-
-		while (itr.hasNext()) {
-			EntityColumn column = itr.next();
-
+		for (EntityColumn column : _columns) {
 			sb.append(column.getHumanCondition(arrayable));
+			sb.append(" and ");
+		}
 
-			if (itr.hasNext()) {
-				sb.append(" and ");
-			}
+		if (!_columns.isEmpty()) {
+			sb.setIndex(sb.index() - 1);
 		}
 
 		return sb.toString();
@@ -102,6 +111,18 @@ public class EntityFinder {
 
 	public boolean hasColumn(String name) {
 		return Entity.hasColumn(name, _columns);
+	}
+
+	public boolean hasCustomComparator() {
+		for (EntityColumn column : _columns) {
+			String comparator = column.getComparator();
+
+			if (!comparator.equals(StringPool.EQUAL)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public boolean isCollection() {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -40,14 +40,14 @@ public class PortalPreferencesImpl
 	implements Cloneable, PortalPreferences, Serializable {
 
 	public PortalPreferencesImpl() {
-		this(0, 0, 0, Collections.<String, Preference>emptyMap(), false);
+		this(0, 0, 0, null, Collections.<String, Preference>emptyMap(), false);
 	}
 
 	public PortalPreferencesImpl(
-		long companyId, long ownerId, int ownerType,
+		long companyId, long ownerId, int ownerType, String xml,
 		Map<String, Preference> preferences, boolean signedIn) {
 
-		super(companyId, ownerId, ownerType, preferences);
+		super(companyId, ownerId, ownerType, xml, preferences);
 
 		_signedIn = signedIn;
 	}
@@ -55,28 +55,63 @@ public class PortalPreferencesImpl
 	@Override
 	public Object clone() {
 		return new PortalPreferencesImpl(
-			getCompanyId(), getOwnerId(), getOwnerType(),
+			getCompanyId(), getOwnerId(), getOwnerType(), getOriginalXML(),
 			getOriginalPreferences(), isSignedIn());
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		PortalPreferencesImpl portalPreferences = (PortalPreferencesImpl)obj;
-
-		if (this == portalPreferences) {
+		if (this == obj) {
 			return true;
 		}
+
+		if (!(obj instanceof PortalPreferencesImpl)) {
+			return false;
+		}
+
+		PortalPreferencesImpl portalPreferences = (PortalPreferencesImpl)obj;
 
 		if ((getCompanyId() == portalPreferences.getCompanyId()) &&
 			(getOwnerId() == portalPreferences.getOwnerId()) &&
 			(getOwnerType() == portalPreferences.getOwnerType()) &&
-			(getMap().equals(portalPreferences.getMap()))) {
+			getPreferences().equals(portalPreferences.getPreferences())) {
 
 			return true;
 		}
 		else {
 			return false;
 		}
+	}
+
+	@Override
+	public long getUserId() {
+		return _userId;
+	}
+
+	@Override
+	public String getValue(String namespace, String key) {
+		return getValue(namespace, key, null);
+	}
+
+	@Override
+	public String getValue(String namespace, String key, String defaultValue) {
+		key = _encodeKey(namespace, key);
+
+		return super.getValue(key, defaultValue);
+	}
+
+	@Override
+	public String[] getValues(String namespace, String key) {
+		return getValues(namespace, key, null);
+	}
+
+	@Override
+	public String[] getValues(
+		String namespace, String key, String[] defaultValue) {
+
+		key = _encodeKey(namespace, key);
+
+		return super.getValues(key, defaultValue);
 	}
 
 	@Override
@@ -91,31 +126,9 @@ public class PortalPreferencesImpl
 		return hashCode.toHashCode();
 	}
 
+	@Override
 	public boolean isSignedIn() {
 		return _signedIn;
-	}
-
-	@Override
-	public String getValue(String namespace, String key) {
-		return getValue(namespace, key, null);
-	}
-
-	public String getValue(String namespace, String key, String defaultValue) {
-		key = _encodeKey(namespace, key);
-
-		return super.getValue(key, defaultValue);
-	}
-
-	public String[] getValues(String namespace, String key) {
-		return getValues(namespace, key, null);
-	}
-
-	public String[] getValues(
-		String namespace, String key, String[] defaultValue) {
-
-		key = _encodeKey(namespace, key);
-
-		return super.getValues(key, defaultValue);
 	}
 
 	@Override
@@ -129,6 +142,7 @@ public class PortalPreferencesImpl
 		modifiedPreferences.remove(key);
 	}
 
+	@Override
 	public void resetValues(String namespace) {
 		try {
 			Map<String, Preference> preferences = getPreferences();
@@ -148,12 +162,19 @@ public class PortalPreferencesImpl
 		}
 	}
 
+	@Override
 	public void setSignedIn(boolean signedIn) {
 		_signedIn = signedIn;
 	}
 
+	@Override
+	public void setUserId(long userId) {
+		_userId = userId;
+	}
+
+	@Override
 	public void setValue(String namespace, String key, String value) {
-		if (Validator.isNull(key) || (key.equals(_RANDOM_KEY))) {
+		if (Validator.isNull(key) || key.equals(_RANDOM_KEY)) {
 			return;
 		}
 
@@ -176,8 +197,9 @@ public class PortalPreferencesImpl
 		}
 	}
 
+	@Override
 	public void setValues(String namespace, String key, String[] values) {
-		if (Validator.isNull(key) || (key.equals(_RANDOM_KEY))) {
+		if (Validator.isNull(key) || key.equals(_RANDOM_KEY)) {
 			return;
 		}
 
@@ -216,14 +238,16 @@ public class PortalPreferencesImpl
 			return key;
 		}
 		else {
-			return namespace + StringPool.POUND + key;
+			return namespace.concat(StringPool.POUND).concat(key);
 		}
 	}
 
 	private static final String _RANDOM_KEY = "r";
 
-	private static Log _log = LogFactoryUtil.getLog(PortalPreferences.class);
+	private static Log _log = LogFactoryUtil.getLog(
+		PortalPreferencesImpl.class);
 
 	private boolean _signedIn;
+	private long _userId;
 
 }

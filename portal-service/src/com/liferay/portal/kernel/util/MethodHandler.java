@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -43,34 +43,17 @@ public class MethodHandler implements Serializable {
 		return arguments;
 	}
 
-	public Class<?>[] getArgumentsClasses() {
-		return _methodKey.getParameterTypes();
-	}
-
-	public String getClassName() {
-		return _methodKey.getClassName();
-	}
-
 	public MethodKey getMethodKey() {
 		return _methodKey;
 	}
 
-	public String getMethodName() {
-		return _methodKey.getMethodName();
-	}
-
 	public Object invoke(boolean newInstance) throws Exception {
-		Method method = MethodCache.get(_methodKey);
-
-		Thread currentThread = Thread.currentThread();
-
-		ClassLoader contextClassLoader = currentThread.getContextClassLoader();
+		Method method = _methodKey.getMethod();
 
 		Object targetObject = null;
 
 		if (newInstance && !Modifier.isStatic(method.getModifiers())) {
-			Class<?> targetClass = contextClassLoader.loadClass(
-				getClassName());
+			Class<?> targetClass = _methodKey.getDeclaringClass();
 
 			targetObject = targetClass.newInstance();
 		}
@@ -79,7 +62,7 @@ public class MethodHandler implements Serializable {
 	}
 
 	public Object invoke(Object target) throws Exception {
-		Method method = MethodCache.get(_methodKey);
+		Method method = _methodKey.getMethod();
 
 		return method.invoke(target, _arguments);
 	}

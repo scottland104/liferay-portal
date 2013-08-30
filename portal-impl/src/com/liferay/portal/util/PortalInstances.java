@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,13 +14,13 @@
 
 package com.liferay.portal.util;
 
-import com.liferay.portal.NoSuchCompanyException;
 import com.liferay.portal.events.EventsProcessorUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.dao.shard.ShardUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.CookieKeys;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -33,8 +33,6 @@ import com.liferay.portal.model.PortletCategory;
 import com.liferay.portal.model.VirtualHost;
 import com.liferay.portal.search.lucene.LuceneHelperUtil;
 import com.liferay.portal.security.auth.CompanyThreadLocal;
-import com.liferay.portal.security.ldap.LDAPSettingsUtil;
-import com.liferay.portal.security.ldap.PortalLDAPImporterUtil;
 import com.liferay.portal.service.CompanyLocalServiceUtil;
 import com.liferay.portal.service.GroupLocalServiceUtil;
 import com.liferay.portal.service.LayoutSetLocalServiceUtil;
@@ -112,6 +110,14 @@ public class PortalInstances {
 		return _instance._isVirtualHostsIgnorePath(path);
 	}
 
+	public static void reload(ServletContext servletContext) {
+		_instance._reload(servletContext);
+	}
+
+	public static void removeCompany(long companyId) {
+		_instance._removeCompanyId(companyId);
+	}
+
 	private PortalInstances() {
 		_companyIds = new long[0];
 		_autoLoginIgnoreHosts = SetUtil.fromArray(
@@ -131,8 +137,7 @@ public class PortalInstances {
 
 		long[] companyIds = new long[_companyIds.length + 1];
 
-		System.arraycopy(
-			_companyIds, 0, companyIds, 0, _companyIds.length);
+		System.arraycopy(_companyIds, 0, companyIds, 0, _companyIds.length);
 
 		companyIds[_companyIds.length] = companyId;
 
@@ -162,23 +167,25 @@ public class PortalInstances {
 
 		if (companyId <= 0) {
 			long cookieCompanyId = GetterUtil.getLong(
-				CookieKeys.getCookie(request, CookieKeys.COMPANY_ID));
+				CookieKeys.getCookie(request, CookieKeys.COMPANY_ID, false));
 
 			if (cookieCompanyId > 0) {
 				try {
-					CompanyLocalServiceUtil.getCompanyById(cookieCompanyId);
+					if (CompanyLocalServiceUtil.fetchCompanyById(
+							cookieCompanyId) == null) {
 
-					companyId = cookieCompanyId;
-
-					if (_log.isDebugEnabled()) {
-						_log.debug("Company id from cookie " + companyId);
+						if (_log.isWarnEnabled()) {
+							_log.warn(
+								"Company id from cookie " + cookieCompanyId +
+										" does not exist");
+						}
 					}
-				}
-				catch (NoSuchCompanyException nsce) {
-					if (_log.isWarnEnabled()) {
-						_log.warn(
-							"Company id from cookie " + cookieCompanyId +
-								" does not exist");
+					else {
+						companyId = cookieCompanyId;
+
+						if (_log.isDebugEnabled()) {
+							_log.debug("Company id from cookie " + companyId);
+						}
 					}
 				}
 				catch (Exception e) {
@@ -285,6 +292,13 @@ public class PortalInstances {
 	private long[] _getCompanyIdsBySQL() throws SQLException {
 		List<Long> companyIds = new ArrayList<Long>();
 
+		String currentShardName = ShardUtil.setTargetSource(
+			PropsValues.SHARD_DEFAULT_NAME);
+
+		if (Validator.isNotNull(currentShardName)) {
+			ShardUtil.pushCompanyService(PropsValues.SHARD_DEFAULT_NAME);
+		}
+
 		Connection con = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -293,6 +307,13 @@ public class PortalInstances {
 			con = DataAccess.getConnection();
 
 			ps = con.prepareStatement(_GET_COMPANY_IDS);
+
+			if (Validator.isNotNull(currentShardName)) {
+				ps.setString(1, currentShardName);
+			}
+			else {
+				ps.setString(1, PropsValues.SHARD_DEFAULT_NAME);
+			}
 
 			rs = ps.executeQuery();
 
@@ -303,6 +324,12 @@ public class PortalInstances {
 			}
 		}
 		finally {
+			if (Validator.isNotNull(currentShardName)) {
+				ShardUtil.popCompanyService();
+
+				ShardUtil.setTargetSource(currentShardName);
+			}
+
 			DataAccess.cleanUp(con, ps, rs);
 		}
 
@@ -346,7 +373,7 @@ public class PortalInstances {
 			_log.error(e, e);
 		}
 
-		if ((_webIds == null) || (_webIds.length == 0)) {
+		if (ArrayUtil.isEmpty(_webIds)) {
 			_webIds = new String[] {PropsValues.COMPANY_DEFAULT_WEB_ID};
 		}
 
@@ -385,12 +412,11 @@ public class PortalInstances {
 		}
 
 		try {
-			String xml = HttpUtil.URLtoString(servletContext.getResource(
-				"/WEB-INF/liferay-display.xml"));
+			String xml = HttpUtil.URLtoString(
+				servletContext.getResource("/WEB-INF/liferay-display.xml"));
 
-			PortletCategory portletCategory =
-				(PortletCategory)WebAppPool.get(
-					String.valueOf(companyId), WebKeys.PORTLET_CATEGORY);
+			PortletCategory portletCategory = (PortletCategory)WebAppPool.get(
+				companyId, WebKeys.PORTLET_CATEGORY);
 
 			if (portletCategory == null) {
 				portletCategory = new PortletCategory();
@@ -406,8 +432,7 @@ public class PortalInstances {
 
 				PortletCategory currentPortletCategory =
 					(PortletCategory)WebAppPool.get(
-						String.valueOf(currentCompanyId),
-						WebKeys.PORTLET_CATEGORY);
+						currentCompanyId, WebKeys.PORTLET_CATEGORY);
 
 				if (currentPortletCategory != null) {
 					portletCategory.merge(currentPortletCategory);
@@ -415,8 +440,7 @@ public class PortalInstances {
 			}
 
 			WebAppPool.put(
-				String.valueOf(companyId), WebKeys.PORTLET_CATEGORY,
-				portletCategory);
+				companyId, WebKeys.PORTLET_CATEGORY, portletCategory);
 		}
 		catch (Exception e) {
 			_log.error(e, e);
@@ -428,8 +452,9 @@ public class PortalInstances {
 			_log.debug("Check journal content search");
 		}
 
-		if (GetterUtil.getBoolean(PropsUtil.get(
-				PropsKeys.JOURNAL_SYNC_CONTENT_SEARCH_ON_STARTUP))) {
+		if (GetterUtil.getBoolean(
+				PropsUtil.get(
+					PropsKeys.JOURNAL_SYNC_CONTENT_SEARCH_ON_STARTUP))) {
 
 			try {
 				JournalContentSearchLocalServiceUtil.checkContentSearches(
@@ -438,17 +463,6 @@ public class PortalInstances {
 			catch (Exception e) {
 				_log.error(e, e);
 			}
-		}
-
-		// LDAP Import
-
-		try {
-			if (LDAPSettingsUtil.isImportOnStartup(companyId)) {
-				PortalLDAPImporterUtil.importFromLDAP(companyId);
-			}
-		}
-		catch (Exception e) {
-			_log.error(e, e);
 		}
 
 		// Process application startup events
@@ -490,7 +504,8 @@ public class PortalInstances {
 
 	private boolean _isCompanyActive(long companyId) {
 		try {
-			Company company = CompanyLocalServiceUtil.fetchCompany(companyId);
+			Company company = CompanyLocalServiceUtil.fetchCompanyById(
+				companyId);
 
 			if (company != null) {
 				return company.isActive();
@@ -511,18 +526,43 @@ public class PortalInstances {
 		return _virtualHostsIgnorePaths.contains(path);
 	}
 
+	private void _reload(ServletContext servletContext) {
+		_companyIds = new long[0];
+		_webIds = null;
+
+		String[] webIds = _getWebIds();
+
+		for (String webId : webIds) {
+			_initCompany(servletContext, webId);
+		}
+	}
+
+	private void _removeCompanyId(long companyId) {
+		_companyIds = ArrayUtil.remove(_companyIds, companyId);
+		_webIds = null;
+
+		_getWebIds();
+
+		LuceneHelperUtil.delete(companyId);
+
+		LuceneHelperUtil.shutdown(companyId);
+
+		WebAppPool.remove(companyId, WebKeys.PORTLET_CATEGORY);
+	}
+
 	private static final String _GET_COMPANY_IDS =
-		"select companyId from Company";
+		"select companyId from Company, Shard where Company.companyId = " +
+			"Shard.classPK and Shard.name = ?";
 
 	private static Log _log = LogFactoryUtil.getLog(PortalInstances.class);
 
 	private static PortalInstances _instance = new PortalInstances();
 
-	private long[] _companyIds;
-	private String[] _webIds;
 	private Set<String> _autoLoginIgnoreHosts;
 	private Set<String> _autoLoginIgnorePaths;
+	private long[] _companyIds;
 	private Set<String> _virtualHostsIgnoreHosts;
 	private Set<String> _virtualHostsIgnorePaths;
+	private String[] _webIds;
 
 }

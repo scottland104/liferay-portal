@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -46,14 +46,15 @@ public class ExportRecordSetAction extends PortletAction {
 
 	@Override
 	public void serveResource(
-			ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
-			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
+			ActionMapping actionMapping, ActionForm actionForm,
+			PortletConfig portletConfig, ResourceRequest resourceRequest,
+			ResourceResponse resourceResponse)
 		throws Exception {
 
-		HttpServletRequest request =
-			PortalUtil.getHttpServletRequest(resourceRequest);
-		HttpServletResponse response =
-			PortalUtil.getHttpServletResponse(resourceResponse);
+		HttpServletRequest request = PortalUtil.getHttpServletRequest(
+			resourceRequest);
+		HttpServletResponse response = PortalUtil.getHttpServletResponse(
+			resourceResponse);
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)resourceRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
@@ -73,6 +74,8 @@ public class ExportRecordSetAction extends PortletAction {
 		DDLExportFormat exportFormat = DDLExportFormat.parse(fileExtension);
 
 		DDLExporter exporter = DDLExporterFactory.getDDLExporter(exportFormat);
+
+		exporter.setLocale(themeDisplay.getLocale());
 
 		byte[] bytes = exporter.export(
 			recordSetId, WorkflowConstants.STATUS_APPROVED);

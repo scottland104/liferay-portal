@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -38,10 +38,10 @@ import java.util.Map;
 public class LayoutSetPrototypeServiceImpl
 	extends LayoutSetPrototypeServiceBaseImpl {
 
+	@Override
 	public LayoutSetPrototype addLayoutSetPrototype(
-			Map<Locale, String> nameMap, String description,
-			boolean active, boolean allowModifications,
-			boolean allowLayoutAddition, ServiceContext serviceContext)
+			Map<Locale, String> nameMap, String description, boolean active,
+			boolean layoutsUpdateable, ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		PortalPermissionUtil.check(
@@ -50,10 +50,11 @@ public class LayoutSetPrototypeServiceImpl
 		User user = getUser();
 
 		return layoutSetPrototypeLocalService.addLayoutSetPrototype(
-			user.getUserId(), user.getCompanyId(), nameMap, description,
-			active, allowModifications, allowLayoutAddition, serviceContext);
+			user.getUserId(), user.getCompanyId(), nameMap, description, active,
+			layoutsUpdateable, serviceContext);
 	}
 
+	@Override
 	public void deleteLayoutSetPrototype(long layoutSetPrototypeId)
 		throws PortalException, SystemException {
 
@@ -64,6 +65,7 @@ public class LayoutSetPrototypeServiceImpl
 			layoutSetPrototypeId);
 	}
 
+	@Override
 	public LayoutSetPrototype getLayoutSetPrototype(long layoutSetPrototypeId)
 		throws PortalException, SystemException {
 
@@ -74,6 +76,7 @@ public class LayoutSetPrototypeServiceImpl
 			layoutSetPrototypeId);
 	}
 
+	@Override
 	public List<LayoutSetPrototype> search(
 			long companyId, Boolean active, OrderByComparator obc)
 		throws PortalException, SystemException {
@@ -98,10 +101,11 @@ public class LayoutSetPrototypeServiceImpl
 		return filteredLayoutSetPrototypes;
 	}
 
+	@Override
 	public LayoutSetPrototype updateLayoutSetPrototype(
 			long layoutSetPrototypeId, Map<Locale, String> nameMap,
-			String description, boolean active, boolean allowModifications,
-			boolean allowLayoutAddition, ServiceContext serviceContext)
+			String description, boolean active, boolean layoutsUpdateable,
+			ServiceContext serviceContext)
 		throws PortalException, SystemException {
 
 		LayoutSetPrototypePermissionUtil.check(
@@ -109,9 +113,10 @@ public class LayoutSetPrototypeServiceImpl
 
 		return layoutSetPrototypeLocalService.updateLayoutSetPrototype(
 			layoutSetPrototypeId, nameMap, description, active,
-			allowModifications, allowLayoutAddition, serviceContext);
+			layoutsUpdateable, serviceContext);
 	}
 
+	@Override
 	public LayoutSetPrototype updateLayoutSetPrototype(
 			long layoutSetPrototypeId, String settings)
 		throws PortalException, SystemException {

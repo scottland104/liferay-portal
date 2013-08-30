@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -28,7 +28,7 @@ String xmlRequest = PortletRequestUtil.toXML(renderRequest, renderResponse);
 JournalArticleDisplay articleDisplay = JournalContentUtil.getDisplay(groupId, articleId, null, null, languageId, themeDisplay, articlePage, xmlRequest);
 
 try {
-	article = JournalArticleLocalServiceUtil.getLatestArticle(scopeGroupId, articleId, WorkflowConstants.STATUS_ANY);
+	article = JournalArticleLocalServiceUtil.getLatestArticle(groupId, articleId, WorkflowConstants.STATUS_ANY);
 
 	boolean expired = article.isExpired();
 
@@ -45,12 +45,12 @@ try {
 		<c:when test="<%= (articleDisplay != null) && !expired %>">
 
 			<div class="journal-content-article">
-				<%= articleDisplay.getContent() %>
+				<%= RuntimePageUtil.processXML(request, response, articleDisplay.getContent()) %>
 			</div>
 
 		</c:when>
 		<c:otherwise>
-			<div class="portlet-msg-error">
+			<div class="alert alert-error">
 				<liferay-ui:message key="this-content-has-expired-or-you-do-not-have-the-required-permissions-to-access-it" />
 			</div>
 		</c:otherwise>
@@ -60,7 +60,7 @@ try {
 } catch (NoSuchArticleException nsae) {
 %>
 
-	<div class="portlet-msg-error">
+	<div class="alert alert-error">
 		<%= LanguageUtil.get(pageContext, "the-selected-web-content-no-longer-exists") %>
 	</div>
 

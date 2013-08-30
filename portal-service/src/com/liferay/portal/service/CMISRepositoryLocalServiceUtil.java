@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,15 +15,15 @@
 package com.liferay.portal.service;
 
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
-import com.liferay.portal.kernel.util.MethodCache;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the c m i s repository local service. This utility wraps {@link com.liferay.portal.service.impl.CMISRepositoryLocalServiceImpl} and is the primary access point for service operations in application layer code running on the local server.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
+ * Provides the local service utility for CMISRepository. This utility wraps
+ * {@link com.liferay.portal.service.impl.CMISRepositoryLocalServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on the local server. Methods of this service will not have security checks
+ * based on the propagated JAAS credentials because this service can only be
+ * accessed from within the same VM.
  *
  * @author Brian Wing Shun Chan
  * @see CMISRepositoryLocalService
@@ -89,20 +89,15 @@ public class CMISRepositoryLocalServiceUtil {
 
 			ReferenceRegistry.registerReference(CMISRepositoryLocalServiceUtil.class,
 				"_service");
-			MethodCache.remove(CMISRepositoryLocalService.class);
 		}
 
 		return _service;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setService(CMISRepositoryLocalService service) {
-		MethodCache.remove(CMISRepositoryLocalService.class);
-
-		_service = service;
-
-		ReferenceRegistry.registerReference(CMISRepositoryLocalServiceUtil.class,
-			"_service");
-		MethodCache.remove(CMISRepositoryLocalService.class);
 	}
 
 	private static CMISRepositoryLocalService _service;

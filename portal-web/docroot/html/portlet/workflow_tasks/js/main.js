@@ -1,4 +1,4 @@
-AUI().add(
+AUI.add(
 	'liferay-workflow-tasks',
 	function(A) {
 		var WorkflowTasks = {
@@ -45,29 +45,34 @@ AUI().add(
 					comments.show();
 				}
 
-				var dialog = new A.Dialog(
+				var dialog = Liferay.Util.Window.getWindow(
 					{
-						bodyContent: form,
-						buttons: [
-							{
-								handler: function() {
-									submitForm(form);
-								},
-								text: Liferay.Language.get('ok')
-							},
-							{
-								handler: function() {
-									this.close();
-								},
-								text: Liferay.Language.get('cancel')
+						dialog: {
+							bodyContent: form,
+							toolbars: {
+								footer: [
+									{
+										label: Liferay.Language.get('ok'),
+										on: {
+											click: function() {
+												submitForm(form);
+											}
+										}
+									},
+									{
+										label: Liferay.Language.get('cancel'),
+										on: {
+											click: function() {
+												dialog.hide();
+											}
+										}
+									}
+								]
 							}
-						],
-						centered: true,
-						modal: true,
-						title: title,
-						width: 400
+						},
+						title: title
 					}
-				).render();
+				);
 			}
 		};
 
@@ -75,6 +80,6 @@ AUI().add(
 	},
 	'',
 	{
-		requires: ['aui-dialog']
+		requires: ['liferay-util-window']
 	}
 );

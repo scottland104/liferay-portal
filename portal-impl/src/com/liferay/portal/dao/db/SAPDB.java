@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -88,6 +88,13 @@ public class SAPDB extends BaseDB {
 					"alter table @table@ modify @old-column@ @type@;",
 					REWORD_TEMPLATE, template);
 			}
+			else if (line.startsWith(ALTER_TABLE_NAME)) {
+				String[] template = buildTableNameTokens(line);
+
+				line = StringUtil.replace(
+					"alter table @old-table@ to @new-table@;",
+					RENAME_TABLE_TEMPLATE, template);
+			}
 
 			sb.append(line);
 			sb.append("\n");
@@ -98,13 +105,10 @@ public class SAPDB extends BaseDB {
 		return sb.toString();
 	}
 
-	private static String[] _SAP = {
-		"##", "TRUE", "FALSE",
-		"'1970-01-01 00:00:00.000000'", "timestamp",
-		" blob", " boolean", " timestamp",
-		" float", " int", " bigint",
-		" varchar", " varchar", " varchar",
-		"", "commit"
+	private static final String[] _SAP = {
+		"##", "TRUE", "FALSE", "'1970-01-01 00:00:00.000000'", "timestamp",
+		" blob", " blob", " boolean", " timestamp", " float", " int", " bigint",
+		" varchar", " varchar", " varchar", "", "commit"
 	};
 
 	private static SAPDB _instance = new SAPDB();

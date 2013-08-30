@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,7 +16,6 @@
 
 <%@ include file="/html/taglib/init.jsp" %>
 
-<%@ page import="com.liferay.portlet.ratings.NoSuchEntryException" %>
 <%@ page import="com.liferay.portlet.ratings.model.RatingsEntry" %>
 <%@ page import="com.liferay.portlet.ratings.model.RatingsStats" %>
 <%@ page import="com.liferay.portlet.ratings.service.RatingsEntryLocalServiceUtil" %>
@@ -40,11 +39,7 @@ if (numberOfStars < 1) {
 }
 
 if (!setRatingsEntry) {
-	try {
-		ratingsEntry = RatingsEntryLocalServiceUtil.getEntry(themeDisplay.getUserId(), className, classPK);
-	}
-	catch (NoSuchEntryException nsee) {
-	}
+	ratingsEntry = RatingsEntryLocalServiceUtil.fetchEntry(themeDisplay.getUserId(), className, classPK);
 }
 
 if (!setRatingsStats) {
@@ -63,22 +58,27 @@ if (ratingsEntry != null) {
 %>
 
 <c:if test="<%= !themeDisplay.isFacebook() %>">
-	<div class="taglib-ratings <%= type %>">
+	<div class="taglib-ratings <%= type %>" id="<%= randomNamespace %>ratingContainer">
 		<c:choose>
 			<c:when test='<%= type.equals("stars") %>'>
 				<c:choose>
-					<c:when test='<%= themeDisplay.isSignedIn() %>'>
+					<c:when test="<%= themeDisplay.isSignedIn() && !TrashUtil.isInTrash(className, classPK) %>">
 						<div class="liferay-rating-vote" id="<%= randomNamespace %>ratingStar">
 							<div id="<%= randomNamespace %>ratingStarContent">
-								<div class="aui-rating-label-element"><liferay-ui:message key="your-rating" /></div>
+								<div class="rating-label"><liferay-ui:message key="your-rating" /></div>
 
 								<%
 								for (int i = 1; i <= numberOfStars; i++) {
+									String ratingId = PortalUtil.generateRandomKey(request, "taglib_ui_ratings_page_rating");
 								%>
 
-									<a class="aui-rating-element <%= (i <= yourScore) ? "aui-rating-element-on" : StringPool.BLANK %>" href="javascript:;"></a>
+									<a class="rating-element <%= (i <= yourScore) ? "icon-star" : "icon-star-empty" %>" href="javascript:;"></a>
 
-									<aui:input checked="<%= i == yourScore %>" label='<%= (yourScore == i) ? LanguageUtil.format(pageContext, "you-have-rated-this-x-stars-out-of-x", new Object[] {i, numberOfStars}) : LanguageUtil.format(pageContext, "rate-this-x-stars-out-of-x", new Object[] {i, numberOfStars}) %>' name="rating" type="radio" value="<%= i %>" />
+									<div class="rating-input-container">
+										<label for="<%= ratingId %>"><liferay-ui:message arguments="<%= new Object[] {i, numberOfStars} %>" key='<%= (yourScore == i) ? "you-have-rated-this-x-stars-out-of-x" : "rate-this-x-stars-out-of-x" %>' /></label>
+
+										<input checked="<%= i == yourScore %>" class="rating-input" id="<%= ratingId %>" name="<portlet:namespace />rating" type="radio" value="<%= i %>">
+									</div>
 
 								<%
 								}
@@ -91,17 +91,17 @@ if (ratingsEntry != null) {
 
 				<div class="liferay-rating-score" id="<%= randomNamespace %>ratingScore">
 					<div id="<%= randomNamespace %>ratingScoreContent">
-						<div class="aui-rating-label-element">
+						<div class="rating-label">
 							<liferay-ui:message key="average" />
 
-							(<%= ratingsStats.getTotalEntries() %> <%= LanguageUtil.get(pageContext, (ratingsStats.getTotalEntries() == 1) ? "vote" : "votes") %>)
+							(<%= ratingsStats.getTotalEntries() %> <liferay-ui:message key='<%= (ratingsStats.getTotalEntries() == 1) ? "vote" : "votes" %>' />)
 						</div>
 
 						<%
 						for (int i = 1; i <= numberOfStars; i++) {
 						%>
 
-							<img alt="<%= (i == 1) ? LanguageUtil.format(pageContext, "the-average-rating-is-x-stars-out-of-x", new Object[] {ratingsStats.getAverageScore(), numberOfStars}) : StringPool.BLANK %>" class="aui-rating-element <%= (i <= ratingsStats.getAverageScore()) ? "aui-rating-element-on" : StringPool.BLANK %>" src="<%= themeDisplay.getPathThemeImages() %>/spacer.png" />
+							<a class="rating-element <%= (i <= yourScore) ? "icon-star" : "icon-star-empty" %>" href="javascript:;" title="<%= TrashUtil.isInTrash(className, classPK) ? LanguageUtil.get(pageContext, "ratings-are-disabled-because-this-entry-is-in-the-recycle-bin") : ((i == 1) ? LanguageUtil.format(pageContext, "the-average-rating-is-x-stars-out-of-x", new Object[] {ratingsStats.getAverageScore(), numberOfStars}) : StringPool.BLANK) %>"></a>
 
 						<%
 						}
@@ -112,10 +112,10 @@ if (ratingsEntry != null) {
 			</c:when>
 			<c:when test='<%= type.equals("thumbs") %>'>
 				<c:choose>
-					<c:when test='<%= themeDisplay.isSignedIn() %>'>
-						<div class="aui-thumbrating liferay-rating-vote" id="<%= randomNamespace %>ratingThumb">
-							<div class="aui-helper-clearfix aui-rating-content aui-thumbrating-content" id="<%= randomNamespace %>ratingThumbContent">
-								<div class="aui-rating-label-element">
+					<c:when test="<%= themeDisplay.isSignedIn() %>">
+						<div class="thumbrating liferay-rating-vote" id="<%= randomNamespace %>ratingThumb">
+							<div class="helper-clearfix rating-content thumbrating-content" id="<%= randomNamespace %>ratingThumbContent">
+								<div class="rating-label">
 									<c:choose>
 										<c:when test="<%= (ratingsStats.getAverageScore() * ratingsStats.getTotalEntries() == 0) %>">
 											0
@@ -125,16 +125,40 @@ if (ratingsEntry != null) {
 										</c:otherwise>
 									</c:choose>
 
-									(<%= ratingsStats.getTotalEntries() %> <%= LanguageUtil.get(pageContext, (ratingsStats.getTotalEntries() == 1) ? "vote" : "votes") %>)
+									(<%= ratingsStats.getTotalEntries() %> <liferay-ui:message key='<%= (ratingsStats.getTotalEntries() == 1) ? "vote" : "votes" %>' />)
 								</div>
 
-								<a class="aui-rating-element aui-rating-element-<%= (yourScore > 0) ? "on" : "off" %> aui-rating-thumb-up" href="javascript:;"></a>
+								<c:choose>
+									<c:when test="<%= TrashUtil.isInTrash(className, classPK) %>">
+										<span class="rating-element rating-<%= (yourScore > 0) ? "on" : "off" %> rating-thumb-up" title="<liferay-ui:message key="ratings-are-disabled-because-this-entry-is-in-the-recycle-bin" />"></span>
 
-								<a class="aui-rating-element aui-rating-element-<%= (yourScore < 0) ? "on" : "off" %> aui-rating-thumb-down" href="javascript:;"></a>
+										<span class="rating-element rating-<%= (yourScore < 0) ? "on" : "off" %> rating-thumb-down" title="<liferay-ui:message key="ratings-are-disabled-because-this-entry-is-in-the-recycle-bin" />"></span>
+									</c:when>
+									<c:otherwise>
+										<a class="rating-element rating-<%= (yourScore > 0) ? "on" : "off" %> rating-thumb-up icon-thumbs-up" href="javascript:;"></a>
 
-								<aui:input label='<%= (yourScore == 1) ? "you-have-rated-this-as-good" : "rate-this-as-good" %>' name="ratingThumb" type="radio" value="up" />
+										<a class="rating-element rating-<%= (yourScore < 0) ? "on" : "off" %> rating-thumb-down icon-thumbs-down" href="javascript:;"></a>
 
-								<aui:input label='<%= (yourScore == -1) ? "you-have-rated-this-as-bad" : "rate-this-as-bad" %>' name="ratingThumb" type="radio" value="down" />
+										<div class="rating-input-container">
+
+											<%
+											String ratingId = PortalUtil.generateRandomKey(request, "taglib_ui_ratings_page_rating");
+											%>
+
+											<label for="<%= ratingId %>"><liferay-ui:message key='<%= (yourScore > 0) ? "you-have-rated-this-as-good" : "rate-this-as-good" %>' /></label>
+
+											<input class="rating-input" id="<%= ratingId %>" name="<portlet:namespace />ratingThumb" type="radio" value="up">
+
+											<%
+											ratingId = PortalUtil.generateRandomKey(request, "taglib_ui_ratings_page_rating");
+											%>
+
+											<label for="<%= ratingId %>"><liferay-ui:message key='<%= (yourScore > 0) ? "you-have-rated-this-as-bad" : "rate-this-as-bad" %>' /></label>
+
+											<input class="rating-input" id="<%= ratingId %>" name="<portlet:namespace />ratingThumb" type="radio" value="down">
+										</div>
+									</c:otherwise>
+								</c:choose>
 							</div>
 						</div>
 					</c:when>
@@ -146,20 +170,23 @@ if (ratingsEntry != null) {
 		</c:choose>
 	</div>
 
-	<aui:script use="liferay-ratings">
-		Liferay.Ratings.register(
-			{
-				className: '<%= className %>',
-				classPK: '<%= classPK %>',
-				yourScore: <%= yourScore %>,
-				namespace: '<%= randomNamespace %>',
-				totalEntries: <%= ratingsStats.getTotalEntries() %>,
-				totalScore: <%= ratingsStats.getTotalScore() %>,
-				averageScore: <%= ratingsStats.getAverageScore() %>,
-				size: <%= numberOfStars %>,
-				uri: '<%= url %>',
-				type: '<%= type %>'
-			}
-		);
-	</aui:script>
+	<c:if test="<%= !TrashUtil.isInTrash(className, classPK) %>">
+		<aui:script use="liferay-ratings">
+			Liferay.Ratings.register(
+				{
+					averageScore: <%= ratingsStats.getAverageScore() %>,
+					className: '<%= HtmlUtil.escapeJS(className) %>',
+					classPK: '<%= classPK %>',
+					containerId: '<%= randomNamespace %>ratingContainer',
+					namespace: '<%= randomNamespace %>',
+					size: <%= numberOfStars %>,
+					totalEntries: <%= ratingsStats.getTotalEntries() %>,
+					totalScore: <%= ratingsStats.getTotalScore() %>,
+					type: '<%= type %>',
+					uri: '<%= url %>',
+					yourScore: <%= yourScore %>
+				}
+			);
+		</aui:script>
+	</c:if>
 </c:if>

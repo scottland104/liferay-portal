@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -16,7 +16,6 @@ package com.liferay.portal.upgrade.v6_1_0;
 
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
-import com.liferay.portal.kernel.util.StringPool;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -27,21 +26,25 @@ import java.sql.ResultSet;
  */
 public class UpgradeVirtualHost extends UpgradeProcess {
 
-	@Override
-	protected void doUpgrade() throws Exception {
-		updateCompany();
-		updateLayoutSet();
-	}
-
 	protected void addVirtualHost(
 			long virtualHostId, long companyId, long layoutSetId,
 			String hostname)
 		throws Exception {
 
+		if (hostname == null) {
+			return;
+		}
+
 		runSQL(
 			"insert into VirtualHost (virtualHostId, companyId, layoutSetId, " +
 				"hostname) values (" + virtualHostId + ", " + companyId +
 					", " + layoutSetId + ", '" + hostname + "')");
+	}
+
+	@Override
+	protected void doUpgrade() throws Exception {
+		updateCompany();
+		updateLayoutSet();
 	}
 
 	protected void updateCompany() throws Exception {
@@ -50,13 +53,11 @@ public class UpgradeVirtualHost extends UpgradeProcess {
 		ResultSet rs = null;
 
 		try {
-			con = DataAccess.getConnection();
+			con = DataAccess.getUpgradeOptimizedConnection();
 
 			ps = con.prepareStatement(
 				"select companyId, virtualHost from Company where " +
-					"virtualHost != ?");
-
-			ps.setString(1, StringPool.BLANK);
+					"virtualHost != ''");
 
 			rs = ps.executeQuery();
 
@@ -82,13 +83,11 @@ public class UpgradeVirtualHost extends UpgradeProcess {
 		ResultSet rs = null;
 
 		try {
-			con = DataAccess.getConnection();
+			con = DataAccess.getUpgradeOptimizedConnection();
 
 			ps = con.prepareStatement(
 				"select layoutSetId, companyId, virtualHost from LayoutSet " +
-					"where virtualHost != ?");
-
-			ps.setString(1, StringPool.BLANK);
+					"where virtualHost != ''");
 
 			rs = ps.executeQuery();
 

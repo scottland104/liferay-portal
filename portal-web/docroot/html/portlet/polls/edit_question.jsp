@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -18,6 +18,8 @@
 
 <%
 String redirect = ParamUtil.getString(request, "redirect");
+
+String referringPortletResource = ParamUtil.getString(request, "referringPortletResource");
 
 PollsQuestion question = (PollsQuestion)request.getAttribute(WebKeys.POLLS_QUESTION);
 
@@ -56,13 +58,14 @@ if (choiceName > 0) {
 }
 %>
 
-<portlet:actionURL var="editQuestionURL">
+<liferay-portlet:actionURL refererPlid="<%= themeDisplay.getRefererPlid() %>" var="editQuestionURL">
 	<portlet:param name="struts_action" value="/polls/edit_question" />
-</portlet:actionURL>
+</liferay-portlet:actionURL>
 
 <aui:form action="<%= editQuestionURL %>" method="post" name="fm" onSubmit='<%= "event.preventDefault(); " + renderResponse.getNamespace() + "saveQuestion();" %>'>
 	<aui:input name="<%= Constants.CMD %>" type="hidden" value="" />
 	<aui:input name="redirect" type="hidden" value="<%= redirect %>" />
+	<aui:input name="referringPortletResource" type="hidden" value="<%= referringPortletResource %>" />
 	<aui:input name="questionId" type="hidden" value="<%= questionId %>" />
 	<aui:input name="choicesCount" type="hidden" value="<%= choicesCount %>" />
 	<aui:input name="choiceName" type="hidden" value="" />
@@ -81,17 +84,11 @@ if (choiceName > 0) {
 	<aui:model-context bean="<%= question %>" model="<%= PollsQuestion.class %>" />
 
 	<aui:fieldset>
-		<aui:input name="title" />
+		<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" name="title" />
 
-		<aui:input name="description" />
+		<aui:input label="polls-question" name="description" />
 
-		<aui:input disabled="<%= neverExpire %>" name="expirationDate" />
-
-		<%
-		String taglibNeverExpireOnClick = renderResponse.getNamespace() + "disableInputDate('expirationDate', this.checked);";
-		%>
-
-		<aui:input inlineLabel="left" name="neverExpire" onClick="<%= taglibNeverExpireOnClick %>" type="checkbox" value="<%= neverExpire %>" />
+		<aui:input dateTogglerCheckboxLabel="never-expire" disabled="<%= neverExpire %>" name="expirationDate" />
 
 		<aui:field-wrapper label="choices">
 
@@ -110,7 +107,7 @@ if (choiceName > 0) {
 					paramName = EditQuestionAction.CHOICE_DESCRIPTION_PREFIX + c;
 				}
 
-				if (question != null && (i - 1 < choices.size())) {
+				if ((question != null) && ((i - 1) < choices.size())) {
 					choice = (PollsChoice)choices.get(i - 1);
 				}
 			%>
@@ -123,7 +120,7 @@ if (choiceName > 0) {
 					<aui:input fieldParam="<%= paramName %>" label="<%= c + StringPool.PERIOD %>" name="description" />
 
 					<c:if test="<%= (((question == null) && (choicesCount > 2)) || ((question != null) && (choicesCount > oldChoicesCount))) && (i == choicesCount) %>">
-						<aui:button onClick='<%= renderResponse.getNamespace() + "deletePollChoice(" + i + ");" %>' value="delete" />
+						<aui:button cssClass="btn-delete" onClick='<%= renderResponse.getNamespace() + "deletePollChoice(" + i + ");" %>' value="delete" />
 					</c:if>
 				</div>
 
@@ -152,48 +149,28 @@ if (choiceName > 0) {
 
 <aui:script>
 	function <portlet:namespace />addPollChoice() {
-		<portlet:actionURL var="addPollChoiceURL">
-			<portlet:param name="struts_action" value="/polls/edit_question" />
-			<portlet:param name="<%= EditQuestionAction.CHOICE_DESCRIPTION_PREFIX + (char)(96 + choicesCount + 1) %>" value="" />
-		</portlet:actionURL>
+		<liferay-portlet:actionURL allowEmptyParam="<%= true %>" var="addPollChoiceURL">
+			<liferay-portlet:param name="struts_action" value="/polls/edit_question" />
+			<liferay-portlet:param name="<%= EditQuestionAction.CHOICE_DESCRIPTION_PREFIX + (char)(96 + choicesCount + 1) %>" value="" />
+		</liferay-portlet:actionURL>
 
 		document.<portlet:namespace />fm.<portlet:namespace />choicesCount.value = '<%= choicesCount + 1 %>';
+
 		submitForm(document.<portlet:namespace />fm, '<%= addPollChoiceURL %>');
 	}
 
 	function <portlet:namespace />deletePollChoice(choiceName) {
 		document.<portlet:namespace />fm.<portlet:namespace />choicesCount.value = '<%= choicesCount - 1 %>';
 		document.<portlet:namespace />fm.<portlet:namespace />choiceName.value = '<%= choiceName %>';
+
 		submitForm(document.<portlet:namespace />fm);
 	}
 
 	function <portlet:namespace />saveQuestion() {
 		document.<portlet:namespace />fm.<portlet:namespace /><%= Constants.CMD %>.value = "<%= (question == null) ? Constants.ADD : Constants.UPDATE %>";
+
 		submitForm(document.<portlet:namespace />fm);
 	}
-
-	Liferay.provide(
-		window,
-		'<portlet:namespace />disableInputDate',
-		function(date, checked) {
-			var A = AUI();
-
-			document.<portlet:namespace />fm["<portlet:namespace />" + date + "Hour"].disabled = checked;
-			document.<portlet:namespace />fm["<portlet:namespace />" + date + "Minute"].disabled = checked;
-			document.<portlet:namespace />fm["<portlet:namespace />" + date + "AmPm"].disabled = checked;
-
-			var calendarWidget = A.Widget.getByNode(document.<portlet:namespace />fm["<portlet:namespace />" + date + "Month"]);
-
-			if (calendarWidget) {
-				calendarWidget.set('disabled', checked);
-			}
-		},
-		['aui-base']
-	);
-
-	<c:if test="<%= windowState.equals(WindowState.MAXIMIZED) %>">
-		Liferay.Util.focusFormField(document.<portlet:namespace />fm.<portlet:namespace />title);
-	</c:if>
 </aui:script>
 
 <%

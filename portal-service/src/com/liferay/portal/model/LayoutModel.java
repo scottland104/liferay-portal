@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -14,7 +14,9 @@
 
 package com.liferay.portal.model;
 
+import com.liferay.portal.LocaleException;
 import com.liferay.portal.kernel.bean.AutoEscape;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.service.ServiceContext;
 
 import com.liferay.portlet.expando.model.ExpandoBridge;
@@ -38,7 +40,7 @@ import java.util.Map;
  * @see com.liferay.portal.model.impl.LayoutModelImpl
  * @generated
  */
-public interface LayoutModel extends BaseModel<Layout> {
+public interface LayoutModel extends BaseModel<Layout>, StagedGroupedModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -65,6 +67,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @return the uuid of this layout
 	 */
 	@AutoEscape
+	@Override
 	public String getUuid();
 
 	/**
@@ -72,6 +75,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 *
 	 * @param uuid the uuid of this layout
 	 */
+	@Override
 	public void setUuid(String uuid);
 
 	/**
@@ -93,6 +97,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 *
 	 * @return the group ID of this layout
 	 */
+	@Override
 	public long getGroupId();
 
 	/**
@@ -100,6 +105,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 *
 	 * @param groupId the group ID of this layout
 	 */
+	@Override
 	public void setGroupId(long groupId);
 
 	/**
@@ -107,6 +113,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 *
 	 * @return the company ID of this layout
 	 */
+	@Override
 	public long getCompanyId();
 
 	/**
@@ -114,13 +121,65 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 *
 	 * @param companyId the company ID of this layout
 	 */
+	@Override
 	public void setCompanyId(long companyId);
+
+	/**
+	 * Returns the user ID of this layout.
+	 *
+	 * @return the user ID of this layout
+	 */
+	@Override
+	public long getUserId();
+
+	/**
+	 * Sets the user ID of this layout.
+	 *
+	 * @param userId the user ID of this layout
+	 */
+	@Override
+	public void setUserId(long userId);
+
+	/**
+	 * Returns the user uuid of this layout.
+	 *
+	 * @return the user uuid of this layout
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public String getUserUuid() throws SystemException;
+
+	/**
+	 * Sets the user uuid of this layout.
+	 *
+	 * @param userUuid the user uuid of this layout
+	 */
+	@Override
+	public void setUserUuid(String userUuid);
+
+	/**
+	 * Returns the user name of this layout.
+	 *
+	 * @return the user name of this layout
+	 */
+	@AutoEscape
+	@Override
+	public String getUserName();
+
+	/**
+	 * Sets the user name of this layout.
+	 *
+	 * @param userName the user name of this layout
+	 */
+	@Override
+	public void setUserName(String userName);
 
 	/**
 	 * Returns the create date of this layout.
 	 *
 	 * @return the create date of this layout
 	 */
+	@Override
 	public Date getCreateDate();
 
 	/**
@@ -128,6 +187,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 *
 	 * @param createDate the create date of this layout
 	 */
+	@Override
 	public void setCreateDate(Date createDate);
 
 	/**
@@ -135,6 +195,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 *
 	 * @return the modified date of this layout
 	 */
+	@Override
 	public Date getModifiedDate();
 
 	/**
@@ -142,6 +203,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 *
 	 * @param modifiedDate the modified date of this layout
 	 */
+	@Override
 	public void setModifiedDate(Date modifiedDate);
 
 	/**
@@ -206,6 +268,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param locale the locale of the language
 	 * @return the localized name of this layout
 	 */
+	@AutoEscape
 	public String getName(Locale locale);
 
 	/**
@@ -215,6 +278,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized name of this layout. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getName(Locale locale, boolean useDefault);
 
 	/**
@@ -223,6 +287,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param languageId the ID of the language
 	 * @return the localized name of this layout
 	 */
+	@AutoEscape
 	public String getName(String languageId);
 
 	/**
@@ -232,7 +297,14 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized name of this layout
 	 */
+	@AutoEscape
 	public String getName(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getNameCurrentLanguageId();
+
+	@AutoEscape
+	public String getNameCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized names of this layout.
@@ -265,6 +337,8 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 */
 	public void setName(String name, Locale locale, Locale defaultLocale);
 
+	public void setNameCurrentLanguageId(String languageId);
+
 	/**
 	 * Sets the localized names of this layout from the map of locales and localized names.
 	 *
@@ -293,6 +367,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param locale the locale of the language
 	 * @return the localized title of this layout
 	 */
+	@AutoEscape
 	public String getTitle(Locale locale);
 
 	/**
@@ -302,6 +377,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized title of this layout. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getTitle(Locale locale, boolean useDefault);
 
 	/**
@@ -310,6 +386,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param languageId the ID of the language
 	 * @return the localized title of this layout
 	 */
+	@AutoEscape
 	public String getTitle(String languageId);
 
 	/**
@@ -319,7 +396,14 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized title of this layout
 	 */
+	@AutoEscape
 	public String getTitle(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getTitleCurrentLanguageId();
+
+	@AutoEscape
+	public String getTitleCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized titles of this layout.
@@ -352,6 +436,8 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 */
 	public void setTitle(String title, Locale locale, Locale defaultLocale);
 
+	public void setTitleCurrentLanguageId(String languageId);
+
 	/**
 	 * Sets the localized titles of this layout from the map of locales and localized titles.
 	 *
@@ -380,6 +466,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param locale the locale of the language
 	 * @return the localized description of this layout
 	 */
+	@AutoEscape
 	public String getDescription(Locale locale);
 
 	/**
@@ -389,6 +476,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized description of this layout. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getDescription(Locale locale, boolean useDefault);
 
 	/**
@@ -397,6 +485,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param languageId the ID of the language
 	 * @return the localized description of this layout
 	 */
+	@AutoEscape
 	public String getDescription(String languageId);
 
 	/**
@@ -406,7 +495,14 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized description of this layout
 	 */
+	@AutoEscape
 	public String getDescription(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getDescriptionCurrentLanguageId();
+
+	@AutoEscape
+	public String getDescriptionCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized descriptions of this layout.
@@ -440,6 +536,8 @@ public interface LayoutModel extends BaseModel<Layout> {
 	public void setDescription(String description, Locale locale,
 		Locale defaultLocale);
 
+	public void setDescriptionCurrentLanguageId(String languageId);
+
 	/**
 	 * Sets the localized descriptions of this layout from the map of locales and localized descriptions.
 	 *
@@ -469,6 +567,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param locale the locale of the language
 	 * @return the localized keywords of this layout
 	 */
+	@AutoEscape
 	public String getKeywords(Locale locale);
 
 	/**
@@ -478,6 +577,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized keywords of this layout. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getKeywords(Locale locale, boolean useDefault);
 
 	/**
@@ -486,6 +586,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param languageId the ID of the language
 	 * @return the localized keywords of this layout
 	 */
+	@AutoEscape
 	public String getKeywords(String languageId);
 
 	/**
@@ -495,7 +596,14 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized keywords of this layout
 	 */
+	@AutoEscape
 	public String getKeywords(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getKeywordsCurrentLanguageId();
+
+	@AutoEscape
+	public String getKeywordsCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized keywordses of this layout.
@@ -528,6 +636,8 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 */
 	public void setKeywords(String keywords, Locale locale, Locale defaultLocale);
 
+	public void setKeywordsCurrentLanguageId(String languageId);
+
 	/**
 	 * Sets the localized keywordses of this layout from the map of locales and localized keywordses.
 	 *
@@ -557,6 +667,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param locale the locale of the language
 	 * @return the localized robots of this layout
 	 */
+	@AutoEscape
 	public String getRobots(Locale locale);
 
 	/**
@@ -566,6 +677,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized robots of this layout. If <code>useDefault</code> is <code>false</code> and no localization exists for the requested language, an empty string will be returned.
 	 */
+	@AutoEscape
 	public String getRobots(Locale locale, boolean useDefault);
 
 	/**
@@ -574,6 +686,7 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param languageId the ID of the language
 	 * @return the localized robots of this layout
 	 */
+	@AutoEscape
 	public String getRobots(String languageId);
 
 	/**
@@ -583,7 +696,14 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param useDefault whether to use the default language if no localization exists for the requested language
 	 * @return the localized robots of this layout
 	 */
+	@AutoEscape
 	public String getRobots(String languageId, boolean useDefault);
+
+	@AutoEscape
+	public String getRobotsCurrentLanguageId();
+
+	@AutoEscape
+	public String getRobotsCurrentValue();
 
 	/**
 	 * Returns a map of the locales and localized robotses of this layout.
@@ -615,6 +735,8 @@ public interface LayoutModel extends BaseModel<Layout> {
 	 * @param defaultLocale the default locale
 	 */
 	public void setRobots(String robots, Locale locale, Locale defaultLocale);
+
+	public void setRobotsCurrentLanguageId(String languageId);
 
 	/**
 	 * Sets the localized robotses of this layout from the map of locales and localized robotses.
@@ -858,37 +980,84 @@ public interface LayoutModel extends BaseModel<Layout> {
 	public void setLayoutPrototypeLinkEnabled(
 		boolean layoutPrototypeLinkEnabled);
 
+	/**
+	 * Returns the source prototype layout uuid of this layout.
+	 *
+	 * @return the source prototype layout uuid of this layout
+	 */
+	@AutoEscape
+	public String getSourcePrototypeLayoutUuid();
+
+	/**
+	 * Sets the source prototype layout uuid of this layout.
+	 *
+	 * @param sourcePrototypeLayoutUuid the source prototype layout uuid of this layout
+	 */
+	public void setSourcePrototypeLayoutUuid(String sourcePrototypeLayoutUuid);
+
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	public String[] getAvailableLanguageIds();
+
+	public String getDefaultLanguageId();
+
+	public void prepareLocalizedFieldsForImport() throws LocaleException;
+
+	public void prepareLocalizedFieldsForImport(Locale defaultImportLocale)
+		throws LocaleException;
+
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(Layout layout);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<Layout> toCacheModel();
 
+	@Override
 	public Layout toEscapedModel();
 
+	@Override
+	public Layout toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

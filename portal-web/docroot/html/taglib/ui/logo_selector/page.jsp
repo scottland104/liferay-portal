@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -33,32 +33,21 @@ if (deleteLogo || (imageId == 0)) {
 	imageSrc = defaultLogoURL;
 }
 else {
-	imageSrc = themeDisplay.getPathImage() + "/logo?img_id=" + imageId + "&t" + ImageServletTokenUtil.getToken(imageId);
+	imageSrc = themeDisplay.getPathImage() + "/logo?img_id=" + imageId + "&t" + WebServerServletTokenUtil.getToken(imageId);
 }
 %>
 
 <div class="taglib-logo-selector" id="<%= randomNamespace %>taglibLogoSelector">
 	<div class="taglib-logo-selector-content" id="<%= randomNamespace %>taglibLogoSelectorContent">
-		<a class='lfr-change-logo edit-logo-link <%= showBackground ? "show-background" : StringPool.BLANK %>' href="javascript:;">
-			<img alt="<liferay-ui:message key="change-logo" />" class="avatar" id="<%= randomNamespace %>avatar" src="<%= imageSrc %>" />
+		<a class='lfr-change-logo <%= showBackground ? "show-background" : StringPool.BLANK %>' href="javascript:;">
+			<img alt="<liferay-ui:message key="change-logo" />" class="img-polaroid avatar" id="<%= randomNamespace %>avatar" src="<%= imageSrc %>" />
 		</a>
 
 		<div class="portrait-icons">
-			<liferay-ui:icon
-				cssClass="edit-logo-link"
-				image="edit"
-				label="<%= true %>"
-				message="change"
-				url="javascript:;"
-			/>
-
-			<liferay-ui:icon
-				cssClass='<%= "modify-link" + (imageId != 0 ? StringPool.BLANK : " aui-helper-hidden") %>'
-				id='<%= randomNamespace + "deleteLogoLink" %>'
-				image="delete"
-				label="<%= true %>"
-				url="javascript:;"
-			/>
+			<div class="btn-group">
+				<aui:button cssClass="btn edit-logo" icon="icon-picture" value="change" />
+				<aui:button cssClass="btn delete-logo" disablesd="<%= (imageId == 0) %>" icon="icon-remove" value="delete" />
+			</div>
 
 			<aui:input name="deleteLogo" type="hidden" value="<%= deleteLogo %>" />
 		</div>

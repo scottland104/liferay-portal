@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,7 @@ package com.liferay.portal.model.impl;
 import com.liferay.portal.kernel.bean.AutoEscapeBeanHandler;
 import com.liferay.portal.kernel.json.JSON;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.CacheModel;
@@ -30,13 +31,13 @@ import com.liferay.portlet.expando.util.ExpandoBridgeFactoryUtil;
 
 import java.io.Serializable;
 
-import java.lang.reflect.Proxy;
-
 import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base model implementation for the Image service. Represents a row in the &quot;Image&quot; database table, with each column mapped to a property of this class.
@@ -62,13 +63,12 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 	public static final Object[][] TABLE_COLUMNS = {
 			{ "imageId", Types.BIGINT },
 			{ "modifiedDate", Types.TIMESTAMP },
-			{ "text_", Types.CLOB },
 			{ "type_", Types.VARCHAR },
 			{ "height", Types.INTEGER },
 			{ "width", Types.INTEGER },
 			{ "size_", Types.INTEGER }
 		};
-	public static final String TABLE_SQL_CREATE = "create table Image (imageId LONG not null primary key,modifiedDate DATE null,text_ TEXT null,type_ VARCHAR(75) null,height INTEGER,width INTEGER,size_ INTEGER)";
+	public static final String TABLE_SQL_CREATE = "create table Image (imageId LONG not null primary key,modifiedDate DATE null,type_ VARCHAR(75) null,height INTEGER,width INTEGER,size_ INTEGER)";
 	public static final String TABLE_SQL_DROP = "drop table Image";
 	public static final String ORDER_BY_JPQL = " ORDER BY image.imageId ASC";
 	public static final String ORDER_BY_SQL = " ORDER BY Image.imageId ASC";
@@ -81,6 +81,11 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 	public static final boolean FINDER_CACHE_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
 				"value.object.finder.cache.enabled.com.liferay.portal.model.Image"),
 			true);
+	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.portal.util.PropsUtil.get(
+				"value.object.column.bitmask.enabled.com.liferay.portal.model.Image"),
+			true);
+	public static long SIZE_COLUMN_BITMASK = 1L;
+	public static long IMAGEID_COLUMN_BITMASK = 2L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -89,11 +94,14 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 	 * @return the normal model instance
 	 */
 	public static Image toModel(ImageSoap soapModel) {
+		if (soapModel == null) {
+			return null;
+		}
+
 		Image model = new ImageImpl();
 
 		model.setImageId(soapModel.getImageId());
 		model.setModifiedDate(soapModel.getModifiedDate());
-		model.setText(soapModel.getText());
 		model.setType(soapModel.getType());
 		model.setHeight(soapModel.getHeight());
 		model.setWidth(soapModel.getWidth());
@@ -109,6 +117,10 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 	 * @return the normal model instances
 	 */
 	public static List<Image> toModels(ImageSoap[] soapModels) {
+		if (soapModels == null) {
+			return null;
+		}
+
 		List<Image> models = new ArrayList<Image>(soapModels.length);
 
 		for (ImageSoap soapModel : soapModels) {
@@ -118,69 +130,121 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 		return models;
 	}
 
-	public Class<?> getModelClass() {
-		return Image.class;
-	}
-
-	public String getModelClassName() {
-		return Image.class.getName();
-	}
-
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(com.liferay.portal.util.PropsUtil.get(
 				"lock.expiration.time.com.liferay.portal.model.Image"));
 
 	public ImageModelImpl() {
 	}
 
+	@Override
 	public long getPrimaryKey() {
 		return _imageId;
 	}
 
+	@Override
 	public void setPrimaryKey(long primaryKey) {
 		setImageId(primaryKey);
 	}
 
+	@Override
 	public Serializable getPrimaryKeyObj() {
-		return new Long(_imageId);
+		return _imageId;
 	}
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj) {
 		setPrimaryKey(((Long)primaryKeyObj).longValue());
 	}
 
+	@Override
+	public Class<?> getModelClass() {
+		return Image.class;
+	}
+
+	@Override
+	public String getModelClassName() {
+		return Image.class.getName();
+	}
+
+	@Override
+	public Map<String, Object> getModelAttributes() {
+		Map<String, Object> attributes = new HashMap<String, Object>();
+
+		attributes.put("imageId", getImageId());
+		attributes.put("modifiedDate", getModifiedDate());
+		attributes.put("type", getType());
+		attributes.put("height", getHeight());
+		attributes.put("width", getWidth());
+		attributes.put("size", getSize());
+
+		return attributes;
+	}
+
+	@Override
+	public void setModelAttributes(Map<String, Object> attributes) {
+		Long imageId = (Long)attributes.get("imageId");
+
+		if (imageId != null) {
+			setImageId(imageId);
+		}
+
+		Date modifiedDate = (Date)attributes.get("modifiedDate");
+
+		if (modifiedDate != null) {
+			setModifiedDate(modifiedDate);
+		}
+
+		String type = (String)attributes.get("type");
+
+		if (type != null) {
+			setType(type);
+		}
+
+		Integer height = (Integer)attributes.get("height");
+
+		if (height != null) {
+			setHeight(height);
+		}
+
+		Integer width = (Integer)attributes.get("width");
+
+		if (width != null) {
+			setWidth(width);
+		}
+
+		Integer size = (Integer)attributes.get("size");
+
+		if (size != null) {
+			setSize(size);
+		}
+	}
+
 	@JSON
+	@Override
 	public long getImageId() {
 		return _imageId;
 	}
 
+	@Override
 	public void setImageId(long imageId) {
+		_columnBitmask = -1L;
+
 		_imageId = imageId;
 	}
 
 	@JSON
+	@Override
 	public Date getModifiedDate() {
 		return _modifiedDate;
 	}
 
+	@Override
 	public void setModifiedDate(Date modifiedDate) {
 		_modifiedDate = modifiedDate;
 	}
 
 	@JSON
-	public String getText() {
-		if (_text == null) {
-			return StringPool.BLANK;
-		}
-		else {
-			return _text;
-		}
-	}
-
-	public void setText(String text) {
-		_text = text;
-	}
-
-	@JSON
+	@Override
 	public String getType() {
 		if (_type == null) {
 			return StringPool.BLANK;
@@ -190,66 +254,81 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 		}
 	}
 
+	@Override
 	public void setType(String type) {
 		_type = type;
 	}
 
 	@JSON
+	@Override
 	public int getHeight() {
 		return _height;
 	}
 
+	@Override
 	public void setHeight(int height) {
 		_height = height;
 	}
 
 	@JSON
+	@Override
 	public int getWidth() {
 		return _width;
 	}
 
+	@Override
 	public void setWidth(int width) {
 		_width = width;
 	}
 
 	@JSON
+	@Override
 	public int getSize() {
 		return _size;
 	}
 
+	@Override
 	public void setSize(int size) {
+		_columnBitmask |= SIZE_COLUMN_BITMASK;
+
+		if (!_setOriginalSize) {
+			_setOriginalSize = true;
+
+			_originalSize = _size;
+		}
+
 		_size = size;
 	}
 
-	@Override
-	public Image toEscapedModel() {
-		if (isEscapedModel()) {
-			return (Image)this;
-		}
-		else {
-			if (_escapedModelProxy == null) {
-				_escapedModelProxy = (Image)Proxy.newProxyInstance(_classLoader,
-						_escapedModelProxyInterfaces,
-						new AutoEscapeBeanHandler(this));
-			}
+	public int getOriginalSize() {
+		return _originalSize;
+	}
 
-			return _escapedModelProxy;
-		}
+	public long getColumnBitmask() {
+		return _columnBitmask;
 	}
 
 	@Override
 	public ExpandoBridge getExpandoBridge() {
-		if (_expandoBridge == null) {
-			_expandoBridge = ExpandoBridgeFactoryUtil.getExpandoBridge(0,
-					Image.class.getName(), getPrimaryKey());
-		}
-
-		return _expandoBridge;
+		return ExpandoBridgeFactoryUtil.getExpandoBridge(0,
+			Image.class.getName(), getPrimaryKey());
 	}
 
 	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext) {
-		getExpandoBridge().setAttributes(serviceContext);
+		ExpandoBridge expandoBridge = getExpandoBridge();
+
+		expandoBridge.setAttributes(serviceContext);
+	}
+
+	@Override
+	public Image toEscapedModel() {
+		if (_escapedModel == null) {
+			_escapedModel = (Image)ProxyUtil.newProxyInstance(_classLoader,
+					_escapedModelInterfaces, new AutoEscapeBeanHandler(this));
+		}
+
+		return _escapedModel;
 	}
 
 	@Override
@@ -258,7 +337,6 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 
 		imageImpl.setImageId(getImageId());
 		imageImpl.setModifiedDate(getModifiedDate());
-		imageImpl.setText(getText());
 		imageImpl.setType(getType());
 		imageImpl.setHeight(getHeight());
 		imageImpl.setWidth(getWidth());
@@ -269,6 +347,7 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 		return imageImpl;
 	}
 
+	@Override
 	public int compareTo(Image image) {
 		int value = 0;
 
@@ -291,18 +370,15 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof Image)) {
 			return false;
 		}
 
-		Image image = null;
-
-		try {
-			image = (Image)obj;
-		}
-		catch (ClassCastException cce) {
-			return false;
-		}
+		Image image = (Image)obj;
 
 		long primaryKey = image.getPrimaryKey();
 
@@ -321,6 +397,13 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 
 	@Override
 	public void resetOriginalValues() {
+		ImageModelImpl imageModelImpl = this;
+
+		imageModelImpl._originalSize = imageModelImpl._size;
+
+		imageModelImpl._setOriginalSize = false;
+
+		imageModelImpl._columnBitmask = 0;
 	}
 
 	@Override
@@ -336,14 +419,6 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 		}
 		else {
 			imageCacheModel.modifiedDate = Long.MIN_VALUE;
-		}
-
-		imageCacheModel.text = getText();
-
-		String text = imageCacheModel.text;
-
-		if ((text != null) && (text.length() == 0)) {
-			imageCacheModel.text = null;
 		}
 
 		imageCacheModel.type = getType();
@@ -365,14 +440,12 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(15);
+		StringBundler sb = new StringBundler(13);
 
 		sb.append("{imageId=");
 		sb.append(getImageId());
 		sb.append(", modifiedDate=");
 		sb.append(getModifiedDate());
-		sb.append(", text=");
-		sb.append(getText());
 		sb.append(", type=");
 		sb.append(getType());
 		sb.append(", height=");
@@ -386,8 +459,9 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 		return sb.toString();
 	}
 
+	@Override
 	public String toXmlString() {
-		StringBundler sb = new StringBundler(25);
+		StringBundler sb = new StringBundler(22);
 
 		sb.append("<model><model-name>");
 		sb.append("com.liferay.portal.model.Image");
@@ -400,10 +474,6 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 		sb.append(
 			"<column><column-name>modifiedDate</column-name><column-value><![CDATA[");
 		sb.append(getModifiedDate());
-		sb.append("]]></column-value></column>");
-		sb.append(
-			"<column><column-name>text</column-name><column-value><![CDATA[");
-		sb.append(getText());
 		sb.append("]]></column-value></column>");
 		sb.append(
 			"<column><column-name>type</column-name><column-value><![CDATA[");
@@ -428,16 +498,15 @@ public class ImageModelImpl extends BaseModelImpl<Image> implements ImageModel {
 	}
 
 	private static ClassLoader _classLoader = Image.class.getClassLoader();
-	private static Class<?>[] _escapedModelProxyInterfaces = new Class[] {
-			Image.class
-		};
+	private static Class<?>[] _escapedModelInterfaces = new Class[] { Image.class };
 	private long _imageId;
 	private Date _modifiedDate;
-	private String _text;
 	private String _type;
 	private int _height;
 	private int _width;
 	private int _size;
-	private transient ExpandoBridge _expandoBridge;
-	private Image _escapedModelProxy;
+	private int _originalSize;
+	private boolean _setOriginalSize;
+	private long _columnBitmask;
+	private Image _escapedModel;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,10 +17,9 @@ package com.liferay.portlet.documentlibrary.store;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.util.PropsUtil;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.portlet.documentlibrary.DuplicateDirectoryException;
 import com.liferay.portlet.documentlibrary.DuplicateFileException;
 import com.liferay.portlet.documentlibrary.NoSuchDirectoryException;
@@ -29,21 +28,23 @@ import com.liferay.portlet.documentlibrary.util.DLUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Brian Wing Shun Chan
  * @author Sten Martinez
  * @author Alexander Chow
+ * @author Edward Han
  */
 public class FileSystemStore extends BaseStore {
 
 	public FileSystemStore() {
-		_rootDir = new File(_ROOT_DIR);
-
 		if (!_rootDir.exists()) {
 			_rootDir.mkdirs();
 		}
@@ -89,15 +90,14 @@ public class FileSystemStore extends BaseStore {
 	@Override
 	public void copyFileVersion(
 			long companyId, long repositoryId, String fileName,
-			String fromVersionNumber, String toVersionNumber,
-			String sourceFileName)
+			String fromVersionLabel, String toVersionLabel)
 		throws PortalException, SystemException {
 
 		File fromFileNameVersionFile = getFileNameVersionFile(
-			companyId, repositoryId, fileName, fromVersionNumber);
+			companyId, repositoryId, fileName, fromVersionLabel);
 
 		File toFileNameVersionFile = getFileNameVersionFile(
-			companyId, repositoryId, fileName, toVersionNumber);
+			companyId, repositoryId, fileName, toVersionLabel);
 
 		if (toFileNameVersionFile.exists()) {
 			throw new DuplicateFileException(toFileNameVersionFile.getPath());
@@ -124,7 +124,16 @@ public class FileSystemStore extends BaseStore {
 			throw new NoSuchDirectoryException(dirNameDir.getPath());
 		}
 
+		File parentFile = dirNameDir.getParentFile();
+
 		FileUtil.deltree(dirNameDir);
+
+		RepositoryDirKey repositoryDirKey = new RepositoryDirKey(
+			companyId, repositoryId);
+
+		_repositoryDirs.remove(repositoryDirKey);
+
+		deleteEmptyAncestors(parentFile);
 	}
 
 	@Override
@@ -137,51 +146,77 @@ public class FileSystemStore extends BaseStore {
 			throw new NoSuchFileException(fileNameDir.getPath());
 		}
 
+		File parentFile = fileNameDir.getParentFile();
+
 		FileUtil.deltree(fileNameDir);
+
+		deleteEmptyAncestors(companyId, repositoryId, parentFile);
 	}
 
 	@Override
 	public void deleteFile(
 			long companyId, long repositoryId, String fileName,
-			String versionNumber)
+			String versionLabel)
 		throws PortalException {
 
 		File fileNameVersionFile = getFileNameVersionFile(
-			companyId, repositoryId, fileName, versionNumber);
+			companyId, repositoryId, fileName, versionLabel);
 
 		if (!fileNameVersionFile.exists()) {
 			throw new NoSuchFileException(fileNameVersionFile.getPath());
 		}
 
+		File parentFile = fileNameVersionFile.getParentFile();
+
 		fileNameVersionFile.delete();
+
+		deleteEmptyAncestors(companyId, repositoryId, parentFile);
+	}
+
+	@Override
+	public File getFile(
+			long companyId, long repositoryId, String fileName,
+			String versionLabel)
+		throws PortalException {
+
+		if (Validator.isNull(versionLabel)) {
+			versionLabel = getHeadVersionLabel(
+				companyId, repositoryId, fileName);
+		}
+
+		File fileNameVersionFile = getFileNameVersionFile(
+			companyId, repositoryId, fileName, versionLabel);
+
+		if (!fileNameVersionFile.exists()) {
+			throw new NoSuchFileException(fileNameVersionFile.getPath());
+		}
+
+		return fileNameVersionFile;
 	}
 
 	@Override
 	public InputStream getFileAsStream(
 			long companyId, long repositoryId, String fileName,
-			String versionNumber)
-		throws PortalException, SystemException {
+			String versionLabel)
+		throws PortalException {
+
+		if (Validator.isNull(versionLabel)) {
+			versionLabel = getHeadVersionLabel(
+				companyId, repositoryId, fileName);
+		}
+
+		File fileNameVersionFile = getFileNameVersionFile(
+			companyId, repositoryId, fileName, versionLabel);
 
 		try {
-			if (Validator.isNull(versionNumber)) {
-				versionNumber = getHeadVersionNumber(
-					companyId, repositoryId, fileName);
-			}
-
-			File fileNameVersionFile = getFileNameVersionFile(
-				companyId, repositoryId, fileName, versionNumber);
-
-			if (!fileNameVersionFile.exists()) {
-				throw new NoSuchFileException(fileNameVersionFile.getPath());
-			}
-
 			return new FileInputStream(fileNameVersionFile);
 		}
-		catch (IOException ioe) {
-			throw new SystemException(ioe);
+		catch (FileNotFoundException fnfe) {
+			throw new NoSuchFileException(fileNameVersionFile.getPath(), fnfe);
 		}
 	}
 
+	@Override
 	public String[] getFileNames(long companyId, long repositoryId) {
 		File repositoryDir = getRepositoryDir(companyId, repositoryId);
 
@@ -217,11 +252,11 @@ public class FileSystemStore extends BaseStore {
 	public long getFileSize(long companyId, long repositoryId, String fileName)
 		throws PortalException {
 
-		String versionNumber = getHeadVersionNumber(
+		String versionLabel = getHeadVersionLabel(
 			companyId, repositoryId, fileName);
 
 		File fileNameVersionFile = getFileNameVersionFile(
-			companyId, repositoryId, fileName, versionNumber);
+			companyId, repositoryId, fileName, versionLabel);
 
 		if (!fileNameVersionFile.exists()) {
 			throw new NoSuchFileException(fileNameVersionFile.getPath());
@@ -231,12 +266,21 @@ public class FileSystemStore extends BaseStore {
 	}
 
 	@Override
+	public boolean hasDirectory(
+		long companyId, long repositoryId, String dirName) {
+
+		File dirNameDir = getDirNameDir(companyId, repositoryId, dirName);
+
+		return dirNameDir.exists();
+	}
+
+	@Override
 	public boolean hasFile(
 		long companyId, long repositoryId, String fileName,
-		String versionNumber) {
+		String versionLabel) {
 
 		File fileNameVersionFile = getFileNameVersionFile(
-			companyId, repositoryId, fileName, versionNumber);
+			companyId, repositoryId, fileName, versionLabel);
 
 		if (fileNameVersionFile.exists()) {
 			return true;
@@ -254,52 +298,65 @@ public class FileSystemStore extends BaseStore {
 	public void updateFile(
 			long companyId, long repositoryId, long newRepositoryId,
 			String fileName)
-		throws SystemException {
+		throws PortalException, SystemException {
 
-		try {
-			File fileNameDir = getFileNameDir(
-				companyId, repositoryId, fileName);
-			File newFileNameDir = getFileNameDir(
-				companyId, newRepositoryId, fileName);
+		File fileNameDir = getFileNameDir(companyId, repositoryId, fileName);
+		File newFileNameDir = getFileNameDir(
+			companyId, newRepositoryId, fileName);
 
-			FileUtil.copyDirectory(fileNameDir, newFileNameDir);
-
-			FileUtil.deltree(fileNameDir);
+		if (newFileNameDir.exists()) {
+			throw new DuplicateFileException(fileName);
 		}
-		catch (IOException ioe) {
-			throw new SystemException(ioe);
+
+		File parentFile = fileNameDir.getParentFile();
+
+		boolean renamed = FileUtil.move(fileNameDir, newFileNameDir);
+
+		if (!renamed) {
+			throw new SystemException(
+				"File name directory was not renamed from " +
+					fileNameDir.getPath() + " to " + newFileNameDir.getPath());
 		}
-	}
 
-	public void updateFile(
-			long companyId, long repositoryId, String fileName,
-			String newFileName)
-		throws SystemException {
-
-		try {
-			File fileNameDir = getFileNameDir(
-				companyId, repositoryId, fileName);
-			File newFileNameDir = getFileNameDir(
-				companyId, repositoryId, newFileName);
-
-			FileUtil.copyDirectory(fileNameDir, newFileNameDir);
-
-			FileUtil.deltree(fileNameDir);
-		}
-		catch (IOException ioe) {
-			throw new SystemException(ioe);
-		}
+		deleteEmptyAncestors(companyId, repositoryId, parentFile);
 	}
 
 	@Override
 	public void updateFile(
 			long companyId, long repositoryId, String fileName,
-			String versionNumber, String sourceFileName, InputStream is)
+			String newFileName)
+		throws PortalException, SystemException {
+
+		File fileNameDir = getFileNameDir(companyId, repositoryId, fileName);
+		File newFileNameDir = getFileNameDir(
+			companyId, repositoryId, newFileName);
+
+		if (newFileNameDir.exists()) {
+			throw new DuplicateFileException(newFileName);
+		}
+
+		File parentFile = fileNameDir.getParentFile();
+
+		boolean renamed = FileUtil.move(fileNameDir, newFileNameDir);
+
+		if (!renamed) {
+			throw new SystemException(
+				"File name directory was not renamed from " +
+					fileNameDir.getPath() + " to " + newFileNameDir.getPath());
+		}
+
+		deleteEmptyAncestors(companyId, repositoryId, parentFile);
+	}
+
+	@Override
+	public void updateFile(
+			long companyId, long repositoryId, String fileName,
+			String versionLabel, InputStream is)
 		throws PortalException, SystemException {
 
 		try {
 			File fileNameVersionFile = getFileNameVersionFile(
-				companyId, repositoryId, fileName, versionNumber);
+				companyId, repositoryId, fileName, versionLabel);
 
 			if (fileNameVersionFile.exists()) {
 				throw new DuplicateFileException(fileNameVersionFile.getPath());
@@ -312,22 +369,62 @@ public class FileSystemStore extends BaseStore {
 		}
 	}
 
+	@Override
 	public void updateFileVersion(
 			long companyId, long repositoryId, String fileName,
-			String fromVersionNumber, String toVersionNumber)
-		throws PortalException {
+			String fromVersionLabel, String toVersionLabel)
+		throws PortalException, SystemException {
 
 		File fromFileNameVersionFile = getFileNameVersionFile(
-			companyId, repositoryId, fileName, fromVersionNumber);
+			companyId, repositoryId, fileName, fromVersionLabel);
 
 		File toFileNameVersionFile = getFileNameVersionFile(
-			companyId, repositoryId, fileName, toVersionNumber);
+			companyId, repositoryId, fileName, toVersionLabel);
 
 		if (toFileNameVersionFile.exists()) {
 			throw new DuplicateFileException(toFileNameVersionFile.getPath());
 		}
 
-		fromFileNameVersionFile.renameTo(toFileNameVersionFile);
+		boolean renamed = FileUtil.move(
+			fromFileNameVersionFile, toFileNameVersionFile);
+
+		if (!renamed) {
+			throw new SystemException(
+				"File name version file was not renamed from " +
+					fromFileNameVersionFile.getPath() + " to " +
+						toFileNameVersionFile.getPath());
+		}
+	}
+
+	protected void deleteEmptyAncestors(File file) {
+		deleteEmptyAncestors(-1, -1, file);
+	}
+
+	protected void deleteEmptyAncestors(
+		long companyId, long repositoryId, File file) {
+
+		String[] fileNames = file.list();
+
+		if ((fileNames == null) || (fileNames.length > 0)) {
+			return;
+		}
+
+		String fileName = file.getName();
+
+		if ((repositoryId > 0) &&
+			fileName.equals(String.valueOf(repositoryId))) {
+
+			RepositoryDirKey repositoryDirKey = new RepositoryDirKey(
+				companyId, repositoryId);
+
+			_repositoryDirs.remove(repositoryDirKey);
+		}
+
+		File parentFile = file.getParentFile();
+
+		if (file.delete() && (parentFile != null)) {
+			deleteEmptyAncestors(companyId, repositoryId, parentFile);
+		}
 	}
 
 	protected File getCompanyDir(long companyId) {
@@ -368,7 +465,7 @@ public class FileSystemStore extends BaseStore {
 		return fileNameVersionFile;
 	}
 
-	protected String getHeadVersionNumber(
+	protected String getHeadVersionLabel(
 		long companyId, long repositoryId, String fileName) {
 
 		File fileNameDir = getFileNameDir(companyId, repositoryId, fileName);
@@ -377,35 +474,74 @@ public class FileSystemStore extends BaseStore {
 			return VERSION_DEFAULT;
 		}
 
-		String[] versionNumbers = FileUtil.listFiles(fileNameDir);
+		String[] versionLabels = FileUtil.listFiles(fileNameDir);
 
-		String headVersionNumber = VERSION_DEFAULT;
+		String headVersionLabel = VERSION_DEFAULT;
 
-		for (String versionNumber : versionNumbers) {
-			if (DLUtil.compareVersions(versionNumber, headVersionNumber) > 0) {
-				headVersionNumber = versionNumber;
+		for (String versionLabel : versionLabels) {
+			if (DLUtil.compareVersions(versionLabel, headVersionLabel) > 0) {
+				headVersionLabel = versionLabel;
 			}
 		}
 
-		return headVersionNumber;
+		return headVersionLabel;
 	}
 
 	protected File getRepositoryDir(long companyId, long repositoryId) {
-		File companyDir = getCompanyDir(companyId);
+		RepositoryDirKey repositoryDirKey = new RepositoryDirKey(
+			companyId, repositoryId);
 
-		File repositoryDir = new File(
-			companyDir + StringPool.SLASH + repositoryId);
+		File repositoryDir = _repositoryDirs.get(repositoryDirKey);
 
-		if (!repositoryDir.exists()) {
-			repositoryDir.mkdirs();
+		if (repositoryDir == null) {
+			File companyDir = getCompanyDir(companyId);
+
+			repositoryDir = new File(
+				companyDir + StringPool.SLASH + repositoryId);
+
+			if (!repositoryDir.exists()) {
+				repositoryDir.mkdirs();
+			}
+
+			_repositoryDirs.put(repositoryDirKey, repositoryDir);
 		}
 
 		return repositoryDir;
 	}
 
-	private static final String _ROOT_DIR = PropsUtil.get(
-		PropsKeys.DL_STORE_FILE_SYSTEM_ROOT_DIR);
+	private Map<RepositoryDirKey, File> _repositoryDirs =
+		new ConcurrentHashMap<RepositoryDirKey, File>();
+	private File _rootDir = new File(PropsValues.DL_STORE_FILE_SYSTEM_ROOT_DIR);
 
-	private File _rootDir;
+	private class RepositoryDirKey {
+
+		public RepositoryDirKey(long companyId, long repositoryId) {
+			_companyId = companyId;
+			_repositoryId = repositoryId;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			RepositoryDirKey repositoryDirKey = (RepositoryDirKey)obj;
+
+			if ((_companyId == repositoryDirKey._companyId) &&
+				(_repositoryId == repositoryDirKey._repositoryId)) {
+
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+
+		@Override
+		public int hashCode() {
+			return (int)(_companyId * 11 + _repositoryId);
+		}
+
+		private long _companyId;
+		private long _repositoryId;
+
+	}
 
 }

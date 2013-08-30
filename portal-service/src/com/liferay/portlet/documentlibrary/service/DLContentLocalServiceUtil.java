@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -15,15 +15,15 @@
 package com.liferay.portlet.documentlibrary.service;
 
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
-import com.liferay.portal.kernel.util.MethodCache;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
- * The utility for the document library content local service. This utility wraps {@link com.liferay.portlet.documentlibrary.service.impl.DLContentLocalServiceImpl} and is the primary access point for service operations in application layer code running on the local server.
- *
- * <p>
- * This is a local service. Methods of this service will not have security checks based on the propagated JAAS credentials because this service can only be accessed from within the same VM.
- * </p>
+ * Provides the local service utility for DLContent. This utility wraps
+ * {@link com.liferay.portlet.documentlibrary.service.impl.DLContentLocalServiceImpl} and is the
+ * primary access point for service operations in application layer code running
+ * on the local server. Methods of this service will not have security checks
+ * based on the propagated JAAS credentials because this service can only be
+ * accessed from within the same VM.
  *
  * @author Brian Wing Shun Chan
  * @see DLContentLocalService
@@ -66,25 +66,32 @@ public class DLContentLocalServiceUtil {
 	* Deletes the document library content with the primary key from the database. Also notifies the appropriate model listeners.
 	*
 	* @param contentId the primary key of the document library content
+	* @return the document library content that was removed
 	* @throws PortalException if a document library content with the primary key could not be found
 	* @throws SystemException if a system exception occurred
 	*/
-	public static void deleteDLContent(long contentId)
+	public static com.liferay.portlet.documentlibrary.model.DLContent deleteDLContent(
+		long contentId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		getService().deleteDLContent(contentId);
+		return getService().deleteDLContent(contentId);
 	}
 
 	/**
 	* Deletes the document library content from the database. Also notifies the appropriate model listeners.
 	*
 	* @param dlContent the document library content
+	* @return the document library content that was removed
 	* @throws SystemException if a system exception occurred
 	*/
-	public static void deleteDLContent(
+	public static com.liferay.portlet.documentlibrary.model.DLContent deleteDLContent(
 		com.liferay.portlet.documentlibrary.model.DLContent dlContent)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		getService().deleteDLContent(dlContent);
+		return getService().deleteDLContent(dlContent);
+	}
+
+	public static com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery() {
+		return getService().dynamicQuery();
 	}
 
 	/**
@@ -105,7 +112,7 @@ public class DLContentLocalServiceUtil {
 	* Performs a dynamic query on the database and returns a range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.documentlibrary.model.impl.DLContentModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -125,7 +132,7 @@ public class DLContentLocalServiceUtil {
 	* Performs a dynamic query on the database and returns an ordered range of the matching rows.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.documentlibrary.model.impl.DLContentModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param dynamicQuery the dynamic query
@@ -159,6 +166,27 @@ public class DLContentLocalServiceUtil {
 	}
 
 	/**
+	* Returns the number of rows that match the dynamic query.
+	*
+	* @param dynamicQuery the dynamic query
+	* @param projection the projection to apply to the query
+	* @return the number of rows that match the dynamic query
+	* @throws SystemException if a system exception occurred
+	*/
+	public static long dynamicQueryCount(
+		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery,
+		com.liferay.portal.kernel.dao.orm.Projection projection)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().dynamicQueryCount(dynamicQuery, projection);
+	}
+
+	public static com.liferay.portlet.documentlibrary.model.DLContent fetchDLContent(
+		long contentId)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().fetchDLContent(contentId);
+	}
+
+	/**
 	* Returns the document library content with the primary key.
 	*
 	* @param contentId the primary key of the document library content
@@ -184,7 +212,7 @@ public class DLContentLocalServiceUtil {
 	* Returns a range of all the document library contents.
 	*
 	* <p>
-	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	* Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.portlet.documentlibrary.model.impl.DLContentModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	* </p>
 	*
 	* @param start the lower bound of the range of document library contents
@@ -222,21 +250,6 @@ public class DLContentLocalServiceUtil {
 		return getService().updateDLContent(dlContent);
 	}
 
-	/**
-	* Updates the document library content in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
-	*
-	* @param dlContent the document library content
-	* @param merge whether to merge the document library content with the current session. See {@link com.liferay.portal.service.persistence.BatchSession#update(com.liferay.portal.kernel.dao.orm.Session, com.liferay.portal.model.BaseModel, boolean)} for an explanation.
-	* @return the document library content that was updated
-	* @throws SystemException if a system exception occurred
-	*/
-	public static com.liferay.portlet.documentlibrary.model.DLContent updateDLContent(
-		com.liferay.portlet.documentlibrary.model.DLContent dlContent,
-		boolean merge)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getService().updateDLContent(dlContent, merge);
-	}
-
 	public static com.liferay.portlet.documentlibrary.model.DLContentDataBlobModel getDataBlobModel(
 		java.io.Serializable primaryKey)
 		throws com.liferay.portal.kernel.exception.SystemException {
@@ -262,68 +275,79 @@ public class DLContentLocalServiceUtil {
 	}
 
 	public static com.liferay.portlet.documentlibrary.model.DLContent addContent(
-		long companyId, java.lang.String portletId, long groupId,
-		long repositoryId, java.lang.String path, java.lang.String version,
-		byte[] bytes)
+		long companyId, long repositoryId, java.lang.String path,
+		java.lang.String version, byte[] bytes)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getService()
-				   .addContent(companyId, portletId, groupId, repositoryId,
-			path, version, bytes);
+				   .addContent(companyId, repositoryId, path, version, bytes);
 	}
 
 	public static com.liferay.portlet.documentlibrary.model.DLContent addContent(
-		long companyId, java.lang.String portletId, long groupId,
-		long repositoryId, java.lang.String path, java.lang.String version,
-		java.io.InputStream inputStream, long size)
+		long companyId, long repositoryId, java.lang.String path,
+		java.lang.String version, java.io.InputStream inputStream, long size)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getService()
-				   .addContent(companyId, portletId, groupId, repositoryId,
-			path, version, inputStream, size);
+				   .addContent(companyId, repositoryId, path, version,
+			inputStream, size);
 	}
 
-	public static void deleteContent(long companyId,
-		java.lang.String portletId, long repositoryId, java.lang.String path,
-		java.lang.String version)
+	public static void deleteContent(long companyId, long repositoryId,
+		java.lang.String path, java.lang.String version)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		getService()
-			.deleteContent(companyId, portletId, repositoryId, path, version);
+		getService().deleteContent(companyId, repositoryId, path, version);
 	}
 
-	public static void deleteContents(long companyId,
-		java.lang.String portletId, long repositoryId, java.lang.String path)
+	public static void deleteContents(long companyId, long repositoryId,
+		java.lang.String path)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		getService().deleteContents(companyId, portletId, repositoryId, path);
+		getService().deleteContents(companyId, repositoryId, path);
+	}
+
+	public static void deleteContentsByDirectory(long companyId,
+		long repositoryId, java.lang.String dirName)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		getService().deleteContentsByDirectory(companyId, repositoryId, dirName);
 	}
 
 	public static com.liferay.portlet.documentlibrary.model.DLContent getContent(
-		long companyId, java.lang.String portletId, long repositoryId,
-		java.lang.String path, java.lang.String version)
+		long companyId, long repositoryId, java.lang.String path)
 		throws com.liferay.portal.kernel.exception.SystemException,
 			com.liferay.portlet.documentlibrary.NoSuchContentException {
-		return getService()
-				   .getContent(companyId, portletId, repositoryId, path, version);
+		return getService().getContent(companyId, repositoryId, path);
 	}
 
-	public static java.util.List<com.liferay.portlet.documentlibrary.model.DLContent> getContentReferences(
-		long companyId, long repositoryId, java.lang.String path)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return getService().getContentReferences(companyId, repositoryId, path);
+	public static com.liferay.portlet.documentlibrary.model.DLContent getContent(
+		long companyId, long repositoryId, java.lang.String path,
+		java.lang.String version)
+		throws com.liferay.portal.kernel.exception.SystemException,
+			com.liferay.portlet.documentlibrary.NoSuchContentException {
+		return getService().getContent(companyId, repositoryId, path, version);
 	}
 
 	public static java.util.List<com.liferay.portlet.documentlibrary.model.DLContent> getContents(
-		long companyId, java.lang.String portletId, long repositoryId,
-		java.lang.String path)
+		long companyId, long repositoryId)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		return getService().getContents(companyId, portletId, repositoryId, path);
+		return getService().getContents(companyId, repositoryId);
 	}
 
-	public static boolean hasContent(long companyId,
-		java.lang.String portletId, long repositoryId, java.lang.String path,
-		java.lang.String version)
+	public static java.util.List<com.liferay.portlet.documentlibrary.model.DLContent> getContents(
+		long companyId, long repositoryId, java.lang.String path)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().getContents(companyId, repositoryId, path);
+	}
+
+	public static java.util.List<com.liferay.portlet.documentlibrary.model.DLContent> getContentsByDirectory(
+		long companyId, long repositoryId, java.lang.String dirName)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getService()
-				   .hasContent(companyId, portletId, repositoryId, path, version);
+				   .getContentsByDirectory(companyId, repositoryId, dirName);
+	}
+
+	public static boolean hasContent(long companyId, long repositoryId,
+		java.lang.String path, java.lang.String version)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getService().hasContent(companyId, repositoryId, path, version);
 	}
 
 	public static void updateDLContent(long companyId, long oldRepositoryId,
@@ -340,20 +364,15 @@ public class DLContentLocalServiceUtil {
 
 			ReferenceRegistry.registerReference(DLContentLocalServiceUtil.class,
 				"_service");
-			MethodCache.remove(DLContentLocalService.class);
 		}
 
 		return _service;
 	}
 
+	/**
+	 * @deprecated As of 6.2.0
+	 */
 	public void setService(DLContentLocalService service) {
-		MethodCache.remove(DLContentLocalService.class);
-
-		_service = service;
-
-		ReferenceRegistry.registerReference(DLContentLocalServiceUtil.class,
-			"_service");
-		MethodCache.remove(DLContentLocalService.class);
 	}
 
 	private static DLContentLocalService _service;

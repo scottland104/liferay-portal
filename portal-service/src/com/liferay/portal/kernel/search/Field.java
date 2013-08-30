@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -13,6 +13,8 @@
  */
 
 package com.liferay.portal.kernel.search;
+
+import com.liferay.portal.kernel.util.ArrayUtil;
 
 import java.io.Serializable;
 
@@ -29,7 +31,14 @@ public class Field implements Serializable {
 
 	public static final String ASSET_CATEGORY_IDS = "assetCategoryIds";
 
+	/**
+	 * @deprecated As of 6.2.0, replaced by {@link #ASSET_CATEGORY_TITLES}
+	 */
 	public static final String ASSET_CATEGORY_NAMES = "assetCategoryNames";
+
+	public static final String ASSET_CATEGORY_TITLES = "assetCategoryTitles";
+
+	public static final String ASSET_TAG_IDS = "assetTagIds";
 
 	public static final String ASSET_TAG_NAMES = "assetTagNames";
 
@@ -38,6 +47,8 @@ public class Field implements Serializable {
 	public static final String CLASS_NAME_ID = "classNameId";
 
 	public static final String CLASS_PK = "classPK";
+
+	public static final String CLASS_TYPE_ID = "classTypeId";
 
 	public static final String COMMENTS = "comments";
 
@@ -53,20 +64,30 @@ public class Field implements Serializable {
 
 	public static final String ENTRY_CLASS_PK = "entryClassPK";
 
+	public static final String EXPIRATION_DATE = "expirationDate";
+
 	public static final String FOLDER_ID = "folderId";
 
 	public static final String GROUP_ID = "groupId";
 
 	public static final String GROUP_ROLE_ID = "groupRoleId";
 
+	public static final String HIDDEN = "hidden";
+
+	public static final String KEYWORD_SEARCH = "keywordSearch";
+
 	public static final String[] KEYWORDS = {
-		Field.ASSET_CATEGORY_NAMES, Field.ASSET_TAG_NAMES, Field.COMMENTS,
+		Field.ASSET_CATEGORY_TITLES, Field.ASSET_TAG_NAMES, Field.COMMENTS,
 		Field.CONTENT, Field.DESCRIPTION, Field.PROPERTIES, Field.TITLE,
 		Field.URL, Field.USER_NAME
 	};
 
+	public static final String LANGUAGE_ID = "languageId";
+
+	public static final String LAYOUT_UUID = "layoutUuid";
+
 	/**
-	 * @deprecated {@link #MODIFIED_DATE}
+	 * @deprecated As of 6.1.0, replaced by {@link #MODIFIED_DATE}
 	 */
 	public static final String MODIFIED = "modified";
 
@@ -80,15 +101,31 @@ public class Field implements Serializable {
 
 	public static final String PORTLET_ID = "portletId";
 
+	public static final String PRIORITY = "priority";
+
 	public static final String PROPERTIES = "properties";
 
+	public static final String PUBLISH_DATE = "publishDate";
+
+	public static final String RATINGS = "ratings";
+
+	public static final String RELATED_ENTRY = "relatedEntry";
+
+	public static final String REMOVED_BY_USER_NAME = "removedByUserName";
+
+	public static final String REMOVED_DATE = "removedDate";
+
 	public static final String ROLE_ID = "roleId";
+
+	public static final String ROOT_ENTRY_CLASS_NAME = "rootEntryClassName";
 
 	public static final String ROOT_ENTRY_CLASS_PK = "rootEntryClassPK";
 
 	public static final String SCOPE_GROUP_ID = "scopeGroupId";
 
 	public static final String SNIPPET = "snippet";
+
+	public static final String SPELL_CHECK_WORD = "spellCheckWord";
 
 	public static final String STAGING_GROUP = "stagingGroup";
 
@@ -100,7 +137,16 @@ public class Field implements Serializable {
 
 	public static final String UID = "uid";
 
+	public static final String[] UNSCORED_FIELD_NAMES = {
+		Field.ASSET_CATEGORY_IDS, Field.COMPANY_ID, Field.ENTRY_CLASS_NAME,
+		Field.ENTRY_CLASS_PK, Field.FOLDER_ID, Field.GROUP_ID,
+		Field.GROUP_ROLE_ID, Field.PORTLET_ID, Field.ROLE_ID,
+		Field.SCOPE_GROUP_ID, Field.USER_ID
+	};
+
 	public static final String URL = "url";
+
+	public static final String USER_GROUP_ID = "userGroupId";
 
 	public static final String USER_ID = "userId";
 
@@ -108,11 +154,7 @@ public class Field implements Serializable {
 
 	public static final String VERSION = "version";
 
-	public static final String[] UNSCORED_FIELD_NAMES = {
-		ASSET_CATEGORY_IDS, COMPANY_ID, ENTRY_CLASS_NAME, ENTRY_CLASS_PK,
-		FOLDER_ID, GROUP_ID, GROUP_ROLE_ID, PORTLET_ID, ROLE_ID,
-		SCOPE_GROUP_ID, USER_ID
-	};
+	public static final String VIEW_COUNT = "viewCount";
 
 	public Field(String name, Map<Locale, String> localizedValues) {
 		_name = name;
@@ -123,13 +165,8 @@ public class Field implements Serializable {
 		this(name, new String[] {value});
 	}
 
-	public Field(String name, String[] values) {
-		_name = name;
-		_values = values;
-	}
-
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.1.0
 	 */
 	public Field(String name, String value, boolean tokenized) {
 		this(name, value);
@@ -137,8 +174,13 @@ public class Field implements Serializable {
 		setTokenized(tokenized);
 	}
 
+	public Field(String name, String[] values) {
+		_name = name;
+		_values = values;
+	}
+
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.1.0
 	 */
 	public Field(String name, String[] values, boolean tokenized) {
 		this(name, values);
@@ -147,7 +189,7 @@ public class Field implements Serializable {
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated As of 6.1.0
 	 */
 	public Field(String name, String[] values, boolean tokenized, float boost) {
 		this(name, values);
@@ -168,8 +210,12 @@ public class Field implements Serializable {
 		return _name;
 	}
 
+	public Class<? extends Number> getNumericClass() {
+		return _numericClass;
+	}
+
 	public String getValue() {
-		if ((_values != null) && (_values.length > 0)) {
+		if (ArrayUtil.isNotEmpty(_values)) {
 			return _values[0];
 		}
 		else {
@@ -210,6 +256,10 @@ public class Field implements Serializable {
 		_numeric = numeric;
 	}
 
+	public void setNumericClass(Class<? extends Number> numericClass) {
+		_numericClass = numericClass;
+	}
+
 	public void setTokenized(boolean tokenized) {
 		_tokenized = tokenized;
 	}
@@ -226,6 +276,7 @@ public class Field implements Serializable {
 	private Map<Locale, String> _localizedValues;
 	private String _name;
 	private boolean _numeric;
+	private Class<? extends Number> _numericClass;
 	private boolean _tokenized;
 	private String[] _values;
 

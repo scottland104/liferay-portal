@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,19 +17,18 @@
 <%@ include file="/html/taglib/init.jsp" %>
 
 <%
-String randomId = PwdGenerator.getPassword(PwdGenerator.KEY3, 4);
-
 SearchContainer searchContainer = (SearchContainer)request.getAttribute("liferay-ui:search:searchContainer");
 
 boolean paginate = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:search-iterator:paginate"));
 String type = (String)request.getAttribute("liferay-ui:search:type");
 
-String id = searchContainer.getId();
-int start = searchContainer.getStart();
+String id = searchContainer.getId(request, namespace);
+
 int end = searchContainer.getEnd();
 int total = searchContainer.getTotal();
 List resultRows = searchContainer.getResultRows();
 List<String> headerNames = searchContainer.getHeaderNames();
+List<String> normalizedHeaderNames = searchContainer.getNormalizedHeaderNames();
 Map orderableHeaders = searchContainer.getOrderableHeaders();
 String emptyResultsMessage = searchContainer.getEmptyResultsMessage();
 RowChecker rowChecker = searchContainer.getRowChecker();
@@ -41,6 +40,8 @@ if (end > total) {
 if (rowChecker != null) {
 	if (headerNames != null) {
 		headerNames.add(0, rowChecker.getAllRowsCheckBox());
+
+		normalizedHeaderNames.add(0, "rowChecker");
 	}
 }
 
@@ -60,137 +61,163 @@ int sortColumnIndex = -1;
 %>
 
 <c:if test="<%= resultRows.isEmpty() && (emptyResultsMessage != null) %>">
-	<div class="portlet-msg-info">
+	<div class="alert alert-info">
 		<%= LanguageUtil.get(pageContext, emptyResultsMessage) %>
 	</div>
 </c:if>
 
-<div class="lfr-search-container <%= resultRows.isEmpty() ? "aui-helper-hidden" : StringPool.BLANK %>">
+<div class="lfr-search-container <%= resultRows.isEmpty() ? "hide" : StringPool.BLANK %>">
 	<c:if test="<%= PropsValues.SEARCH_CONTAINER_SHOW_PAGINATION_TOP && (resultRows.size() > 10) && paginate %>">
 		<div class="taglib-search-iterator-page-iterator-top">
-			<liferay-ui:search-paginator searchContainer="<%= searchContainer %>" type="<%= type %>" />
+			<liferay-ui:search-paginator id='<%= id + "PageIteratorTop" %>' searchContainer="<%= searchContainer %>" type="<%= type %>" />
 		</div>
 	</c:if>
 
-	<div class="results-grid"
-		<c:if test="<%= Validator.isNotNull(id) %>">
-			id="<%= id %>SearchContainer"
-		</c:if>
-	>
-		<table class="taglib-search-iterator">
+	<div id="<%= namespace + id %>SearchContainer">
+		<table class="table table-bordered table-hover table-striped">
 
 		<c:if test="<%= headerNames != null %>">
-			<tr class="portlet-section-header results-header">
-
-			<%
-			for (int i = 0; i < headerNames.size(); i++) {
-				String headerName = headerNames.get(i);
-
-				String orderKey = null;
-				String orderByType = null;
-				boolean orderCurrentHeader = false;
-
-				if (orderableHeaders != null) {
-					orderKey = (String)orderableHeaders.get(headerName);
-
-					if (orderKey != null) {
-						orderByType = searchContainer.getOrderByType();
-
-						if (orderKey.equals(searchContainer.getOrderByCol())) {
-							orderCurrentHeader = true;
-						}
-					}
-				}
-
-				String cssClass = StringPool.BLANK;
-
-				if (headerNames.size() == 1) {
-					cssClass = "only";
-				}
-				else if (i == 0) {
-					cssClass = "first";
-				}
-				else if (i == headerNames.size() - 1) {
-					cssClass = "last";
-				}
-
-				if (orderCurrentHeader) {
-					cssClass += " sort-column";
-
-					cssClass += " sort-" + HtmlUtil.escapeAttribute(orderByType);
-
-					sortColumnIndex = i;
-
-					if (orderByType.equals("asc")) {
-						orderByType = "desc";
-					}
-					else {
-						orderByType = "asc";
-					}
-				}
-			%>
-
-				<th class="col-<%= i + 1 %> <%= cssClass %>" id="<%= randomId %>_col-<%= i + 1 %>"
-
-					<%--
-
-					// Maximize the width of the second column if and only if the first
-					// column is a row checker and there is only one second column.
-
-					--%>
-
-					<c:if test="<%= (rowChecker != null) && (headerNames.size() == 2) && (i == 1) %>">
-						width="95%"
-					</c:if>
-				>
-
-					<c:if test="<%= orderKey != null %>">
-						<span class="result-column-name">
-							<a href="<%= url %>&<%= namespace %><%= searchContainer.getOrderByColParam() %>=<%= orderKey %>&<%= namespace %><%= searchContainer.getOrderByTypeParam() %>=<%= HtmlUtil.escapeURL(orderByType) %>">
-					</c:if>
-
-						<%
-						String headerNameValue = LanguageUtil.get(pageContext, headerName);
-						%>
-
-						<c:choose>
-							<c:when test="<%= Validator.isNull(headerNameValue) %>">
-								<%= StringPool.NBSP %>
-							</c:when>
-							<c:otherwise>
-								<%= headerNameValue %>
-							</c:otherwise>
-						</c:choose>
-
-					<c:if test="<%= orderKey != null %>">
-							</a>
-						</span>
-					</c:if>
-				</th>
-
-			<%
-			}
-			%>
-
-			</tr>
-			<tr class="lfr-template portlet-section-body results-row">
+			<thead class="table-columns">
+				<tr>
 
 				<%
 				for (int i = 0; i < headerNames.size(); i++) {
+					String headerName = headerNames.get(i);
+
+					String normalizedHeaderName = null;
+
+					if (i < normalizedHeaderNames.size()) {
+						normalizedHeaderName = normalizedHeaderNames.get(i);
+					}
+
+					if (Validator.isNull(normalizedHeaderName)) {
+						normalizedHeaderName = String.valueOf(i +1);
+					}
+
+					String orderKey = null;
+					String orderByType = null;
+					boolean orderCurrentHeader = false;
+
+					if (orderableHeaders != null) {
+						orderKey = (String)orderableHeaders.get(headerName);
+
+						if (orderKey != null) {
+							orderByType = searchContainer.getOrderByType();
+
+							if (orderKey.equals(searchContainer.getOrderByCol())) {
+								orderCurrentHeader = true;
+							}
+						}
+					}
+
+					String cssClass = StringPool.BLANK;
+
+					if (headerNames.size() == 1) {
+						cssClass = "only";
+					}
+					else if (i == 0) {
+						cssClass = "table-first-header";
+					}
+					else if (i == (headerNames.size() - 1)) {
+						cssClass = "table-last-header";
+					}
+
+					if (orderCurrentHeader) {
+						cssClass += " table-sortable-column table-sorted";
+
+						if (HtmlUtil.escapeAttribute(orderByType).equals("desc")) {
+							cssClass += " table-sorted-desc";
+						}
+
+						sortColumnIndex = i;
+
+						if (orderByType.equals("asc")) {
+							orderByType = "desc";
+						}
+						else {
+							orderByType = "asc";
+						}
+					}
 				%>
 
-					<td></td>
+					<th class="<%= cssClass %>" id="<%= namespace + id %>_col-<%= normalizedHeaderName %>"
+
+						<%--
+
+						// Minimize the width of the first column if and only if
+						// it is a row checker.
+
+						--%>
+
+						<c:if test="<%= (rowChecker != null) && (i == 0) %>">
+							width="1%"
+						</c:if>
+					>
+
+						<c:if test="<%= orderKey != null %>">
+							<div class="table-sort-liner">
+
+								<%
+								String orderByJS = searchContainer.getOrderByJS();
+								%>
+
+								<c:choose>
+									<c:when test="<%= Validator.isNull(orderByJS) %>">
+
+										<%
+										url = HttpUtil.setParameter(url, namespace + searchContainer.getOrderByColParam(), orderKey);
+										url = HttpUtil.setParameter(url, namespace + searchContainer.getOrderByTypeParam(), orderByType);
+										%>
+
+										<a href="<%= url %>">
+									</c:when>
+									<c:otherwise>
+										<a href="<%= StringUtil.replace(orderByJS, new String[] { "orderKey", "orderByType" }, new String[] { orderKey, orderByType }) %>">
+									</c:otherwise>
+								</c:choose>
+						</c:if>
+
+							<%
+							String headerNameValue = null;
+
+							if ((rowChecker == null) || (i > 0)) {
+								headerNameValue = LanguageUtil.get(pageContext, HtmlUtil.escape(headerName));
+							}
+							else {
+								headerNameValue = headerName;
+							}
+							%>
+
+							<c:choose>
+								<c:when test="<%= Validator.isNull(headerNameValue) %>">
+									<%= StringPool.NBSP %>
+								</c:when>
+								<c:otherwise>
+									<%= headerNameValue %>
+								</c:otherwise>
+							</c:choose>
+
+						<c:if test="<%= orderKey != null %>">
+								</a>
+
+								<span class="table-sort-indicator"></span>
+							</div>
+						</c:if>
+					</th>
 
 				<%
 				}
 				%>
 
-			</tr>
+				</tr>
+			</thead>
 		</c:if>
 
+		<tbody class="table-data">
+
 		<c:if test="<%= resultRows.isEmpty() && (emptyResultsMessage != null) %>">
-			<tr class="portlet-section-body results-row last">
-				<td class="align-center only" colspan="<%= (headerNames == null) ? 1 : headerNames.size() %>">
+			<tr>
+				<td class="table-cell">
 					<%= LanguageUtil.get(pageContext, emptyResultsMessage) %>
 				</td>
 			</tr>
@@ -202,43 +229,18 @@ int sortColumnIndex = -1;
 		for (int i = 0; i < resultRows.size(); i++) {
 			ResultRow row = (ResultRow)resultRows.get(i);
 
-			String rowClassName = "portlet-section-alternate results-row alt";
-			String rowClassHoverName = "portlet-section-alternate-hover results-row alt hover";
-
-			primaryKeys.add(row.getPrimaryKey());
-
-			if (MathUtil.isEven(i)) {
-				rowClassName = "portlet-section-body results-row";
-				rowClassHoverName = "portlet-section-body-hover results-row hover";
-			}
-
-			if (Validator.isNotNull(row.getClassName())) {
-				rowClassName += " " + row.getClassName();
-			}
-
-			if (Validator.isNotNull(row.getClassHoverName())) {
-				rowClassHoverName += " " + row.getClassHoverName();
-			}
-
-			if (row.isRestricted()) {
-				rowClassName += " restricted";
-				rowClassHoverName += " restricted";
-			}
-
-			if ((i + 1) == resultRows.size()) {
-				rowClassName += " last";
-				rowClassHoverName += " last";
-			}
-
-			row.setClassName(rowClassName);
-			row.setClassHoverName(rowClassHoverName);
+			primaryKeys.add(HtmlUtil.escape(row.getPrimaryKey()));
 
 			request.setAttribute(WebKeys.SEARCH_CONTAINER_RESULT_ROW, row);
 
 			List entries = row.getEntries();
 
+			boolean rowIsChecked = false;
+
 			if (rowChecker != null) {
-				boolean rowIsChecked = rowChecker.isChecked(row.getObject());
+				rowIsChecked = rowChecker.isChecked(row.getObject());
+
+				boolean rowIsDisabled = rowChecker.isDisabled(row.getObject());
 
 				if (!rowIsChecked) {
 					allRowsIsChecked = false;
@@ -249,22 +251,32 @@ int sortColumnIndex = -1;
 				textSearchEntry.setAlign(rowChecker.getAlign());
 				textSearchEntry.setColspan(rowChecker.getColspan());
 				textSearchEntry.setCssClass(rowChecker.getCssClass());
-				textSearchEntry.setName(rowChecker.getRowCheckBox(rowIsChecked, row.getPrimaryKey()));
+				textSearchEntry.setName(rowChecker.getRowCheckBox(request, rowIsChecked, rowIsDisabled, row.getPrimaryKey()));
 				textSearchEntry.setValign(rowChecker.getValign());
 
 				row.addSearchEntry(0, textSearchEntry);
 			}
+
+			request.setAttribute("liferay-ui:search-container-row:rowId", id.concat(StringPool.UNDERLINE.concat(row.getRowId())));
+
+			Map<String, Object> data = row.getData();
 		%>
 
-			<tr class="<%= rowClassName %>"
-				<c:if test="<%= searchContainer.isHover() %>">
-					onmouseover="this.className = '<%= rowClassHoverName %>';" onmouseout="this.className = '<%= rowClassName %>';"
-				</c:if>
-			>
+			<tr class="<%= rowIsChecked ? "info" : StringPool.BLANK %>" <%= AUIUtil.buildData(data) %>>
 
 			<%
 			for (int j = 0; j < entries.size(); j++) {
 				SearchEntry entry = (SearchEntry)entries.get(j);
+
+				String normalizedHeaderName = null;
+
+				if ((normalizedHeaderNames != null) && (j < normalizedHeaderNames.size())) {
+					normalizedHeaderName = normalizedHeaderNames.get(j);
+				}
+
+				if (Validator.isNull(normalizedHeaderName)) {
+					normalizedHeaderName = String.valueOf(j + 1);
+				}
 
 				entry.setIndex(j);
 
@@ -283,15 +295,11 @@ int sortColumnIndex = -1;
 				}
 
 				if (j == sortColumnIndex) {
-					columnClassName += " sort-column";
+					columnClassName += " table-sortable-column";
 				}
 			%>
 
-				<td class="align-<%= entry.getAlign() %> col-<%= j + 1 %><%= row.isBold() ? " taglib-search-iterator-highlighted" : "" %> <%= columnClassName %> valign-<%= entry.getValign() %>" colspan="<%= entry.getColspan() %>"
-					<c:if test="<%= (headerNames != null) && (headerNames.size() >= (j + 1)) %>">
-						headers="<%= randomId %>_col-<%= (j + 1) %>"
-					</c:if>
-				>
+				<td class="table-cell <%= columnClassName %>">
 
 					<%
 					entry.print(pageContext);
@@ -306,15 +314,33 @@ int sortColumnIndex = -1;
 			</tr>
 
 		<%
+			request.removeAttribute("liferay-ui:search-container-row:rowId");
 		}
 		%>
 
+		<c:if test="<%= headerNames != null %>">
+			<tr class="lfr-template">
+
+				<%
+				for (int i = 0; i < headerNames.size(); i++) {
+				%>
+
+					<td class="table-cell"></td>
+
+				<%
+				}
+				%>
+
+			</tr>
+		</c:if>
+
+		</tbody>
 		</table>
 	</div>
 
 	<c:if test="<%= PropsValues.SEARCH_CONTAINER_SHOW_PAGINATION_BOTTOM && paginate %>">
 		<div class="taglib-search-iterator-page-iterator-bottom">
-			<liferay-ui:search-paginator searchContainer="<%= searchContainer %>" type="<%= type %>" />
+			<liferay-ui:search-paginator id='<%= id + "PageIteratorBottom" %>' searchContainer="<%= searchContainer %>" type="<%= type %>" />
 		</div>
 	</c:if>
 </div>
@@ -326,13 +352,29 @@ int sortColumnIndex = -1;
 </c:if>
 
 <c:if test="<%= Validator.isNotNull(id) %>">
-	<input id="<%= id %>PrimaryKeys" name="<%= id %>PrimaryKeys" type="hidden" value="<%= StringUtil.merge(primaryKeys) %>" />
+	<input id="<%= namespace + id %>PrimaryKeys" name="<%= namespace + id %>PrimaryKeys" type="hidden" value="<%= StringUtil.merge(primaryKeys) %>" />
 
 	<aui:script use="liferay-search-container">
 		new Liferay.SearchContainer(
 			{
-				id: '<%= id %>'
+				classNameHover: '<%= _CLASS_NAME_HOVER %>',
+				hover: <%= searchContainer.isHover() %>,
+				id: '<%= namespace + id %>',
+				rowClassNameAlternate: '<%= _ROW_CLASS_NAME_ALTERNATE %>',
+				rowClassNameAlternateHover: '<%= _ROW_CLASS_NAME_ALTERNATE_HOVER %>',
+				rowClassNameBody: '<%= _ROW_CLASS_NAME_BODY %>',
+				rowClassNameBodyHover: '<%= _ROW_CLASS_NAME_BODY %>'
 			}
 		).render();
 	</aui:script>
 </c:if>
+
+<%!
+private static final String _CLASS_NAME_HOVER = "hover";
+
+private static final String _ROW_CLASS_NAME_ALTERNATE = "";
+
+private static final String _ROW_CLASS_NAME_ALTERNATE_HOVER = "-hover";
+
+private static final String _ROW_CLASS_NAME_BODY = "";
+%>

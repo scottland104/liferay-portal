@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.webdav.WebDAVStorage;
 
 import java.io.InputStream;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -32,34 +33,36 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class GetMethodImpl implements Method {
 
-	public int process(WebDAVRequest webDavRequest) throws WebDAVException {
+	@Override
+	public int process(WebDAVRequest webDAVRequest) throws WebDAVException {
 		InputStream is = null;
 
 		try {
-			WebDAVStorage storage = webDavRequest.getWebDAVStorage();
+			WebDAVStorage storage = webDAVRequest.getWebDAVStorage();
+			HttpServletRequest request = webDAVRequest.getHttpServletRequest();
 			HttpServletResponse response =
-				webDavRequest.getHttpServletResponse();
+				webDAVRequest.getHttpServletResponse();
 
-			Resource resource = storage.getResource(webDavRequest);
+			Resource resource = storage.getResource(webDAVRequest);
 
-			if (resource != null) {
-				try {
-					is = resource.getContentAsStream();
-				}
-				catch (Exception e) {
-					if (_log.isErrorEnabled()) {
-						_log.error(e.getMessage());
-					}
+			if (resource == null) {
+				return HttpServletResponse.SC_NOT_FOUND;
+			}
+
+			try {
+				is = resource.getContentAsStream();
+			}
+			catch (Exception e) {
+				if (_log.isErrorEnabled()) {
+					_log.error(e.getMessage());
 				}
 			}
 
-			int status = HttpServletResponse.SC_NOT_FOUND;
-
 			if (is != null) {
 				try {
-					response.setContentType(resource.getContentType());
-
-					ServletResponseUtil.write(response, is);
+					ServletResponseUtil.sendFile(
+						request, response, resource.getDisplayName(), is,
+						resource.getSize(), resource.getContentType());
 				}
 				catch (Exception e) {
 					if (_log.isWarnEnabled()) {
@@ -67,10 +70,10 @@ public class GetMethodImpl implements Method {
 					}
 				}
 
-				status = HttpServletResponse.SC_OK;
+				return HttpServletResponse.SC_OK;
 			}
 
-			return status;
+			return HttpServletResponse.SC_NOT_FOUND;
 		}
 		catch (Exception e) {
 			throw new WebDAVException(e);

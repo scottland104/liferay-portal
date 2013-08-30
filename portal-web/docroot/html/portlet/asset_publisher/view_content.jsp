@@ -1,6 +1,6 @@
 <%--
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -17,6 +17,12 @@
 <%@ include file="/html/portlet/asset_publisher/init.jsp" %>
 
 <%
+String returnToFullPageURL = ParamUtil.getString(request, "returnToFullPageURL");
+
+if (Validator.isNotNull(returnToFullPageURL)) {
+	portletDisplay.setURLBack(returnToFullPageURL);
+}
+
 long assetEntryId = ParamUtil.getLong(request, "assetEntryId");
 String type = ParamUtil.getString(request, "type");
 long groupId = ParamUtil.getLong(request, "groupId", scopeGroupId);
@@ -60,14 +66,18 @@ try {
 		else {
 			assetRenderer = assetRendererFactory.getAssetRenderer(classPK, AssetRendererFactory.TYPE_LATEST_APPROVED);
 		}
+	}
 
+	if (!assetEntry.isVisible() &&
+		(assetRenderer.getAssetRendererType() == AssetRendererFactory.TYPE_LATEST_APPROVED)) {
+
+		throw new NoSuchModelException();
 	}
 
 	String title = assetRenderer.getTitle(locale);
 	String summary = StringPool.BLANK;
 	String viewURL = StringPool.BLANK;
 	String viewURLMessage = StringPool.BLANK;
-	String editURL = StringPool.BLANK;
 
 	request.setAttribute("view.jsp-results", results);
 

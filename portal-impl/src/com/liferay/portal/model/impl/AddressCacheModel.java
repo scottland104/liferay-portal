@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,6 +19,11 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.model.Address;
 import com.liferay.portal.model.CacheModel;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import java.util.Date;
 
 /**
@@ -28,12 +33,14 @@ import java.util.Date;
  * @see Address
  * @generated
  */
-public class AddressCacheModel implements CacheModel<Address> {
+public class AddressCacheModel implements CacheModel<Address>, Externalizable {
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(37);
+		StringBundler sb = new StringBundler(39);
 
-		sb.append("{addressId=");
+		sb.append("{uuid=");
+		sb.append(uuid);
+		sb.append(", addressId=");
 		sb.append(addressId);
 		sb.append(", companyId=");
 		sb.append(companyId);
@@ -74,8 +81,16 @@ public class AddressCacheModel implements CacheModel<Address> {
 		return sb.toString();
 	}
 
+	@Override
 	public Address toEntityModel() {
 		AddressImpl addressImpl = new AddressImpl();
+
+		if (uuid == null) {
+			addressImpl.setUuid(StringPool.BLANK);
+		}
+		else {
+			addressImpl.setUuid(uuid);
+		}
 
 		addressImpl.setAddressId(addressId);
 		addressImpl.setCompanyId(companyId);
@@ -151,6 +166,98 @@ public class AddressCacheModel implements CacheModel<Address> {
 		return addressImpl;
 	}
 
+	@Override
+	public void readExternal(ObjectInput objectInput) throws IOException {
+		uuid = objectInput.readUTF();
+		addressId = objectInput.readLong();
+		companyId = objectInput.readLong();
+		userId = objectInput.readLong();
+		userName = objectInput.readUTF();
+		createDate = objectInput.readLong();
+		modifiedDate = objectInput.readLong();
+		classNameId = objectInput.readLong();
+		classPK = objectInput.readLong();
+		street1 = objectInput.readUTF();
+		street2 = objectInput.readUTF();
+		street3 = objectInput.readUTF();
+		city = objectInput.readUTF();
+		zip = objectInput.readUTF();
+		regionId = objectInput.readLong();
+		countryId = objectInput.readLong();
+		typeId = objectInput.readInt();
+		mailing = objectInput.readBoolean();
+		primary = objectInput.readBoolean();
+	}
+
+	@Override
+	public void writeExternal(ObjectOutput objectOutput)
+		throws IOException {
+		if (uuid == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(uuid);
+		}
+
+		objectOutput.writeLong(addressId);
+		objectOutput.writeLong(companyId);
+		objectOutput.writeLong(userId);
+
+		if (userName == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(userName);
+		}
+
+		objectOutput.writeLong(createDate);
+		objectOutput.writeLong(modifiedDate);
+		objectOutput.writeLong(classNameId);
+		objectOutput.writeLong(classPK);
+
+		if (street1 == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(street1);
+		}
+
+		if (street2 == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(street2);
+		}
+
+		if (street3 == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(street3);
+		}
+
+		if (city == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(city);
+		}
+
+		if (zip == null) {
+			objectOutput.writeUTF(StringPool.BLANK);
+		}
+		else {
+			objectOutput.writeUTF(zip);
+		}
+
+		objectOutput.writeLong(regionId);
+		objectOutput.writeLong(countryId);
+		objectOutput.writeInt(typeId);
+		objectOutput.writeBoolean(mailing);
+		objectOutput.writeBoolean(primary);
+	}
+
+	public String uuid;
 	public long addressId;
 	public long companyId;
 	public long userId;

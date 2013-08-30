@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -145,6 +145,27 @@ public interface CountryModel extends BaseModel<Country> {
 	public void setIdd(String idd);
 
 	/**
+	 * Returns the zip required of this country.
+	 *
+	 * @return the zip required of this country
+	 */
+	public boolean getZipRequired();
+
+	/**
+	 * Returns <code>true</code> if this country is zip required.
+	 *
+	 * @return <code>true</code> if this country is zip required; <code>false</code> otherwise
+	 */
+	public boolean isZipRequired();
+
+	/**
+	 * Sets whether this country is zip required.
+	 *
+	 * @param zipRequired the zip required of this country
+	 */
+	public void setZipRequired(boolean zipRequired);
+
+	/**
 	 * Returns the active of this country.
 	 *
 	 * @return the active of this country
@@ -165,37 +186,60 @@ public interface CountryModel extends BaseModel<Country> {
 	 */
 	public void setActive(boolean active);
 
+	@Override
 	public boolean isNew();
 
+	@Override
 	public void setNew(boolean n);
 
+	@Override
 	public boolean isCachedModel();
 
+	@Override
 	public void setCachedModel(boolean cachedModel);
 
+	@Override
 	public boolean isEscapedModel();
 
-	public void setEscapedModel(boolean escapedModel);
-
+	@Override
 	public Serializable getPrimaryKeyObj();
 
+	@Override
 	public void setPrimaryKeyObj(Serializable primaryKeyObj);
 
+	@Override
 	public ExpandoBridge getExpandoBridge();
 
+	@Override
+	public void setExpandoBridgeAttributes(BaseModel<?> baseModel);
+
+	@Override
+	public void setExpandoBridgeAttributes(ExpandoBridge expandoBridge);
+
+	@Override
 	public void setExpandoBridgeAttributes(ServiceContext serviceContext);
 
+	@Override
 	public Object clone();
 
+	@Override
 	public int compareTo(Country country);
 
+	@Override
 	public int hashCode();
 
+	@Override
 	public CacheModel<Country> toCacheModel();
 
+	@Override
 	public Country toEscapedModel();
 
+	@Override
+	public Country toUnescapedModel();
+
+	@Override
 	public String toString();
 
+	@Override
 	public String toXmlString();
 }

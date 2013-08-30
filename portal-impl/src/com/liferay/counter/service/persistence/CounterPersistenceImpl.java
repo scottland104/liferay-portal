@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2000-2011 Liferay, Inc. All rights reserved.
+ * Copyright (c) 2000-2013 Liferay, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Lesser General Public License as published by the Free
@@ -19,8 +19,6 @@ import com.liferay.counter.model.Counter;
 import com.liferay.counter.model.impl.CounterImpl;
 import com.liferay.counter.model.impl.CounterModelImpl;
 
-import com.liferay.portal.NoSuchModelException;
-import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.cache.CacheRegistryUtil;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
 import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
@@ -36,11 +34,9 @@ import com.liferay.portal.kernel.util.InstanceFactory;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.UnmodifiableList;
 import com.liferay.portal.model.CacheModel;
 import com.liferay.portal.model.ModelListener;
-import com.liferay.portal.service.persistence.BatchSessionUtil;
-import com.liferay.portal.service.persistence.ResourcePersistence;
-import com.liferay.portal.service.persistence.UserPersistence;
 import com.liferay.portal.service.persistence.impl.BasePersistenceImpl;
 
 import java.io.Serializable;
@@ -69,20 +65,30 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	 * Never modify or reference this class directly. Always use {@link CounterUtil} to access the counter persistence. Modify <code>service.xml</code> and rerun ServiceBuilder to regenerate this class.
 	 */
 	public static final String FINDER_CLASS_NAME_ENTITY = CounterImpl.class.getName();
-	public static final String FINDER_CLASS_NAME_LIST = FINDER_CLASS_NAME_ENTITY +
-		".List";
-	public static final FinderPath FINDER_PATH_FIND_ALL = new FinderPath(CounterModelImpl.ENTITY_CACHE_ENABLED,
+	public static final String FINDER_CLASS_NAME_LIST_WITH_PAGINATION = FINDER_CLASS_NAME_ENTITY +
+		".List1";
+	public static final String FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION = FINDER_CLASS_NAME_ENTITY +
+		".List2";
+	public static final FinderPath FINDER_PATH_WITH_PAGINATION_FIND_ALL = new FinderPath(CounterModelImpl.ENTITY_CACHE_ENABLED,
 			CounterModelImpl.FINDER_CACHE_ENABLED, CounterImpl.class,
-			FINDER_CLASS_NAME_LIST, "findAll", new String[0]);
+			FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findAll", new String[0]);
+	public static final FinderPath FINDER_PATH_WITHOUT_PAGINATION_FIND_ALL = new FinderPath(CounterModelImpl.ENTITY_CACHE_ENABLED,
+			CounterModelImpl.FINDER_CACHE_ENABLED, CounterImpl.class,
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findAll", new String[0]);
 	public static final FinderPath FINDER_PATH_COUNT_ALL = new FinderPath(CounterModelImpl.ENTITY_CACHE_ENABLED,
 			CounterModelImpl.FINDER_CACHE_ENABLED, Long.class,
-			FINDER_CLASS_NAME_LIST, "countAll", new String[0]);
+			FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countAll", new String[0]);
+
+	public CounterPersistenceImpl() {
+		setModelClass(Counter.class);
+	}
 
 	/**
 	 * Caches the counter in the entity cache if it is enabled.
 	 *
 	 * @param counter the counter
 	 */
+	@Override
 	public void cacheResult(Counter counter) {
 		EntityCacheUtil.putResult(CounterModelImpl.ENTITY_CACHE_ENABLED,
 			CounterImpl.class, counter.getPrimaryKey(), counter);
@@ -95,12 +101,16 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	 *
 	 * @param counters the counters
 	 */
+	@Override
 	public void cacheResult(List<Counter> counters) {
 		for (Counter counter : counters) {
 			if (EntityCacheUtil.getResult(
 						CounterModelImpl.ENTITY_CACHE_ENABLED,
-						CounterImpl.class, counter.getPrimaryKey(), this) == null) {
+						CounterImpl.class, counter.getPrimaryKey()) == null) {
 				cacheResult(counter);
+			}
+			else {
+				counter.resetOriginalValues();
 			}
 		}
 	}
@@ -119,8 +129,10 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 		}
 
 		EntityCacheUtil.clearCache(CounterImpl.class.getName());
+
 		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_ENTITY);
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 	}
 
 	/**
@@ -134,6 +146,20 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	public void clearCache(Counter counter) {
 		EntityCacheUtil.removeResult(CounterModelImpl.ENTITY_CACHE_ENABLED,
 			CounterImpl.class, counter.getPrimaryKey());
+
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+	}
+
+	@Override
+	public void clearCache(List<Counter> counters) {
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+
+		for (Counter counter : counters) {
+			EntityCacheUtil.removeResult(CounterModelImpl.ENTITY_CACHE_ENABLED,
+				CounterImpl.class, counter.getPrimaryKey());
+		}
 	}
 
 	/**
@@ -142,6 +168,7 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	 * @param name the primary key for the new counter
 	 * @return the new counter
 	 */
+	@Override
 	public Counter create(String name) {
 		Counter counter = new CounterImpl();
 
@@ -154,44 +181,45 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	/**
 	 * Removes the counter with the primary key from the database. Also notifies the appropriate model listeners.
 	 *
-	 * @param primaryKey the primary key of the counter
-	 * @return the counter that was removed
-	 * @throws com.liferay.portal.NoSuchModelException if a counter with the primary key could not be found
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public Counter remove(Serializable primaryKey)
-		throws NoSuchModelException, SystemException {
-		return remove((String)primaryKey);
-	}
-
-	/**
-	 * Removes the counter with the primary key from the database. Also notifies the appropriate model listeners.
-	 *
 	 * @param name the primary key of the counter
 	 * @return the counter that was removed
 	 * @throws com.liferay.counter.NoSuchCounterException if a counter with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Counter remove(String name)
+		throws NoSuchCounterException, SystemException {
+		return remove((Serializable)name);
+	}
+
+	/**
+	 * Removes the counter with the primary key from the database. Also notifies the appropriate model listeners.
+	 *
+	 * @param primaryKey the primary key of the counter
+	 * @return the counter that was removed
+	 * @throws com.liferay.counter.NoSuchCounterException if a counter with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
+	@Override
+	public Counter remove(Serializable primaryKey)
 		throws NoSuchCounterException, SystemException {
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			Counter counter = (Counter)session.get(CounterImpl.class, name);
+			Counter counter = (Counter)session.get(CounterImpl.class, primaryKey);
 
 			if (counter == null) {
 				if (_log.isWarnEnabled()) {
-					_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + name);
+					_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + primaryKey);
 				}
 
 				throw new NoSuchCounterException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
-					name);
+					primaryKey);
 			}
 
-			return counterPersistence.remove(counter);
+			return remove(counter);
 		}
 		catch (NoSuchCounterException nsee) {
 			throw nsee;
@@ -204,18 +232,6 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 		}
 	}
 
-	/**
-	 * Removes the counter from the database. Also notifies the appropriate model listeners.
-	 *
-	 * @param counter the counter
-	 * @return the counter that was removed
-	 * @throws SystemException if a system exception occurred
-	 */
-	@Override
-	public Counter remove(Counter counter) throws SystemException {
-		return super.remove(counter);
-	}
-
 	@Override
 	protected Counter removeImpl(Counter counter) throws SystemException {
 		counter = toUnwrappedModel(counter);
@@ -225,7 +241,14 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 		try {
 			session = openSession();
 
-			BatchSessionUtil.delete(session, counter);
+			if (!session.contains(counter)) {
+				counter = (Counter)session.get(CounterImpl.class,
+						counter.getPrimaryKeyObj());
+			}
+
+			if (counter != null) {
+				session.delete(counter);
+			}
 		}
 		catch (Exception e) {
 			throw processException(e);
@@ -234,27 +257,33 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 			closeSession(session);
 		}
 
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
-
-		EntityCacheUtil.removeResult(CounterModelImpl.ENTITY_CACHE_ENABLED,
-			CounterImpl.class, counter.getPrimaryKey());
+		if (counter != null) {
+			clearCache(counter);
+		}
 
 		return counter;
 	}
 
 	@Override
-	public Counter updateImpl(com.liferay.counter.model.Counter counter,
-		boolean merge) throws SystemException {
+	public Counter updateImpl(com.liferay.counter.model.Counter counter)
+		throws SystemException {
 		counter = toUnwrappedModel(counter);
+
+		boolean isNew = counter.isNew();
 
 		Session session = null;
 
 		try {
 			session = openSession();
 
-			BatchSessionUtil.update(session, counter, merge);
+			if (counter.isNew()) {
+				session.save(counter);
 
-			counter.setNew(false);
+				counter.setNew(false);
+			}
+			else {
+				session.merge(counter);
+			}
 		}
 		catch (Exception e) {
 			throw processException(e);
@@ -263,7 +292,11 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 			closeSession(session);
 		}
 
-		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST);
+		FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+
+		if (isNew) {
+			FinderCacheUtil.clearCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
+		}
 
 		EntityCacheUtil.putResult(CounterModelImpl.ENTITY_CACHE_ENABLED,
 			CounterImpl.class, counter.getPrimaryKey(), counter);
@@ -292,13 +325,24 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	 *
 	 * @param primaryKey the primary key of the counter
 	 * @return the counter
-	 * @throws com.liferay.portal.NoSuchModelException if a counter with the primary key could not be found
+	 * @throws com.liferay.counter.NoSuchCounterException if a counter with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
 	@Override
 	public Counter findByPrimaryKey(Serializable primaryKey)
-		throws NoSuchModelException, SystemException {
-		return findByPrimaryKey((String)primaryKey);
+		throws NoSuchCounterException, SystemException {
+		Counter counter = fetchByPrimaryKey(primaryKey);
+
+		if (counter == null) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + primaryKey);
+			}
+
+			throw new NoSuchCounterException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
+				primaryKey);
+		}
+
+		return counter;
 	}
 
 	/**
@@ -309,20 +353,10 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	 * @throws com.liferay.counter.NoSuchCounterException if a counter with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Counter findByPrimaryKey(String name)
 		throws NoSuchCounterException, SystemException {
-		Counter counter = fetchByPrimaryKey(name);
-
-		if (counter == null) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY + name);
-			}
-
-			throw new NoSuchCounterException(_NO_SUCH_ENTITY_WITH_PRIMARY_KEY +
-				name);
-		}
-
-		return counter;
+		return findByPrimaryKey((Serializable)name);
 	}
 
 	/**
@@ -335,7 +369,41 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	@Override
 	public Counter fetchByPrimaryKey(Serializable primaryKey)
 		throws SystemException {
-		return fetchByPrimaryKey((String)primaryKey);
+		Counter counter = (Counter)EntityCacheUtil.getResult(CounterModelImpl.ENTITY_CACHE_ENABLED,
+				CounterImpl.class, primaryKey);
+
+		if (counter == _nullCounter) {
+			return null;
+		}
+
+		if (counter == null) {
+			Session session = null;
+
+			try {
+				session = openSession();
+
+				counter = (Counter)session.get(CounterImpl.class, primaryKey);
+
+				if (counter != null) {
+					cacheResult(counter);
+				}
+				else {
+					EntityCacheUtil.putResult(CounterModelImpl.ENTITY_CACHE_ENABLED,
+						CounterImpl.class, primaryKey, _nullCounter);
+				}
+			}
+			catch (Exception e) {
+				EntityCacheUtil.removeResult(CounterModelImpl.ENTITY_CACHE_ENABLED,
+					CounterImpl.class, primaryKey);
+
+				throw processException(e);
+			}
+			finally {
+				closeSession(session);
+			}
+		}
+
+		return counter;
 	}
 
 	/**
@@ -345,43 +413,9 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	 * @return the counter, or <code>null</code> if a counter with the primary key could not be found
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public Counter fetchByPrimaryKey(String name) throws SystemException {
-		Counter counter = (Counter)EntityCacheUtil.getResult(CounterModelImpl.ENTITY_CACHE_ENABLED,
-				CounterImpl.class, name, this);
-
-		if (counter == _nullCounter) {
-			return null;
-		}
-
-		if (counter == null) {
-			Session session = null;
-
-			boolean hasException = false;
-
-			try {
-				session = openSession();
-
-				counter = (Counter)session.get(CounterImpl.class, name);
-			}
-			catch (Exception e) {
-				hasException = true;
-
-				throw processException(e);
-			}
-			finally {
-				if (counter != null) {
-					cacheResult(counter);
-				}
-				else if (!hasException) {
-					EntityCacheUtil.putResult(CounterModelImpl.ENTITY_CACHE_ENABLED,
-						CounterImpl.class, name, _nullCounter);
-				}
-
-				closeSession(session);
-			}
-		}
-
-		return counter;
+		return fetchByPrimaryKey((Serializable)name);
 	}
 
 	/**
@@ -390,6 +424,7 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	 * @return the counters
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Counter> findAll() throws SystemException {
 		return findAll(QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 	}
@@ -398,7 +433,7 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	 * Returns a range of all the counters.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.counter.model.impl.CounterModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param start the lower bound of the range of counters
@@ -406,6 +441,7 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	 * @return the range of counters
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Counter> findAll(int start, int end) throws SystemException {
 		return findAll(start, end, null);
 	}
@@ -414,7 +450,7 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	 * Returns an ordered range of all the counters.
 	 *
 	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set.
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS} will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent and pagination is required (<code>start</code> and <code>end</code> are not {@link com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS}), then the query will include the default ORDER BY logic from {@link com.liferay.counter.model.impl.CounterModelImpl}. If both <code>orderByComparator</code> and pagination are absent, for performance reasons, the query will not have an ORDER BY clause and the returned result set will be sorted on by the primary key in an ascending order.
 	 * </p>
 	 *
 	 * @param start the lower bound of the range of counters
@@ -423,14 +459,25 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	 * @return the ordered range of counters
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public List<Counter> findAll(int start, int end,
 		OrderByComparator orderByComparator) throws SystemException {
-		Object[] finderArgs = new Object[] {
-				String.valueOf(start), String.valueOf(end),
-				String.valueOf(orderByComparator)
-			};
+		boolean pagination = true;
+		FinderPath finderPath = null;
+		Object[] finderArgs = null;
 
-		List<Counter> list = (List<Counter>)FinderCacheUtil.getResult(FINDER_PATH_FIND_ALL,
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS) &&
+				(orderByComparator == null)) {
+			pagination = false;
+			finderPath = FINDER_PATH_WITHOUT_PAGINATION_FIND_ALL;
+			finderArgs = FINDER_ARGS_EMPTY;
+		}
+		else {
+			finderPath = FINDER_PATH_WITH_PAGINATION_FIND_ALL;
+			finderArgs = new Object[] { start, end, orderByComparator };
+		}
+
+		List<Counter> list = (List<Counter>)FinderCacheUtil.getResult(finderPath,
 				finderArgs, this);
 
 		if (list == null) {
@@ -450,6 +497,10 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 			}
 			else {
 				sql = _SQL_SELECT_COUNTER;
+
+				if (pagination) {
+					sql = sql.concat(CounterModelImpl.ORDER_BY_JPQL);
+				}
 			}
 
 			Session session = null;
@@ -459,32 +510,29 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 
 				Query q = session.createQuery(sql);
 
-				if (orderByComparator == null) {
+				if (!pagination) {
 					list = (List<Counter>)QueryUtil.list(q, getDialect(),
 							start, end, false);
 
 					Collections.sort(list);
+
+					list = new UnmodifiableList<Counter>(list);
 				}
 				else {
 					list = (List<Counter>)QueryUtil.list(q, getDialect(),
 							start, end);
 				}
+
+				cacheResult(list);
+
+				FinderCacheUtil.putResult(finderPath, finderArgs, list);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(finderPath, finderArgs);
+
 				throw processException(e);
 			}
 			finally {
-				if (list == null) {
-					FinderCacheUtil.removeResult(FINDER_PATH_FIND_ALL,
-						finderArgs);
-				}
-				else {
-					cacheResult(list);
-
-					FinderCacheUtil.putResult(FINDER_PATH_FIND_ALL, finderArgs,
-						list);
-				}
-
 				closeSession(session);
 			}
 		}
@@ -497,9 +545,10 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	 *
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public void removeAll() throws SystemException {
 		for (Counter counter : findAll()) {
-			counterPersistence.remove(counter);
+			remove(counter);
 		}
 	}
 
@@ -509,11 +558,10 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	 * @return the number of counters
 	 * @throws SystemException if a system exception occurred
 	 */
+	@Override
 	public int countAll() throws SystemException {
-		Object[] finderArgs = new Object[0];
-
 		Long count = (Long)FinderCacheUtil.getResult(FINDER_PATH_COUNT_ALL,
-				finderArgs, this);
+				FINDER_ARGS_EMPTY, this);
 
 		if (count == null) {
 			Session session = null;
@@ -524,18 +572,17 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 				Query q = session.createQuery(_SQL_COUNT_COUNTER);
 
 				count = (Long)q.uniqueResult();
+
+				FinderCacheUtil.putResult(FINDER_PATH_COUNT_ALL,
+					FINDER_ARGS_EMPTY, count);
 			}
 			catch (Exception e) {
+				FinderCacheUtil.removeResult(FINDER_PATH_COUNT_ALL,
+					FINDER_ARGS_EMPTY);
+
 				throw processException(e);
 			}
 			finally {
-				if (count == null) {
-					count = Long.valueOf(0);
-				}
-
-				FinderCacheUtil.putResult(FINDER_PATH_COUNT_ALL, finderArgs,
-					count);
-
 				closeSession(session);
 			}
 		}
@@ -557,7 +604,7 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 
 				for (String listenerClassName : listenerClassNames) {
 					listenersList.add((ModelListener<Counter>)InstanceFactory.newInstance(
-							listenerClassName));
+							getClassLoader(), listenerClassName));
 				}
 
 				listeners = listenersList.toArray(new ModelListener[listenersList.size()]);
@@ -571,15 +618,10 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	public void destroy() {
 		EntityCacheUtil.removeCache(CounterImpl.class.getName());
 		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_ENTITY);
-		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST);
+		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST_WITH_PAGINATION);
+		FinderCacheUtil.removeCache(FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION);
 	}
 
-	@BeanReference(type = CounterPersistence.class)
-	protected CounterPersistence counterPersistence;
-	@BeanReference(type = ResourcePersistence.class)
-	protected ResourcePersistence resourcePersistence;
-	@BeanReference(type = UserPersistence.class)
-	protected UserPersistence userPersistence;
 	private static final String _SQL_SELECT_COUNTER = "SELECT counter FROM Counter counter";
 	private static final String _SQL_COUNT_COUNTER = "SELECT COUNT(counter) FROM Counter counter";
 	private static final String _ORDER_BY_ENTITY_ALIAS = "counter.";
@@ -587,16 +629,19 @@ public class CounterPersistenceImpl extends BasePersistenceImpl<Counter>
 	private static final boolean _HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE = com.liferay.portal.util.PropsValues.HIBERNATE_CACHE_USE_SECOND_LEVEL_CACHE;
 	private static Log _log = LogFactoryUtil.getLog(CounterPersistenceImpl.class);
 	private static Counter _nullCounter = new CounterImpl() {
+			@Override
 			public Object clone() {
 				return this;
 			}
 
+			@Override
 			public CacheModel<Counter> toCacheModel() {
 				return _nullCounterCacheModel;
 			}
 		};
 
 	private static CacheModel<Counter> _nullCounterCacheModel = new CacheModel<Counter>() {
+			@Override
 			public Counter toEntityModel() {
 				return _nullCounter;
 			}
